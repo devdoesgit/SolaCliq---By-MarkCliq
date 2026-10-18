@@ -64,6 +64,10 @@ metering → service.
 - Agents will enter their own commission and expenses for admin review: what
   proof should they attach?
 - What happens if two agents claim the same customer?
+- Agents will register customers in the app on site; the customer reads out
+  a code sent to their email. **Do most customers have an email address
+  they can open on the spot?** If not, what do they use (a family member's
+  email, WhatsApp only)? Login is email-only until SMS is set up.
 
 ## 7. Referrals
 

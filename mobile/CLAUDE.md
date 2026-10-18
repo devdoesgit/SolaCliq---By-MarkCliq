@@ -61,7 +61,7 @@ Shared: sign up (customers), log in, org switcher, notifications, profile.
 | Worker | My jobs, job detail (customer, address, directions) | F6 |
 | Worker | Installation capture (camera + GPS) | F6 |
 | Worker | My expenses, log expense with receipt | F7 |
-| Agent | My customers | F4/F10 |
+| Agent | My customers; register a customer (email code, details, submit) | F4/F10 |
 | Agent | My expenses, log expense | F7 |
 | Agent | My commission, enter commission | F8 |
 | Agent | Share referral link | F11 |
@@ -69,5 +69,5 @@ Shared: sign up (customers), log in, org switcher, notifications, profile.
 | Customer | Cost breakdown, payments made | F9 |
 | Customer | Share referral link | F11 |
 
-Not settled (see `../questioner.md`): whether agents add leads in the app,
-and whether customers see their documents and installation photos.
+Not settled (see `../questioner.md`): whether customers see their documents
+and installation photos.

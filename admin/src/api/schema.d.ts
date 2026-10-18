@@ -500,7 +500,12 @@ export interface operations {
             /** @description Logged in. */
             200: {
                 headers: {
-                    /** @description Web clients only. `solacliq_session`, HttpOnly, Secure, SameSite=Lax, Path=/. */
+                    /**
+                     * @description Web clients only. `solacliq_session`, HttpOnly, Secure,
+                     *     SameSite=Lax, Path=/, Max-Age 12 hours. (The example omits
+                     *     Secure so the mock works over plain HTTP in development.)
+                     * @example solacliq_session=mock-session; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200
+                     */
                     "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
@@ -550,6 +555,11 @@ export interface operations {
             /** @description Logged out. */
             204: {
                 headers: {
+                    /**
+                     * @description Web clients only. Clears `solacliq_session`.
+                     * @example solacliq_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0
+                     */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;

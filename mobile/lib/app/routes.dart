@@ -28,16 +28,23 @@ abstract final class AppRoutes {
     queryParameters: {'email': email, 'notice': 'verified'},
   ).toString();
 
-  static String loginAfterReset(String email) => Uri(
+  static String loginAfterReset(String email, {bool setup = false}) => Uri(
     path: login,
-    queryParameters: {'email': email, 'notice': 'reset'},
+    queryParameters: {'email': email, 'notice': setup ? 'setup' : 'reset'},
   ).toString();
 
-  static String forgotPassword(String email) => Uri(
+  /// The code request. With [setup] it is worded as setting up an account
+  /// that someone else created (no password yet).
+  static String forgotPassword(String email, {bool setup = false}) => Uri(
     path: forgot,
-    queryParameters: email.isEmpty ? null : {'email': email},
+    queryParameters: {
+      if (email.isNotEmpty) 'email': email,
+      if (setup) 'setup': '1',
+    },
   ).toString();
 
-  static String resetPassword(String email) =>
-      Uri(path: reset, queryParameters: {'email': email}).toString();
+  static String resetPassword(String email, {bool setup = false}) => Uri(
+    path: reset,
+    queryParameters: {'email': email, if (setup) 'setup': '1'},
+  ).toString();
 }

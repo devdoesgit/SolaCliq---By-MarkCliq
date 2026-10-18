@@ -10,6 +10,7 @@ import {
   StatusPill,
   TextField,
 } from '../components';
+import { HealthStatus } from '../features/health/HealthStatus';
 
 /**
  * Every component, for checking them in a browser. Development only. All
@@ -29,6 +30,7 @@ export function GalleryPage() {
       </header>
 
       <Notice title="Illustrative" body="Names, amounts and dates on this page are not real." />
+      <HealthStatus />
       <p className="t-label muted" aria-live="polite">
         {tapped ? `Clicked: ${tapped}` : 'Click a control to try it.'}
       </p>

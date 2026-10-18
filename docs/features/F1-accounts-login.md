@@ -28,6 +28,12 @@ feature knows who is using it and in which orgs.
   memberships `(org, role, org status)`.
 - Forgot password: a 6-digit code by email, then a new password. Resetting
   logs the person out everywhere.
+- **First-time set-up** (added 2026-10-18): accounts created for someone
+  (customers registered by an agent in F4; workers and agents in F3) have
+  no password. Logging in to one returns `account.password_not_set`; the app
+  then offers "Set up your account", which is the forgot-password flow
+  worded for a first visit (`POST /auth/password/forgot` then
+  `/auth/password/reset` both work for an account without a password).
 - Sessions:
   - **App:** a short-lived access token (Bearer) and a long-lived refresh
     token, kept in the phone's secure storage (Android Keystore). The app
@@ -64,10 +70,14 @@ feature knows who is using it and in which orgs.
   email instead of a code.
 - Login failure always says "Email or password is wrong." An unverified
   account gets `account.email_unverified` only after the right password.
-- Codes: 6 digits, valid 15 minutes, 5 tries, stored hashed, single use.
+- Codes: 6 digits, valid **5 minutes**, 5 tries, stored hashed (PostgreSQL),
+  single use.
 - Rate limits: login 5 tries per 15 minutes per email and per IP; code
   emails 3 per hour per email.
-- Emails go through Google Workspace (server only). In development the backend prints
+- Emails go through the Gmail API (Google Workspace) from
+  `no-reply@app.markcliq.com`, server only: verification code, reset code,
+  set-up code, "you already have an account", and an activation/welcome
+  email for accounts created by an agent or org admin (sent in F3/F4). In development the backend prints
   codes to its log; the Prism mock returns example responses.
 
 ## API
@@ -87,7 +97,8 @@ Added to `api/openapi.yaml` (tag `auth`). All under `/api/v1`.
 | `GET /me` | bearer or cookie | The user and their memberships. |
 
 Errors use problem+json codes: `auth.invalid_credentials`,
-`account.email_unverified`, `auth.code_invalid`, `auth.code_expired`,
+`account.email_unverified`, `account.password_not_set`,
+`auth.code_invalid`, `auth.code_expired`,
 `auth.too_many_attempts`, `auth.password_too_weak`, `auth.session_expired`,
 `validation.failed`.
 
@@ -168,5 +179,11 @@ Errors use problem+json codes: `auth.invalid_credentials`,
   find fields by id; Flutter gives field labels to Android as hints, which
   TalkBack reads but mobile-mcp doesn't show.
 - The app icon is still the VGV template's; replace when there is a logo.
-- Left: admin website log in, forgot and reset password, signed-in page;
-  then switching to the real backend.
+- 2026-10-18, admin website done against the Prism mock: log in, forgot
+  and reset password, signed-in page with the "use the app" message for
+  people without an admin role. Session via cookie; `next` after log in is
+  only followed for paths on this site. 40 admin tests.
+- The contract's login and logout responses carry example `Set-Cookie`
+  headers so the mock keeps a browser signed in during development.
+- Claude's side of F1 is done. Left: the backend endpoints (owner), then
+  running both apps against them with only the base URL changed.

@@ -147,4 +147,8 @@ None.
 - Done: tokens, contract, Dart and TS clients, `sola_ui` (40 tests incl.
   goldens with real fonts), mobile shell (19 tests, runs on the emulator
   against Prism), admin shell (23 tests, builds, checked in Chrome at
-  desktop and phone width). Left: CI, design-polish pass.
+  desktop and phone width).
+- CI added (`.github/workflows/ci.yml`, on `master`): spec lint and
+  generated-files check, mobile format/analyze/tests/goldens/debug APK,
+  admin lint/typecheck/tests/build. The design-polish pass moves to the
+  real screens (F1 onwards).

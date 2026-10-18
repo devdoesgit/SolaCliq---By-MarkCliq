@@ -68,6 +68,7 @@ void main() {
         (401, 'auth.invalid_credentials', AuthFailureCode.invalidCredentials),
         (403, 'account.email_unverified', AuthFailureCode.emailUnverified),
         (429, 'auth.too_many_attempts', AuthFailureCode.tooManyAttempts),
+        (403, 'account.password_not_set', AuthFailureCode.passwordNotSet),
       ]) {
         answer = (_) async => jsonBody(status, problem(status, code));
         await expectLater(

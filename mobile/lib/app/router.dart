@@ -58,6 +58,7 @@ class AppRouter {
               notice: switch (params['notice']) {
                 'verified' => LoginNotice.emailVerified,
                 'reset' => LoginNotice.passwordChanged,
+                'setup' => LoginNotice.passwordCreated,
                 _ => null,
               },
             );
@@ -76,11 +77,13 @@ class AppRouter {
           path: AppRoutes.forgot,
           builder: (context, state) => ForgotPasswordPage(
             initialEmail: state.uri.queryParameters['email'],
+            setup: state.uri.queryParameters['setup'] == '1',
           ),
         ),
         GoRoute(
           path: AppRoutes.reset,
           builder: (context, state) => ResetPasswordPage(
+            setup: state.uri.queryParameters['setup'] == '1',
             email: state.uri.queryParameters['email'] ?? '',
           ),
         ),

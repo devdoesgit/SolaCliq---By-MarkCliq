@@ -1,8 +1,17 @@
 # Features
 
-Built one at a time, in this order. Each feature is small, finished and
-tested before the next one starts. Order and scope are a proposal until the
-owner confirms them.
+Built one at a time. Each feature is small, finished and tested before the
+next one starts.
+
+**Build order: mobile first, admin website last** (decided 2026-10-18).
+The mobile side of each feature is built in the order below against the
+mock, while the owner builds the backend. F2 has no mobile screens, so it
+moves to the admin phase. The admin side of every feature is built last,
+with 7–10 days kept for it before the pilot; until then orgs and teams are
+set up by backend command.
+
+Mobile order: F3 → F4 → F6 → F7 → F8 → F9 → F10 → F11 → F12 → F13.
+Admin order: F2 → F3 → F4 → F5 → F6 → F7 → F8 → F11 → F12 → F13 → F14.
 
 Status: `planned` → `spec` (spec written, under review) → `building` →
 `done`.
@@ -63,7 +72,10 @@ until a platform admin approves or denies it.
 gets a membership instead of a new account; org switcher.
 
 **F4 Customers.** Customer records, install stages, stage changes, cost
-breakdown and recorded payments (admin side).
+breakdown and recorded payments (admin side). Agents register customers in
+the app: the account is created and the email verified with a code the
+customer reads out; registration status draft → submitted → verified /
+rejected, decided by the org admin.
 
 **F5 Documents.** Upload and view customer documents through presigned R2
 URLs; document types; role-based access.

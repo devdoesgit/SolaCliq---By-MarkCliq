@@ -101,7 +101,7 @@
     "@verifyTitle": {
         "description": "Screen title."
     },
-    "verifyIntro": "We sent a 6-digit code to {email}. It works for 15 minutes.",
+    "verifyIntro": "We sent a 6-digit code to {email}. It works for 5 minutes.",
     "@verifyIntro": {
         "description": "Explains where the code went.",
         "placeholders": {
@@ -276,5 +276,42 @@
     "back": "Back",
     "@back": {
         "description": "Back button label."
+    },
+    "failPasswordNotSet": "Your account was set up for you. Create a password to log in.",
+    "@failPasswordNotSet": {
+        "description": "Login to an account an agent or admin created, before a password is chosen."
+    },
+    "setUpAccount": "Set up your account",
+    "@setUpAccount": {
+        "description": "Action for people whose account was created for them."
+    },
+    "setupTitle": "Set up your account",
+    "@setupTitle": {
+        "description": "Title of the code request in set-up mode."
+    },
+    "setupIntro": "Enter the email your installer or agent registered. We'll send a 6-digit code so you can create your password.",
+    "@setupIntro": {
+        "description": "Explains first-time set-up."
+    },
+    "setupResetTitle": "Create your password",
+    "@setupResetTitle": {
+        "description": "Title of the password screen in set-up mode."
+    },
+    "setupResetIntro": "Enter the code we sent to {email} and choose a password.",
+    "@setupResetIntro": {
+        "description": "Explains the set-up password screen.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "passwordCreated": "Password created. Log in to continue.",
+    "@passwordCreated": {
+        "description": "Shown on the log in screen after set-up."
+    },
+    "firstTimeHere": "First time? Set up your account",
+    "@firstTimeHere": {
+        "description": "Link on the log in screen for accounts created by an agent."
     }
 }

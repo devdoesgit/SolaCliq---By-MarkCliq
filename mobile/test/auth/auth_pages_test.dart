@@ -266,6 +266,77 @@ void main() {
     });
   });
 
+  group('first-time set-up', () {
+    testWidgets('logging in to an account with no password offers set-up', (
+      tester,
+    ) async {
+      when(
+        () => auth.logIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthFailure(AuthFailureCode.passwordNotSet));
+      await tester.pumpApp(const LoginPage(), authRepository: auth);
+      await tester.enterText(_input('login_email'), 'asha@example.com');
+      await tester.enterText(_input('login_password_input'), 'guess');
+      await tester.tap(find.byKey(const Key('login_submit')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Your account was set up for you. Create a password to log in.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('login_set_up_now')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('route:/forgot?email=asha%40example.com&setup=1'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('set-up wording, then back to log in with a message', (
+      tester,
+    ) async {
+      when(() => auth.requestPasswordReset(email: any(named: 'email')))
+          .thenAnswer((_) async {});
+      await tester.pumpApp(
+        const ForgotPasswordPage(initialEmail: 'asha@example.com', setup: true),
+        authRepository: auth,
+      );
+      expect(find.text('SET UP YOUR ACCOUNT'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('forgot_submit')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('route:/reset?email=asha%40example.com&setup=1'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('creating the password returns to log in', (tester) async {
+      when(
+        () => auth.resetPassword(
+          email: any(named: 'email'),
+          code: any(named: 'code'),
+          newPassword: any(named: 'newPassword'),
+        ),
+      ).thenAnswer((_) async {});
+      await tester.pumpApp(
+        const ResetPasswordPage(email: 'asha@example.com', setup: true),
+        authRepository: auth,
+      );
+      expect(find.text('CREATE YOUR PASSWORD'), findsOneWidget);
+      await tester.enterText(_input('reset_code'), '111222');
+      await tester.enterText(_input('reset_password_input'), 'new password');
+      await tester.tap(find.byKey(const Key('reset_submit')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('route:/login?email=asha%40example.com&notice=setup'),
+        findsOneWidget,
+      );
+    });
+  });
+
   testWidgets('auth screens meet tap target and label guidelines', (
     tester,
   ) async {

@@ -93,6 +93,10 @@
   padding-inline: var(--space-6);
 }
 
+.sc-btn-ghost.sc-btn-compact {
+  padding-inline: var(--space-3);
+}
+
 .sc-btn-block {
   width: 100%;
 }

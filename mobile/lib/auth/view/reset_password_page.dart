@@ -14,24 +14,28 @@ import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/auth/widgets/password_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
+/// Sets a new password with the emailed code. With [setup], worded as
+/// creating the first password.
 class ResetPasswordPage extends StatelessWidget {
-  const new({required this.email, super.key});
+  const new({required this.email, this.setup = false, super.key});
 
   final String email;
+  final bool setup;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => SubmitCubit(),
-      child: ResetPasswordView(email: email),
+      child: ResetPasswordView(email: email, setup: setup),
     );
   }
 }
 
 class ResetPasswordView extends StatefulWidget {
-  const new({required this.email, super.key});
+  const new({required this.email, this.setup = false, super.key});
 
   final String email;
+  final bool setup;
 
   @override
   State<ResetPasswordView> createState() => _ResetPasswordViewState();
@@ -75,12 +79,15 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     final l10n = context.l10n;
     return BlocConsumer<SubmitCubit, SubmitState>(
       listenWhen: (a, b) => b.status == SubmitStatus.success,
-      listener: (context, _) =>
-          context.go(AppRoutes.loginAfterReset(widget.email)),
+      listener: (context, _) => context.go(
+        AppRoutes.loginAfterReset(widget.email, setup: widget.setup),
+      ),
       builder: (context, state) => AutofillGroup(
         child: AuthLayout(
-          title: l10n.resetTitle,
-          intro: l10n.resetIntro(widget.email),
+          title: widget.setup ? l10n.setupResetTitle : l10n.resetTitle,
+          intro: widget.setup
+              ? l10n.setupResetIntro(widget.email)
+              : l10n.resetIntro(widget.email),
           onBack: context.canPop() ? context.pop : null,
           notice: FailureNotice(state: state),
           primaryAction: SolaButton(

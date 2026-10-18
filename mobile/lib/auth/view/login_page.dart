@@ -15,7 +15,7 @@ import 'package:solacliq/auth/widgets/password_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
 /// Why the person arrived here, shown as a success message.
-enum LoginNotice { emailVerified, passwordChanged }
+enum LoginNotice { emailVerified, passwordChanged, passwordCreated }
 
 class LoginPage extends StatelessWidget {
   const new({this.initialEmail, this.notice, super.key});
@@ -89,6 +89,24 @@ class _LoginViewState extends State<LoginView> {
     unawaited(context.push(AppRoutes.verifyEmail(email)));
   }
 
+  void _setUpAccount() => unawaited(
+    context.push(AppRoutes.forgotPassword(_email.text.trim(), setup: true)),
+  );
+
+  Widget? _failureAction(AuthFailureCode? failure) => switch (failure) {
+    AuthFailureCode.emailUnverified => SolaButton(
+      key: const Key('login_verify_now'),
+      label: context.l10n.verifyNow,
+      onPressed: _verifyInstead,
+    ),
+    AuthFailureCode.passwordNotSet => SolaButton(
+      key: const Key('login_set_up_now'),
+      label: context.l10n.setUpAccount,
+      onPressed: _setUpAccount,
+    ),
+    _ => null,
+  };
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -99,22 +117,14 @@ class _LoginViewState extends State<LoginView> {
         title: l10n.logIn,
         onBack: context.canPop() ? context.pop : null,
         notice: state.status == SubmitStatus.failure
-            ? FailureNotice(
-                state: state,
-                action: state.failure == AuthFailureCode.emailUnverified
-                    ? SolaButton(
-                        key: const Key('login_verify_now'),
-                        label: l10n.verifyNow,
-                        onPressed: _verifyInstead,
-                      )
-                    : null,
-              )
+            ? FailureNotice(state: state, action: _failureAction(state.failure))
             : notice == null
             ? null
             : SolaNotice(
                 title: switch (notice) {
                   LoginNotice.emailVerified => l10n.emailVerified,
                   LoginNotice.passwordChanged => l10n.passwordChanged,
+                  LoginNotice.passwordCreated => l10n.passwordCreated,
                 },
                 tone: SolaTone.success,
               ),
@@ -132,6 +142,12 @@ class _LoginViewState extends State<LoginView> {
             variant: SolaButtonVariant.ghost,
             onPressed: () =>
                 context.push(AppRoutes.forgotPassword(_email.text.trim())),
+          ),
+          SolaButton(
+            key: const Key('login_first_time'),
+            label: l10n.firstTimeHere,
+            variant: SolaButtonVariant.ghost,
+            onPressed: _setUpAccount,
           ),
         ],
         children: [

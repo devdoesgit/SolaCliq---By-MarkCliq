@@ -1,0 +1,115 @@
+# Checks every push to master and every pull request into it.
+# The backend job is the owner's to add.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.7"
+  NODE_VERSION: "22"
+
+jobs:
+  contract:
+    name: API contract and generated files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            admin/package-lock.json
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: npm ci
+      - run: npm ci
+        working-directory: admin
+      - name: Lint the spec
+        run: npx spectral lint api/openapi.yaml --ruleset api/.spectral.yaml --fail-severity error
+      - name: Tokens and clients are up to date
+        run: make check
+
+  mobile:
+    name: Mobile app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Get packages
+        run: |
+          (cd packages/sola_ui && flutter pub get)
+          (cd packages/api_client && dart pub get)
+          flutter pub get
+          flutter gen-l10n
+        working-directory: mobile
+      - name: Format
+        run: dart format --set-exit-if-changed lib test packages/sola_ui/lib packages/sola_ui/test
+        working-directory: mobile
+      - name: Analyze
+        run: |
+          (cd packages/sola_ui && dart analyze --fatal-infos)
+          dart analyze --fatal-infos
+        working-directory: mobile
+      - name: Test design system (incl. goldens)
+        run: flutter test
+        working-directory: mobile/packages/sola_ui
+      - name: Test app
+        run: flutter test
+        working-directory: mobile
+      - name: Build debug APK (development)
+        run: flutter build apk --debug --flavor development -t lib/main_development.dart
+        working-directory: mobile
+      - name: Keep golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: mobile/packages/sola_ui/test/goldens/failures/
+          if-no-files-found: ignore
+
+  admin:
+    name: Admin website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

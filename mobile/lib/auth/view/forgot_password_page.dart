@@ -12,24 +12,28 @@ import 'package:solacliq/auth/widgets/auth_layout.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
+/// Requests an emailed code to reset a password, or, with [setup], to
+/// create the first password on an account an agent or admin created.
 class ForgotPasswordPage extends StatelessWidget {
-  const new({this.initialEmail, super.key});
+  const new({this.initialEmail, this.setup = false, super.key});
 
   final String? initialEmail;
+  final bool setup;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => SubmitCubit(),
-      child: ForgotPasswordView(initialEmail: initialEmail),
+      child: ForgotPasswordView(initialEmail: initialEmail, setup: setup),
     );
   }
 }
 
 class ForgotPasswordView extends StatefulWidget {
-  const new({this.initialEmail, super.key});
+  const new({this.initialEmail, this.setup = false, super.key});
 
   final String? initialEmail;
+  final bool setup;
 
   @override
   State<ForgotPasswordView> createState() => _ForgotPasswordViewState();
@@ -61,11 +65,12 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     final l10n = context.l10n;
     return BlocConsumer<SubmitCubit, SubmitState>(
       listenWhen: (a, b) => b.status == SubmitStatus.success,
-      listener: (context, _) =>
-          context.pushReplacement(AppRoutes.resetPassword(_email.text.trim())),
+      listener: (context, _) => context.pushReplacement(
+        AppRoutes.resetPassword(_email.text.trim(), setup: widget.setup),
+      ),
       builder: (context, state) => AuthLayout(
-        title: l10n.forgotTitle,
-        intro: l10n.forgotIntro,
+        title: widget.setup ? l10n.setupTitle : l10n.forgotTitle,
+        intro: widget.setup ? l10n.setupIntro : l10n.forgotIntro,
         onBack: context.canPop() ? context.pop : null,
         notice: FailureNotice(state: state),
         primaryAction: SolaButton(

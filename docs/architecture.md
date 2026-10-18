@@ -44,7 +44,11 @@ One OpenAPI spec is the contract between backend and frontends.
    TypeScript client (admin, `openapi-typescript` + `openapi-fetch`). A
    contract change breaks the build until the frontend is updated.
 4. **Mocking:** Prism serves responses from the spec, so frontend work does
-   not wait for endpoints.
+   not wait for endpoints. One mock (`make mock`, port 4010) serves both
+   apps; it keeps no state. It serves the spec's paths without `/api/v1`;
+   the real backend serves them under `/api/v1`. Pointing at a local
+   backend: mobile `--dart-define=API_BASE_URL=http://10.0.2.2:<port>/api/v1`,
+   admin `BACKEND_URL=http://localhost:<port> npm run dev`.
 5. **Contract testing:** Schemathesis runs generated requests against the
    real API and reports anything that breaks the spec.
 
@@ -87,8 +91,10 @@ when F0 starts and recorded here.
 
 ## Distribution and updates
 
-- **Not on the Play Store early on.** APK on the public R2 bucket, linked
-  from `solacliq.markcliq.com/app` with a QR code.
+- **Pilot on a self-hosted APK; Play Store in about 3 months.** APK on the
+  public R2 bucket, linked from `solacliq.markcliq.com/app` with a QR code.
+  Before the Play Store: privacy policy, data-safety form, account deletion
+  (in app and on the web), organisation developer account.
 - **Dart fixes:** Shorebird patch. Users do nothing; urgent patches can prompt
   "restart to apply". Patches can be rolled back.
 - **Native changes:** `make release` builds, signs and uploads the APK and

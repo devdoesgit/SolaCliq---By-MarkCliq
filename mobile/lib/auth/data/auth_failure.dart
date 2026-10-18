@@ -6,6 +6,9 @@ import 'package:dio/dio.dart';
 enum AuthFailureCode {
   invalidCredentials('auth.invalid_credentials'),
   emailUnverified('account.email_unverified'),
+
+  /// Created for the person by an agent or admin; no password chosen yet.
+  passwordNotSet('account.password_not_set'),
   codeInvalid('auth.code_invalid'),
   codeExpired('auth.code_expired'),
   tooManyAttempts('auth.too_many_attempts'),

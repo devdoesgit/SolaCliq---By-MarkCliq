@@ -80,7 +80,7 @@ paths:
       operationId: verifyEmail
       summary: Verify an email with its code
       description: |
-        Marks the email verified so the account can log in. Codes last 15
+        Marks the email verified so the account can log in. Codes last 5
         minutes and allow 5 tries; after that, request a new one.
       tags: [auth]
       security: []
@@ -126,7 +126,9 @@ paths:
         the session cookie and returns no tokens. Wrong email and wrong
         password give the same `auth.invalid_credentials`; an unverified
         account gets `account.email_unverified` only after the right
-        password.
+        password. An account created for someone (by an agent or org admin)
+        that has no password yet gets 403 `account.password_not_set`; the
+        person sets one through /auth/password/forgot and /reset.
       tags: [auth]
       security: []
       requestBody:
@@ -140,9 +142,13 @@ paths:
           description: Logged in.
           headers:
             Set-Cookie:
-              description: Web clients only. `solacliq_session`, HttpOnly, Secure, SameSite=Lax, Path=/.
+              description: |
+                Web clients only. `solacliq_session`, HttpOnly, Secure,
+                SameSite=Lax, Path=/, Max-Age 12 hours. (The example omits
+                Secure so the mock works over plain HTTP in development.)
               schema:
                 type: string
+              example: solacliq_session=mock-session; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200
           content:
             application/json:
               schema:
@@ -188,14 +194,22 @@ paths:
       responses:
         "204":
           description: Logged out.
+          headers:
+            Set-Cookie:
+              description: Web clients only. Clears `solacliq_session`.
+              schema:
+                type: string
+              example: solacliq_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0
         "401":
           $ref: "#/components/responses/Problem"
 
   /auth/password/forgot:
     post:
       operationId: forgotPassword
-      summary: Email a password reset code
-      description: Always 202 (no enumeration).
+      summary: Email a password reset or set-up code
+      description: |
+        Always 202 (no enumeration). Also used to set a first password on an
+        account created for someone. Codes last 5 minutes.
       tags: [auth]
       security: []
       requestBody:

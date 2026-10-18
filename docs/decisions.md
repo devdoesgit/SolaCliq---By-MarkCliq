@@ -89,3 +89,32 @@ Change a decision by adding a new line, not by editing an old one.
   no breached-password check for now.
 - **Email through Google Workspace, not Zoho.** The owner already has a
   Workspace account and will create the sender there.
+- **Main branch is `master`.** The owner committed and pushed to it; CI
+  runs on `master`.
+- **SolaCliq is sold to solar EPC businesses as a service.** Pilot with 2–3
+  vendors for 2–3 months, then wider.
+- **Customers can sign up on their own** (later from the Play Store) and are
+  linked automatically when they work with a MarkCliq vendor.
+- **Agents register customers in the app.** The account is created
+  automatically, the email verified with a 6-digit code the customer reads
+  out, the agent completes and submits the registration, the org admin
+  verifies or rejects it. The customer sets a password on first login.
+- **Email-only login for now**; phone login after DLT.
+- **Email codes expire after 5 minutes** (was 15), 5 tries, stored hashed in
+  PostgreSQL, rate limited. Redis not needed for the MVP (Claude's
+  recommendation; the owner's call as backend owner).
+- **Email via the Gmail API from `no-reply@app.markcliq.com`.** Needs the
+  subdomain in Workspace with SPF, DKIM and DMARC. Emails: verification
+  code, reset code, set-up code, activation/welcome.
+- **Play Store in about 3 months, not for the pilot.** The pilot uses the
+  self-hosted APK. Before the Play Store: privacy policy, data-safety form,
+  in-app and web account deletion, and an organisation developer account
+  (a personal one needs a 12-tester, 14-day closed test first).
+- **Mobile first, admin website last.** The owner builds the backend while
+  Claude builds the mobile app against the Prism mock, feature by feature,
+  with the endpoints agreed in `api/openapi.yaml` first. Each mobile
+  feature is tested against the real backend as soon as its endpoints
+  exist, since the mock keeps no state. The admin website (org signup,
+  team, customers, approvals) is built last, with 7–10 days kept for it
+  before the pilot; until then orgs and teams are set up by backend
+  command. Aim: the highest-quality mobile UI/UX.

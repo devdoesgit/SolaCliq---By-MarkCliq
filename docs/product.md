@@ -11,6 +11,8 @@ nothing listed there is settled.
 - One shared app, **SolaCliq**, used by every org. It onboards solar
   businesses and runs their whole customer, worker and agent lifecycle. Not
   white-labelled per vendor.
+- **A product MarkCliq sells to solar EPC businesses.** Pilot with 2–3
+  vendors for about 2–3 months, then open to more businesses.
 - Multi-tenant: every org-owned row belongs to an org (vendor).
 - Android first. iOS later; the owner wants to test on their own iPhone.
 - The admin dashboard is a website. Workers, agents and customers use the
@@ -40,8 +42,34 @@ nothing listed there is settled.
   approves or denies it. MarkCliq offers setup help on request.
 - One admin per org for now (no staff sub-roles).
 - The org admin creates worker and agent accounts and hands out the logins.
-- Customers sign up freely with email (phone login later). A new customer
-  account starts empty.
+- Login is by **email** (with password) for everyone. Phone number login
+  comes after SMS (DLT registration).
+
+## How customers arrive
+
+**A. On their own.** They install the app (from the Play Store once it is
+there), sign up with email, verify it with a 6-digit code and look around.
+A new account starts empty. If they later work with any MarkCliq vendor,
+the vendor's customer record links to their account automatically (see
+Customer linking).
+
+**B. Registered by an agent** (decided 2026-10-18):
+1. The agent enters the customer in the app. The customer's account is
+   created automatically.
+2. A 6-digit code is emailed to the customer; the customer reads it out
+   and the agent enters it. This proves the email is real and that the
+   customer agreed.
+3. The agent completes the registration (details, documents) and submits
+   it. Registration status: **draft → submitted → verified / rejected**.
+   The **org admin** verifies or rejects it on the website. A verified
+   registration enters the install stages at "lead" (assumed; to confirm).
+4. The customer later logs in with their email. The first time, they set a
+   password using a fresh emailed code ("Set up your account").
+5. If the email already has an account, no new account is made; the
+   existing one is linked and the person is notified.
+
+Customer details (the org's record), the login account, and document
+records are kept separate.
 - **Identity:** one global account per person, joined to orgs through
   memberships `(user, org, role)`. A person can hold roles in several orgs
   (org switcher in the app). An org adding an existing email adds a

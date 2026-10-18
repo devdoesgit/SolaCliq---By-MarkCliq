@@ -35,6 +35,7 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.invalidCredentials => l10n.failInvalidCredentials,
     AuthFailureCode.emailUnverified => l10n.failEmailUnverified,
     AuthFailureCode.codeInvalid => l10n.failCodeInvalid,
+    AuthFailureCode.passwordNotSet => l10n.failPasswordNotSet,
     AuthFailureCode.codeExpired => l10n.failCodeExpired,
     AuthFailureCode.tooManyAttempts => l10n.failTooManyAttempts,
     AuthFailureCode.passwordTooWeak => l10n.failPasswordTooWeak,
