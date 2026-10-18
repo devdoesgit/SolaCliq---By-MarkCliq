@@ -1,0 +1,8 @@
+# OpenAPI Generator settings for the mobile app's Dart client (make gen).
+pubName: api_client
+pubDescription: SolaCliq API client, generated from api/openapi.yaml. Do not edit.
+pubVersion: 0.1.0
+pubAuthor: MarkCliq
+pubHomepage: https://solacliq.markcliq.com
+serializationLibrary: json_serializable
+equalityCheckMethod: equatable

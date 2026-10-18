@@ -1,0 +1,364 @@
+/* SolaCliq components for the admin website. Same seven components as the
+   mobile app's sola_ui package, styled like markcliq.com. */
+
+/* Button: mono, uppercase, tracked; on hover the letters spread and a wash
+   rises from the bottom, slowly, as on markcliq.com. Pressing is instant. */
+
+.sc-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  overflow: hidden;
+  min-height: var(--control-sm);
+  padding: var(--space-5) var(--space-10);
+  border: var(--hairline) solid var(--line-strong);
+  border-radius: var(--radius-0);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--text-button-family);
+  font-size: var(--text-button-size);
+  line-height: var(--text-button-line-height);
+  font-weight: var(--text-button-weight);
+  letter-spacing: var(--text-button-tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    letter-spacing var(--duration-slow) var(--ease-editorial),
+    background-color var(--duration-instant) linear;
+}
+
+.sc-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-tint);
+  transform: translateY(100%);
+  transition: transform var(--duration-slow) var(--ease-editorial);
+  z-index: 0;
+}
+
+.sc-btn > span {
+  position: relative;
+  z-index: 1;
+}
+
+.sc-btn:hover:not(:disabled) {
+  letter-spacing: 0.4em;
+}
+
+.sc-btn:hover:not(:disabled)::after {
+  transform: translateY(0);
+}
+
+.sc-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.sc-btn-primary::after {
+  background: color-mix(in oklab, var(--on-accent) 10%, transparent);
+}
+
+.sc-btn-primary:active:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.sc-btn-secondary:active:not(:disabled),
+.sc-btn-ghost:active:not(:disabled) {
+  background: var(--surface-sunken);
+}
+
+.sc-btn-ghost {
+  border-color: transparent;
+  color: var(--accent);
+  padding-inline: var(--space-3);
+}
+
+.sc-btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.sc-btn-danger::after {
+  background: var(--danger-tint);
+}
+
+.sc-btn-compact {
+  padding-block: var(--space-2);
+  padding-inline: var(--space-6);
+}
+
+.sc-btn-block {
+  width: 100%;
+}
+
+.sc-btn:disabled {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+/* Text field */
+
+.sc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 28rem;
+}
+
+.sc-input {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: var(--hairline) solid var(--line-strong);
+  border-radius: var(--radius-0);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--text-body-family);
+  font-size: var(--text-body-size);
+  font-weight: 400;
+}
+
+.sc-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.sc-input-num {
+  font-family: var(--text-num-family);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.sc-input:disabled {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+  color: var(--ink-muted);
+}
+
+.sc-field-help {
+  color: var(--ink-muted);
+}
+
+.sc-field-error {
+  color: var(--danger);
+}
+
+/* Status pill */
+
+.sc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sc-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+
+.sc-tone-success {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.sc-tone-warning {
+  background: var(--warning-tint);
+  color: var(--warning);
+}
+
+.sc-tone-danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.sc-tone-info {
+  background: var(--info-tint);
+  color: var(--info);
+}
+
+.sc-tone-accent {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* Stage tracker */
+
+.sc-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--hairline) solid var(--line);
+  max-width: 32rem;
+}
+
+.sc-stage {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--hairline) solid var(--line);
+  color: var(--ink-muted);
+}
+
+.sc-stage-done {
+  color: var(--ink);
+}
+
+.sc-stage-done .sc-stage-n {
+  color: var(--success);
+}
+
+.sc-stage-current {
+  background: var(--accent-tint);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.sc-stage-current .sc-stage-n,
+.sc-stage-current .sc-stage-date {
+  color: var(--accent);
+}
+
+.sc-stage-n,
+.sc-stage-date {
+  color: var(--ink-muted);
+}
+
+/* List row */
+
+.sc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--hairline) solid var(--line);
+}
+
+.sc-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-3) var(--space-6);
+  border: 0;
+  border-bottom: var(--hairline) solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: background-color var(--duration-slow) var(--ease-editorial);
+}
+
+button.sc-row,
+a.sc-row {
+  cursor: pointer;
+}
+
+button.sc-row:hover,
+a.sc-row:hover {
+  background: var(--panel);
+}
+
+button.sc-row:active,
+a.sc-row:active {
+  background: var(--surface-sunken);
+  transition-duration: var(--duration-instant);
+}
+
+.sc-row:focus-visible {
+  outline-offset: calc(var(--focus-width) * -1);
+}
+
+.sc-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.sc-row-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+/* Amount */
+
+.sc-amt-credit {
+  color: var(--success);
+}
+
+.sc-amt-due {
+  color: var(--accent);
+}
+
+.sc-sum {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* No column gap, so the rule above the total runs unbroken. */
+  gap: var(--space-2) 0;
+  max-width: 28rem;
+  margin: 0;
+}
+
+.sc-sum dt,
+.sc-sum dd {
+  margin: 0;
+}
+
+.sc-sum dd {
+  padding-left: var(--space-6);
+  text-align: right;
+}
+
+.sc-sum-total {
+  padding-top: var(--space-2);
+  border-top: var(--hairline) solid var(--ink);
+  font-weight: 500;
+}
+
+/* Notice */
+
+.sc-notice {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  border-block: var(--hairline) solid currentColor;
+}
+
+.sc-notice-title {
+  font-weight: 500;
+}
+
+.sc-notice-body {
+  grid-column: 1;
+  color: var(--ink);
+}
+
+.sc-notice-action {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}

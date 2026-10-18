@@ -1,0 +1,14 @@
+{
+  "name": "solacliq-tools",
+  "private": true,
+  "description": "Pinned tools for the API contract and design tokens. The apps have their own package files.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "2.41.0",
+    "@stoplight/prism-cli": "5.16.0",
+    "@stoplight/spectral-cli": "6.17.0"
+  }
+}

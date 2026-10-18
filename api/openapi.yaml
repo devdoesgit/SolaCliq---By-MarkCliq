@@ -1,0 +1,530 @@
+openapi: 3.1.0
+info:
+  title: SolaCliq API
+  version: 0.2.0
+  contact:
+    name: MarkCliq
+    url: https://markcliq.com
+    email: info@markcliq.com
+  description: |
+    Contract between the SolaCliq backend, mobile app and admin website.
+    Conventions are in docs/architecture.md under "API conventions":
+    money in integer paise, UUIDv7 ids, ISO 8601 UTC timestamps, cursor
+    pagination, RFC 9457 errors.
+servers:
+  - url: https://solacliq.markcliq.com/api/v1
+    description: Production
+  - url: http://localhost:4010
+    description: Prism mock (make mock)
+
+security:
+  - bearer: []
+  - cookie: []
+
+tags:
+  - name: system
+    description: Service status.
+  - name: auth
+    description: Accounts, login and sessions (F1).
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Service health
+      description: |
+        Whether the API and its database are up. Needs no authentication.
+        503 with the same body when the database can't be reached.
+      tags: [system]
+      security: []
+      responses:
+        "200":
+          description: The API is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: The API is up but the database is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /auth/signup:
+    post:
+      operationId: signup
+      summary: Create a customer account
+      description: |
+        Creates an unverified account and emails a 6-digit code. Always 202,
+        whether or not the email already has an account (no enumeration);
+        an existing account gets an "you already have an account" email.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "202":
+          description: Accepted; a code is on its way if the email is new.
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/email/verify:
+    post:
+      operationId: verifyEmail
+      summary: Verify an email with its code
+      description: |
+        Marks the email verified so the account can log in. Codes last 15
+        minutes and allow 5 tries; after that, request a new one.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "204":
+          description: Email verified; the account can log in.
+        "400":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/email/resend:
+    post:
+      operationId: resendVerification
+      summary: Send a new verification code
+      description: Always 202 (no enumeration).
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailRequest"
+      responses:
+        "202":
+          description: Accepted.
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/login:
+    post:
+      operationId: login
+      summary: Log in
+      description: |
+        `client: app` returns a token pair in the body. `client: web` sets
+        the session cookie and returns no tokens. Wrong email and wrong
+        password give the same `auth.invalid_credentials`; an unverified
+        account gets `account.email_unverified` only after the right
+        password.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in.
+          headers:
+            Set-Cookie:
+              description: Web clients only. `solacliq_session`, HttpOnly, Secure, SameSite=Lax, Path=/.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      summary: Get a new token pair (app)
+      description: |
+        Rotates the refresh token. Reusing an already-used refresh token
+        revokes that login and returns 401 `auth.session_expired`.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New tokens.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Log out of this session
+      description: Web clients also get the cookie cleared.
+      tags: [auth]
+      responses:
+        "204":
+          description: Logged out.
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /auth/password/forgot:
+    post:
+      operationId: forgotPassword
+      summary: Email a password reset code
+      description: Always 202 (no enumeration).
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailRequest"
+      responses:
+        "202":
+          description: Accepted.
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/password/reset:
+    post:
+      operationId: resetPassword
+      summary: Set a new password with the reset code
+      description: Ends every session of the account.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Password changed; log in again.
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /me:
+    get:
+      operationId: getMe
+      summary: The signed-in person and their memberships
+      description: Used by both apps on start-up to restore the session.
+      tags: [auth]
+      responses:
+        "200":
+          description: The current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: Access token, used by the mobile app.
+    cookie:
+      type: apiKey
+      in: cookie
+      name: solacliq_session
+      description: Session cookie, used by the admin website.
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor from the previous page's `next_cursor`.
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Unique per logical write (UUID). Sent on writes from the mobile app
+        so a retry after a lost response never creates a duplicate.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Problem:
+      description: Error, as RFC 9457 problem details.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Health:
+      type: object
+      required: [status, version, database]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+          description: Backend build version.
+          examples: ["0.1.0"]
+        database:
+          type: string
+          enum: [ok, unavailable]
+
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          examples: ["https://solacliq.markcliq.com/problems/expense.limit_exceeded"]
+        title:
+          type: string
+          description: Short, human-readable summary.
+        status:
+          type: integer
+        detail:
+          type: string
+          description: What went wrong and what to do, safe to show to the user.
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Machine-readable error code, `<area>.<reason>`.
+          examples: ["expense.limit_exceeded"]
+        errors:
+          type: array
+          description: Per-field validation errors.
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    Id:
+      type: string
+      format: uuid
+      description: UUIDv7.
+
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601, UTC.
+
+    Money:
+      type: integer
+      format: int64
+      description: Amount in paise (₹1 = 100). Never a float.
+      examples: [18500000]
+
+    PageInfo:
+      type: object
+      required: [next_cursor]
+      properties:
+        next_cursor:
+          type: [string, "null"]
+          description: Pass as `cursor` for the next page; null on the last page.
+
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      examples: ["ramesh.sahoo@example.com"]
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 128
+      format: password
+
+    VerificationCode:
+      type: string
+      pattern: "^[0-9]{6}$"
+      description: 6-digit code from the email.
+      examples: ["482913"]
+
+    SignupRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          examples: ["Ramesh Sahoo"]
+        email:
+          $ref: "#/components/schemas/Email"
+        password:
+          $ref: "#/components/schemas/Password"
+
+    EmailRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+
+    VerifyEmailRequest:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        code:
+          $ref: "#/components/schemas/VerificationCode"
+
+    LoginRequest:
+      type: object
+      required: [email, password, client]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          format: password
+        client:
+          type: string
+          enum: [app, web]
+          description: "`app` gets tokens in the body; `web` gets a session cookie."
+
+    LoginResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/Me"
+        tokens:
+          description: "Present for `client: app` only."
+          $ref: "#/components/schemas/TokenPair"
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, access_expires_in, token_type]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+          description: Single use; the next refresh returns a new one.
+        access_expires_in:
+          type: integer
+          description: Seconds until the access token expires.
+          examples: [900]
+        token_type:
+          type: string
+          enum: [Bearer]
+
+    ResetPasswordRequest:
+      type: object
+      required: [email, code, new_password]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        code:
+          $ref: "#/components/schemas/VerificationCode"
+        new_password:
+          $ref: "#/components/schemas/Password"
+
+    OrgStatus:
+      type: string
+      enum: [pending, active, suspended]
+
+    Role:
+      type: string
+      enum: [org_admin, worker, agent]
+
+    Membership:
+      type: object
+      required: [org, role]
+      properties:
+        org:
+          type: object
+          required: [id, name, status]
+          properties:
+            id:
+              $ref: "#/components/schemas/Id"
+            name:
+              type: string
+              examples: ["Example Solar (illustrative)"]
+            status:
+              $ref: "#/components/schemas/OrgStatus"
+        role:
+          $ref: "#/components/schemas/Role"
+
+    Me:
+      type: object
+      required: [id, name, email, email_verified, is_platform_admin, memberships]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          examples: ["Ramesh Sahoo"]
+        email:
+          $ref: "#/components/schemas/Email"
+        email_verified:
+          type: boolean
+        is_platform_admin:
+          type: boolean
+        memberships:
+          type: array
+          items:
+            $ref: "#/components/schemas/Membership"
