@@ -94,9 +94,9 @@ export function GalleryPage() {
       <Section title="List rows">
         <ul className="sc-list" style={{ maxWidth: '40rem' }}>
           <ListRow
-            title="Ramesh Sahoo, 5 kW rooftop"
+            title="Asha Example (illustrative), 5 kW rooftop"
             meta="Quote · 18 Oct 2026"
-            onClick={tap('Ramesh Sahoo')}
+            onClick={tap('Asha Example (illustrative)')}
             end={
               <>
                 <Amount paise={18500000} />

@@ -60,6 +60,8 @@ One OpenAPI spec is the contract between backend and frontends.
 - Money: integer **paise** (`i64`). Never floats.
 - IDs: UUIDv7. Dates: ISO 8601, UTC.
 - Lists: cursor pagination (`?cursor=&limit=`).
+- Org-scoped endpoints live under `/orgs/{org_id}/...` (decided in F3).
+  The server checks membership, that the org is `active`, and the role.
 - Auth: `Authorization: Bearer` for mobile, cookies for the admin website,
   same endpoints.
 - Uploads: `POST /uploads` returns a presigned R2 URL.

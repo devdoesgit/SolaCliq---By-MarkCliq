@@ -10,12 +10,17 @@ export 'package:api_client/src/auth/oauth.dart';
 
 export 'package:api_client/src/api/auth_api.dart';
 export 'package:api_client/src/api/system_api.dart';
+export 'package:api_client/src/api/team_api.dart';
 
+export 'package:api_client/src/model/add_member_request.dart';
 export 'package:api_client/src/model/email_request.dart';
 export 'package:api_client/src/model/health.dart';
 export 'package:api_client/src/model/login_request.dart';
 export 'package:api_client/src/model/login_response.dart';
 export 'package:api_client/src/model/me.dart';
+export 'package:api_client/src/model/member.dart';
+export 'package:api_client/src/model/member_page.dart';
+export 'package:api_client/src/model/member_status.dart';
 export 'package:api_client/src/model/membership.dart';
 export 'package:api_client/src/model/membership_org.dart';
 export 'package:api_client/src/model/org_status.dart';

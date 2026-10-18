@@ -58,7 +58,7 @@ export interface paths {
         put?: never;
         /**
          * Verify an email with its code
-         * @description Marks the email verified so the account can log in. Codes last 15
+         * @description Marks the email verified so the account can log in. Codes last 5
          *     minutes and allow 5 tries; after that, request a new one.
          */
         post: operations["verifyEmail"];
@@ -103,7 +103,9 @@ export interface paths {
          *     the session cookie and returns no tokens. Wrong email and wrong
          *     password give the same `auth.invalid_credentials`; an unverified
          *     account gets `account.email_unverified` only after the right
-         *     password.
+         *     password. An account created for someone (by an agent or org admin)
+         *     that has no password yet gets 403 `account.password_not_set`; the
+         *     person sets one through /auth/password/forgot and /reset.
          */
         post: operations["login"];
         delete?: never;
@@ -163,8 +165,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Email a password reset code
-         * @description Always 202 (no enumeration).
+         * Email a password reset or set-up code
+         * @description Always 202 (no enumeration). Also used to set a first password on an
+         *     account created for someone. Codes last 5 minutes.
          */
         post: operations["forgotPassword"];
         delete?: never;
@@ -208,6 +211,65 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The org's admin, workers and agents
+         * @description Org admin only. Used by the admin website's team page.
+         */
+        get: operations["listMembers"];
+        put?: never;
+        /**
+         * Add a worker or agent
+         * @description Org admin only. If the email has no account, one is created with no
+         *     password and a set-up email is sent (the person then uses "Set up
+         *     your account", F1). If it has an account, only a membership is
+         *     added and the person is emailed that they were added. One role per
+         *     person per org: `member.already_in_org` (409) otherwise. The role
+         *     must be `worker` or `agent`: `member.role_not_allowed` (422).
+         */
+        post: operations["addMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                user_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a worker or agent from the org
+         * @description Org admin only. Ends the membership, not the account; the person's
+         *     sessions stop working for this org at once. The org admin can't be
+         *     removed (`member.cannot_remove_admin`, 422). Their past records
+         *     (jobs, expenses, customers) stay with the org.
+         */
+        delete: operations["removeMember"];
         options?: never;
         head?: never;
         patch?: never;
@@ -275,7 +337,7 @@ export interface components {
         };
         /**
          * Format: email
-         * @example ramesh.sahoo@example.com
+         * @example asha@example.com
          */
         Email: string;
         /** Format: password */
@@ -286,7 +348,7 @@ export interface components {
          */
         VerificationCode: string;
         SignupRequest: {
-            /** @example Ramesh Sahoo */
+            /** @example Asha Example (illustrative) */
             name: string;
             email: components["schemas"]["Email"];
             password: components["schemas"]["Password"];
@@ -348,12 +410,36 @@ export interface components {
         };
         Me: {
             id: components["schemas"]["Id"];
-            /** @example Ramesh Sahoo */
+            /** @example Asha Example (illustrative) */
             name: string;
             email: components["schemas"]["Email"];
             email_verified: boolean;
             is_platform_admin: boolean;
             memberships: components["schemas"]["Membership"][];
+        };
+        /**
+         * @description `invited` until the person has set a password.
+         * @enum {string}
+         */
+        MemberStatus: "invited" | "active";
+        Member: {
+            user_id: components["schemas"]["Id"];
+            /** @example Ravi Example (illustrative) */
+            name: string;
+            email: components["schemas"]["Email"];
+            role: components["schemas"]["Role"];
+            status: components["schemas"]["MemberStatus"];
+            added_at: components["schemas"]["Timestamp"];
+        };
+        MemberPage: {
+            items: components["schemas"]["Member"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        AddMemberRequest: {
+            /** @example Ravi Example (illustrative) */
+            name: string;
+            email: components["schemas"]["Email"];
+            role: components["schemas"]["Role"];
         };
     };
     responses: {
@@ -368,6 +454,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description The org the request is for; the caller needs a membership in it. */
+        OrgId: components["schemas"]["Id"];
         /** @description Opaque cursor from the previous page's `next_cursor`. */
         Cursor: string;
         /** @description Page size. */
@@ -634,6 +722,94 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+        };
+    };
+    listMembers: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+                role?: components["schemas"]["Role"];
+            };
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of members, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    addMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddMemberRequest"];
+            };
+        };
+        responses: {
+            /** @description Added. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                user_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
 }

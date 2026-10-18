@@ -21,7 +21,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F0 | Foundation | building |
 | F1 | Accounts and login | building |
 | F2 | Org signup, GSTIN autofill, platform approval | planned |
-| F3 | Team: org admin creates worker and agent accounts | planned |
+| F3 | Team: org admin creates worker and agent accounts | building |
 | F4 | Customers and install stages | planned |
 | F5 | Documents | planned |
 | F6 | Worker jobs and geotagged installation photos | planned |

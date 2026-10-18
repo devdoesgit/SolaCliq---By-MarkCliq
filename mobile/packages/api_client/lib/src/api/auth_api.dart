@@ -26,8 +26,8 @@ class AuthApi {
 
   const AuthApi(this._dio);
 
-  /// Email a password reset code
-  /// Always 202 (no enumeration).
+  /// Email a password reset or set-up code
+  /// Always 202 (no enumeration). Also used to set a first password on an account created for someone. Codes last 5 minutes.
   ///
   /// Parameters:
   /// * [emailRequest]
@@ -161,7 +161,7 @@ class AuthApi {
   }
 
   /// Log in
-  /// &#x60;client: app&#x60; returns a token pair in the body. &#x60;client: web&#x60; sets the session cookie and returns no tokens. Wrong email and wrong password give the same &#x60;auth.invalid_credentials&#x60;; an unverified account gets &#x60;account.email_unverified&#x60; only after the right password.
+  /// &#x60;client: app&#x60; returns a token pair in the body. &#x60;client: web&#x60; sets the session cookie and returns no tokens. Wrong email and wrong password give the same &#x60;auth.invalid_credentials&#x60;; an unverified account gets &#x60;account.email_unverified&#x60; only after the right password. An account created for someone (by an agent or org admin) that has no password yet gets 403 &#x60;account.password_not_set&#x60;; the person sets one through /auth/password/forgot and /reset.
   ///
   /// Parameters:
   /// * [loginRequest]
@@ -557,7 +557,7 @@ class AuthApi {
   }
 
   /// Verify an email with its code
-  /// Marks the email verified so the account can log in. Codes last 15 minutes and allow 5 tries; after that, request a new one.
+  /// Marks the email verified so the account can log in. Codes last 5 minutes and allow 5 tries; after that, request a new one.
   ///
   /// Parameters:
   /// * [verifyEmailRequest]

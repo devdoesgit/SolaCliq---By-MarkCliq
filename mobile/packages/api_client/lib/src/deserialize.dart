@@ -1,8 +1,11 @@
+import 'package:api_client/src/model/add_member_request.dart';
 import 'package:api_client/src/model/email_request.dart';
 import 'package:api_client/src/model/health.dart';
 import 'package:api_client/src/model/login_request.dart';
 import 'package:api_client/src/model/login_response.dart';
 import 'package:api_client/src/model/me.dart';
+import 'package:api_client/src/model/member.dart';
+import 'package:api_client/src/model/member_page.dart';
 import 'package:api_client/src/model/membership.dart';
 import 'package:api_client/src/model/membership_org.dart';
 import 'package:api_client/src/model/page_info.dart';
@@ -36,6 +39,9 @@ ReturnType deserialize<ReturnType, BaseType>(
       return (valueString == 'true' || valueString == '1') as ReturnType;
     case 'double':
       return (value is double ? value : double.parse('$value')) as ReturnType;
+    case 'AddMemberRequest':
+      return AddMemberRequest.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'EmailRequest':
       return EmailRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Health':
@@ -47,6 +53,11 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'Me':
       return Me.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'Member':
+      return Member.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'MemberPage':
+      return MemberPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'MemberStatus':
     case 'Membership':
       return Membership.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'MembershipOrg':

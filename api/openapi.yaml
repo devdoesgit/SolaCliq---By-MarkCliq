@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: SolaCliq API
-  version: 0.2.0
+  version: 0.3.0
   contact:
     name: MarkCliq
     url: https://markcliq.com
@@ -26,6 +26,8 @@ tags:
     description: Service status.
   - name: auth
     description: Accounts, login and sessions (F1).
+  - name: team
+    description: An org's workers and agents (F3).
 
 paths:
   /health:
@@ -260,7 +262,154 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Me"
+              examples:
+                customer:
+                  summary: A customer with no org memberships
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000001
+                    name: Asha Example (illustrative)
+                    email: asha@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships: []
+                worker:
+                  summary: A worker in one org
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000002
+                    name: Ravi Example (illustrative)
+                    email: ravi@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: worker
+                agent:
+                  summary: An agent in one org
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000003
+                    name: Meena Example (illustrative)
+                    email: meena@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: agent
+                multi_org:
+                  summary: An agent in two orgs and a worker in a third, one suspended
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000004
+                    name: Kiran Example (illustrative)
+                    email: kiran@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: agent
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a2, name: Sample Rooftops (illustrative), status: active}
+                        role: agent
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a3, name: Demo Power (illustrative), status: suspended}
+                        role: worker
+                org_admin:
+                  summary: An org admin (their tools are on the website)
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000005
+                    name: Dev Example (illustrative)
+                    email: dev@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: org_admin
         "401":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/members:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMembers
+      summary: The org's admin, workers and agents
+      description: Org admin only. Used by the admin website's team page.
+      tags: [team]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: One page of members, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addMember
+      summary: Add a worker or agent
+      description: |
+        Org admin only. If the email has no account, one is created with no
+        password and a set-up email is sent (the person then uses "Set up
+        your account", F1). If it has an account, only a membership is
+        added and the person is emailed that they were added. One role per
+        person per org: `member.already_in_org` (409) otherwise. The role
+        must be `worker` or `agent`: `member.role_not_allowed` (422).
+      tags: [team]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddMemberRequest"
+      responses:
+        "201":
+          description: Added.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/members/{user_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Id"
+    delete:
+      operationId: removeMember
+      summary: Remove a worker or agent from the org
+      description: |
+        Org admin only. Ends the membership, not the account; the person's
+        sessions stop working for this org at once. The org admin can't be
+        removed (`member.cannot_remove_admin`, 422). Their past records
+        (jobs, expenses, customers) stay with the org.
+      tags: [team]
+      responses:
+        "204":
+          description: Removed.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
 components:
@@ -276,6 +425,13 @@ components:
       description: Session cookie, used by the admin website.
 
   parameters:
+    OrgId:
+      name: org_id
+      in: path
+      required: true
+      description: The org the request is for; the caller needs a membership in it.
+      schema:
+        $ref: "#/components/schemas/Id"
     Cursor:
       name: cursor
       in: query
@@ -392,7 +548,7 @@ components:
       type: string
       format: email
       maxLength: 254
-      examples: ["ramesh.sahoo@example.com"]
+      examples: ["asha@example.com"]
 
     Password:
       type: string
@@ -414,7 +570,7 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-          examples: ["Ramesh Sahoo"]
+          examples: ["Asha Example (illustrative)"]
         email:
           $ref: "#/components/schemas/Email"
         password:
@@ -531,7 +687,7 @@ components:
           $ref: "#/components/schemas/Id"
         name:
           type: string
-          examples: ["Ramesh Sahoo"]
+          examples: ["Asha Example (illustrative)"]
         email:
           $ref: "#/components/schemas/Email"
         email_verified:
@@ -542,3 +698,51 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Membership"
+
+    MemberStatus:
+      type: string
+      description: "`invited` until the person has set a password."
+      enum: [invited, active]
+
+    Member:
+      type: object
+      required: [user_id, name, email, role, status, added_at]
+      properties:
+        user_id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          examples: ["Ravi Example (illustrative)"]
+        email:
+          $ref: "#/components/schemas/Email"
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          $ref: "#/components/schemas/MemberStatus"
+        added_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    MemberPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Member"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AddMemberRequest:
+      type: object
+      required: [name, email, role]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          examples: ["Ravi Example (illustrative)"]
+        email:
+          $ref: "#/components/schemas/Email"
+        role:
+          $ref: "#/components/schemas/Role"

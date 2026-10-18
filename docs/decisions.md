@@ -118,3 +118,9 @@ Change a decision by adding a new line, not by editing an old one.
   team, customers, approvals) is built last, with 7–10 days kept for it
   before the pilot; until then orgs and teams are set up by backend
   command. Aim: the highest-quality mobile UI/UX.
+- **F3 approved.** Org admins use only the website: an org-admin
+  membership opens no home in the app, only a notice pointing to the
+  website. Org-scoped endpoints are `/orgs/{org_id}/...`; the server checks
+  membership, org status and role in one place. One role per person per
+  org until RY Enterprises says whether someone can be both worker and
+  agent.

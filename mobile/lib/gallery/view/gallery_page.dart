@@ -233,12 +233,12 @@ class _Rows extends StatelessWidget {
         children: [
           SolaListRow(
             key: const Key('gallery_row_1'),
-            title: 'Ramesh Sahoo, 5 kW rooftop',
+            title: 'Asha Example (illustrative), 5 kW rooftop',
             meta: 'Quote · 18 Oct 2026',
             semanticsLabel:
-                'Ramesh Sahoo, 5 kW rooftop, quote, '
+                'Asha Example (illustrative), 5 kW rooftop, quote, '
                 '${formatPaise(18500000)}, pending',
-            onTap: () => _tapped(context, 'Ramesh Sahoo'),
+            onTap: () => _tapped(context, 'Asha Example (illustrative)'),
             trailing: const [
               SolaAmount(18500000),
               SolaStatusPill(label: 'Pending', tone: SolaTone.info),
