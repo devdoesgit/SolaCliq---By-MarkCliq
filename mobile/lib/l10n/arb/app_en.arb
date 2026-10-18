@@ -1,0 +1,280 @@
+{
+    "@@locale": "en",
+    "appName": "SolaCliq",
+    "@appName": {
+        "description": "Product name. A working name that may change; this is the only place the app's Dart code holds it (Android: android/app/build.gradle.kts)."
+    },
+    "openGallery": "Component gallery",
+    "@openGallery": {
+        "description": "Development-only button that opens the design-system gallery."
+    },
+    "galleryTitle": "Components",
+    "@galleryTitle": {
+        "description": "Title of the development-only component gallery."
+    },
+    "illustrative": "Illustrative",
+    "@illustrative": {
+        "description": "Label on demo data that is not real."
+    },
+    "healthChecking": "Checking the server",
+    "@healthChecking": {
+        "description": "Shown while the health check runs."
+    },
+    "healthOk": "Server ok",
+    "@healthOk": {
+        "description": "Status pill when the API and database are up."
+    },
+    "healthDegraded": "Database unavailable",
+    "@healthDegraded": {
+        "description": "Status pill when the API is up but its database is not."
+    },
+    "healthVersion": "Version {version}",
+    "@healthVersion": {
+        "description": "Backend version under the health status.",
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "healthUnreachableTitle": "Can't reach the server",
+    "@healthUnreachableTitle": {
+        "description": "Notice title when the API can't be reached."
+    },
+    "healthUnreachableBody": "Check your internet connection and try again.",
+    "@healthUnreachableBody": {
+        "description": "Notice body when the API can't be reached."
+    },
+    "retry": "Try again",
+    "@retry": {
+        "description": "Button that repeats a failed request."
+    },
+    "welcomeTagline": "Your solar installation, jobs and payments in one place.",
+    "@welcomeTagline": {
+        "description": "Line under the product name on the welcome screen."
+    },
+    "logIn": "Log in",
+    "@logIn": {
+        "description": "Button and screen title."
+    },
+    "createAccount": "Create account",
+    "@createAccount": {
+        "description": "Button and screen title."
+    },
+    "fieldName": "Your name",
+    "@fieldName": {
+        "description": "Name field label."
+    },
+    "fieldEmail": "Email",
+    "@fieldEmail": {
+        "description": "Email field label."
+    },
+    "fieldPassword": "Password",
+    "@fieldPassword": {
+        "description": "Password field label."
+    },
+    "fieldNewPassword": "New password",
+    "@fieldNewPassword": {
+        "description": "New password field label."
+    },
+    "fieldCode": "6-digit code",
+    "@fieldCode": {
+        "description": "Verification code field label."
+    },
+    "passwordHelp": "At least 8 characters.",
+    "@passwordHelp": {
+        "description": "Help under a new password field."
+    },
+    "showPassword": "Show password",
+    "@showPassword": {
+        "description": "Button that reveals the password."
+    },
+    "hidePassword": "Hide password",
+    "@hidePassword": {
+        "description": "Button that hides the password."
+    },
+    "signupIntro": "For homeowners getting solar. Installers and agents get their login from their company.",
+    "@signupIntro": {
+        "description": "Explains who signs up here."
+    },
+    "verifyTitle": "Verify your email",
+    "@verifyTitle": {
+        "description": "Screen title."
+    },
+    "verifyIntro": "We sent a 6-digit code to {email}. It works for 15 minutes.",
+    "@verifyIntro": {
+        "description": "Explains where the code went.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "verifyButton": "Verify",
+    "@verifyButton": {
+        "description": "Submit button on the verify screen."
+    },
+    "resendCode": "Send a new code",
+    "@resendCode": {
+        "description": "Asks for another code."
+    },
+    "codeSent": "New code sent",
+    "@codeSent": {
+        "description": "Confirms a new code was requested."
+    },
+    "emailVerified": "Email verified. Log in to continue.",
+    "@emailVerified": {
+        "description": "Shown on the log in screen after verifying."
+    },
+    "forgotPassword": "Forgot password?",
+    "@forgotPassword": {
+        "description": "Link on the log in screen."
+    },
+    "forgotTitle": "Reset password",
+    "@forgotTitle": {
+        "description": "Screen title."
+    },
+    "forgotIntro": "Enter your email. If it has an account, we'll send a 6-digit code.",
+    "@forgotIntro": {
+        "description": "Explains the reset flow without saying whether the email exists."
+    },
+    "sendCode": "Send code",
+    "@sendCode": {
+        "description": "Button that emails a code."
+    },
+    "resetTitle": "New password",
+    "@resetTitle": {
+        "description": "Screen title."
+    },
+    "resetIntro": "Enter the code we sent to {email} and choose a new password.",
+    "@resetIntro": {
+        "description": "Explains the reset screen.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "resetButton": "Save password",
+    "@resetButton": {
+        "description": "Submit button on the reset screen."
+    },
+    "passwordChanged": "Password changed. Log in with your new password.",
+    "@passwordChanged": {
+        "description": "Shown on the log in screen after a reset."
+    },
+    "verifyNow": "Verify email",
+    "@verifyNow": {
+        "description": "Action when logging in with an unverified email."
+    },
+    "accountGreeting": "Hello, {name}",
+    "@accountGreeting": {
+        "description": "Heading on the signed-in screen.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "accountYourOrgs": "Your companies",
+    "@accountYourOrgs": {
+        "description": "Heading above the person's memberships."
+    },
+    "accountEmpty": "Your account is ready. When your installer adds you, your installation will appear here.",
+    "@accountEmpty": {
+        "description": "Shown to a new customer with nothing linked yet."
+    },
+    "logOut": "Log out",
+    "@logOut": {
+        "description": "Button."
+    },
+    "roleOrgAdmin": "Admin",
+    "@roleOrgAdmin": {
+        "description": "Role name."
+    },
+    "roleWorker": "Installer",
+    "@roleWorker": {
+        "description": "Role name for a worker."
+    },
+    "roleAgent": "Agent",
+    "@roleAgent": {
+        "description": "Role name."
+    },
+    "orgPending": "Pending approval",
+    "@orgPending": {
+        "description": "Org status."
+    },
+    "orgActive": "Active",
+    "@orgActive": {
+        "description": "Org status."
+    },
+    "orgSuspended": "Suspended",
+    "@orgSuspended": {
+        "description": "Org status."
+    },
+    "errorRequired": "Enter {field}.",
+    "@errorRequired": {
+        "description": "Field left empty.",
+        "placeholders": {
+            "field": {
+                "type": "String"
+            }
+        }
+    },
+    "errorEmail": "Enter an email like name@example.com.",
+    "@errorEmail": {
+        "description": "Email in the wrong form."
+    },
+    "errorPasswordShort": "Use at least 8 characters.",
+    "@errorPasswordShort": {
+        "description": "Password too short."
+    },
+    "errorCode": "Enter the 6 digits from the email.",
+    "@errorCode": {
+        "description": "Code in the wrong form."
+    },
+    "failInvalidCredentials": "Email or password is wrong.",
+    "@failInvalidCredentials": {
+        "description": "Login failed. Never says which."
+    },
+    "failEmailUnverified": "Verify your email before logging in.",
+    "@failEmailUnverified": {
+        "description": "Login with an unverified email."
+    },
+    "failCodeInvalid": "That code is wrong. Check the email and try again.",
+    "@failCodeInvalid": {
+        "description": "Wrong code."
+    },
+    "failCodeExpired": "That code has expired. Send a new one.",
+    "@failCodeExpired": {
+        "description": "Expired code."
+    },
+    "failTooManyAttempts": "Too many tries. Wait a few minutes and try again.",
+    "@failTooManyAttempts": {
+        "description": "Rate limited."
+    },
+    "failPasswordTooWeak": "Choose a stronger password.",
+    "@failPasswordTooWeak": {
+        "description": "Password rejected by the server."
+    },
+    "failSessionExpired": "You were logged out. Log in again.",
+    "@failSessionExpired": {
+        "description": "Session ended."
+    },
+    "failValidation": "Check the fields and try again.",
+    "@failValidation": {
+        "description": "Server rejected the input."
+    },
+    "failNetwork": "No connection. Check your internet and try again.",
+    "@failNetwork": {
+        "description": "Request couldn't reach the server."
+    },
+    "failUnknown": "Something went wrong. Try again.",
+    "@failUnknown": {
+        "description": "Unexpected error."
+    },
+    "back": "Back",
+    "@back": {
+        "description": "Back button label."
+    }
+}
