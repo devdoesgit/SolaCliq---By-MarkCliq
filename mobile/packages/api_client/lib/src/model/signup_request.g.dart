@@ -11,6 +11,8 @@ abstract class _$SignupRequestCWProxy {
 
   SignupRequest email(String email);
 
+  SignupRequest phone(String? phone);
+
   SignupRequest password(String password);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `SignupRequest(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -19,7 +21,12 @@ abstract class _$SignupRequestCWProxy {
   /// ```dart
   /// SignupRequest(...).copyWith(id: 12, name: "My name")
   /// ````
-  SignupRequest call({String name, String email, String password});
+  SignupRequest call({
+    String name,
+    String email,
+    String? phone,
+    String password,
+  });
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfSignupRequest.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfSignupRequest.copyWith.fieldName(...)`
@@ -35,6 +42,9 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
   SignupRequest email(String email) => this(email: email);
 
   @override
+  SignupRequest phone(String? phone) => this(phone: phone);
+
+  @override
   SignupRequest password(String password) => this(password: password);
 
   @override
@@ -47,6 +57,7 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
   SignupRequest call({
     Object? name = const $CopyWithPlaceholder(),
     Object? email = const $CopyWithPlaceholder(),
+    Object? phone = const $CopyWithPlaceholder(),
     Object? password = const $CopyWithPlaceholder(),
   }) {
     return SignupRequest(
@@ -58,6 +69,10 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
           ? _value.email
           // ignore: cast_nullable_to_non_nullable
           : email as String,
+      phone: phone == const $CopyWithPlaceholder()
+          ? _value.phone
+          // ignore: cast_nullable_to_non_nullable
+          : phone as String?,
       password: password == const $CopyWithPlaceholder()
           ? _value.password
           // ignore: cast_nullable_to_non_nullable
@@ -82,6 +97,7 @@ SignupRequest _$SignupRequestFromJson(Map<String, dynamic> json) =>
       final val = SignupRequest(
         name: $checkedConvert('name', (v) => v as String),
         email: $checkedConvert('email', (v) => v as String),
+        phone: $checkedConvert('phone', (v) => v as String?),
         password: $checkedConvert('password', (v) => v as String),
       );
       return val;
@@ -91,5 +107,6 @@ Map<String, dynamic> _$SignupRequestToJson(SignupRequest instance) =>
     <String, dynamic>{
       'name': instance.name,
       'email': instance.email,
+      'phone': ?instance.phone,
       'password': instance.password,
     };

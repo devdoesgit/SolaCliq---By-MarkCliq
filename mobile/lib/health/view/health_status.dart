@@ -35,32 +35,34 @@ class HealthStatusView extends StatelessWidget {
     return switch (state) {
       HealthChecking() => SolaText(
         l10n.healthChecking,
-        style: SolaTextStyle.label,
-        color: SolaColors.inkMuted,
+        style: SolaTextStyle.meta,
+        color: SolaColors.muted,
       ),
       HealthLoaded(:final report) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: SolaSpace.space2,
+        spacing: SolaSpace.space4,
         children: [
-          SolaStatusPill(
-            label: report.databaseOk ? l10n.healthOk : l10n.healthDegraded,
+          SolaPill(
+            report.databaseOk ? l10n.healthOk : l10n.healthDegraded,
             tone: report.databaseOk ? SolaTone.success : SolaTone.warning,
           ),
           SolaText(
             l10n.healthVersion(report.version),
-            style: SolaTextStyle.label,
-            color: SolaColors.inkMuted,
+            style: SolaTextStyle.meta,
+            color: SolaColors.muted,
           ),
         ],
       ),
       HealthUnreachable() => SolaNotice(
         title: l10n.healthUnreachableTitle,
         body: l10n.healthUnreachableBody,
-        tone: SolaTone.danger,
         announce: true,
         action: SolaButton(
           key: const Key('health_retry'),
           label: l10n.retry,
+          variant: SolaButtonVariant.white,
+          compact: true,
+          expand: false,
           onPressed: () => context.read<HealthCubit>().check(),
         ),
       ),

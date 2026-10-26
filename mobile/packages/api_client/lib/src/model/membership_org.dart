@@ -19,7 +19,15 @@ part 'membership_org.g.dart';
 )
 class MembershipOrg {
   /// Returns a new [MembershipOrg] instance.
-  MembershipOrg({required this.id, required this.name, required this.status});
+  MembershipOrg({
+    required this.id,
+
+    required this.name,
+
+    required this.status,
+
+    this.phone,
+  });
 
   /// UUIDv7.
   @JsonKey(name: r'id', required: true, includeIfNull: false)
@@ -31,16 +39,23 @@ class MembershipOrg {
   @JsonKey(name: r'status', required: true, includeIfNull: false)
   final OrgStatus status;
 
+  /// The company's number, for its people to call.
+  @JsonKey(name: r'phone', required: false, includeIfNull: false)
+  final String? phone;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is MembershipOrg &&
             runtimeType == other.runtimeType &&
-            equals([id, name, status], [other.id, other.name, other.status]);
+            equals(
+              [id, name, status, phone],
+              [other.id, other.name, other.status, other.phone],
+            );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([id, name, status]);
+      runtimeType.hashCode ^ mapPropsToHashCode([id, name, status, phone]);
 
   factory MembershipOrg.fromJson(Map<String, dynamic> json) =>
       _$MembershipOrgFromJson(json);

@@ -9,8 +9,9 @@ class SplashPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: SolaColors.cream,
       body: Center(
-        child: SolaText(context.l10n.appName, style: SolaTextStyle.h1),
+        child: SolaText(context.l10n.appName, style: SolaTextStyle.title),
       ),
     );
   }

@@ -1,6 +1,8 @@
 # F3 Team and roles
 
-Status: `building`. Spec approved by the owner on 2026-10-18.
+Status: `building`. Spec approved by the owner on 2026-10-18. The mobile
+side is done and tested against the mock; waiting on the backend's team
+endpoints and org checks.
 
 Mobile first (see `../decisions.md`, 2026-10-18): the app side is built now
 against the mock; the team page on the admin website is built in the admin
@@ -143,4 +145,23 @@ for any new shared widget (bottom bar, org header, sheet).
 
 ## Notes
 
-(Filled in while building.)
+- **Workspaces.** The app treats each `(company, role)` pair as a
+  workspace (`lib/workspace/`). `WorkspaceCubit` turns the sign-in status
+  into one of: loading, signed out, website only, choosing, ready. The
+  router redirects on that state alone. The chosen workspace is kept in
+  secure storage next to the login and cleared with it.
+- **Switching** rebuilds the home from its first tab, so no screen state
+  from one company carries into another.
+- **Staying current:** `AuthRepository.refreshAccount()` re-reads `/me`
+  on return to the app (at most once a minute), from "Check again" on a
+  paused company, and after any 403 from `/orgs/...`.
+- **New `sola_ui` widgets:** `SolaTabBar`, `SolaTopBar`, `SolaEmptyState`,
+  `showSolaSheet`/`SolaSheet`; `SolaListRow.selected`;
+  `SolaButton.alignToText` lines up a ghost button's label with the text
+  above it (fixes the indented "Show password" and "Back").
+- **Readability:** empty-state text is ink, not muted (light-weight grey
+  fades outdoors); emails are shown in body style, never uppercased.
+- **Checked on the emulator** for customer, worker, agent, multi-company
+  (choose, switch, suspended) and org admin, at normal and 1.3× text.
+- **Tests:** 107 app tests, coverage 92%; sola_ui 52 tests with new goldens
+  (tab bar, top bar, empty state, sheet).

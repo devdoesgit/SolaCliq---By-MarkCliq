@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-/// Loads the bundled fonts so golden images show real text instead of the
-/// test font's blocks.
+/// Loads the bundled font so tests and goldens lay out real text instead
+/// of the test font's blocks.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   Future<void> load(String family, List<String> files) async {
     final loader = FontLoader('packages/sola_ui/$family');
@@ -15,7 +15,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     await loader.load();
   }
 
-  await load('SpaceGrotesk', ['SpaceGrotesk-Variable.ttf']);
-  await load('SpaceMono', ['SpaceMono-Regular.ttf', 'SpaceMono-Bold.ttf']);
+  await load('Inter', ['Inter-Variable.ttf']);
   await testMain();
 }

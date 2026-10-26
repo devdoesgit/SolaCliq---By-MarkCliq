@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: SolaCliq API
-  version: 0.3.0
+  version: 0.5.0
   contact:
     name: MarkCliq
     url: https://markcliq.com
@@ -28,6 +28,26 @@ tags:
     description: Accounts, login and sessions (F1).
   - name: team
     description: An org's workers and agents (F3).
+  - name: onboarding
+    description: Solar companies asking for SolaCliq, and invites to join one.
+  - name: quotes
+    description: People without an installer asking for a solar quote (leads).
+  - name: home
+    description: What each home screen shows.
+  - name: expenses
+    description: Workers and agents logging costs for approval (F7).
+  - name: customers
+    description: Agents registering customers with their KYC (F4).
+  - name: uploads
+    description: Files go straight to storage through presigned URLs.
+  - name: tasks
+    description: A worker's assigned work, proof photos and approvals (F6).
+  - name: notifications
+    description: What changed for the caller in one company (F12).
+  - name: profile
+    description: The person's details, documents and settings.
+  - name: install
+    description: A customer's own install and payments.
 
 paths:
   /health:
@@ -155,6 +175,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
+              examples:
+                personal:
+                  summary: A person with no company (a normal user)
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000001", "name": "Asha Example (illustrative)", "email": "asha@example.com", "email_verified": true, "is_platform_admin": false, "memberships": []}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
+                customer:
+                  summary: A customer whose installer added them
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000006", "name": "Rajinder Example (illustrative)", "email": "rajinder@example.com", "email_verified": true, "is_platform_admin": false, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "customer"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
+                worker:
+                  summary: A worker in one org
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000002", "name": "Ravi Example (illustrative)", "email": "ravi@example.com", "email_verified": true, "is_platform_admin": false, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "worker"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
+                agent:
+                  summary: An agent in one org
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000003", "name": "Meena Example (illustrative)", "email": "meena@example.com", "email_verified": true, "is_platform_admin": false, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "agent"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
+                multi_org:
+                  summary: An agent in two orgs and a worker in a third, one suspended
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000004", "name": "Kiran Example (illustrative)", "email": "kiran@example.com", "email_verified": true, "is_platform_admin": false, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "agent"}, {"org": {"id": "01928f6e-0000-7000-8000-0000000000a2", "name": "Sample Rooftops (illustrative)", "status": "active"}, "role": "agent"}, {"org": {"id": "01928f6e-0000-7000-8000-0000000000a3", "name": "Demo Power (illustrative)", "status": "suspended"}, "role": "worker"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
+                org_admin:
+                  summary: An org admin (their tools are on the website)
+                  value:
+                    {"user": {"id": "01928f6e-0000-7000-8000-000000000005", "name": "Dev Example (illustrative)", "email": "dev@example.com", "email_verified": true, "is_platform_admin": false, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "org_admin"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
         "401":
           $ref: "#/components/responses/Problem"
         "403":
@@ -263,8 +308,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Me"
               examples:
-                customer:
-                  summary: A customer with no org memberships
+                personal:
+                  summary: A person with no company (a normal user)
                   value:
                     id: 01928f6e-0000-7000-8000-000000000001
                     name: Asha Example (illustrative)
@@ -272,6 +317,17 @@ paths:
                     email_verified: true
                     is_platform_admin: false
                     memberships: []
+                customer:
+                  summary: A customer whose installer added them
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000006
+                    name: Rajinder Example (illustrative)
+                    email: rajinder@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: customer
                 worker:
                   summary: A worker in one org
                   value:
@@ -292,8 +348,21 @@ paths:
                     email_verified: true
                     is_platform_admin: false
                     memberships:
-                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active, phone: "9814000000"}
                         role: agent
+                        pay_type: commission
+                sales:
+                  summary: A salaried sales employee in one org
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000007
+                    name: Aman Example (illustrative)
+                    email: aman@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active, phone: "9814000000"}
+                        role: agent
+                        pay_type: salary
                 multi_org:
                   summary: An agent in two orgs and a worker in a third, one suspended
                   value:
@@ -412,6 +481,1107 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
 
+  /access-requests:
+    post:
+      operationId: requestAccess
+      summary: A solar company asks for SolaCliq
+      description: |
+        Public. MarkCliq is notified and onboards the company; its admin
+        then gets the web dashboard. Always 202.
+      tags: [onboarding]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessRequestCreate"
+      responses:
+        "202":
+          description: Received; MarkCliq will be in touch.
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /me/invites:
+    get:
+      operationId: listMyInvites
+      summary: Invites waiting for the signed-in person
+      description: Shown as a banner on the personal home until answered.
+      tags: [onboarding]
+      responses:
+        "200":
+          description: Pending invites, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteList"
+              examples:
+                none:
+                  summary: Nothing waiting
+                  value: {items: []}
+                one:
+                  summary: A company invited the person as a worker (illustrative)
+                  value:
+                    items:
+                      - id: 01928f6e-0000-7000-8000-0000000000e1
+                        org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative)}
+                        role: worker
+                        invited_by: Dev Example (illustrative)
+                        invited_at: "2026-10-21T09:00:00Z"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /invites/{invite_id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/InviteId"
+    post:
+      operationId: acceptInvite
+      summary: Join the company that sent the invite
+      description: Adds the membership and returns the updated person.
+      tags: [onboarding]
+      responses:
+        "200":
+          description: Joined.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+              examples:
+                worker:
+                  summary: Now a worker at the company (illustrative)
+                  value:
+                    id: 01928f6e-0000-7000-8000-000000000001
+                    name: Asha Example (illustrative)
+                    email: asha@example.com
+                    email_verified: true
+                    is_platform_admin: false
+                    memberships:
+                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
+                        role: worker
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+
+  /invites/{invite_id}/decline:
+    parameters:
+      - $ref: "#/components/parameters/InviteId"
+    post:
+      operationId: declineInvite
+      summary: Turn down an invite
+      description: The person keeps their account; nothing is shared.
+      tags: [onboarding]
+      responses:
+        "204":
+          description: Declined; the company is told.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /quote-requests:
+    post:
+      operationId: createQuoteRequest
+      summary: Ask verified solar companies nearby for a quote
+      description: |
+        Creates a lead that companies near the PIN code can accept; the one
+        that accepts contacts the person on their phone (the account's, or
+        `phone` here if the account has none; 422 `quote.phone_required` if
+        neither). Returns an indicative estimate from the bill band.
+      tags: [quotes]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequestCreate"
+      responses:
+        "201":
+          description: Sent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteRequest"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/home:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: getOrgHome
+      summary: The home screen for the caller's role in this company
+      description: |
+        The server composes it for the role, from the same parts: a worker's
+        week and tasks, an agent's customers and KYC, a customer's install
+        progress, or their live energy after handover. Images are URLs;
+        sample data uses `asset:<name>` for pictures bundled in the app.
+      tags: [home]
+      responses:
+        "200":
+          description: The home.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeSummary"
+              examples:
+                worker:
+                  summary: A worker's day (illustrative)
+                  value: {"eyebrow": "Thursday, 23 Oct", "title": "Suresh's day", "headline": {"value": "3", "label": "tasks", "detail": "on site today"}, "week": [{"day": "Mon", "date": 20, "dots": ["done", "done"]}, {"day": "Tue", "date": 21, "dots": ["done"]}, {"day": "Wed", "date": 22, "dots": ["done", "done", "done"]}, {"day": "Thu", "date": 23, "today": true, "dots": ["live", "live", "planned"]}, {"day": "Fri", "date": 24, "dots": ["planned"]}, {"day": "Sat", "date": 25, "dots": ["planned"]}, {"day": "Sun", "date": 26, "dots": []}], "tiles": [{"label": "To submit", "value": "2", "icon": "camera", "footer": "today", "dark": true, "avatars": [{"image": "asset:thumb-install"}, {"image": "asset:thumb-inverter"}], "action": "to_submit"}, {"label": "Expenses", "value": "1", "icon": "receipt", "footer": "with admin", "avatars": [{"glyph": "rupee"}], "action": "expenses"}], "list": {"title": "Up next", "rows": [{"id": "01928f6e-0000-7000-8000-000000000a01", "image": "asset:thumb-install", "title": "Ramesh Sahoo (illustrative)", "detail": "Panel installation · 9:30", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a03", "image": "asset:thumb-inverter", "title": "Priya Nair (illustrative)", "detail": "Wiring · 13:00 · 7.8 km", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a04", "image": "asset:thumb-meter", "title": "Kiran Patel (illustrative)", "detail": "Net meter · awaiting admin", "status": {"label": "In review", "tone": "neutral"}, "action": "task"}]}, "unread_notifications": 3}
+                agent:
+                  summary: A commission agent's customers (illustrative)
+                  value: {"eyebrow": "Good morning", "title": "Meena's customers", "headline": {"value": "5", "label": "customers", "detail": "added this month"}, "tiles": [{"label": "Needs fix", "value": "1", "icon": "alarm", "footer": "KYC", "dark": true, "avatars": [{"initials": "SR"}], "action": "fix"}, {"label": "Earnings", "value": "₹4k", "icon": "wallet", "footer": "payable", "avatars": [{"glyph": "rupee"}], "action": "earnings"}], "progress": {"label": "KYC this month", "trailing": "5 total", "segments": [{"weight": 3, "tone": "success", "label": "3 approved"}, {"weight": 1, "tone": "neutral", "label": "1 review"}, {"weight": 1, "tone": "danger", "label": "1 fix"}], "legend": true}, "list": {"title": "Recent customers", "rows": [{"id": "01928f6e-0000-7000-8000-0000000000c1", "initials": "SR", "title": "Sunita Rao (illustrative)", "detail": "Bill photo blurry", "status": {"label": "Fix KYC", "tone": "danger"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c2", "initials": "AM", "title": "Arjun Mehra (illustrative)", "detail": "Sent today", "status": {"label": "In review", "tone": "neutral"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c3", "initials": "RK", "title": "Rajinder Kaur (illustrative)", "detail": "Stage 1 · ₹5,000", "status": {"label": "Approved", "tone": "success"}, "action": "customer"}]}}
+                sales:
+                  summary: A salaried sales employee's customers (illustrative)
+                  value: {"eyebrow": "Good morning", "title": "Aman's customers", "headline": {"value": "3", "label": "customers", "detail": "added this month"}, "tiles": [{"label": "Needs fix", "value": "1", "icon": "alarm", "footer": "KYC", "dark": true, "avatars": [{"initials": "VK"}], "action": "fix"}, {"label": "In review", "value": "1", "icon": "hourglass", "footer": "with admin", "avatars": [{"initials": "RB"}], "action": "review"}], "progress": {"label": "Installs", "trailing": "your customers", "segments": [{"weight": 1, "tone": "live", "label": "1 installing"}, {"weight": 2, "tone": "neutral", "label": "2 not started"}], "legend": true}, "list": {"title": "Recent customers", "rows": [{"id": "01928f6e-0000-7000-8000-0000000000c6", "initials": "VK", "title": "Vikas Kumar (illustrative)", "detail": "PAN photo cut off", "status": {"label": "Fix KYC", "tone": "danger"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c8", "initials": "NG", "title": "Neha Gupta (illustrative)", "detail": "Stage 2 · structure", "status": {"label": "Approved", "tone": "success"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c7", "initials": "RB", "title": "Rohit Bansal (illustrative)", "detail": "Sent yesterday", "status": {"label": "In review", "tone": "neutral"}, "action": "customer"}]}}
+                customer:
+                  summary: A customer before handover (illustrative)
+                  value: {"eyebrow": "Your solar", "title": "5 kW · Mohali", "headline": {"value": "1", "label": "of 7 stages", "detail": "Site survey is next"}, "tiles": [{"label": "Next visit", "value": "Thu", "icon": "alarm", "footer": "survey", "dark": true, "avatars": [{"image": "asset:thumb-survey"}], "action": "track"}, {"label": "Advance", "value": "₹85k", "icon": "wallet", "footer": "due 31 Oct", "avatars": [{"glyph": "rupee"}], "action": "payments"}], "progress": {"label": "Install progress", "trailing": "Example Solar (illustrative)", "segments": [{"weight": 1, "tone": "live"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}], "stages": ["Survey", "Install", "Handover"]}, "list": {"rows": [{"id": "i1", "glyph": "card", "title": "Documents", "detail": "Aadhaar, PAN, bill, bank", "status": {"label": "Verified", "tone": "success"}, "action": "documents"}, {"id": "i2", "image": "asset:thumb-survey", "title": "Site survey", "detail": "Thu 23 Oct, 11:00 · Vikram", "status": {"label": "Next", "tone": "warning"}, "action": "track"}]}}
+                customer_live:
+                  summary: A customer after handover, live energy (illustrative)
+                  value: {"eyebrow": "Your solar", "title": "5 kW · Mohali", "energy": {"now_kw": 3.8, "today_kwh": 18.4, "sunrise": "06:12", "sunset": "17:41", "day_progress": 0.66, "hours": [0.2, 0.2, 0.6, 1.3, 2.1, 2.8, 3.3, 3.5, 3.2, 1.0, 0.2, 0.2, 0.2], "now_index": 8}, "tiles": [{"label": "Saved", "value": "₹4.1k", "icon": "wallet", "footer": "this month", "dark": true, "avatars": [{"glyph": "rupee"}], "action": "savings"}, {"label": "Bill", "value": "₹0", "icon": "receipt", "footer": "Oct, PSPCL", "avatars": [{"image": "asset:thumb-meter"}], "action": "bill"}], "list": {"rows": [{"id": "l1", "image": "asset:thumb-install", "title": "System health", "detail": "All 10 panels producing", "status": {"label": "Good", "tone": "success"}}, {"id": "l2", "image": "asset:thumb-survey", "title": "Free cleaning visit", "detail": "Booked for 4 Nov", "status": {"label": "Booked", "tone": "neutral"}}]}}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /uploads:
+    post:
+      operationId: createUpload
+      summary: Get a presigned URL to upload one file
+      description: |
+        The app PUTs the file to `url` with `headers`, then sends
+        `upload_id` with the record it belongs to. URLs expire after 15
+        minutes. Sample data uses a `.invalid` host, which the development
+        app treats as uploaded.
+      tags: [uploads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadCreate"
+      responses:
+        "201":
+          description: Ready for the file.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Upload"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/expenses:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMyExpenses
+      summary: The caller's recent expenses in this company
+      description: Newest first; the screen after logging one shows them.
+      tags: [expenses]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: One page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensePage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createExpense
+      summary: Log an expense for the admin to approve
+      description: Goes to the org admin's approvals queue as `in_review`.
+      tags: [expenses]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseCreate"
+      responses:
+        "201":
+          description: Sent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/customer-registrations:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    post:
+      operationId: submitCustomerRegistration
+      summary: An agent registers a customer with their KYC
+      description: |
+        Agents only. Submits details, site, connection and KYC documents for
+        the org admin to approve. On approval the customer's account is
+        created (or an existing one linked) and they get a welcome email
+        with a link to set their password. Bank proof is required when the
+        subsidy is on (`registration.bank_proof_required`, 422).
+      tags: [customers]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerRegistrationCreate"
+      responses:
+        "201":
+          description: With the admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerRegistration"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMyTasks
+      summary: The caller's tasks in this company
+      description: |
+        Workers only. `today`: due today, plus any returned or with a
+        problem, in due order. `upcoming`: due later, by day. `done`:
+        approved and cancelled, newest first.
+      tags: [tasks]
+      parameters:
+        - name: view
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [today, upcoming, done]
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: One page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskPage"
+              examples:
+                today:
+                  summary: Due today (illustrative)
+                  value: {items: [{id: 01928f6e-0000-7000-8000-000000000a01, reference: TSK-0418, title: Panel installation, status: assigned, due_at: "2026-10-23T04:00:00Z", customer_name: Ramesh Sahoo (illustrative), image: "asset:thumb-install"}, {id: 01928f6e-0000-7000-8000-000000000a02, reference: TSK-0415, title: Earthing, status: returned, due_at: "2026-10-23T05:00:00Z", customer_name: Anil Mehta (illustrative), image: "asset:thumb-survey", status_at: "2026-10-23T06:50:00Z"}, {id: 01928f6e-0000-7000-8000-000000000a03, reference: TSK-0420, title: Wiring, status: assigned, due_at: "2026-10-23T07:30:00Z", customer_name: Priya Nair (illustrative), image: "asset:thumb-inverter", distance_km: 7.8}, {id: 01928f6e-0000-7000-8000-000000000a04, reference: TSK-0411, title: Net meter, status: submitted, due_at: "2026-10-23T05:30:00Z", customer_name: Kiran Patel (illustrative), image: "asset:thumb-meter", status_at: "2026-10-23T05:32:00Z"}], page: {next_cursor: null}}
+                upcoming:
+                  summary: Later this week (illustrative)
+                  value: {items: [{id: 01928f6e-0000-7000-8000-000000000a06, reference: TSK-0425, title: Wiring and inverter, status: assigned, due_at: "2026-10-24T04:30:00Z", customer_name: Ramesh Sahoo (illustrative), image: "asset:thumb-inverter"}, {id: 01928f6e-0000-7000-8000-000000000a10, reference: TSK-0426, title: Structure, status: assigned, due_at: "2026-10-24T09:00:00Z", customer_name: Neha Gupta (illustrative), image: "asset:thumb-install", distance_km: 12}, {id: 01928f6e-0000-7000-8000-000000000a08, reference: TSK-0427, title: Site survey, status: assigned, due_at: "2026-10-27T05:30:00Z", customer_name: Gurpreet Kaur (illustrative), image: "asset:thumb-survey"}], page: {next_cursor: null}}
+                done:
+                  summary: Approved and cancelled (illustrative)
+                  value: {items: [{id: 01928f6e-0000-7000-8000-000000000a05, reference: TSK-0409, title: Net meter, status: approved, due_at: "2026-10-22T05:00:00Z", customer_name: Harpal Singh (illustrative), image: "asset:thumb-meter", status_at: "2026-10-22T10:00:00Z"}, {id: 01928f6e-0000-7000-8000-000000000a09, reference: TSK-0404, title: Panel installation, status: approved, due_at: "2026-10-21T05:00:00Z", customer_name: Sunita Rao (illustrative), image: "asset:thumb-install", status_at: "2026-10-21T11:00:00Z"}, {id: 01928f6e-0000-7000-8000-000000000a07, reference: TSK-0402, title: Structure, status: cancelled, due_at: "2026-10-21T05:00:00Z", customer_name: Anil Mehta (illustrative), image: "asset:thumb-survey", status_at: "2026-10-21T10:10:00Z"}], page: {next_cursor: null}}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      operationId: getTask
+      summary: One task with its customer, photos, checklist and status
+      description: Photo and receipt links in it expire after 15 minutes.
+      tags: [tasks]
+      responses:
+        "200":
+          description: The task.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                assigned:
+                  $ref: "#/components/examples/Task_assigned"
+                ready:
+                  $ref: "#/components/examples/Task_ready"
+                submitted:
+                  $ref: "#/components/examples/Task_submitted"
+                returned:
+                  $ref: "#/components/examples/Task_returned"
+                reported:
+                  $ref: "#/components/examples/Task_reported"
+                cancelled:
+                  $ref: "#/components/examples/Task_cancelled"
+                approved:
+                  $ref: "#/components/examples/Task_approved"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/photos:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      operationId: addTaskPhoto
+      summary: Attach a proof photo to one of the task's photo slots
+      description: |
+        The photo comes from the live camera only, never the gallery, and
+        carries where and when it was taken. The server flags photos far
+        from the site, with poor accuracy or a mocked location; flags go to
+        the admin, nothing is refused. Replaces an earlier photo in the
+        slot (a retake). 409 `task.locked` once submitted.
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProofPhotoCreate"
+      responses:
+        "200":
+          description: The task, updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                assigned:
+                  $ref: "#/components/examples/Task_assigned"
+                ready:
+                  $ref: "#/components/examples/Task_ready"
+                returned:
+                  $ref: "#/components/examples/Task_returned"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/checklist/{item_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: setTaskChecklistItem
+      summary: Tick or untick one checklist item
+      description: Fails with 409 `task.locked` once submitted.
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [done]
+              properties:
+                done:
+                  type: boolean
+      responses:
+        "200":
+          description: The task, updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                assigned:
+                  $ref: "#/components/examples/Task_assigned"
+                ready:
+                  $ref: "#/components/examples/Task_ready"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/submit:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      operationId: submitTask
+      summary: Send the finished work to the admin for approval
+      description: |
+        Needs every photo slot filled and every checklist item done
+        (422 `task.incomplete`). The task becomes `submitted` and its photos
+        lock until the admin approves or returns it.
+      tags: [tasks]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+                  maxLength: 500
+                  description: Optional note for the admin.
+      responses:
+        "200":
+          description: Submitted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                submitted:
+                  $ref: "#/components/examples/Task_submitted"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/problems:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      operationId: reportTaskProblem
+      summary: Tell the admin the task can't go ahead as planned
+      description: |
+        The admin is notified at once and decides: reschedule, reassign or
+        cancel. The task stays `assigned` with `problem` set.
+      tags: [tasks]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskProblemCreate"
+      responses:
+        "200":
+          description: Reported.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                reported:
+                  $ref: "#/components/examples/Task_reported"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/messages:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      operationId: sendTaskMessage
+      summary: Reply to the admin about this task
+      description: Shows in the task's history and notifies the admin.
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+      responses:
+        "204":
+          description: Sent.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/tasks/{task_id}/history:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      operationId: getTaskHistory
+      summary: Everything that happened to a task, newest first
+      description: Kept for every task and never edited.
+      tags: [tasks]
+      responses:
+        "200":
+          description: The history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskHistory"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/expenses/{expense_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/ExpenseId"
+    get:
+      operationId: getExpense
+      summary: One of the caller's expenses
+      description: With the admin's note and the receipt link when there is one.
+      tags: [expenses]
+      responses:
+        "200":
+          description: The expense.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+              examples:
+                needs_fix:
+                  summary: Sent back by the admin (illustrative)
+                  value: {id: 01928f6e-0000-7000-8000-0000000000f3, reference: EXP-2274, amount: 20000, category: other, note: Food, spent_on: "2026-10-20", status: needs_fix, has_receipt: true, receipt_url: "asset:thumb-meter", admin_note: Receipt photo is unreadable. Upload a clearer one or add a note., admin_name: Rajeeb Kumar (illustrative), task: {id: 01928f6e-0000-7000-8000-000000000a09, title: Panel installation, customer_name: Sunita Rao (illustrative)}}
+                in_review:
+                  summary: With the admin (illustrative)
+                  value: {id: 01928f6e-0000-7000-8000-0000000000f3, reference: EXP-2274, amount: 20000, category: other, note: Food, spent_on: "2026-10-20", status: in_review, has_receipt: true, receipt_url: "asset:thumb-meter", task: {id: 01928f6e-0000-7000-8000-000000000a09, title: Panel installation, customer_name: Sunita Rao (illustrative)}}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/expenses/{expense_id}/receipt:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/ExpenseId"
+    put:
+      operationId: replaceExpenseReceipt
+      summary: Send a new receipt for an expense the admin sent back
+      description: The expense goes back to `in_review`. 409 unless it is `needs_fix`.
+      tags: [expenses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id]
+              properties:
+                upload_id:
+                  $ref: "#/components/schemas/Id"
+                note:
+                  type: string
+                  maxLength: 200
+      responses:
+        "200":
+          description: Back with the admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+              examples:
+                in_review:
+                  summary: Back with the admin (illustrative)
+                  value: {id: 01928f6e-0000-7000-8000-0000000000f3, reference: EXP-2274, amount: 20000, category: other, note: Food, spent_on: "2026-10-20", status: in_review, has_receipt: true, receipt_url: "asset:thumb-meter", task: {id: 01928f6e-0000-7000-8000-000000000a09, title: Panel installation, customer_name: Sunita Rao (illustrative)}}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/notifications:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listNotifications
+      summary: The caller's notifications in this company, newest first
+      description: The `unread_count` drives the dot on the bell.
+      tags: [notifications]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: One page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPage"
+              examples:
+                worker:
+                  summary: A worker's notifications (illustrative)
+                  value:
+                    unread_count: 3
+                    page: {next_cursor: null}
+                    items:
+                      - {id: 01928f6e-0000-7000-8000-000000000b01, kind: task_approved, title: Stage 3 approved, body: Ramesh Sahoo (illustrative) moved to Wiring and inverter, at: "2026-10-23T07:18:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a05}
+                      - {id: 01928f6e-0000-7000-8000-000000000b02, kind: task_returned, title: Photo retake asked, body: "Anil Mehta (illustrative) · Earthing: “Earth pit photo is too dark.”", at: "2026-10-23T06:50:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a02}
+                      - {id: 01928f6e-0000-7000-8000-000000000b03, kind: task_assigned, title: New task assigned, body: Ramesh Sahoo (illustrative) · Wiring and inverter · Fri 10:00, at: "2026-10-23T07:18:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a06}
+                      - {id: 01928f6e-0000-7000-8000-000000000b04, kind: expense_approved, title: Expense approved, body: Material · ₹860 · paid with salary, at: "2026-10-23T04:45:00Z", read: true, expense_id: 01928f6e-0000-7000-8000-0000000000f2}
+                      - {id: 01928f6e-0000-7000-8000-000000000b05, kind: task_cancelled, title: Task cancelled, body: Anil Mehta (illustrative) · Structure · customer postponed, at: "2026-10-21T10:10:00Z", read: true, task_id: 01928f6e-0000-7000-8000-000000000a07}
+                      - {id: 01928f6e-0000-7000-8000-000000000b06, kind: task_rescheduled, title: Task rescheduled, body: Gurpreet Kaur (illustrative) · Site survey moved to Mon 27 Oct, at: "2026-10-20T09:00:00Z", read: true, task_id: 01928f6e-0000-7000-8000-000000000a08}
+                agent:
+                  summary: A commission agent's notifications (illustrative)
+                  value:
+                    unread_count: 2
+                    page: {next_cursor: null}
+                    items:
+                      - {id: 01928f6e-0000-7000-8000-000000000b11, kind: commission_changed, title: Commission changed, body: "Rajinder Kaur (illustrative): ₹6,000 → ₹5,000. See the admin's note.", at: "2026-10-23T06:35:00Z", read: false, customer_id: 01928f6e-0000-7000-8000-0000000000c3}
+                      - {id: 01928f6e-0000-7000-8000-000000000b12, kind: kyc_returned, title: Documents returned, body: "Sunita Rao (illustrative): electricity bill blurry", at: "2026-10-23T06:10:00Z", read: false, customer_id: 01928f6e-0000-7000-8000-0000000000c1}
+                      - {id: 01928f6e-0000-7000-8000-000000000b13, kind: commission_payable, title: Commission payable, body: "Harpal Singh (illustrative) paid the advance. ₹4,000 is payable.", at: "2026-10-24T06:00:00Z", read: true, customer_id: 01928f6e-0000-7000-8000-0000000000c4}
+                      - {id: 01928f6e-0000-7000-8000-000000000b14, kind: commission_paid, title: Commission paid, body: "₹5,000 for Gurpreet Kaur (illustrative) sent to your bank", at: "2026-10-18T06:00:00Z", read: true, customer_id: 01928f6e-0000-7000-8000-0000000000c5}
+                sales:
+                  summary: A salaried sales employee's notifications (illustrative)
+                  value:
+                    unread_count: 1
+                    page: {next_cursor: null}
+                    items:
+                      - {id: 01928f6e-0000-7000-8000-000000000b21, kind: kyc_returned, title: Documents returned, body: "Vikas Kumar (illustrative): PAN photo cut off", at: "2026-10-23T05:00:00Z", read: false, customer_id: 01928f6e-0000-7000-8000-0000000000c6}
+                      - {id: 01928f6e-0000-7000-8000-000000000b22, kind: install_started, title: Install started, body: "Neha Gupta (illustrative) is at Stage 2, structure", at: "2026-10-22T06:00:00Z", read: true, customer_id: 01928f6e-0000-7000-8000-0000000000c8}
+                      - {id: 01928f6e-0000-7000-8000-000000000b23, kind: kyc_submitted, title: Sent for review, body: "Rohit Bansal's (illustrative) documents reached the admin", at: "2026-10-22T11:50:00Z", read: true, customer_id: 01928f6e-0000-7000-8000-0000000000c7}
+                customer:
+                  summary: A customer's notifications (illustrative)
+                  value:
+                    unread_count: 2
+                    page: {next_cursor: null}
+                    items:
+                      - {id: 01928f6e-0000-7000-8000-000000000b41, kind: visit_booked, title: Site survey booked, body: "Vikram Rana (illustrative) · Thu 23 Oct, 11:00", at: "2026-10-20T05:00:00Z", read: false}
+                      - {id: 01928f6e-0000-7000-8000-000000000b42, kind: payment_due, title: Advance due, body: "₹85,500 by 31 Oct to book your install", at: "2026-10-20T04:00:00Z", read: false}
+                      - {id: 01928f6e-0000-7000-8000-000000000b43, kind: documents_verified, title: Documents verified, body: The company checked all 4 documents, at: "2026-10-19T06:00:00Z", read: true}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/notifications/read:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    post:
+      operationId: markNotificationsRead
+      summary: Mark all of the caller's notifications here as read
+      description: The "Read all" link on the notifications screen.
+      tags: [notifications]
+      responses:
+        "204":
+          description: Done.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/me/stats:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: getMyStats
+      summary: The caller's work this month, for their profile
+      description: Workers only. Shown on their profile.
+      tags: [tasks]
+      responses:
+        "200":
+          description: This month.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerStats"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+
+  /me/details:
+    get:
+      operationId: getMyDetails
+      summary: The caller's personal details and payout bank
+      description: |
+        Shared by every company the person works with: their admins see
+        them for salary, commission payouts and site passes. The bank
+        account number comes back masked (`account_last4`).
+      tags: [profile]
+      responses:
+        "200":
+          description: The details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalDetails"
+              examples:
+                worker:
+                  summary: A worker's details (illustrative)
+                  value: {"phone": "9876511223", "address": "H.No 12, Phase 9, Mohali", "emergency_contact": "Kamla Yadav · 9814055210", "bank": {"holder": "Suresh Yadav (illustrative)", "account_last4": "4410", "ifsc": "HDFC0001234", "bank_name": "HDFC Bank"}}
+        "401":
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateMyDetails
+      summary: Change the caller's personal details or payout bank
+      description: |
+        Send only what changes. A new bank needs `account_number` and
+        `ifsc`; the server fills `bank_name` from the IFSC.
+      tags: [profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalDetails"
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalDetails"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /me/settings:
+    get:
+      operationId: getMySettings
+      summary: The caller's notification and language settings
+      description: The same on every phone the person signs in on.
+      tags: [profile]
+      responses:
+        "200":
+          description: The settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateMySettings
+      summary: Change the caller's settings
+      description: Send the whole object.
+      tags: [profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Settings"
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /me/notifications:
+    get:
+      operationId: listMyNotifications
+      summary: The caller's own notifications, outside any company
+      description: Quote requests, invites and guides, for the Personal workspace.
+      tags: [notifications]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: One page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPage"
+              examples:
+                personal:
+                  summary: A normal user's notifications (illustrative)
+                  value: {"unread_count": 1, "page": {"next_cursor": null}, "items": [{"id": "01928f6e-0000-7000-8000-000000000b31", "kind": "quote_shared", "title": "Quote request shared", "body": "3 verified companies near Mohali can see it", "at": "2026-10-23T09:00:00Z", "read": false}, {"id": "01928f6e-0000-7000-8000-000000000b32", "kind": "invite_received", "title": "Example Solar (illustrative) invited you", "body": "To join as a Worker", "at": "2026-10-23T08:00:00Z", "read": true}, {"id": "01928f6e-0000-7000-8000-000000000b33", "kind": "guide", "title": "New guide", "body": "How the PM Surya Ghar subsidy works", "at": "2026-10-20T08:00:00Z", "read": true}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/me/documents:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMyDocuments
+      summary: The caller's documents this company holds
+      description: |
+        A worker's ID (for salary and site passes) or a customer's KYC.
+        Only the person and the org's admins see them.
+      tags: [profile]
+      responses:
+        "200":
+          description: The documents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyDocumentList"
+              examples:
+                worker:
+                  summary: A worker's ID (illustrative)
+                  value: {"items": [{"kind": "aadhaar", "detail": "Front and back · 7712", "status": "verified"}, {"kind": "pan", "detail": "Name matches", "status": "verified"}]}
+                customer:
+                  summary: A customer's KYC (illustrative)
+                  value: {"uploaded_by": "Meena Jain (illustrative)", "items": [{"kind": "aadhaar", "detail": "Front and back · 4821", "status": "verified"}, {"kind": "pan", "detail": "Name matches", "status": "verified"}, {"kind": "electricity_bill", "detail": "Sep 2026 · PSPCL", "status": "verified"}, {"kind": "bank_proof", "detail": "For the subsidy", "status": "verified"}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/my-customers:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMyCustomers
+      summary: The customers the caller registered, newest first
+      description: |
+        Agents (Sales) only. Each with its KYC status, install stage and,
+        for commission agents, the commission. Earnings are summed from
+        this list.
+      tags: [customers]
+      responses:
+        "200":
+          description: The customers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerList"
+              examples:
+                agent:
+                  summary: A commission agent's customers (illustrative)
+                  value: {"items": [{"id": "01928f6e-0000-7000-8000-0000000000c1", "name": "Sunita Rao (illustrative)", "system_kw": 3, "place": "Sector 69, Mohali", "kyc_status": "needs_fix", "detail": "Bill photo blurry", "sent_at": "2026-10-22T05:00:00Z", "commission": {"amount": 300000, "status": "in_review"}}, {"id": "01928f6e-0000-7000-8000-0000000000c2", "name": "Arjun Mehra (illustrative)", "system_kw": 3, "place": "Kharar", "kyc_status": "in_review", "detail": "Sent today", "sent_at": "2026-10-23T04:50:00Z", "commission": {"amount": 350000, "status": "in_review"}}, {"id": "01928f6e-0000-7000-8000-0000000000c3", "name": "Rajinder Kaur (illustrative)", "system_kw": 5, "place": "Phase 7, Mohali", "kyc_status": "approved", "detail": "Stage 1 · survey", "sent_at": "2026-10-15T05:00:00Z", "commission": {"amount": 500000, "proposed_amount": 600000, "status": "approved"}}, {"id": "01928f6e-0000-7000-8000-0000000000c4", "name": "Harpal Singh (illustrative)", "system_kw": 4, "place": "Sector 80, Mohali", "kyc_status": "approved", "detail": "Stage 4 · wiring", "sent_at": "2026-10-02T05:00:00Z", "commission": {"amount": 400000, "status": "payable", "payable_since": "2026-10-24"}}, {"id": "01928f6e-0000-7000-8000-0000000000c5", "name": "Gurpreet Kaur (illustrative)", "system_kw": 5, "place": "Aerocity, Mohali", "kyc_status": "approved", "detail": "Handed over", "sent_at": "2026-09-10T05:00:00Z", "commission": {"amount": 500000, "status": "paid", "paid_on": "2026-10-18"}}]}
+                sales:
+                  summary: A salaried sales employee's customers (illustrative)
+                  value: {"items": [{"id": "01928f6e-0000-7000-8000-0000000000c6", "name": "Vikas Kumar (illustrative)", "system_kw": 5, "place": "Sector 71, Mohali", "kyc_status": "needs_fix", "detail": "PAN photo cut off", "sent_at": "2026-10-22T05:00:00Z"}, {"id": "01928f6e-0000-7000-8000-0000000000c7", "name": "Rohit Bansal (illustrative)", "system_kw": 4, "place": "Zirakpur", "kyc_status": "in_review", "detail": "Sent yesterday", "sent_at": "2026-10-22T11:50:00Z"}, {"id": "01928f6e-0000-7000-8000-0000000000c8", "name": "Neha Gupta (illustrative)", "system_kw": 6, "place": "Sector 20, Panchkula", "kyc_status": "approved", "detail": "Stage 2 · structure", "sent_at": "2026-10-10T05:00:00Z"}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/my-customers/{customer_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/CustomerId"
+    get:
+      operationId: getMyCustomer
+      summary: One customer the caller registered
+      description: Its KYC, install progress, advance and commission.
+      tags: [customers]
+      responses:
+        "200":
+          description: The customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetail"
+              examples:
+                needs_fix:
+                  summary: A document sent back (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c1", "name": "Sunita Rao (illustrative)", "phone": "9814000000", "system_kw": 3, "place": "Sector 69, Mohali", "kyc_status": "needs_fix", "detail": "Bill photo blurry", "sent_at": "2026-10-22T05:00:00Z", "returned": {"kind": "electricity_bill", "title": "Electricity bill blurry", "note": {"text": "Upload a clear photo of the September bill, all four corners visible.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-23T06:10:00Z"}}, "commission": {"amount": 300000, "status": "in_review"}}
+                in_review:
+                  summary: With the admin (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c2", "name": "Arjun Mehra (illustrative)", "phone": "9814000000", "system_kw": 3, "place": "Kharar", "kyc_status": "in_review", "detail": "Sent today", "sent_at": "2026-10-23T04:50:00Z", "commission": {"amount": 350000, "status": "in_review"}}
+                approved:
+                  summary: Approved, commission changed by the admin (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c3", "name": "Rajinder Kaur (illustrative)", "phone": "9814022671", "system_kw": 5, "place": "Phase 7, Mohali", "kyc_status": "approved", "detail": "Stage 1 · survey", "sent_at": "2026-10-15T05:00:00Z", "stage": {"index": 1, "count": 7, "label": "Site survey, Thu"}, "documents": {"status": "verified", "detail": "Aadhaar, PAN, bill, bank"}, "advance": {"status": "due"}, "commission": {"amount": 500000, "proposed_amount": 600000, "status": "approved", "admin_note": {"text": "Our rate for 5 kW homes is ₹1,000 per kW.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-23T06:35:00Z"}}}
+                payable:
+                  summary: Advance paid, commission payable (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c4", "name": "Harpal Singh (illustrative)", "phone": "9814000000", "system_kw": 4, "place": "Sector 80, Mohali", "kyc_status": "approved", "detail": "Stage 4 · wiring", "sent_at": "2026-10-02T05:00:00Z", "stage": {"index": 4, "count": 7, "label": "Wiring this week"}, "documents": {"status": "verified", "detail": "Aadhaar, PAN, bill, bank"}, "advance": {"status": "paid", "paid_on": "2026-10-24"}, "commission": {"amount": 400000, "status": "payable", "payable_since": "2026-10-24"}}
+                paid:
+                  summary: Handed over, commission paid (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c5", "name": "Gurpreet Kaur (illustrative)", "phone": "9814000000", "system_kw": 5, "place": "Aerocity, Mohali", "kyc_status": "approved", "detail": "Handed over", "sent_at": "2026-09-10T05:00:00Z", "stage": {"index": 7, "count": 7, "label": "Handed over 20 Oct"}, "documents": {"status": "verified", "detail": "Aadhaar, PAN, bill, bank"}, "advance": {"status": "paid", "paid_on": "2026-09-20"}, "commission": {"amount": 500000, "status": "paid", "paid_on": "2026-10-18"}}
+                sales_needs_fix:
+                  summary: A salaried employee's customer, document sent back (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c6", "name": "Vikas Kumar (illustrative)", "phone": "9814000000", "system_kw": 5, "place": "Sector 71, Mohali", "kyc_status": "needs_fix", "detail": "PAN photo cut off", "sent_at": "2026-10-22T05:00:00Z", "returned": {"kind": "pan", "title": "PAN photo cut off", "note": {"text": "Retake the PAN card with all four corners visible.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-23T05:00:00Z"}}}
+                sales_in_review:
+                  summary: A salaried employee's customer with the admin (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c7", "name": "Rohit Bansal (illustrative)", "phone": "9814000000", "system_kw": 4, "place": "Zirakpur", "kyc_status": "in_review", "detail": "Sent yesterday", "sent_at": "2026-10-22T11:50:00Z"}
+                sales_installing:
+                  summary: A salaried employee's customer, installing (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c8", "name": "Neha Gupta (illustrative)", "phone": "9814000000", "system_kw": 6, "place": "Sector 20, Panchkula", "kyc_status": "approved", "detail": "Stage 2 · structure", "sent_at": "2026-10-10T05:00:00Z", "stage": {"index": 2, "count": 7, "label": "Structure on Fri"}, "documents": {"status": "verified", "detail": "Aadhaar, PAN, bill, bank"}, "advance": {"status": "paid", "paid_on": "2026-10-19"}}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/my-customers/{customer_id}/documents/{kind}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/CustomerId"
+      - name: kind
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/KycKind"
+    put:
+      operationId: replaceCustomerDocument
+      summary: Send a clearer copy of a document the admin sent back
+      description: The customer goes back to `in_review`.
+      tags: [customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upload_id]
+              properties:
+                upload_id:
+                  $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: With the admin again.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetail"
+              examples:
+                in_review:
+                  summary: Sent again (illustrative)
+                  value: {"id": "01928f6e-0000-7000-8000-0000000000c1", "name": "Sunita Rao (illustrative)", "phone": "9814000000", "system_kw": 3, "place": "Sector 69, Mohali", "kyc_status": "in_review", "detail": "Sent again", "sent_at": "2026-10-23T07:00:00Z"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/my-install:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: getMyInstall
+      summary: The caller's own install with this company
+      description: Customers only. Stages, the next visit and the payment plan.
+      tags: [install]
+      responses:
+        "200":
+          description: The install.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Install"
+              examples:
+                before:
+                  summary: Before the survey, advance due (illustrative)
+                  value: {"system_kw": 5, "place": "Mohali", "stage_index": 1, "stage_count": 7, "total": 28500000, "subsidy": 7800000, "upi_uri": "upi://pay?pa=examplesolar@upi&pn=Example%20Solar&am=85500.00&cu=INR", "next_visit": {"title": "Site survey", "starts_at": "2026-10-23T05:30:00Z", "ends_at": "2026-10-23T06:30:00Z", "person": {"name": "Vikram Rana (illustrative)", "phone": "9814000000"}}, "stages": [{"name": "Site survey", "detail": "Thu 23 Oct, 11:00 · Vikram Rana", "status": "next"}, {"name": "Structure", "detail": "After survey", "status": "upcoming"}, {"name": "Panel installation", "status": "upcoming"}, {"name": "Wiring and inverter", "status": "upcoming"}, {"name": "Earthing", "status": "upcoming"}, {"name": "Net meter", "detail": "PSPCL visit", "status": "upcoming"}, {"name": "Handover", "detail": "Your app shows live energy", "status": "upcoming"}], "payments": [{"id": "01928f6e-0000-7000-8000-0000000000d1", "label": "Advance, 30%", "detail": "Due 31 Oct", "amount": 8550000, "due_on": "2026-10-31", "status": "due"}, {"id": "01928f6e-0000-7000-8000-0000000000d2", "label": "On installation, 60%", "detail": "After panels are fixed", "amount": 17100000, "status": "later"}, {"id": "01928f6e-0000-7000-8000-0000000000d3", "label": "On handover, 10%", "detail": "After net meter", "amount": 2850000, "status": "later"}]}
+                live:
+                  summary: Handed over (illustrative)
+                  value: {"system_kw": 5, "place": "Mohali", "stage_index": 7, "stage_count": 7, "total": 28500000, "subsidy": 7800000, "handed_over_on": "2026-10-20", "stages": [{"name": "Site survey", "status": "done"}, {"name": "Structure", "status": "done"}, {"name": "Panel installation", "status": "done"}, {"name": "Wiring and inverter", "status": "done"}, {"name": "Earthing", "status": "done"}, {"name": "Net meter", "status": "done"}, {"name": "Handover", "detail": "20 Oct", "status": "done"}], "payments": [{"id": "01928f6e-0000-7000-8000-0000000000d1", "label": "Advance, 30%", "amount": 8550000, "status": "paid"}, {"id": "01928f6e-0000-7000-8000-0000000000d2", "label": "On installation, 60%", "amount": 17100000, "status": "paid"}, {"id": "01928f6e-0000-7000-8000-0000000000d3", "label": "On handover, 10%", "amount": 2850000, "status": "paid"}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/my-install/payments/{payment_id}/claim:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Id"
+    post:
+      operationId: claimInstallPayment
+      summary: The customer says they paid an instalment
+      description: |
+        After paying by UPI or bank transfer. The company confirms it
+        (status `claimed` until then, `paid` after).
+      tags: [install]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [method]
+              properties:
+                method:
+                  type: string
+                  enum: [upi, bank_transfer]
+      responses:
+        "200":
+          description: The install, with the payment claimed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Install"
+              examples:
+                claimed:
+                  summary: Advance sent (illustrative)
+                  value: {"system_kw": 5, "place": "Mohali", "stage_index": 1, "stage_count": 7, "total": 28500000, "subsidy": 7800000, "next_visit": {"title": "Site survey", "starts_at": "2026-10-23T05:30:00Z", "ends_at": "2026-10-23T06:30:00Z", "person": {"name": "Vikram Rana (illustrative)", "phone": "9814000000"}}, "stages": [{"name": "Site survey", "detail": "Thu 23 Oct, 11:00 · Vikram Rana", "status": "next"}, {"name": "Structure", "detail": "After survey", "status": "upcoming"}, {"name": "Panel installation", "status": "upcoming"}, {"name": "Wiring and inverter", "status": "upcoming"}, {"name": "Earthing", "status": "upcoming"}, {"name": "Net meter", "detail": "PSPCL visit", "status": "upcoming"}, {"name": "Handover", "detail": "Your app shows live energy", "status": "upcoming"}], "payments": [{"id": "01928f6e-0000-7000-8000-0000000000d1", "label": "Advance, 30%", "detail": "Due 31 Oct", "amount": 8550000, "due_on": "2026-10-31", "status": "claimed"}, {"id": "01928f6e-0000-7000-8000-0000000000d2", "label": "On installation, 60%", "detail": "After panels are fixed", "amount": 17100000, "status": "later"}, {"id": "01928f6e-0000-7000-8000-0000000000d3", "label": "On handover, 10%", "detail": "After net meter", "amount": 2850000, "status": "later"}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+
 components:
   securitySchemes:
     bearer:
@@ -425,6 +1595,30 @@ components:
       description: Session cookie, used by the admin website.
 
   parameters:
+    CustomerId:
+      name: customer_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Id"
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Id"
+    ExpenseId:
+      name: expense_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Id"
+    InviteId:
+      name: invite_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Id"
     OrgId:
       name: org_id
       in: path
@@ -459,6 +1653,29 @@ components:
       schema:
         type: string
         format: uuid
+
+  examples:
+    Task_assigned:
+      summary: To do, 2 of 4 photos (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "assigned", "admin_note": {"text": "Use the new clamps from batch B.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-22T12:35:00Z"}, "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible"}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging"}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": false}, {"id": "clear", "text": "Clear site and remove packaging", "done": false}]}
+    Task_ready:
+      summary: All photos and checklist done (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "assigned", "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:45:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging", "photo": {"url": "asset:quote-home", "taken_at": "2026-10-23T06:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": true}, {"id": "clear", "text": "Clear site and remove packaging", "done": true}]}
+    Task_submitted:
+      summary: With the admin (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "submitted", "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:45:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging", "photo": {"url": "asset:quote-home", "taken_at": "2026-10-23T06:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": true}, {"id": "clear", "text": "Clear site and remove packaging", "done": true}], "submitted_at": "2026-10-23T06:12:00Z", "worker_note": "All 10 panels fixed. Customer checked the work."}
+    Task_returned:
+      summary: A photo to retake (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "returned", "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:45:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}, "retake": true}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging", "photo": {"url": "asset:quote-home", "taken_at": "2026-10-23T06:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": true}, {"id": "clear", "text": "Clear site and remove packaging", "done": true}], "submitted_at": "2026-10-23T06:12:00Z", "returned": {"text": "Clamp close-up is blurry. Take it again with the bolt in focus.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-23T06:40:00Z"}}
+    Task_reported:
+      summary: A problem reported (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "assigned", "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible"}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging"}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": false}, {"id": "clear", "text": "Clear site and remove packaging", "done": false}], "problem": {"reason": "material_missing", "note": "MC4 connectors short by 6. Rest of the work is done.", "at": "2026-10-23T05:50:00Z"}}
+    Task_cancelled:
+      summary: Cancelled by the admin (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a07", "reference": "TSK-0402", "title": "Structure", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 2, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Anil Mehta (illustrative)", "system_kw": 3, "address": "Kharar"}, "status": "cancelled", "photos": [], "checklist": [], "cancelled": {"text": "Customer postponed the install to December. No action needed from you.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-21T10:10:00Z"}}
+    Task_approved:
+      summary: Approved, with the next task (illustrative)
+      value: {"id": "01928f6e-0000-7000-8000-000000000a05", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "approved", "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:45:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging", "photo": {"url": "asset:quote-home", "taken_at": "2026-10-23T06:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": true}, {"id": "clear", "text": "Clear site and remove packaging", "done": true}], "approved": {"by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-23T07:18:00Z", "next_task": {"id": "01928f6e-0000-7000-8000-000000000a06", "reference": "TSK-0425", "title": "Wiring and inverter", "status": "assigned", "due_at": "2026-10-24T04:30:00Z", "customer_name": "Ramesh Sahoo (illustrative)", "image": "asset:thumb-inverter"}}}
 
   responses:
     Problem:
@@ -550,8 +1767,15 @@ components:
       maxLength: 254
       examples: ["asha@example.com"]
 
+    Phone:
+      type: string
+      description: Indian mobile number, 10 digits, without +91.
+      pattern: "^[6-9][0-9]{9}$"
+      examples: ["9876511223"]
+
     Password:
       type: string
+      description: At least 8 characters, including a number.
       minLength: 8
       maxLength: 128
       format: password
@@ -573,6 +1797,8 @@ components:
           examples: ["Asha Example (illustrative)"]
         email:
           $ref: "#/components/schemas/Email"
+        phone:
+          $ref: "#/components/schemas/Phone"
         password:
           $ref: "#/components/schemas/Password"
 
@@ -659,7 +1885,10 @@ components:
 
     Role:
       type: string
-      enum: [org_admin, worker, agent]
+      description: |
+        `customer`: the company installs for this person; they follow the
+        install in the app.
+      enum: [org_admin, worker, agent, customer]
 
     Membership:
       type: object
@@ -676,8 +1905,18 @@ components:
               examples: ["Example Solar (illustrative)"]
             status:
               $ref: "#/components/schemas/OrgStatus"
+            phone:
+              $ref: "#/components/schemas/Phone"
+              description: The company's number, for its people to call.
         role:
           $ref: "#/components/schemas/Role"
+        pay_type:
+          type: string
+          enum: [commission, salary]
+          description: |
+            Agents (shown as Sales) only. `commission` agents enter a
+            commission on each customer they add; `salary` employees have
+            no commission step.
 
     Me:
       type: object
@@ -690,6 +1929,8 @@ components:
           examples: ["Asha Example (illustrative)"]
         email:
           $ref: "#/components/schemas/Email"
+        phone:
+          $ref: "#/components/schemas/Phone"
         email_verified:
           type: boolean
         is_platform_admin:
@@ -746,3 +1987,1194 @@ components:
           $ref: "#/components/schemas/Email"
         role:
           $ref: "#/components/schemas/Role"
+
+    AccessRequestCreate:
+      type: object
+      required: [company_name, owner_name, phone, city, email]
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+          examples: ["Example Solar Pvt. Ltd. (illustrative)"]
+        owner_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone:
+          $ref: "#/components/schemas/Phone"
+        city:
+          type: string
+          minLength: 1
+          maxLength: 80
+          examples: ["Jaipur"]
+        email:
+          $ref: "#/components/schemas/Email"
+
+    Invite:
+      type: object
+      required: [id, org, role, invited_by, invited_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        org:
+          type: object
+          required: [id, name]
+          properties:
+            id:
+              $ref: "#/components/schemas/Id"
+            name:
+              type: string
+              examples: ["Example Solar (illustrative)"]
+        role:
+          $ref: "#/components/schemas/Role"
+        invited_by:
+          type: string
+          description: Name of the admin who sent it.
+          examples: ["Dev Example (illustrative)"]
+        invited_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    InviteList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invite"
+
+    QuoteFor:
+      type: string
+      enum: [home, business, farm]
+
+    BillBand:
+      type: string
+      description: Monthly electricity bill, in rupees.
+      enum: [under_1500, from_1500_to_3000, from_3000_to_6000, over_6000]
+
+    RoofType:
+      type: string
+      enum: [rcc, tin_shed, other]
+
+    QuoteTimeline:
+      type: string
+      enum: [this_month, in_1_to_3_months, exploring]
+
+    QuoteRequestCreate:
+      type: object
+      required: [quote_for, pin_code, city, bill_band, roof, timeline, share_consent]
+      properties:
+        quote_for:
+          $ref: "#/components/schemas/QuoteFor"
+        pin_code:
+          type: string
+          pattern: "^[1-9][0-9]{5}$"
+          examples: ["160055"]
+        city:
+          type: string
+          minLength: 1
+          maxLength: 80
+          examples: ["Mohali"]
+        bill_band:
+          $ref: "#/components/schemas/BillBand"
+        roof:
+          $ref: "#/components/schemas/RoofType"
+        timeline:
+          $ref: "#/components/schemas/QuoteTimeline"
+        phone:
+          $ref: "#/components/schemas/Phone"
+        share_consent:
+          type: boolean
+          description: |
+            The person agrees to be contacted. Must be true; anything else
+            is 422 `quote.consent_required`.
+
+    QuoteEstimate:
+      type: object
+      required: [kw_min, kw_max, price_min, price_max, subsidy_max]
+      properties:
+        kw_min:
+          type: number
+          examples: [4]
+        kw_max:
+          type: number
+          examples: [5]
+        price_min:
+          $ref: "#/components/schemas/Money"
+        price_max:
+          $ref: "#/components/schemas/Money"
+        subsidy_max:
+          $ref: "#/components/schemas/Money"
+
+    QuoteRequest:
+      type: object
+      required: [id, status, created_at, estimate]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        status:
+          type: string
+          enum: [open, accepted, closed]
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        estimate:
+          $ref: "#/components/schemas/QuoteEstimate"
+      examples:
+        - id: 01928f6e-0000-7000-8000-0000000000c1
+          status: open
+          created_at: "2026-10-21T10:30:00Z"
+          estimate: {kw_min: 4, kw_max: 5, price_min: 24000000, price_max: 29000000, subsidy_max: 7800000}
+
+    HomeTone:
+      type: string
+      description: |
+        A status colour: success (done), warning (due), danger (needs a
+        fix), neutral (waiting, booked), live (now, current), empty (to
+        come).
+      enum: [success, warning, danger, neutral, live, empty]
+
+    HomeVisual:
+      type: object
+      description: |
+        A row's or avatar's picture: one of `image` (a URL, or
+        `asset:<name>` in sample data), `initials`, or `glyph` (a drawn
+        document or the rupee).
+      properties:
+        image:
+          type: string
+        initials:
+          type: string
+          maxLength: 3
+        glyph:
+          type: string
+          enum: [card, bill, passbook, rupee]
+
+    HomeStatus:
+      type: object
+      required: [label, tone]
+      properties:
+        label:
+          type: string
+        tone:
+          $ref: "#/components/schemas/HomeTone"
+
+    HomeRow:
+      allOf:
+        - $ref: "#/components/schemas/HomeVisual"
+        - type: object
+          required: [id, title, detail]
+          properties:
+            id:
+              type: string
+            title:
+              type: string
+            detail:
+              type: string
+            status:
+              $ref: "#/components/schemas/HomeStatus"
+            action:
+              type: string
+              description: |
+                What tapping it opens: `task` or `customer` (the row's id),
+                `documents` or `track`. None: nothing.
+
+    HomeTile:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        icon:
+          type: string
+          description: An icon name from the app's set.
+          enum: [camera, receipt, alarm, hourglass, shield, wallet, sun, users]
+        footer:
+          type: string
+        dark:
+          type: boolean
+          default: false
+        avatars:
+          type: array
+          items:
+            $ref: "#/components/schemas/HomeVisual"
+        action:
+          type: string
+          description: What tapping it opens, if anything.
+
+    HomeDay:
+      type: object
+      required: [day, date, dots]
+      properties:
+        day:
+          type: string
+        date:
+          type: integer
+        today:
+          type: boolean
+          default: false
+        dots:
+          type: array
+          items:
+            type: string
+            enum: [done, live, planned]
+
+    HomeSegment:
+      type: object
+      required: [weight, tone]
+      properties:
+        weight:
+          type: integer
+          minimum: 1
+        tone:
+          $ref: "#/components/schemas/HomeTone"
+        label:
+          type: string
+          description: For the legend.
+
+    HomeProgress:
+      type: object
+      required: [label, segments]
+      properties:
+        label:
+          type: string
+        trailing:
+          type: string
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/HomeSegment"
+        stages:
+          type: array
+          description: Names spread under the bar.
+          items:
+            type: string
+        legend:
+          type: boolean
+          default: false
+          description: Shows each segment's label with a dot under the bar.
+
+    HomeEnergy:
+      type: object
+      required: [now_kw, today_kwh, sunrise, sunset, day_progress, hours, now_index]
+      properties:
+        now_kw:
+          type: number
+        today_kwh:
+          type: number
+        sunrise:
+          type: string
+          examples: ["06:12"]
+        sunset:
+          type: string
+          examples: ["17:41"]
+        day_progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        hours:
+          type: array
+          description: kWh per daylight hour, from sunrise.
+          items:
+            type: number
+        now_index:
+          type: integer
+
+    HomeSummary:
+      type: object
+      required: [eyebrow, title, tiles, list]
+      properties:
+        unread_notifications:
+          type: integer
+          minimum: 0
+          description: Shows a dot on the bell when above zero.
+        eyebrow:
+          type: string
+        title:
+          type: string
+        headline:
+          type: object
+          required: [value, label]
+          properties:
+            value:
+              type: string
+            label:
+              type: string
+            detail:
+              type: string
+        week:
+          type: array
+          items:
+            $ref: "#/components/schemas/HomeDay"
+        energy:
+          $ref: "#/components/schemas/HomeEnergy"
+        tiles:
+          type: array
+          maxItems: 2
+          items:
+            $ref: "#/components/schemas/HomeTile"
+        progress:
+          $ref: "#/components/schemas/HomeProgress"
+        list:
+          type: object
+          required: [rows]
+          properties:
+            title:
+              type: string
+            rows:
+              type: array
+              items:
+                $ref: "#/components/schemas/HomeRow"
+
+    UploadCreate:
+      type: object
+      required: [content_type, size_bytes, purpose]
+      properties:
+        content_type:
+          type: string
+          enum: [image/jpeg, image/png, application/pdf]
+        size_bytes:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        purpose:
+          type: string
+          enum: [receipt, kyc, proof]
+          description: "`proof`: a task's photo from the live camera."
+
+    Upload:
+      type: object
+      required: [upload_id, url, method, headers, expires_at]
+      properties:
+        upload_id:
+          $ref: "#/components/schemas/Id"
+        url:
+          type: string
+          format: uri
+          examples: ["https://uploads.mock.invalid/01928f6e"]
+        method:
+          type: string
+          enum: [PUT]
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        expires_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    ExpenseCategory:
+      type: string
+      enum: [fuel, material, labour, other]
+
+    ExpenseStatus:
+      type: string
+      enum: [in_review, approved, needs_fix, paid]
+      description: "`paid`: approved and paid out (with salary or cash)."
+
+    ExpenseCreate:
+      type: object
+      required: [amount, category, note, spent_on]
+      properties:
+        amount:
+          $ref: "#/components/schemas/Money"
+        category:
+          $ref: "#/components/schemas/ExpenseCategory"
+        note:
+          type: string
+          maxLength: 200
+        spent_on:
+          type: string
+          format: date
+        receipt_upload_id:
+          $ref: "#/components/schemas/Id"
+        task_id:
+          $ref: "#/components/schemas/Id"
+          description: The task it was spent on, if any.
+
+    Expense:
+      type: object
+      required: [id, reference, amount, category, note, spent_on, status, has_receipt]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+          examples: ["EXP-2291"]
+        amount:
+          $ref: "#/components/schemas/Money"
+        category:
+          $ref: "#/components/schemas/ExpenseCategory"
+        note:
+          type: string
+        spent_on:
+          type: string
+          format: date
+        status:
+          $ref: "#/components/schemas/ExpenseStatus"
+        has_receipt:
+          type: boolean
+        admin_note:
+          type: string
+          description: Why it needs a fix.
+        admin_name:
+          type: string
+          description: Who decided, when someone has.
+        task:
+          $ref: "#/components/schemas/TaskRef"
+        receipt_url:
+          type: string
+          description: Short-lived link to the receipt photo; `asset:<name>` in sample data.
+
+    ExpensePage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+      examples:
+        - page: {next_cursor: null}
+          items:
+            - {id: 01928f6e-0000-7000-8000-0000000000f1, reference: EXP-2291, amount: 124000, category: fuel, note: Diesel for site van, spent_on: "2026-10-23", status: in_review, has_receipt: true, receipt_url: "asset:thumb-meter", task: {id: 01928f6e-0000-7000-8000-000000000a01, title: Panel installation, customer_name: Ramesh Sahoo (illustrative)}}
+            - {id: 01928f6e-0000-7000-8000-0000000000f3, reference: EXP-2274, amount: 20000, category: other, note: Food, spent_on: "2026-10-20", status: needs_fix, has_receipt: true, receipt_url: "asset:thumb-meter", admin_note: Receipt photo is unreadable. Upload a clearer one or add a note., admin_name: Rajeeb Kumar (illustrative), task: {id: 01928f6e-0000-7000-8000-000000000a09, title: Panel installation, customer_name: Sunita Rao (illustrative)}}
+            - {id: 01928f6e-0000-7000-8000-0000000000f2, reference: EXP-2287, amount: 86000, category: material, note: MC4 connectors, spent_on: "2026-10-20", status: approved, has_receipt: true, receipt_url: "asset:thumb-meter"}
+            - {id: 01928f6e-0000-7000-8000-0000000000f4, reference: EXP-2260, amount: 110000, category: fuel, note: Kharar site, spent_on: "2026-10-18", status: paid, has_receipt: true, receipt_url: "asset:thumb-meter"}
+
+    ConnectionType:
+      type: string
+      enum: [residential, commercial, industrial]
+
+    KycKind:
+      type: string
+      enum: [aadhaar, pan, electricity_bill, bank_proof, roof_photo]
+
+    CustomerRegistrationCreate:
+      type: object
+      required: [name, phone, email, address, city, pin_code, state, discom, consumer_number, sanctioned_load_kw, connection_type, proposed_kw, roof, subsidy, documents, consent]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone:
+          $ref: "#/components/schemas/Phone"
+        email:
+          $ref: "#/components/schemas/Email"
+        address:
+          type: string
+          maxLength: 200
+        city:
+          type: string
+          maxLength: 80
+        pin_code:
+          type: string
+          pattern: "^[1-9][0-9]{5}$"
+        state:
+          type: string
+          maxLength: 60
+        discom:
+          type: string
+          maxLength: 80
+        consumer_number:
+          type: string
+          maxLength: 30
+        sanctioned_load_kw:
+          type: number
+          minimum: 0
+        connection_type:
+          $ref: "#/components/schemas/ConnectionType"
+        proposed_kw:
+          type: number
+          minimum: 0
+        roof:
+          $ref: "#/components/schemas/RoofType"
+        subsidy:
+          type: boolean
+          description: Apply for PM Surya Ghar.
+        documents:
+          type: array
+          items:
+            type: object
+            required: [kind, upload_id]
+            properties:
+              kind:
+                $ref: "#/components/schemas/KycKind"
+              upload_id:
+                $ref: "#/components/schemas/Id"
+        consent:
+          type: boolean
+          description: The customer agreed to share these with the company. Must be true.
+        commission:
+          $ref: "#/components/schemas/Money"
+          description: |
+            Commission agents only (422 `registration.commission_not_allowed`
+            for salaried ones). The admin approves or changes it.
+        commission_note:
+          type: string
+          maxLength: 200
+          description: How the agent worked it out.
+
+    CustomerRegistration:
+      type: object
+      required: [id, reference, status]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+          examples: ["SC-1042"]
+        status:
+          type: string
+          enum: [submitted, verified, rejected]
+
+    TaskStatus:
+      type: string
+      enum: [assigned, submitted, returned, approved, cancelled]
+      description: |
+        `assigned`: to do (may have an open `problem`). `submitted`: with
+        the admin. `returned`: the admin asked for changes. `approved` and
+        `cancelled` are final.
+
+    Person:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          description: Shown after the name, e.g. "Admin".
+        you:
+          type: boolean
+          default: false
+          description: The caller.
+
+    TaskRef:
+      type: object
+      required: [id, title, customer_name]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+        customer_name:
+          type: string
+
+    TaskSummary:
+      type: object
+      required: [id, reference, title, status, due_at, customer_name]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+          examples: ["TSK-0418"]
+        title:
+          type: string
+          description: The work, e.g. "Panel installation".
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        due_at:
+          $ref: "#/components/schemas/Timestamp"
+        customer_name:
+          type: string
+        image:
+          type: string
+          description: A picture for the row; `asset:<name>` in sample data.
+        distance_km:
+          type: number
+          description: From the caller's last known position, when known.
+        status_at:
+          $ref: "#/components/schemas/Timestamp"
+          description: When the status last changed.
+        has_problem:
+          type: boolean
+          default: false
+
+    TaskPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+      examples:
+        - items:
+            - {id: 01928f6e-0000-7000-8000-000000000a01, reference: TSK-0418, title: Panel installation, status: assigned, due_at: "2026-10-23T04:00:00Z", customer_name: Ramesh Sahoo (illustrative), image: "asset:thumb-install"}
+            - {id: 01928f6e-0000-7000-8000-000000000a02, reference: TSK-0415, title: Earthing, status: returned, due_at: "2026-10-23T05:00:00Z", customer_name: Anil Mehta (illustrative), image: "asset:thumb-survey", status_at: "2026-10-23T06:50:00Z"}
+            - {id: 01928f6e-0000-7000-8000-000000000a03, reference: TSK-0420, title: Wiring, status: assigned, due_at: "2026-10-23T07:30:00Z", customer_name: Priya Nair (illustrative), image: "asset:thumb-inverter", distance_km: 7.8}
+            - {id: 01928f6e-0000-7000-8000-000000000a04, reference: TSK-0411, title: Net meter, status: submitted, due_at: "2026-10-23T05:30:00Z", customer_name: Kiran Patel (illustrative), image: "asset:thumb-meter", status_at: "2026-10-23T05:32:00Z"}
+          page: {next_cursor: null}
+
+    ProofPhoto:
+      type: object
+      required: [url, taken_at]
+      properties:
+        url:
+          type: string
+          description: Short-lived link to the photo; `asset:<name>` in sample data.
+        taken_at:
+          $ref: "#/components/schemas/Timestamp"
+        lat:
+          type: number
+        lng:
+          type: number
+        accuracy_m:
+          type: number
+
+    ProofSlot:
+      type: object
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+          examples: ["Clamp close-up"]
+        hint:
+          type: string
+          examples: ["Fit one clamp in the frame, bolt visible"]
+        photo:
+          $ref: "#/components/schemas/ProofPhoto"
+        retake:
+          type: boolean
+          default: false
+          description: The admin asked for this one again.
+
+    ChecklistItem:
+      type: object
+      required: [id, text, done]
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        done:
+          type: boolean
+
+    TaskNote:
+      type: object
+      required: [text, by, at]
+      properties:
+        text:
+          type: string
+        by:
+          $ref: "#/components/schemas/Person"
+        at:
+          $ref: "#/components/schemas/Timestamp"
+
+    TaskProblemReason:
+      type: string
+      enum: [customer_away, material_missing, bad_weather, site_not_ready, safety, other]
+
+    TaskProblem:
+      type: object
+      required: [reason, note, at]
+      properties:
+        reason:
+          $ref: "#/components/schemas/TaskProblemReason"
+        note:
+          type: string
+        at:
+          $ref: "#/components/schemas/Timestamp"
+
+    TaskProblemCreate:
+      type: object
+      required: [reason, note]
+      properties:
+        reason:
+          $ref: "#/components/schemas/TaskProblemReason"
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+        upload_id:
+          $ref: "#/components/schemas/Id"
+          description: An optional photo (purpose `proof`).
+
+    Task:
+      type: object
+      required: [id, reference, title, status, due_at, stage, customer, photos, checklist]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+        title:
+          type: string
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        due_at:
+          $ref: "#/components/schemas/Timestamp"
+        stage:
+          type: object
+          required: [index, count]
+          description: The customer's install stage this task finishes (1-based).
+          properties:
+            index:
+              type: integer
+              minimum: 1
+            count:
+              type: integer
+              minimum: 1
+        assigned_by:
+          $ref: "#/components/schemas/Person"
+        customer:
+          type: object
+          required: [name, address]
+          properties:
+            name:
+              type: string
+            system_kw:
+              type: number
+            address:
+              type: string
+            phone:
+              $ref: "#/components/schemas/Phone"
+            lat:
+              type: number
+            lng:
+              type: number
+        admin_note:
+          $ref: "#/components/schemas/TaskNote"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProofSlot"
+        checklist:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChecklistItem"
+        submitted_at:
+          $ref: "#/components/schemas/Timestamp"
+        worker_note:
+          type: string
+        returned:
+          $ref: "#/components/schemas/TaskNote"
+          description: Why the admin sent it back.
+        problem:
+          $ref: "#/components/schemas/TaskProblem"
+          description: An open problem the caller reported.
+        cancelled:
+          $ref: "#/components/schemas/TaskNote"
+        approved:
+          type: object
+          required: [by, at]
+          properties:
+            by:
+              $ref: "#/components/schemas/Person"
+            at:
+              $ref: "#/components/schemas/Timestamp"
+            next_task:
+              $ref: "#/components/schemas/TaskSummary"
+
+    ProofPhotoCreate:
+      type: object
+      required: [slot_id, upload_id, taken_at, lat, lng, accuracy_m]
+      properties:
+        slot_id:
+          type: string
+        upload_id:
+          $ref: "#/components/schemas/Id"
+        taken_at:
+          $ref: "#/components/schemas/Timestamp"
+        lat:
+          type: number
+        lng:
+          type: number
+        accuracy_m:
+          type: number
+          minimum: 0
+        mocked_location:
+          type: boolean
+          default: false
+          description: The phone reported a mocked (fake) location.
+
+    TaskEvent:
+      type: object
+      required: [kind, actor, at]
+      properties:
+        kind:
+          type: string
+          enum: [assigned, photos_uploaded, submitted, resubmitted, returned, approved, problem_reported, rescheduled, reassigned, cancelled, message]
+        actor:
+          $ref: "#/components/schemas/Person"
+        at:
+          $ref: "#/components/schemas/Timestamp"
+        detail:
+          type: string
+          description: A line under the event, e.g. the admin's words.
+
+    TaskHistory:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskEvent"
+      examples:
+        - events:
+            - {kind: approved, actor: {name: Rajeeb Kumar (illustrative)}, at: "2026-10-23T07:18:00Z", detail: "Moved to Stage 4"}
+            - {kind: resubmitted, actor: {name: You, you: true}, at: "2026-10-23T07:01:00Z", detail: Clamp close-up retaken}
+            - {kind: returned, actor: {name: Rajeeb Kumar (illustrative)}, at: "2026-10-23T06:40:00Z", detail: Clamp close-up is blurry. Take it again with the bolt in focus.}
+            - {kind: submitted, actor: {name: You, you: true}, at: "2026-10-23T06:12:00Z", detail: 4 photos · checklist done · note added}
+            - {kind: photos_uploaded, actor: {name: You, you: true}, at: "2026-10-23T04:35:00Z", detail: "GPS: Sector 70, Mohali"}
+            - {kind: assigned, actor: {name: Rajeeb Kumar (illustrative)}, at: "2026-10-22T12:35:00Z", detail: "Due Thu 23 Oct, 9:30"}
+
+    Notification:
+      type: object
+      required: [id, kind, title, body, at, read]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        kind:
+          type: string
+          enum: [task_assigned, task_approved, task_returned, task_cancelled, task_rescheduled, expense_approved, expense_returned, expense_paid, kyc_returned, kyc_submitted, kyc_approved, install_started, commission_changed, commission_payable, commission_paid, visit_booked, payment_due, documents_verified, quote_shared, invite_received, guide]
+        title:
+          type: string
+        body:
+          type: string
+        at:
+          $ref: "#/components/schemas/Timestamp"
+        read:
+          type: boolean
+        task_id:
+          $ref: "#/components/schemas/Id"
+        expense_id:
+          $ref: "#/components/schemas/Id"
+        customer_id:
+          $ref: "#/components/schemas/Id"
+          description: One of the caller's customers (Sales).
+
+    NotificationPage:
+      type: object
+      required: [items, unread_count, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unread_count:
+          type: integer
+          minimum: 0
+        page:
+          $ref: "#/components/schemas/PageInfo"
+      examples:
+        - unread_count: 3
+          page: {next_cursor: null}
+          items:
+            - {id: 01928f6e-0000-7000-8000-000000000b01, kind: task_approved, title: Stage 3 approved, body: Ramesh Sahoo (illustrative) moved to Wiring and inverter, at: "2026-10-23T07:18:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a05}
+            - {id: 01928f6e-0000-7000-8000-000000000b02, kind: task_returned, title: Photo retake asked, body: "Anil Mehta (illustrative) · Earthing: “Earth pit photo is too dark.”", at: "2026-10-23T06:50:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a02}
+            - {id: 01928f6e-0000-7000-8000-000000000b03, kind: task_assigned, title: New task assigned, body: Ramesh Sahoo (illustrative) · Wiring and inverter · Fri 10:00, at: "2026-10-23T07:18:00Z", read: false, task_id: 01928f6e-0000-7000-8000-000000000a06}
+            - {id: 01928f6e-0000-7000-8000-000000000b04, kind: expense_approved, title: Expense approved, body: Material · ₹860 · paid with salary, at: "2026-10-23T04:45:00Z", read: true, expense_id: 01928f6e-0000-7000-8000-0000000000f2}
+            - {id: 01928f6e-0000-7000-8000-000000000b05, kind: task_cancelled, title: Task cancelled, body: Anil Mehta (illustrative) · Structure · customer postponed, at: "2026-10-21T10:10:00Z", read: true, task_id: 01928f6e-0000-7000-8000-000000000a07}
+            - {id: 01928f6e-0000-7000-8000-000000000b06, kind: task_rescheduled, title: Task rescheduled, body: Gurpreet Kaur (illustrative) · Site survey moved to Mon 27 Oct, at: "2026-10-20T09:00:00Z", read: true, task_id: 01928f6e-0000-7000-8000-000000000a08}
+
+    WorkerStats:
+      type: object
+      required: [tasks_this_month, returned_this_month, avg_minutes_on_site]
+      properties:
+        tasks_this_month:
+          type: integer
+        returned_this_month:
+          type: integer
+        avg_minutes_on_site:
+          type: integer
+      examples:
+        - {tasks_this_month: 23, returned_this_month: 2, avg_minutes_on_site: 288}
+
+    PayoutBank:
+      type: object
+      properties:
+        holder:
+          type: string
+          maxLength: 100
+        account_number:
+          type: string
+          writeOnly: true
+          pattern: "^[0-9]{6,18}$"
+          description: Sent to change it; never returned.
+        account_last4:
+          type: string
+          readOnly: true
+        ifsc:
+          type: string
+          pattern: "^[A-Z]{4}0[A-Z0-9]{6}$"
+        bank_name:
+          type: string
+          readOnly: true
+
+    PersonalDetails:
+      type: object
+      properties:
+        phone:
+          $ref: "#/components/schemas/Phone"
+        address:
+          type: string
+          maxLength: 200
+        emergency_contact:
+          type: string
+          maxLength: 120
+        bank:
+          $ref: "#/components/schemas/PayoutBank"
+
+    Settings:
+      type: object
+      required: [push, whatsapp, sound, language]
+      properties:
+        push:
+          type: boolean
+          description: Push notifications for new work, approvals and returns.
+        whatsapp:
+          type: boolean
+          description: A daily WhatsApp summary at 8 pm.
+        sound:
+          type: boolean
+        language:
+          type: string
+          enum: [en, hi, pa]
+      examples:
+        - {push: true, whatsapp: true, sound: false, language: en}
+
+    DocumentStatus:
+      type: string
+      enum: [verified, in_review, needs_fix]
+
+    MyDocument:
+      type: object
+      required: [kind, status]
+      properties:
+        kind:
+          $ref: "#/components/schemas/KycKind"
+        detail:
+          type: string
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+
+    MyDocumentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyDocument"
+        uploaded_by:
+          type: string
+          description: The agent who collected a customer's KYC.
+
+    KycStatus:
+      type: string
+      enum: [in_review, needs_fix, approved]
+
+    CommissionStatus:
+      type: string
+      description: |
+        `approved` waits for the customer's advance; `payable` once it is
+        paid; `paid` when the admin pays it out.
+      enum: [in_review, approved, payable, paid]
+
+    Commission:
+      type: object
+      required: [amount, status]
+      properties:
+        amount:
+          $ref: "#/components/schemas/Money"
+        proposed_amount:
+          $ref: "#/components/schemas/Money"
+          description: What the agent asked, when the admin changed it.
+        status:
+          $ref: "#/components/schemas/CommissionStatus"
+        admin_note:
+          $ref: "#/components/schemas/TaskNote"
+        payable_since:
+          type: string
+          format: date
+        paid_on:
+          type: string
+          format: date
+
+    CustomerSummary:
+      type: object
+      required: [id, name, system_kw, place, kyc_status, detail, sent_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+        system_kw:
+          type: number
+        place:
+          type: string
+        kyc_status:
+          $ref: "#/components/schemas/KycStatus"
+        detail:
+          type: string
+          description: One line on where it stands, composed by the server.
+        sent_at:
+          $ref: "#/components/schemas/Timestamp"
+        commission:
+          $ref: "#/components/schemas/Commission"
+
+    CustomerList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerSummary"
+
+    CustomerDetail:
+      type: object
+      required: [id, name, phone, system_kw, place, kyc_status, detail, sent_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+        phone:
+          $ref: "#/components/schemas/Phone"
+        system_kw:
+          type: number
+        place:
+          type: string
+        kyc_status:
+          $ref: "#/components/schemas/KycStatus"
+        detail:
+          type: string
+        sent_at:
+          $ref: "#/components/schemas/Timestamp"
+        stage:
+          type: object
+          description: Once approved.
+          required: [index, count, label]
+          properties:
+            index:
+              type: integer
+            count:
+              type: integer
+            label:
+              type: string
+        returned:
+          type: object
+          description: The document the admin sent back.
+          required: [kind, title, note]
+          properties:
+            kind:
+              $ref: "#/components/schemas/KycKind"
+            title:
+              type: string
+            note:
+              $ref: "#/components/schemas/TaskNote"
+        documents:
+          type: object
+          required: [status, detail]
+          properties:
+            status:
+              $ref: "#/components/schemas/DocumentStatus"
+            detail:
+              type: string
+        advance:
+          type: object
+          required: [status]
+          properties:
+            status:
+              type: string
+              enum: [due, paid]
+            paid_on:
+              type: string
+              format: date
+        commission:
+          $ref: "#/components/schemas/Commission"
+
+    InstallStage:
+      type: object
+      required: [name, status]
+      properties:
+        name:
+          type: string
+        detail:
+          type: string
+        status:
+          type: string
+          enum: [done, next, upcoming]
+
+    InstallPayment:
+      type: object
+      required: [id, label, amount, status]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        label:
+          type: string
+        detail:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        due_on:
+          type: string
+          format: date
+        status:
+          type: string
+          description: "`claimed`: the customer says they paid; the company confirms."
+          enum: [due, claimed, paid, later]
+
+    Install:
+      type: object
+      required: [system_kw, place, stage_index, stage_count, total, subsidy, stages, payments]
+      properties:
+        system_kw:
+          type: number
+        place:
+          type: string
+        stage_index:
+          type: integer
+        stage_count:
+          type: integer
+        total:
+          $ref: "#/components/schemas/Money"
+        subsidy:
+          $ref: "#/components/schemas/Money"
+          description: PM Surya Ghar, paid by the government to the customer.
+        handed_over_on:
+          type: string
+          format: date
+        upi_uri:
+          type: string
+          description: Pays the payment that is due, through any UPI app.
+        next_visit:
+          type: object
+          required: [title, starts_at, person]
+          properties:
+            title:
+              type: string
+            starts_at:
+              $ref: "#/components/schemas/Timestamp"
+            ends_at:
+              $ref: "#/components/schemas/Timestamp"
+            person:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                phone:
+                  $ref: "#/components/schemas/Phone"
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/InstallStage"
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/InstallPayment"

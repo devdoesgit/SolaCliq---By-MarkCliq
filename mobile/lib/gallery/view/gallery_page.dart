@@ -1,326 +1,164 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
+import 'package:solacliq/app/routes.dart';
+import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/health/health.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
-/// Every design-system component, for checking them on a real screen.
-/// Development flavor only. All data here is illustrative and stays in this
-/// file rather than the ARB, since it never reaches users.
+/// Development only: the iOS v2 components in their states, and the
+/// server's health, to check the design system on a real phone. Sample
+/// values only.
 class GalleryPage extends StatelessWidget {
   const new({super.key});
 
   @override
+  Widget build(BuildContext context) => const GalleryView();
+}
+
+class GalleryView extends StatefulWidget {
+  const new({super.key});
+
+  @override
+  State<GalleryView> createState() => _GalleryViewState();
+}
+
+class _GalleryViewState extends State<GalleryView> {
+  String _segment = 'Home';
+  String? _chip = 'RCC';
+  bool _switch = true;
+  final _text = TextEditingController();
+  final _code = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        title: SolaText(l10n.galleryTitle, style: SolaTextStyle.h2),
+    const choices = [SolaChoice('Home', 'Home'), SolaChoice('Farm', 'Farm')];
+    return SolaScreen(
+      navBar: SolaNavBar(
+        leading: const BackTo(fallback: AppRoutes.home),
+        title: l10n.openGallery,
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: SolaSpace.space12),
-        children: [
-          SolaNotice(
-            title: l10n.illustrative,
-            body: 'Names, amounts and dates on this screen are not real.',
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              SolaSpace.space6,
-              SolaSpace.space6,
-              SolaSpace.space6,
-              0,
-            ),
-            child: HealthStatus(),
-          ),
-          const _Section(title: 'Buttons', child: _Buttons()),
-          const _Section(title: 'Text fields', child: _TextFields()),
-          const _Section(title: 'Status pills', child: _Pills()),
-          _Section(
-            title: 'Stage tracker',
-            padded: false,
-            child: SolaStageTracker(
-              stages: [
-                SolaStage(
-                  name: 'Lead',
-                  state: SolaStageState.done,
-                  date: DateTime(2026, 10, 2),
-                ),
-                SolaStage(
-                  name: 'Site survey',
-                  state: SolaStageState.done,
-                  date: DateTime(2026, 10, 9),
-                ),
-                SolaStage(
-                  name: 'Quote',
-                  state: SolaStageState.current,
-                  date: DateTime(2026, 10, 18),
-                ),
-                const SolaStage(
-                  name: 'Subsidy paperwork',
-                  state: SolaStageState.upcoming,
-                ),
-                const SolaStage(
-                  name: 'Install',
-                  state: SolaStageState.upcoming,
-                ),
-                const SolaStage(
-                  name: 'Net metering',
-                  state: SolaStageState.upcoming,
-                ),
-                const SolaStage(
-                  name: 'Service',
-                  state: SolaStageState.upcoming,
-                ),
-              ],
-            ),
-          ),
-          const _Section(title: 'List rows', padded: false, child: _Rows()),
-          const _Section(title: 'Amounts', child: _Amounts()),
-          const _Section(title: 'Notices', padded: false, child: _Notices()),
-        ],
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  const new({required this.title, required this.child, this.padded = true});
-
-  final String title;
-  final Widget child;
-
-  /// Full-bleed components (rows, notices) handle their own gutter.
-  final bool padded;
-
-  @override
-  Widget build(BuildContext context) {
-    const gutter = EdgeInsets.symmetric(horizontal: SolaSpace.space6);
-    return Padding(
-      padding: const EdgeInsets.only(top: SolaSpace.space8),
-      child: Column(
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: SolaSpace.space16,
         children: [
-          Padding(
-            padding: gutter,
-            child: SolaText(title, style: SolaTextStyle.h2),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SolaPill(l10n.illustrative, tone: SolaTone.warning),
           ),
-          const SizedBox(height: SolaSpace.space4),
-          if (padded) Padding(padding: gutter, child: child) else child,
-        ],
-      ),
-    );
-  }
-}
-
-void _tapped(BuildContext context, String what) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text('Tapped: $what')));
-}
-
-class _Buttons extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: SolaSpace.space3,
-      children: [
-        SolaButton(
-          key: const Key('gallery_button_primary'),
-          label: 'Save expense',
-          variant: SolaButtonVariant.primary,
-          onPressed: () => _tapped(context, 'Save expense'),
-        ),
-        SolaButton(
-          key: const Key('gallery_button_secondary'),
-          label: 'Add photo',
-          onPressed: () => _tapped(context, 'Add photo'),
-        ),
-        SolaButton(
-          key: const Key('gallery_button_ghost'),
-          label: 'Cancel',
-          variant: SolaButtonVariant.ghost,
-          onPressed: () => _tapped(context, 'Cancel'),
-        ),
-        SolaButton(
-          key: const Key('gallery_button_danger'),
-          label: 'Delete receipt',
-          variant: SolaButtonVariant.danger,
-          onPressed: () => _tapped(context, 'Delete receipt'),
-        ),
-        const SolaButton(
-          key: Key('gallery_button_disabled'),
-          label: 'Submit (disabled)',
-          onPressed: null,
-        ),
-        SolaButton(
-          key: const Key('gallery_button_full_width'),
-          label: 'Mark installed',
-          variant: SolaButtonVariant.primary,
-          expand: true,
-          onPressed: () => _tapped(context, 'Mark installed'),
-        ),
-      ],
-    );
-  }
-}
-
-class _TextFields extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: SolaSpace.space6,
-      children: [
-        SolaTextField(
-          key: Key('gallery_field_name'),
-          label: 'Customer name',
-          hint: 'Full name',
-          help: 'As on the electricity bill',
-          textInputAction: TextInputAction.next,
-        ),
-        SolaTextField(
-          key: Key('gallery_field_amount'),
-          label: 'Amount',
-          hint: '0.00',
-          numeric: true,
-          textInputAction: TextInputAction.next,
-        ),
-        SolaTextField(
-          key: Key('gallery_field_meter'),
-          label: 'Meter number',
-          error: 'Enter the meter number.',
-        ),
-      ],
-    );
-  }
-}
-
-class _Pills extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Wrap(
-      spacing: SolaSpace.space2,
-      runSpacing: SolaSpace.space2,
-      children: [
-        SolaStatusPill(label: 'Draft'),
-        SolaStatusPill(label: 'Approved', tone: SolaTone.success),
-        SolaStatusPill(label: 'Flagged', tone: SolaTone.warning),
-        SolaStatusPill(label: 'Rejected', tone: SolaTone.danger),
-        SolaStatusPill(label: 'Pending', tone: SolaTone.info),
-        SolaStatusPill(label: 'Current', tone: SolaTone.accent),
-      ],
-    );
-  }
-}
-
-class _Rows extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: SolaColors.line)),
-      ),
-      child: Column(
-        children: [
-          SolaListRow(
-            key: const Key('gallery_row_1'),
-            title: 'Asha Example (illustrative), 5 kW rooftop',
-            meta: 'Quote · 18 Oct 2026',
-            semanticsLabel:
-                'Asha Example (illustrative), 5 kW rooftop, quote, '
-                '${formatPaise(18500000)}, pending',
-            onTap: () => _tapped(context, 'Asha Example (illustrative)'),
-            trailing: const [
-              SolaAmount(18500000),
-              SolaStatusPill(label: 'Pending', tone: SolaTone.info),
+          const HealthStatus(),
+          SolaButton(key: const Key('g_sun'), label: 'Sun', onPressed: () {}),
+          SolaButton(
+            key: const Key('g_dark'),
+            label: 'Dark',
+            variant: SolaButtonVariant.dark,
+            onPressed: () {},
+          ),
+          SolaButton(
+            key: const Key('g_white'),
+            label: 'White',
+            variant: SolaButtonVariant.white,
+            icon: SolaIcons.logOut,
+            onPressed: () {},
+          ),
+          const SolaButton(
+            key: Key('g_disabled'),
+            label: 'Disabled',
+            onPressed: null,
+          ),
+          SolaSegmented<String>(
+            key: const ValueKey('g_segmented'),
+            label: 'Segmented',
+            choices: choices,
+            selected: _segment,
+            onChanged: (v) => setState(() => _segment = v),
+          ),
+          SolaChips<String>(
+            key: const ValueKey('g_chips'),
+            label: 'Chips',
+            choices: const [
+              SolaChoice('RCC', 'RCC'),
+              SolaChoice('Tin', 'Tin shed'),
+            ],
+            selected: _chip,
+            onChanged: (v) => setState(() => _chip = v),
+          ),
+          SolaGroup(
+            children: [
+              SolaFieldRow(
+                key: const ValueKey('g_field'),
+                label: 'Field',
+                controller: _text,
+                placeholder: 'Placeholder',
+              ),
+              const SolaFieldRow(
+                key: ValueKey('g_field_error'),
+                label: 'With an error',
+                error: 'Something is wrong.',
+              ),
+              SolaToggleRow(
+                key: const Key('g_switch'),
+                title: 'Toggle',
+                value: _switch,
+                onChanged: (v) => setState(() => _switch = v),
+              ),
             ],
           ),
-          SolaListRow(
-            key: const Key('gallery_row_2'),
-            title: 'Sunita Mohanty, 3.3 kW rooftop',
-            meta: 'Install · 12 Oct 2026',
-            semanticsLabel:
-                'Sunita Mohanty, 3.3 kW rooftop, install, '
-                '${formatPaise(9800000)}, approved',
-            onTap: () => _tapped(context, 'Sunita Mohanty'),
-            trailing: const [
-              SolaAmount(9800000),
-              SolaStatusPill(label: 'Approved', tone: SolaTone.success),
+          SolaCodeInput(
+            key: const ValueKey('g_code'),
+            label: 'Code',
+            controller: _code,
+          ),
+          const Wrap(
+            spacing: SolaSpace.space6,
+            runSpacing: SolaSpace.space6,
+            children: [
+              SolaPill('Done', tone: SolaTone.success, icon: SolaIcons.check),
+              SolaPill('Proof due', tone: SolaTone.warning),
+              SolaPill('Fix KYC', tone: SolaTone.danger),
+              SolaPill('In review'),
+              SolaPill('Live', tone: SolaTone.live),
+              SolaPill('Worker', tone: SolaTone.dark),
             ],
           ),
-          const SolaListRow(
-            title: 'Static row, not tappable',
-            meta: 'Service · 1 Sep 2026',
+          const SolaNotice(title: 'A danger notice', body: 'With a body.'),
+          const SolaNotice(title: 'A success notice', tone: SolaTone.success),
+          Row(
+            spacing: SolaSpace.space12,
+            children: [
+              const Expanded(
+                child: SolaStatTile(
+                  label: 'Dark',
+                  value: '2',
+                  icon: SolaIcons.camera,
+                  footer: 'today',
+                  dark: true,
+                ),
+              ),
+              Expanded(
+                child: SolaStatTile(
+                  label: 'Light',
+                  value: '1',
+                  icon: SolaIcons.receipt,
+                  footer: 'sample',
+                  avatars: const [SolaAvatar(glyph: SolaGlyph.rupee, size: 26)],
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
+          const SolaStepsCard(
+            steps: [SolaStep('First', 'Sample'), SolaStep('Second', 'Sample')],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Amounts extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SolaText('Balance due', style: SolaTextStyle.label),
-        SizedBox(height: SolaSpace.space1),
-        SolaAmount(4250000, tone: SolaAmountTone.due, large: true),
-        SizedBox(height: SolaSpace.space6),
-        SolaAmountSummary(
-          lines: [
-            SolaSummaryLine('Panels and inverter', 21000000),
-            SolaSummaryLine('Installation', 2500000),
-            SolaSummaryLine('Subsidy', 7800000, tone: SolaAmountTone.credit),
-          ],
-          total: SolaSummaryLine('Total', 15700000),
-        ),
-      ],
-    );
-  }
-}
-
-class _Notices extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      spacing: SolaSpace.space3,
-      children: [
-        const SolaNotice(
-          title: 'Waiting for approval',
-          body: 'MarkCliq is checking your GSTIN.',
-        ),
-        SolaNotice(
-          title: 'No GPS signal',
-          body: 'Move into the open and try again.',
-          tone: SolaTone.warning,
-          action: SolaButton(
-            key: const Key('gallery_notice_retry'),
-            label: 'Retry',
-            onPressed: () => _tapped(context, 'Retry'),
-          ),
-        ),
-        const SolaNotice(
-          title: 'Upload failed',
-          body: 'Check your connection and try again.',
-          tone: SolaTone.danger,
-        ),
-        const SolaNotice(title: 'Expense approved', tone: SolaTone.success),
-      ],
     );
   }
 }

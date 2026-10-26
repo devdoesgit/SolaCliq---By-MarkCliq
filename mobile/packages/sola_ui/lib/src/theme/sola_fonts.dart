@@ -5,10 +5,7 @@ import 'package:flutter/services.dart';
 /// page. Call once at startup.
 void registerSolaFontLicenses() {
   LicenseRegistry.addLicense(() async* {
-    for (final (family, file) in const [
-      ('Space Grotesk', 'SpaceGrotesk-OFL.txt'),
-      ('Space Mono', 'SpaceMono-OFL.txt'),
-    ]) {
+    for (final (family, file) in const [('Inter', 'Inter-OFL.txt')]) {
       final text = await rootBundle.loadString(
         'packages/sola_ui/assets/fonts/$file',
       );

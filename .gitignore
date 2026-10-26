@@ -10,9 +10,18 @@
 .env.*
 !.env.example
 *.pem
+*.key
+*.p8
+*.p12
 *.jks
 *.keystore
+*.mobileprovision
 key.properties
+local.properties
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+*.log
 
 # Node (admin, tools)
 node_modules/

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:solacliq/auth/auth.dart';
+import 'package:solacliq/workspace/data/workspace_store.dart';
 
 /// Keeps the login in memory instead of the phone's secure storage.
 class FakeTokenStore implements TokenStore {
@@ -21,6 +22,22 @@ class FakeTokenStore implements TokenStore {
 
   @override
   Future<void> clear() async => session = null;
+}
+
+/// Remembers the workspace in memory.
+class FakeWorkspaceStore implements WorkspaceStore {
+  new([this.id]);
+
+  String? id;
+
+  @override
+  Future<String?> read() async => id;
+
+  @override
+  Future<void> write(String workspaceId) async => id = workspaceId;
+
+  @override
+  Future<void> clear() async => id = null;
 }
 
 /// A Dio adapter that answers from [handler], with no network.
@@ -86,3 +103,40 @@ Map<String, Object?> tokensJson({
   'access_expires_in': expiresIn,
   'token_type': 'Bearer',
 };
+
+Map<String, Object?> membershipJson({
+  String orgId = '0192a000-0000-7000-8000-0000000000a1',
+  String orgName = 'Example Solar',
+  String status = 'active',
+  String role = 'worker',
+}) => {
+  'org': {'id': orgId, 'name': orgName, 'status': status},
+  'role': role,
+};
+
+AccountMembership testMembership({
+  String orgId = 'o1',
+  String orgName = 'Example Solar',
+  OrgStatus status = OrgStatus.active,
+  OrgRole role = OrgRole.worker,
+  PayType? payType,
+}) => AccountMembership(
+  orgId: orgId,
+  orgName: orgName,
+  orgStatus: status,
+  role: role,
+  payType: payType,
+  orgPhone: '9814000000',
+);
+
+Account testAccount({
+  String id = '1',
+  String name = 'Asha',
+  List<AccountMembership> memberships = const [],
+}) => Account(
+  id: id,
+  name: name,
+  email: 'asha@example.com',
+  isPlatformAdmin: false,
+  memberships: memberships,
+);

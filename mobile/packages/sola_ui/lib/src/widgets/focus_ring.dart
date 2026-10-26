@@ -40,7 +40,7 @@ class _RingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const width = SolaSize.focusWidth;
+    const width = 2.0;
     // Centre the stroke on a rect one offset plus half a stroke away.
     final delta = inset ? -width / 2 : width + width / 2;
     final rect = (Offset.zero & size).inflate(delta);

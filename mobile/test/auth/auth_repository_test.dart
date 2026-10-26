@@ -9,6 +9,7 @@ import '../helpers/helpers.dart';
 
 void main() {
   final now = DateTime.utc(2026, 10, 18, 12);
+  late DateTime time;
   late FakeTokenStore store;
   late FakeAdapter adapter;
   late Dio dio;
@@ -25,13 +26,14 @@ void main() {
 
   setUp(() {
     store = FakeTokenStore();
+    time = now;
     answer = (_) async => jsonBody(500, problem(500, 'unexpected'));
     adapter = FakeAdapter((o) => answer(o));
     dio = Dio(BaseOptions(baseUrl: 'http://api'))..httpClientAdapter = adapter;
     repository = AuthRepository(
       authApi: ApiClient(dio: dio, interceptors: []).getAuthApi(),
       store: store,
-      clock: () => now,
+      clock: () => time,
     );
     dio.interceptors.add(AuthInterceptor(repository: repository, dio: dio));
   });
@@ -247,6 +249,85 @@ void main() {
           ),
         ),
       );
+    });
+  });
+
+  group('refreshAccount', () {
+    Future<void> signedIn() async {
+      store.session = session(account: meJson(name: 'Old'));
+      answer = (_) async => jsonBody(200, meJson(name: 'Old'));
+      await repository.restore();
+      adapter.requests.clear();
+    }
+
+    test('re-reads the account at most once a minute', () async {
+      await signedIn();
+      answer = (_) async => jsonBody(200, meJson(name: 'New'));
+
+      await repository.refreshAccount();
+      expect(adapter.requests, isEmpty, reason: 'just loaded at start-up');
+
+      time = now.add(const Duration(minutes: 2));
+      await repository.refreshAccount();
+      await repository.refreshAccount();
+      expect(adapter.requests.map((r) => r.path), ['/me']);
+      final status = repository.status as AuthAuthenticated;
+      expect(status.account.name, 'New');
+      expect(store.session!.accountJson!['name'], 'New');
+
+      await repository.refreshAccount(force: true);
+      expect(adapter.requests, hasLength(2));
+    });
+
+    test('no signal keeps the person signed in', () async {
+      await signedIn();
+      answer = (o) async => throw DioException.connectionError(
+        requestOptions: o,
+        reason: 'offline',
+      );
+      await repository.refreshAccount(force: true);
+      expect(repository.status, isA<AuthAuthenticated>());
+    });
+
+    test('a rejected login signs out', () async {
+      await signedIn();
+      answer = (_) async => jsonBody(401, problem(401, 'auth.session_expired'));
+      await repository.refreshAccount(force: true);
+      expect(repository.status, const AuthUnauthenticated());
+      expect(store.session, isNull);
+    });
+
+    test('does nothing when signed out', () async {
+      await repository.restore();
+      await repository.refreshAccount(force: true);
+      expect(adapter.requests, isEmpty);
+    });
+
+    test("a 403 from a company's endpoint re-reads the account", () async {
+      await signedIn();
+      answer = (o) async => o.path == '/me'
+          ? jsonBody(200, meJson(name: 'Removed'))
+          : jsonBody(403, problem(403, 'org.not_a_member'));
+      await expectLater(
+        dio.get<Object?>('/orgs/o1/customers'),
+        throwsA(isA<DioException>()),
+      );
+      await pumpEventQueue();
+      expect(adapter.requests.map((r) => r.path), [
+        '/orgs/o1/customers',
+        '/me',
+      ]);
+    });
+
+    test('a 403 elsewhere does not', () async {
+      await signedIn();
+      answer = (_) async => jsonBody(403, problem(403, 'forbidden'));
+      await expectLater(
+        dio.get<Object?>('/uploads'),
+        throwsA(isA<DioException>()),
+      );
+      await pumpEventQueue();
+      expect(adapter.requests.map((r) => r.path), ['/uploads']);
     });
   });
 }

@@ -2,32 +2,38 @@ import 'dart:ui';
 
 import 'package:sola_ui/src/tokens/tokens.g.dart';
 
-/// The meaning a status pill or notice carries. Always shown with a word,
-/// never colour alone.
+/// The meaning a status pill or notice carries: real status colours, each
+/// always shown with a word.
 enum SolaTone {
-  /// No particular state.
-  neutral(SolaColors.ink, SolaColors.surfaceSunken),
+  /// Waiting on someone else, booked, neutral facts: tan.
+  neutral(SolaColors.tanText, SolaColors.tan),
 
-  /// Approved, completed, synced.
+  /// Done, approved, verified, good.
   success(SolaColors.success, SolaColors.successTint),
 
-  /// Flagged for review, waiting to sync.
+  /// Due, next, needs attention soon.
   warning(SolaColors.warning, SolaColors.warningTint),
 
-  /// Rejected, suspended, errors.
+  /// Needs a fix, errors.
   danger(SolaColors.danger, SolaColors.dangerTint),
 
-  /// Pending, waiting on someone else.
-  info(SolaColors.info, SolaColors.infoTint),
+  /// Live and current: the sun accent.
+  live(SolaColors.ink, SolaColors.sun),
 
-  /// The current item, such as the current install stage.
-  accent(SolaColors.accent, SolaColors.accentTint);
+  /// Strong neutral: a role, an action on a pill.
+  dark(SolaColors.cream, SolaColors.brown),
+
+  /// On a photo: ink on white.
+  light(SolaColors.ink, SolaColors.surface),
+
+  /// Over and done with, nothing to do: cancelled.
+  quiet(SolaColors.muted, SolaColors.segmentTrack);
 
   new(this.foreground, this.background);
 
-  /// Text, dot and rule colour.
+  /// Text and icon colour.
   final Color foreground;
 
-  /// Tint behind the text.
+  /// Fill behind the text.
   final Color background;
 }

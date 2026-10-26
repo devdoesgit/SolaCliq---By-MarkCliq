@@ -8,8 +8,18 @@ import 'package:api_client/src/auth/basic_auth.dart';
 import 'package:api_client/src/auth/bearer_auth.dart';
 import 'package:api_client/src/auth/oauth.dart';
 import 'package:api_client/src/api/auth_api.dart';
+import 'package:api_client/src/api/customers_api.dart';
+import 'package:api_client/src/api/expenses_api.dart';
+import 'package:api_client/src/api/home_api.dart';
+import 'package:api_client/src/api/install_api.dart';
+import 'package:api_client/src/api/notifications_api.dart';
+import 'package:api_client/src/api/onboarding_api.dart';
+import 'package:api_client/src/api/profile_api.dart';
+import 'package:api_client/src/api/quotes_api.dart';
 import 'package:api_client/src/api/system_api.dart';
+import 'package:api_client/src/api/tasks_api.dart';
 import 'package:api_client/src/api/team_api.dart';
+import 'package:api_client/src/api/uploads_api.dart';
 
 class ApiClient {
   static const String basePath = r'https://solacliq.markcliq.com/api/v1';
@@ -129,15 +139,75 @@ class ApiClient {
     return AuthApi(dio);
   }
 
+  /// Get CustomersApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  CustomersApi getCustomersApi() {
+    return CustomersApi(dio);
+  }
+
+  /// Get ExpensesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  ExpensesApi getExpensesApi() {
+    return ExpensesApi(dio);
+  }
+
+  /// Get HomeApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  HomeApi getHomeApi() {
+    return HomeApi(dio);
+  }
+
+  /// Get InstallApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  InstallApi getInstallApi() {
+    return InstallApi(dio);
+  }
+
+  /// Get NotificationsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  NotificationsApi getNotificationsApi() {
+    return NotificationsApi(dio);
+  }
+
+  /// Get OnboardingApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  OnboardingApi getOnboardingApi() {
+    return OnboardingApi(dio);
+  }
+
+  /// Get ProfileApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  ProfileApi getProfileApi() {
+    return ProfileApi(dio);
+  }
+
+  /// Get QuotesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  QuotesApi getQuotesApi() {
+    return QuotesApi(dio);
+  }
+
   /// Get SystemApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   SystemApi getSystemApi() {
     return SystemApi(dio);
   }
 
+  /// Get TasksApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  TasksApi getTasksApi() {
+    return TasksApi(dio);
+  }
+
   /// Get TeamApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   TeamApi getTeamApi() {
     return TeamApi(dio);
+  }
+
+  /// Get UploadsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  UploadsApi getUploadsApi() {
+    return UploadsApi(dio);
   }
 }

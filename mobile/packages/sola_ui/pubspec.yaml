@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^2.3.0
   material_ui: ^1.7.0
 
 dev_dependencies:
@@ -19,14 +20,9 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/fonts/SpaceGrotesk-OFL.txt
-    - assets/fonts/SpaceMono-OFL.txt
+    - assets/fonts/Inter-OFL.txt
+    - assets/images/
   fonts:
-    - family: SpaceGrotesk
+    - family: Inter
       fonts:
-        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
-    - family: SpaceMono
-      fonts:
-        - asset: assets/fonts/SpaceMono-Regular.ttf
-        - asset: assets/fonts/SpaceMono-Bold.ttf
-          weight: 700
+        - asset: assets/fonts/Inter-Variable.ttf

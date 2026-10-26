@@ -124,3 +124,160 @@ Change a decision by adding a new line, not by editing an old one.
   membership, org status and role in one place. One role per person per
   org until RY Enterprises says whether someone can be both worker and
   agent.
+- **Brand illustration drawn in code** (`SolaRooftopScene` in `sola_ui`),
+  after the markcliq.com banner's line-art style: an Indian flat-roof house
+  with a water tank, panels on a raised frame, a rust sun and the dashed
+  arc with its square. Code rather than an image file: sharp at any size,
+  brand tokens only, no new package, and it can animate. The full scene is
+  the welcome screen's hero and the app's one entrance animation (the arc
+  draws to the panels; still with reduce-motion). On the account screens
+  (owner's request: login in the middle, blended with the illustration)
+  the page reads as one scene: the sun's arc (`SolaSunArc`) lands its
+  square on the form's title, the form sits in the middle on the sky's
+  paper, and the rooftop (`SolaSceneView.ground`) stands at the foot. The
+  page scrolls as a whole, so on short screens the house's lower floor
+  leaves view rather than the form covering its panels.
+  No rule divides the scene from the page: the ground line is solid only
+  under the house and breaks into shrinking dashes at the edges, and a
+  walkway from the front door widens down into the text below. The hero's
+  animation has two stages: the arc lands on the panels, then a dashed
+  conduit runs down the wall and lights the electricity meter (net
+  metering). Indian details: water tank, chajjas over the windows, potted
+  plants by the door. MarkCliq's red slashes (`SolaBrandSlashes`) mark the
+  name. The real MarkCliq logo file is not in this repo yet.
+
+## 2026-10-25
+
+- **"Bold" redesign tried, then dropped.** A navy and sun-orange theme
+  replaced the markcliq.com look on the welcome, log in and request-access
+  screens. The owner superseded it with iOS v2 before it was finished.
+- **The mobile app follows the "iOS v2" design, not markcliq.com.** Source:
+  the "SolaCliq Login" design canvas, page "iOS v2" (25 screens). Warm
+  cream, sand, stone and sky backgrounds per role, sun `#F6C445` accent,
+  brown cards, white rounded cards and grouped fields, pill buttons, a
+  floating tab bar. `design/tokens.json` v4 holds its values; the admin
+  website keeps the markcliq.com look until it is redone, last.
+- **Inter replaces Space Grotesk and Space Mono in the app** (the design's
+  stand-in for SF Pro; OFL, bundled in `sola_ui`).
+- **Photos from the design are bundled** (`sola_ui/assets/images`: hero
+  install, quote home, four thumbnails) for the welcome screen, the quote
+  card and sample data. Their origin and licence are unknown, and the hero
+  shows a "SOLAR GRID EPC" vest: confirm or replace before release.
+- **Home screens are composed by the server.** `GET /orgs/{org_id}/home`
+  returns parts (headline, week, energy, two tiles, a progress bar, a
+  list) and the app draws them, so each role's home can change without an
+  app update.
+- **New endpoints for the designs' flows, drafted for the owner's review:**
+  `POST /uploads` (presigned upload to private R2; receipt or KYC),
+  `GET/POST /orgs/{org_id}/expenses` (amount in paise, category, note,
+  day, receipt, `Idempotency-Key`), and
+  `POST /orgs/{org_id}/customer-registrations` (an agent's new customer
+  with KYC upload ids and consent, approved by the admin on the web).
+- **Plain dates travel as `YYYY-MM-DD`.** The Dart client maps OpenAPI
+  `date` to `String` (`make gen-dart`); the generator otherwise sent a full
+  timestamp, which the contract rejects.
+
+## 2026-10-26
+
+- **Text colours darkened from the design for WCAG AA.** Muted `#8C7F74`
+  read at 3.6:1 on cream; it is now `#6D635A` (4.5:1 on every background).
+  Faint is `#8D837B` (3:1) and used only for icons and placeholders. Tan
+  text and warning were nudged to 4.5:1 on their pills. Field workers read
+  these outdoors in sunlight. Noted on each token.
+- **Every tap target is at least 48px,** keeping the design's look: the
+  field rows' inputs span the whole row, chips and segments have a 48px
+  target around a 36px shape, text links and keypad keys are 48px tall.
+- **The expense form has no project pill.** The design shows the expense
+  linked to a customer's job; jobs come with F6, so the link waits for it.
+  *Superseded the same day:* with F6's tasks, the form has a task pill
+  (`ExpenseCreate.task_id`).
+- **Setting a password still asks for the emailed code.** The design opens
+  it from a welcome-email link; until that link exists the code proves the
+  email belongs to the person.
+- **The quote form keeps "When".** The design leaves it out, but the
+  contract needs it to route the lead.
+- **The admin website keeps its own tokens for now.** `design/tokens.web.json`
+  is the markcliq.com set the admin site was built on; `make tokens`
+  generates the admin CSS from it and the app's tokens from
+  `design/tokens.json`. When the admin site is redone (last), it moves to
+  the main file and the web file goes.
+- **"Quick forms" for walking the app against the mock** (owner's
+  request). Development flavor only and on by default: a form sent with
+  nothing typed takes illustrative sample values, default choices and
+  placeholder document ids, so every screen can be passed without typing.
+  Toggled in the Development section or with `QUICK_FORMS=false`; tests
+  and production run without it.
+- **Success screens use a green tick, not the design's sun circle**
+  (owner's call). Green already means done on every status pill, so a
+  sent screen reads as success at a glance; sun stays the accent for
+  actions and what's next. Token `shadow-success` gives it its glow.
+- **F6 worker tasks drafted from the new worker designs.** The contract adds
+  `tasks` and `notifications` tags; task list, detail, photos, checklist,
+  submit, problems, messages and history; expense detail and receipt
+  replacement; notifications with read-all; worker stats. Upload purpose
+  `proof`; expense status `paid`. Spec in `features/F6-worker-tasks.md`,
+  awaiting the owner's review.
+- **The proof camera has no gallery or flip button.** The design shows
+  both. Proof comes only from the live back camera, so the gallery button
+  would break the rule and a selfie camera has nothing to prove.
+- **A task with a reported problem shows "On hold", not "Assigned".** The
+  design keeps "Assigned"; the worker can't act on it until the admin
+  decides, and the list should say so.
+- **Task screens open over the tab bar.** The design shows the tab bar on
+  Submitted, Reported and Cancelled; they are pushed pages here, like the
+  other task states, so back always returns to where the worker was.
+- **Tasks have no search yet.** The design shows a search button; a
+  worker's day is a handful of tasks, so it waits for a real need.
+- **The app keeps its own photo and checklist progress on an open task.**
+  The Prism mock keeps no state, so the app overlays what the worker did
+  until the server's task leaves the worker (submitted, approved,
+  cancelled). Against a real server the overlay matches what it returns.
+- **Pills shorten long text, and the nav bar grows with scaled text.**
+  Found by the accessibility test on a 360dp phone: the expense form's
+  task pill overflowed and the nav bar's title and subtitle didn't fit a
+  fixed 52px.
+
+## 2026-10-27
+
+- **The v2 designs are copied into the repo.** The canvas split "iOS v2"
+  into five pages; the four mobile ones (100 screens) are in
+  `design/ios-v2/` with an index. Admin web (page 5) waits for the admin
+  phase.
+- **Every v2 mobile screen is wired, one screen per job, not per person.**
+  The designs repeat a screen for each sample customer or state (Sunita,
+  Arjun, Harpal...); the app has one customer page, one fix page, one
+  task page, driven by the data. Help is the existing sheet, with a "Call
+  your company" row.
+- **Agents are shown as "Sales", with a pay type.** `Membership.pay_type`
+  is `commission` or `salary`. Commission agents enter a commission on the
+  review step (`CustomerRegistrationCreate.commission`), see Earnings and
+  a payout bank; salaried ones get an Alerts tab instead. The role stays
+  `agent` in the contract.
+- **Each role has its own tab shell.** Sales: home, customers, add,
+  earnings or alerts, profile. Customer: home, track, payments, profile. Home tiles, rows and the avatar ask the shell to switch tabs;
+  rows carry an `action` (`task`, `customer`, `documents`, `track`).
+- **Earnings are summed in the app** from `GET /orgs/{org_id}/my-customers`
+  (each with its commission), so there is no earnings endpoint.
+- **New endpoints, drafted for the owner's review:** `my-customers` (list,
+  detail, replace a returned document), `me/details` (phone, address,
+  emergency contact, payout bank; the account number is write-only),
+  `me/settings`, `me/documents`, `me/notifications` (Personal),
+  `my-install` and its payment claim. Notifications gain Sales,
+  customer and personal kinds and a `customer_id`.
+- **A customer's payment is claimed, not confirmed, by the app.** "Pay by
+  UPI" opens the UPI app from the server's `upi_uri`; either button then
+  marks it `claimed` until the company confirms it on the website.
+- **Language is saved but English only for now.** Settings stores
+  Hindi or Punjabi and says they arrive in an update; there are no
+  translations yet.
+- **Money totals are shown in full** ("₹2,85,000", not the design's
+  "₹2.85L"), so a rounded figure is never mistaken for the price.
+- **No customer chat (owner's call).** The design's "Message Arka Solar"
+  tab is dropped: not needed while an install is under way. Customers call
+  the company from Help; the contract has no `messages` endpoints. A
+  worker's reply on a returned task stays.
+- **A new workspace always starts at its home.** Switching workspace, or
+  another person signing in (another mock person in development), closes
+  any open screen and opens the new home; a different person no longer
+  inherits the last one's Personal workspace.
+

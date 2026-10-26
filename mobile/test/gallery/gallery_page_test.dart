@@ -32,11 +32,14 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('tapping a button confirms it', (tester) async {
+    testWidgets('the segmented control switches', (tester) async {
       await tester.pumpApp(const GalleryPage(), healthRepository: health);
-      await tester.tap(find.byKey(const Key('gallery_button_primary')));
+      await tester.tapKey('g_segmented_1');
       await tester.pump();
-      expect(find.text('Tapped: Save expense'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('g_segmented_1'))),
+        isSemantics(isSelected: true),
+      );
     });
   });
 }

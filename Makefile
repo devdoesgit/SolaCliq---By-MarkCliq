@@ -36,6 +36,7 @@ gen-dart:
 	rm -rf $(API_CLIENT)
 	npx openapi-generator-cli generate -i $(SPEC) -g dart-dio -o $(API_CLIENT) \
 	  -c api/generator/dart.yaml \
+	  --type-mappings=date=String \
 	  --global-property apiTests=false,modelTests=false,apiDocs=false,modelDocs=false
 	rm -rf $(API_CLIENT)/.openapi-generator $(API_CLIENT)/.openapi-generator-ignore $(API_CLIENT)/test
 	# json_serializable emits Dart 3.8+ syntax; the template pins 3.5.

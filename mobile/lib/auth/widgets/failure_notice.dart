@@ -18,8 +18,8 @@ class FailureNotice extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return SolaNotice(
+      key: const Key('failure_notice'),
       title: failure.message(context.l10n),
-      tone: SolaTone.danger,
       announce: true,
       action: action,
     );

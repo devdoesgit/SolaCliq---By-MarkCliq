@@ -9,6 +9,7 @@ const ROLE: Record<Membership['role'], string> = {
   org_admin: 'Admin',
   worker: 'Installer',
   agent: 'Agent',
+  customer: 'Customer',
 };
 
 const STATUS: Record<Membership['org']['status'], { label: string; tone: Tone }> = {

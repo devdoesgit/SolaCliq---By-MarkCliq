@@ -45,12 +45,15 @@ Keep these current. They are the record of what SolaCliq is and why.
 - `docs/decisions.md`: dated log of decisions and their reasons.
 - `questioner.md`: open questions for the pilot vendor. Nothing in it is
   settled.
-- Design system: `design/tokens.json` is the source of truth (generated
-  into both apps by `make tokens`). The published design system,
+- Design system: `design/tokens.json` is the source of truth for the
+  mobile app; the admin website reads `design/tokens.web.json` (the
+  markcliq.com tokens) until it is redone. `make tokens` generates both.
+  The mobile app follows the "iOS v2" design (SolaCliq Login canvas,
+  https://claude.ai/artifact/8nC3HVvyGMq7v2wf3gVGUZ, pages "v2 · 1" to
+  "v2 · 4"; a copy of each screen is in `design/ios-v2/`); the tokens hold
+  its values. The published design system,
   https://claude.ai/artifact/DHZ36BtTE4ZCxGNoUbxSbN, still shows the old
-  system-font version (fonts, type scale, 2px radius); republish it from
-  the tokens before relying on its README. Both apps take their values
-  from the tokens.
+  markcliq.com version; republish it from the tokens before relying on it.
 
 ## How we work
 
@@ -67,11 +70,13 @@ Keep these current. They are the record of what SolaCliq is and why.
 
 ## Conventions
 
-- Brand: SolaCliq matches **markcliq.com** in everything: Space Grotesk and
-  Space Mono (bundled in both apps, OFL), type, spacing, square corners, 1px
-  rules, editorial easing. `design/tokens.json` holds the values, read from
-  the live site; apps generate theirs from it with `make tokens`. Deviations
-  exist only where field use needs them, and are noted on the token.
+- Brand: the mobile app follows the **iOS v2** design: Inter (bundled,
+  OFL), warm tinted backgrounds per role, sun accent, rounded white cards
+  and pill buttons. `design/tokens.json` holds the values; apps generate
+  theirs from it with `make tokens`. Deviations exist only where field use
+  or accessibility needs them (WCAG AA contrast, 48px targets), and are
+  noted on the token. The admin website keeps the markcliq.com look until
+  it is redone, last.
 - Mobile: every interactive widget gets a `Key` and a Semantics label, so
   Claude can find and tap it through mobile-mcp and it is accessible to users.
 - Money is integer paise everywhere. Never floats.

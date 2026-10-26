@@ -275,6 +275,752 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/access-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A solar company asks for SolaCliq
+         * @description Public. MarkCliq is notified and onboards the company; its admin
+         *     then gets the web dashboard. Always 202.
+         */
+        post: operations["requestAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invites waiting for the signed-in person
+         * @description Shown as a banner on the personal home until answered.
+         */
+        get: operations["listMyInvites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invites/{invite_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: components["parameters"]["InviteId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join the company that sent the invite
+         * @description Adds the membership and returns the updated person.
+         */
+        post: operations["acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invites/{invite_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: components["parameters"]["InviteId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn down an invite
+         * @description The person keeps their account; nothing is shared.
+         */
+        post: operations["declineInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quote-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask verified solar companies nearby for a quote
+         * @description Creates a lead that companies near the PIN code can accept; the one
+         *     that accepts contacts the person on their phone (the account's, or
+         *     `phone` here if the account has none; 422 `quote.phone_required` if
+         *     neither). Returns an indicative estimate from the bill band.
+         */
+        post: operations["createQuoteRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The home screen for the caller's role in this company
+         * @description The server composes it for the role, from the same parts: a worker's
+         *     week and tasks, an agent's customers and KYC, a customer's install
+         *     progress, or their live energy after handover. Images are URLs;
+         *     sample data uses `asset:<name>` for pictures bundled in the app.
+         */
+        get: operations["getOrgHome"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Get a presigned URL to upload one file
+         * @description The app PUTs the file to `url` with `headers`, then sends
+         *     `upload_id` with the record it belongs to. URLs expire after 15
+         *     minutes. Sample data uses a `.invalid` host, which the development
+         *     app treats as uploaded.
+         */
+        post: operations["createUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's recent expenses in this company
+         * @description Newest first; the screen after logging one shows them.
+         */
+        get: operations["listMyExpenses"];
+        put?: never;
+        /**
+         * Log an expense for the admin to approve
+         * @description Goes to the org admin's approvals queue as `in_review`.
+         */
+        post: operations["createExpense"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/customer-registrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * An agent registers a customer with their KYC
+         * @description Agents only. Submits details, site, connection and KYC documents for
+         *     the org admin to approve. On approval the customer's account is
+         *     created (or an existing one linked) and they get a welcome email
+         *     with a link to set their password. Bank proof is required when the
+         *     subsidy is on (`registration.bank_proof_required`, 422).
+         */
+        post: operations["submitCustomerRegistration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's tasks in this company
+         * @description Workers only. `today`: due today, plus any returned or with a
+         *     problem, in due order. `upcoming`: due later, by day. `done`:
+         *     approved and cancelled, newest first.
+         */
+        get: operations["listMyTasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * One task with its customer, photos, checklist and status
+         * @description Photo and receipt links in it expire after 15 minutes.
+         */
+        get: operations["getTask"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attach a proof photo to one of the task's photo slots
+         * @description The photo comes from the live camera only, never the gallery, and
+         *     carries where and when it was taken. The server flags photos far
+         *     from the site, with poor accuracy or a mocked location; flags go to
+         *     the admin, nothing is refused. Replaces an earlier photo in the
+         *     slot (a retake). 409 `task.locked` once submitted.
+         */
+        post: operations["addTaskPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/checklist/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Tick or untick one checklist item
+         * @description Fails with 409 `task.locked` once submitted.
+         */
+        put: operations["setTaskChecklistItem"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the finished work to the admin for approval
+         * @description Needs every photo slot filled and every checklist item done
+         *     (422 `task.incomplete`). The task becomes `submitted` and its photos
+         *     lock until the admin approves or returns it.
+         */
+        post: operations["submitTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/problems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tell the admin the task can't go ahead as planned
+         * @description The admin is notified at once and decides: reschedule, reassign or
+         *     cancel. The task stays `assigned` with `problem` set.
+         */
+        post: operations["reportTaskProblem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply to the admin about this task
+         * @description Shows in the task's history and notifies the admin.
+         */
+        post: operations["sendTaskMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/tasks/{task_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Everything that happened to a task, newest first
+         * @description Kept for every task and never edited.
+         */
+        get: operations["getTaskHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/expenses/{expense_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                expense_id: components["parameters"]["ExpenseId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * One of the caller's expenses
+         * @description With the admin's note and the receipt link when there is one.
+         */
+        get: operations["getExpense"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/expenses/{expense_id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                expense_id: components["parameters"]["ExpenseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Send a new receipt for an expense the admin sent back
+         * @description The expense goes back to `in_review`. 409 unless it is `needs_fix`.
+         */
+        put: operations["replaceExpenseReceipt"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's notifications in this company, newest first
+         * @description The `unread_count` drives the dot on the bell.
+         */
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark all of the caller's notifications here as read
+         * @description The "Read all" link on the notifications screen.
+         */
+        post: operations["markNotificationsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/me/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's work this month, for their profile
+         * @description Workers only. Shown on their profile.
+         */
+        get: operations["getMyStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's personal details and payout bank
+         * @description Shared by every company the person works with: their admins see
+         *     them for salary, commission payouts and site passes. The bank
+         *     account number comes back masked (`account_last4`).
+         */
+        get: operations["getMyDetails"];
+        /**
+         * Change the caller's personal details or payout bank
+         * @description Send only what changes. A new bank needs `account_number` and
+         *     `ifsc`; the server fills `bank_name` from the IFSC.
+         */
+        put: operations["updateMyDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's notification and language settings
+         * @description The same on every phone the person signs in on.
+         */
+        get: operations["getMySettings"];
+        /**
+         * Change the caller's settings
+         * @description Send the whole object.
+         */
+        put: operations["updateMySettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own notifications, outside any company
+         * @description Quote requests, invites and guides, for the Personal workspace.
+         */
+        get: operations["listMyNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/me/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's documents this company holds
+         * @description A worker's ID (for salary and site passes) or a customer's KYC.
+         *     Only the person and the org's admins see them.
+         */
+        get: operations["listMyDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/my-customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The customers the caller registered, newest first
+         * @description Agents (Sales) only. Each with its KYC status, install stage and,
+         *     for commission agents, the commission. Earnings are summed from
+         *     this list.
+         */
+        get: operations["listMyCustomers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/my-customers/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                customer_id: components["parameters"]["CustomerId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * One customer the caller registered
+         * @description Its KYC, install progress, advance and commission.
+         */
+        get: operations["getMyCustomer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/my-customers/{customer_id}/documents/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                customer_id: components["parameters"]["CustomerId"];
+                kind: components["schemas"]["KycKind"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Send a clearer copy of a document the admin sent back
+         * @description The customer goes back to `in_review`.
+         */
+        put: operations["replaceCustomerDocument"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/my-install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The caller's own install with this company
+         * @description Customers only. Stages, the next visit and the payment plan.
+         */
+        get: operations["getMyInstall"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/my-install/payments/{payment_id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                payment_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The customer says they paid an instalment
+         * @description After paying by UPI or bank transfer. The company confirms it
+         *     (status `claimed` until then, `paid` after).
+         */
+        post: operations["claimInstallPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -340,7 +1086,15 @@ export interface components {
          * @example asha@example.com
          */
         Email: string;
-        /** Format: password */
+        /**
+         * @description Indian mobile number, 10 digits, without +91.
+         * @example 9876511223
+         */
+        Phone: string;
+        /**
+         * Format: password
+         * @description At least 8 characters, including a number.
+         */
         Password: string;
         /**
          * @description 6-digit code from the email.
@@ -351,6 +1105,7 @@ export interface components {
             /** @example Asha Example (illustrative) */
             name: string;
             email: components["schemas"]["Email"];
+            phone?: components["schemas"]["Phone"];
             password: components["schemas"]["Password"];
         };
         EmailRequest: {
@@ -397,22 +1152,36 @@ export interface components {
         };
         /** @enum {string} */
         OrgStatus: "pending" | "active" | "suspended";
-        /** @enum {string} */
-        Role: "org_admin" | "worker" | "agent";
+        /**
+         * @description `customer`: the company installs for this person; they follow the
+         *     install in the app.
+         * @enum {string}
+         */
+        Role: "org_admin" | "worker" | "agent" | "customer";
         Membership: {
             org: {
                 id: components["schemas"]["Id"];
                 /** @example Example Solar (illustrative) */
                 name: string;
                 status: components["schemas"]["OrgStatus"];
+                /** @description The company's number, for its people to call. */
+                phone?: components["schemas"]["Phone"];
             };
             role: components["schemas"]["Role"];
+            /**
+             * @description Agents (shown as Sales) only. `commission` agents enter a
+             *     commission on each customer they add; `salary` employees have
+             *     no commission step.
+             * @enum {string}
+             */
+            pay_type?: "commission" | "salary";
         };
         Me: {
             id: components["schemas"]["Id"];
             /** @example Asha Example (illustrative) */
             name: string;
             email: components["schemas"]["Email"];
+            phone?: components["schemas"]["Phone"];
             email_verified: boolean;
             is_platform_admin: boolean;
             memberships: components["schemas"]["Membership"][];
@@ -441,6 +1210,863 @@ export interface components {
             email: components["schemas"]["Email"];
             role: components["schemas"]["Role"];
         };
+        AccessRequestCreate: {
+            /** @example Example Solar Pvt. Ltd. (illustrative) */
+            company_name: string;
+            owner_name: string;
+            phone: components["schemas"]["Phone"];
+            /** @example Jaipur */
+            city: string;
+            email: components["schemas"]["Email"];
+        };
+        Invite: {
+            id: components["schemas"]["Id"];
+            org: {
+                id: components["schemas"]["Id"];
+                /** @example Example Solar (illustrative) */
+                name: string;
+            };
+            role: components["schemas"]["Role"];
+            /**
+             * @description Name of the admin who sent it.
+             * @example Dev Example (illustrative)
+             */
+            invited_by: string;
+            invited_at: components["schemas"]["Timestamp"];
+        };
+        InviteList: {
+            items: components["schemas"]["Invite"][];
+        };
+        /** @enum {string} */
+        QuoteFor: "home" | "business" | "farm";
+        /**
+         * @description Monthly electricity bill, in rupees.
+         * @enum {string}
+         */
+        BillBand: "under_1500" | "from_1500_to_3000" | "from_3000_to_6000" | "over_6000";
+        /** @enum {string} */
+        RoofType: "rcc" | "tin_shed" | "other";
+        /** @enum {string} */
+        QuoteTimeline: "this_month" | "in_1_to_3_months" | "exploring";
+        QuoteRequestCreate: {
+            quote_for: components["schemas"]["QuoteFor"];
+            /** @example 160055 */
+            pin_code: string;
+            /** @example Mohali */
+            city: string;
+            bill_band: components["schemas"]["BillBand"];
+            roof: components["schemas"]["RoofType"];
+            timeline: components["schemas"]["QuoteTimeline"];
+            phone?: components["schemas"]["Phone"];
+            /**
+             * @description The person agrees to be contacted. Must be true; anything else
+             *     is 422 `quote.consent_required`.
+             */
+            share_consent: boolean;
+        };
+        QuoteEstimate: {
+            /** @example 4 */
+            kw_min: number;
+            /** @example 5 */
+            kw_max: number;
+            price_min: components["schemas"]["Money"];
+            price_max: components["schemas"]["Money"];
+            subsidy_max: components["schemas"]["Money"];
+        };
+        /**
+         * @example {
+         *       "id": "01928f6e-0000-7000-8000-0000000000c1",
+         *       "status": "open",
+         *       "created_at": "2026-10-21T10:30:00Z",
+         *       "estimate": {
+         *         "kw_min": 4,
+         *         "kw_max": 5,
+         *         "price_min": 24000000,
+         *         "price_max": 29000000,
+         *         "subsidy_max": 7800000
+         *       }
+         *     }
+         */
+        QuoteRequest: {
+            id: components["schemas"]["Id"];
+            /** @enum {string} */
+            status: "open" | "accepted" | "closed";
+            created_at: components["schemas"]["Timestamp"];
+            estimate: components["schemas"]["QuoteEstimate"];
+        };
+        /**
+         * @description A status colour: success (done), warning (due), danger (needs a
+         *     fix), neutral (waiting, booked), live (now, current), empty (to
+         *     come).
+         * @enum {string}
+         */
+        HomeTone: "success" | "warning" | "danger" | "neutral" | "live" | "empty";
+        /**
+         * @description A row's or avatar's picture: one of `image` (a URL, or
+         *     `asset:<name>` in sample data), `initials`, or `glyph` (a drawn
+         *     document or the rupee).
+         */
+        HomeVisual: {
+            image?: string;
+            initials?: string;
+            /** @enum {string} */
+            glyph?: "card" | "bill" | "passbook" | "rupee";
+        };
+        HomeStatus: {
+            label: string;
+            tone: components["schemas"]["HomeTone"];
+        };
+        HomeRow: components["schemas"]["HomeVisual"] & {
+            id: string;
+            title: string;
+            detail: string;
+            status?: components["schemas"]["HomeStatus"];
+            /**
+             * @description What tapping it opens: `task` or `customer` (the row's id),
+             *     `documents` or `track`. None: nothing.
+             */
+            action?: string;
+        };
+        HomeTile: {
+            label: string;
+            value: string;
+            /**
+             * @description An icon name from the app's set.
+             * @enum {string}
+             */
+            icon?: "camera" | "receipt" | "alarm" | "hourglass" | "shield" | "wallet" | "sun" | "users";
+            footer?: string;
+            /** @default false */
+            dark: boolean;
+            avatars?: components["schemas"]["HomeVisual"][];
+            /** @description What tapping it opens, if anything. */
+            action?: string;
+        };
+        HomeDay: {
+            day: string;
+            date: number;
+            /** @default false */
+            today: boolean;
+            dots: ("done" | "live" | "planned")[];
+        };
+        HomeSegment: {
+            weight: number;
+            tone: components["schemas"]["HomeTone"];
+            /** @description For the legend. */
+            label?: string;
+        };
+        HomeProgress: {
+            label: string;
+            trailing?: string;
+            segments: components["schemas"]["HomeSegment"][];
+            /** @description Names spread under the bar. */
+            stages?: string[];
+            /**
+             * @description Shows each segment's label with a dot under the bar.
+             * @default false
+             */
+            legend: boolean;
+        };
+        HomeEnergy: {
+            now_kw: number;
+            today_kwh: number;
+            /** @example 06:12 */
+            sunrise: string;
+            /** @example 17:41 */
+            sunset: string;
+            day_progress: number;
+            /** @description kWh per daylight hour, from sunrise. */
+            hours: number[];
+            now_index: number;
+        };
+        HomeSummary: {
+            /** @description Shows a dot on the bell when above zero. */
+            unread_notifications?: number;
+            eyebrow: string;
+            title: string;
+            headline?: {
+                value: string;
+                label: string;
+                detail?: string;
+            };
+            week?: components["schemas"]["HomeDay"][];
+            energy?: components["schemas"]["HomeEnergy"];
+            tiles: components["schemas"]["HomeTile"][];
+            progress?: components["schemas"]["HomeProgress"];
+            list: {
+                title?: string;
+                rows: components["schemas"]["HomeRow"][];
+            };
+        };
+        UploadCreate: {
+            /** @enum {string} */
+            content_type: "image/jpeg" | "image/png" | "application/pdf";
+            size_bytes: number;
+            /**
+             * @description `proof`: a task's photo from the live camera.
+             * @enum {string}
+             */
+            purpose: "receipt" | "kyc" | "proof";
+        };
+        Upload: {
+            upload_id: components["schemas"]["Id"];
+            /**
+             * Format: uri
+             * @example https://uploads.mock.invalid/01928f6e
+             */
+            url: string;
+            /** @enum {string} */
+            method: "PUT";
+            headers: {
+                [key: string]: string;
+            };
+            expires_at: components["schemas"]["Timestamp"];
+        };
+        /** @enum {string} */
+        ExpenseCategory: "fuel" | "material" | "labour" | "other";
+        /**
+         * @description `paid`: approved and paid out (with salary or cash).
+         * @enum {string}
+         */
+        ExpenseStatus: "in_review" | "approved" | "needs_fix" | "paid";
+        ExpenseCreate: {
+            amount: components["schemas"]["Money"];
+            category: components["schemas"]["ExpenseCategory"];
+            note: string;
+            /** Format: date */
+            spent_on: string;
+            receipt_upload_id?: components["schemas"]["Id"];
+            /** @description The task it was spent on, if any. */
+            task_id?: components["schemas"]["Id"];
+        };
+        Expense: {
+            id: components["schemas"]["Id"];
+            /** @example EXP-2291 */
+            reference: string;
+            amount: components["schemas"]["Money"];
+            category: components["schemas"]["ExpenseCategory"];
+            note: string;
+            /** Format: date */
+            spent_on: string;
+            status: components["schemas"]["ExpenseStatus"];
+            has_receipt: boolean;
+            /** @description Why it needs a fix. */
+            admin_note?: string;
+            /** @description Who decided, when someone has. */
+            admin_name?: string;
+            task?: components["schemas"]["TaskRef"];
+            /** @description Short-lived link to the receipt photo; `asset:<name>` in sample data. */
+            receipt_url?: string;
+        };
+        /**
+         * @example {
+         *       "page": {
+         *         "next_cursor": null
+         *       },
+         *       "items": [
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-0000000000f1",
+         *           "reference": "EXP-2291",
+         *           "amount": 124000,
+         *           "category": "fuel",
+         *           "note": "Diesel for site van",
+         *           "spent_on": "2026-10-23",
+         *           "status": "in_review",
+         *           "has_receipt": true,
+         *           "receipt_url": "asset:thumb-meter",
+         *           "task": {
+         *             "id": "01928f6e-0000-7000-8000-000000000a01",
+         *             "title": "Panel installation",
+         *             "customer_name": "Ramesh Sahoo (illustrative)"
+         *           }
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-0000000000f3",
+         *           "reference": "EXP-2274",
+         *           "amount": 20000,
+         *           "category": "other",
+         *           "note": "Food",
+         *           "spent_on": "2026-10-20",
+         *           "status": "needs_fix",
+         *           "has_receipt": true,
+         *           "receipt_url": "asset:thumb-meter",
+         *           "admin_note": "Receipt photo is unreadable. Upload a clearer one or add a note.",
+         *           "admin_name": "Rajeeb Kumar (illustrative)",
+         *           "task": {
+         *             "id": "01928f6e-0000-7000-8000-000000000a09",
+         *             "title": "Panel installation",
+         *             "customer_name": "Sunita Rao (illustrative)"
+         *           }
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-0000000000f2",
+         *           "reference": "EXP-2287",
+         *           "amount": 86000,
+         *           "category": "material",
+         *           "note": "MC4 connectors",
+         *           "spent_on": "2026-10-20",
+         *           "status": "approved",
+         *           "has_receipt": true,
+         *           "receipt_url": "asset:thumb-meter"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-0000000000f4",
+         *           "reference": "EXP-2260",
+         *           "amount": 110000,
+         *           "category": "fuel",
+         *           "note": "Kharar site",
+         *           "spent_on": "2026-10-18",
+         *           "status": "paid",
+         *           "has_receipt": true,
+         *           "receipt_url": "asset:thumb-meter"
+         *         }
+         *       ]
+         *     }
+         */
+        ExpensePage: {
+            items: components["schemas"]["Expense"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        /** @enum {string} */
+        ConnectionType: "residential" | "commercial" | "industrial";
+        /** @enum {string} */
+        KycKind: "aadhaar" | "pan" | "electricity_bill" | "bank_proof" | "roof_photo";
+        CustomerRegistrationCreate: {
+            name: string;
+            phone: components["schemas"]["Phone"];
+            email: components["schemas"]["Email"];
+            address: string;
+            city: string;
+            pin_code: string;
+            state: string;
+            discom: string;
+            consumer_number: string;
+            sanctioned_load_kw: number;
+            connection_type: components["schemas"]["ConnectionType"];
+            proposed_kw: number;
+            roof: components["schemas"]["RoofType"];
+            /** @description Apply for PM Surya Ghar. */
+            subsidy: boolean;
+            documents: {
+                kind: components["schemas"]["KycKind"];
+                upload_id: components["schemas"]["Id"];
+            }[];
+            /** @description The customer agreed to share these with the company. Must be true. */
+            consent: boolean;
+            /**
+             * @description Commission agents only (422 `registration.commission_not_allowed`
+             *     for salaried ones). The admin approves or changes it.
+             */
+            commission?: components["schemas"]["Money"];
+            /** @description How the agent worked it out. */
+            commission_note?: string;
+        };
+        CustomerRegistration: {
+            id: components["schemas"]["Id"];
+            /** @example SC-1042 */
+            reference: string;
+            /** @enum {string} */
+            status: "submitted" | "verified" | "rejected";
+        };
+        /**
+         * @description `assigned`: to do (may have an open `problem`). `submitted`: with
+         *     the admin. `returned`: the admin asked for changes. `approved` and
+         *     `cancelled` are final.
+         * @enum {string}
+         */
+        TaskStatus: "assigned" | "submitted" | "returned" | "approved" | "cancelled";
+        Person: {
+            name: string;
+            /** @description Shown after the name, e.g. "Admin". */
+            role?: string;
+            /**
+             * @description The caller.
+             * @default false
+             */
+            you: boolean;
+        };
+        TaskRef: {
+            id: components["schemas"]["Id"];
+            title: string;
+            customer_name: string;
+        };
+        TaskSummary: {
+            id: components["schemas"]["Id"];
+            /** @example TSK-0418 */
+            reference: string;
+            /** @description The work, e.g. "Panel installation". */
+            title: string;
+            status: components["schemas"]["TaskStatus"];
+            due_at: components["schemas"]["Timestamp"];
+            customer_name: string;
+            /** @description A picture for the row; `asset:<name>` in sample data. */
+            image?: string;
+            /** @description From the caller's last known position, when known. */
+            distance_km?: number;
+            /** @description When the status last changed. */
+            status_at?: components["schemas"]["Timestamp"];
+            /** @default false */
+            has_problem: boolean;
+        };
+        /**
+         * @example {
+         *       "items": [
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000a01",
+         *           "reference": "TSK-0418",
+         *           "title": "Panel installation",
+         *           "status": "assigned",
+         *           "due_at": "2026-10-23T04:00:00Z",
+         *           "customer_name": "Ramesh Sahoo (illustrative)",
+         *           "image": "asset:thumb-install"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000a02",
+         *           "reference": "TSK-0415",
+         *           "title": "Earthing",
+         *           "status": "returned",
+         *           "due_at": "2026-10-23T05:00:00Z",
+         *           "customer_name": "Anil Mehta (illustrative)",
+         *           "image": "asset:thumb-survey",
+         *           "status_at": "2026-10-23T06:50:00Z"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000a03",
+         *           "reference": "TSK-0420",
+         *           "title": "Wiring",
+         *           "status": "assigned",
+         *           "due_at": "2026-10-23T07:30:00Z",
+         *           "customer_name": "Priya Nair (illustrative)",
+         *           "image": "asset:thumb-inverter",
+         *           "distance_km": 7.8
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000a04",
+         *           "reference": "TSK-0411",
+         *           "title": "Net meter",
+         *           "status": "submitted",
+         *           "due_at": "2026-10-23T05:30:00Z",
+         *           "customer_name": "Kiran Patel (illustrative)",
+         *           "image": "asset:thumb-meter",
+         *           "status_at": "2026-10-23T05:32:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "next_cursor": null
+         *       }
+         *     }
+         */
+        TaskPage: {
+            items: components["schemas"]["TaskSummary"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        ProofPhoto: {
+            /** @description Short-lived link to the photo; `asset:<name>` in sample data. */
+            url: string;
+            taken_at: components["schemas"]["Timestamp"];
+            lat?: number;
+            lng?: number;
+            accuracy_m?: number;
+        };
+        ProofSlot: {
+            id: string;
+            /** @example Clamp close-up */
+            label: string;
+            /** @example Fit one clamp in the frame, bolt visible */
+            hint?: string;
+            photo?: components["schemas"]["ProofPhoto"];
+            /**
+             * @description The admin asked for this one again.
+             * @default false
+             */
+            retake: boolean;
+        };
+        ChecklistItem: {
+            id: string;
+            text: string;
+            done: boolean;
+        };
+        TaskNote: {
+            text: string;
+            by: components["schemas"]["Person"];
+            at: components["schemas"]["Timestamp"];
+        };
+        /** @enum {string} */
+        TaskProblemReason: "customer_away" | "material_missing" | "bad_weather" | "site_not_ready" | "safety" | "other";
+        TaskProblem: {
+            reason: components["schemas"]["TaskProblemReason"];
+            note: string;
+            at: components["schemas"]["Timestamp"];
+        };
+        TaskProblemCreate: {
+            reason: components["schemas"]["TaskProblemReason"];
+            note: string;
+            /** @description An optional photo (purpose `proof`). */
+            upload_id?: components["schemas"]["Id"];
+        };
+        Task: {
+            id: components["schemas"]["Id"];
+            reference: string;
+            title: string;
+            status: components["schemas"]["TaskStatus"];
+            due_at: components["schemas"]["Timestamp"];
+            /** @description The customer's install stage this task finishes (1-based). */
+            stage: {
+                index: number;
+                count: number;
+            };
+            assigned_by?: components["schemas"]["Person"];
+            customer: {
+                name: string;
+                system_kw?: number;
+                address: string;
+                phone?: components["schemas"]["Phone"];
+                lat?: number;
+                lng?: number;
+            };
+            admin_note?: components["schemas"]["TaskNote"];
+            photos: components["schemas"]["ProofSlot"][];
+            checklist: components["schemas"]["ChecklistItem"][];
+            submitted_at?: components["schemas"]["Timestamp"];
+            worker_note?: string;
+            /** @description Why the admin sent it back. */
+            returned?: components["schemas"]["TaskNote"];
+            /** @description An open problem the caller reported. */
+            problem?: components["schemas"]["TaskProblem"];
+            cancelled?: components["schemas"]["TaskNote"];
+            approved?: {
+                by: components["schemas"]["Person"];
+                at: components["schemas"]["Timestamp"];
+                next_task?: components["schemas"]["TaskSummary"];
+            };
+        };
+        ProofPhotoCreate: {
+            slot_id: string;
+            upload_id: components["schemas"]["Id"];
+            taken_at: components["schemas"]["Timestamp"];
+            lat: number;
+            lng: number;
+            accuracy_m: number;
+            /**
+             * @description The phone reported a mocked (fake) location.
+             * @default false
+             */
+            mocked_location: boolean;
+        };
+        TaskEvent: {
+            /** @enum {string} */
+            kind: "assigned" | "photos_uploaded" | "submitted" | "resubmitted" | "returned" | "approved" | "problem_reported" | "rescheduled" | "reassigned" | "cancelled" | "message";
+            actor: components["schemas"]["Person"];
+            at: components["schemas"]["Timestamp"];
+            /** @description A line under the event, e.g. the admin's words. */
+            detail?: string;
+        };
+        /**
+         * @example {
+         *       "events": [
+         *         {
+         *           "kind": "approved",
+         *           "actor": {
+         *             "name": "Rajeeb Kumar (illustrative)"
+         *           },
+         *           "at": "2026-10-23T07:18:00Z",
+         *           "detail": "Moved to Stage 4"
+         *         },
+         *         {
+         *           "kind": "resubmitted",
+         *           "actor": {
+         *             "name": "You",
+         *             "you": true
+         *           },
+         *           "at": "2026-10-23T07:01:00Z",
+         *           "detail": "Clamp close-up retaken"
+         *         },
+         *         {
+         *           "kind": "returned",
+         *           "actor": {
+         *             "name": "Rajeeb Kumar (illustrative)"
+         *           },
+         *           "at": "2026-10-23T06:40:00Z",
+         *           "detail": "Clamp close-up is blurry. Take it again with the bolt in focus."
+         *         },
+         *         {
+         *           "kind": "submitted",
+         *           "actor": {
+         *             "name": "You",
+         *             "you": true
+         *           },
+         *           "at": "2026-10-23T06:12:00Z",
+         *           "detail": "4 photos · checklist done · note added"
+         *         },
+         *         {
+         *           "kind": "photos_uploaded",
+         *           "actor": {
+         *             "name": "You",
+         *             "you": true
+         *           },
+         *           "at": "2026-10-23T04:35:00Z",
+         *           "detail": "GPS: Sector 70, Mohali"
+         *         },
+         *         {
+         *           "kind": "assigned",
+         *           "actor": {
+         *             "name": "Rajeeb Kumar (illustrative)"
+         *           },
+         *           "at": "2026-10-22T12:35:00Z",
+         *           "detail": "Due Thu 23 Oct, 9:30"
+         *         }
+         *       ]
+         *     }
+         */
+        TaskHistory: {
+            events: components["schemas"]["TaskEvent"][];
+        };
+        Notification: {
+            id: components["schemas"]["Id"];
+            /** @enum {string} */
+            kind: "task_assigned" | "task_approved" | "task_returned" | "task_cancelled" | "task_rescheduled" | "expense_approved" | "expense_returned" | "expense_paid" | "kyc_returned" | "kyc_submitted" | "kyc_approved" | "install_started" | "commission_changed" | "commission_payable" | "commission_paid" | "visit_booked" | "payment_due" | "documents_verified" | "quote_shared" | "invite_received" | "guide";
+            title: string;
+            body: string;
+            at: components["schemas"]["Timestamp"];
+            read: boolean;
+            task_id?: components["schemas"]["Id"];
+            expense_id?: components["schemas"]["Id"];
+            /** @description One of the caller's customers (Sales). */
+            customer_id?: components["schemas"]["Id"];
+        };
+        /**
+         * @example {
+         *       "unread_count": 3,
+         *       "page": {
+         *         "next_cursor": null
+         *       },
+         *       "items": [
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b01",
+         *           "kind": "task_approved",
+         *           "title": "Stage 3 approved",
+         *           "body": "Ramesh Sahoo (illustrative) moved to Wiring and inverter",
+         *           "at": "2026-10-23T07:18:00Z",
+         *           "read": false,
+         *           "task_id": "01928f6e-0000-7000-8000-000000000a05"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b02",
+         *           "kind": "task_returned",
+         *           "title": "Photo retake asked",
+         *           "body": "Anil Mehta (illustrative) · Earthing: “Earth pit photo is too dark.”",
+         *           "at": "2026-10-23T06:50:00Z",
+         *           "read": false,
+         *           "task_id": "01928f6e-0000-7000-8000-000000000a02"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b03",
+         *           "kind": "task_assigned",
+         *           "title": "New task assigned",
+         *           "body": "Ramesh Sahoo (illustrative) · Wiring and inverter · Fri 10:00",
+         *           "at": "2026-10-23T07:18:00Z",
+         *           "read": false,
+         *           "task_id": "01928f6e-0000-7000-8000-000000000a06"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b04",
+         *           "kind": "expense_approved",
+         *           "title": "Expense approved",
+         *           "body": "Material · ₹860 · paid with salary",
+         *           "at": "2026-10-23T04:45:00Z",
+         *           "read": true,
+         *           "expense_id": "01928f6e-0000-7000-8000-0000000000f2"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b05",
+         *           "kind": "task_cancelled",
+         *           "title": "Task cancelled",
+         *           "body": "Anil Mehta (illustrative) · Structure · customer postponed",
+         *           "at": "2026-10-21T10:10:00Z",
+         *           "read": true,
+         *           "task_id": "01928f6e-0000-7000-8000-000000000a07"
+         *         },
+         *         {
+         *           "id": "01928f6e-0000-7000-8000-000000000b06",
+         *           "kind": "task_rescheduled",
+         *           "title": "Task rescheduled",
+         *           "body": "Gurpreet Kaur (illustrative) · Site survey moved to Mon 27 Oct",
+         *           "at": "2026-10-20T09:00:00Z",
+         *           "read": true,
+         *           "task_id": "01928f6e-0000-7000-8000-000000000a08"
+         *         }
+         *       ]
+         *     }
+         */
+        NotificationPage: {
+            items: components["schemas"]["Notification"][];
+            unread_count: number;
+            page: components["schemas"]["PageInfo"];
+        };
+        /**
+         * @example {
+         *       "tasks_this_month": 23,
+         *       "returned_this_month": 2,
+         *       "avg_minutes_on_site": 288
+         *     }
+         */
+        WorkerStats: {
+            tasks_this_month: number;
+            returned_this_month: number;
+            avg_minutes_on_site: number;
+        };
+        PayoutBank: {
+            holder?: string;
+            /** @description Sent to change it; never returned. */
+            account_number?: string;
+            readonly account_last4?: string;
+            ifsc?: string;
+            readonly bank_name?: string;
+        };
+        PersonalDetails: {
+            phone?: components["schemas"]["Phone"];
+            address?: string;
+            emergency_contact?: string;
+            bank?: components["schemas"]["PayoutBank"];
+        };
+        /**
+         * @example {
+         *       "push": true,
+         *       "whatsapp": true,
+         *       "sound": false,
+         *       "language": "en"
+         *     }
+         */
+        Settings: {
+            /** @description Push notifications for new work, approvals and returns. */
+            push: boolean;
+            /** @description A daily WhatsApp summary at 8 pm. */
+            whatsapp: boolean;
+            sound: boolean;
+            /** @enum {string} */
+            language: "en" | "hi" | "pa";
+        };
+        /** @enum {string} */
+        DocumentStatus: "verified" | "in_review" | "needs_fix";
+        MyDocument: {
+            kind: components["schemas"]["KycKind"];
+            detail?: string;
+            status: components["schemas"]["DocumentStatus"];
+        };
+        MyDocumentList: {
+            items: components["schemas"]["MyDocument"][];
+            /** @description The agent who collected a customer's KYC. */
+            uploaded_by?: string;
+        };
+        /** @enum {string} */
+        KycStatus: "in_review" | "needs_fix" | "approved";
+        /**
+         * @description `approved` waits for the customer's advance; `payable` once it is
+         *     paid; `paid` when the admin pays it out.
+         * @enum {string}
+         */
+        CommissionStatus: "in_review" | "approved" | "payable" | "paid";
+        Commission: {
+            amount: components["schemas"]["Money"];
+            /** @description What the agent asked, when the admin changed it. */
+            proposed_amount?: components["schemas"]["Money"];
+            status: components["schemas"]["CommissionStatus"];
+            admin_note?: components["schemas"]["TaskNote"];
+            /** Format: date */
+            payable_since?: string;
+            /** Format: date */
+            paid_on?: string;
+        };
+        CustomerSummary: {
+            id: components["schemas"]["Id"];
+            name: string;
+            system_kw: number;
+            place: string;
+            kyc_status: components["schemas"]["KycStatus"];
+            /** @description One line on where it stands, composed by the server. */
+            detail: string;
+            sent_at: components["schemas"]["Timestamp"];
+            commission?: components["schemas"]["Commission"];
+        };
+        CustomerList: {
+            items: components["schemas"]["CustomerSummary"][];
+        };
+        CustomerDetail: {
+            id: components["schemas"]["Id"];
+            name: string;
+            phone: components["schemas"]["Phone"];
+            system_kw: number;
+            place: string;
+            kyc_status: components["schemas"]["KycStatus"];
+            detail: string;
+            sent_at: components["schemas"]["Timestamp"];
+            /** @description Once approved. */
+            stage?: {
+                index: number;
+                count: number;
+                label: string;
+            };
+            /** @description The document the admin sent back. */
+            returned?: {
+                kind: components["schemas"]["KycKind"];
+                title: string;
+                note: components["schemas"]["TaskNote"];
+            };
+            documents?: {
+                status: components["schemas"]["DocumentStatus"];
+                detail: string;
+            };
+            advance?: {
+                /** @enum {string} */
+                status: "due" | "paid";
+                /** Format: date */
+                paid_on?: string;
+            };
+            commission?: components["schemas"]["Commission"];
+        };
+        InstallStage: {
+            name: string;
+            detail?: string;
+            /** @enum {string} */
+            status: "done" | "next" | "upcoming";
+        };
+        InstallPayment: {
+            id: components["schemas"]["Id"];
+            label: string;
+            detail?: string;
+            amount: components["schemas"]["Money"];
+            /** Format: date */
+            due_on?: string;
+            /**
+             * @description `claimed`: the customer says they paid; the company confirms.
+             * @enum {string}
+             */
+            status: "due" | "claimed" | "paid" | "later";
+        };
+        Install: {
+            system_kw: number;
+            place: string;
+            stage_index: number;
+            stage_count: number;
+            total: components["schemas"]["Money"];
+            /** @description PM Surya Ghar, paid by the government to the customer. */
+            subsidy: components["schemas"]["Money"];
+            /** Format: date */
+            handed_over_on?: string;
+            /** @description Pays the payment that is due, through any UPI app. */
+            upi_uri?: string;
+            next_visit?: {
+                title: string;
+                starts_at: components["schemas"]["Timestamp"];
+                ends_at?: components["schemas"]["Timestamp"];
+                person: {
+                    name: string;
+                    phone?: components["schemas"]["Phone"];
+                };
+            };
+            stages: components["schemas"]["InstallStage"][];
+            payments: components["schemas"]["InstallPayment"][];
+        };
     };
     responses: {
         /** @description Error, as RFC 9457 problem details. */
@@ -454,6 +2080,10 @@ export interface components {
         };
     };
     parameters: {
+        CustomerId: components["schemas"]["Id"];
+        TaskId: components["schemas"]["Id"];
+        ExpenseId: components["schemas"]["Id"];
+        InviteId: components["schemas"]["Id"];
         /** @description The org the request is for; the caller needs a membership in it. */
         OrgId: components["schemas"]["Id"];
         /** @description Opaque cursor from the previous page's `next_cursor`. */
@@ -810,6 +2440,986 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    requestAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Received; MarkCliq will be in touch. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    listMyInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pending invites, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    acceptInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: components["parameters"]["InviteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Joined. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    declineInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: components["parameters"]["InviteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Declined; the company is told. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createQuoteRequest: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Sent. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteRequest"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getOrgHome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The home. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeSummary"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    createUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadCreate"];
+            };
+        };
+        responses: {
+            /** @description Ready for the file. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Upload"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listMyExpenses: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpensePage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    createExpense: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCreate"];
+            };
+        };
+        responses: {
+            /** @description Sent. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    submitCustomerRegistration: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerRegistrationCreate"];
+            };
+        };
+        responses: {
+            /** @description With the admin. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerRegistration"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listMyTasks: {
+        parameters: {
+            query: {
+                view: "today" | "upcoming" | "done";
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    addTaskPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProofPhotoCreate"];
+            };
+        };
+        responses: {
+            /** @description The task, updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    setTaskChecklistItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    done: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description The task, updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    submitTask: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Optional note for the admin. */
+                    note?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Submitted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    reportTaskProblem: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskProblemCreate"];
+            };
+        };
+        responses: {
+            /** @description Reported. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    sendTaskMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    text: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Sent. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getTaskHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                task_id: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The history. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskHistory"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getExpense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                expense_id: components["parameters"]["ExpenseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The expense. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    replaceExpenseReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                expense_id: components["parameters"]["ExpenseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    upload_id: components["schemas"]["Id"];
+                    note?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Back with the admin. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    markNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getMyStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description This month. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerStats"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getMyDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The details. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonalDetails"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    updateMyDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonalDetails"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonalDetails"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getMySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    updateMySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Settings"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    listMyNotifications: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    listMyDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The documents. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyDocumentList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listMyCustomers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The customers. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getMyCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                customer_id: components["parameters"]["CustomerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The customer. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetail"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    replaceCustomerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                customer_id: components["parameters"]["CustomerId"];
+                kind: components["schemas"]["KycKind"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    upload_id: components["schemas"]["Id"];
+                };
+            };
+        };
+        responses: {
+            /** @description With the admin again. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetail"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    getMyInstall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The install. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Install"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    claimInstallPayment: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The org the request is for; the caller needs a membership in it. */
+                org_id: components["parameters"]["OrgId"];
+                payment_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    method: "upi" | "bank_transfer";
+                };
+            };
+        };
+        responses: {
+            /** @description The install, with the payment claimed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Install"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
 }

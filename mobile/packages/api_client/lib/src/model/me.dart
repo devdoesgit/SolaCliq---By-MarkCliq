@@ -26,6 +26,8 @@ class Me {
 
     required this.email,
 
+    this.phone,
+
     required this.emailVerified,
 
     required this.isPlatformAdmin,
@@ -43,6 +45,10 @@ class Me {
   @JsonKey(name: r'email', required: true, includeIfNull: false)
   final String email;
 
+  /// Indian mobile number, 10 digits, without +91.
+  @JsonKey(name: r'phone', required: false, includeIfNull: false)
+  final String? phone;
+
   @JsonKey(name: r'email_verified', required: true, includeIfNull: false)
   final bool emailVerified;
 
@@ -57,11 +63,20 @@ class Me {
         other is Me &&
             runtimeType == other.runtimeType &&
             equals(
-              [id, name, email, emailVerified, isPlatformAdmin, memberships],
+              [
+                id,
+                name,
+                email,
+                phone,
+                emailVerified,
+                isPlatformAdmin,
+                memberships,
+              ],
               [
                 other.id,
                 other.name,
                 other.email,
+                other.phone,
                 other.emailVerified,
                 other.isPlatformAdmin,
                 other.memberships,
@@ -76,6 +91,7 @@ class Me {
         id,
         name,
         email,
+        phone,
         emailVerified,
         isPlatformAdmin,
         memberships,

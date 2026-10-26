@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solacliq/auth/auth.dart';
+import 'package:solacliq/workspace/data/workspace_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +54,22 @@ void main() {
       final store = SecureTokenStore();
       expect(await store.read(), isNull);
       expect(await store.read(), isNull);
+    });
+  });
+
+  group(SecureWorkspaceStore, () {
+    setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+    test('writes, reads and clears, apart from the login', () async {
+      final store = SecureWorkspaceStore();
+      final tokens = SecureTokenStore();
+      await tokens.write(session);
+      expect(await store.read(), isNull);
+      await store.write('o1:agent');
+      expect(await store.read(), 'o1:agent');
+      await store.clear();
+      expect(await store.read(), isNull);
+      expect(await tokens.read(), session);
     });
   });
 }

@@ -28,9 +28,13 @@ class AuthRepository {
   AuthStatus _status = const AuthUnknown();
   StoredSession? _session;
   Future<String?>? _refreshing;
+  DateTime? _accountCheckedAt;
 
   /// Refresh a little before the access token runs out.
   static const _expiryMargin = Duration(seconds: 30);
+
+  /// How often [refreshAccount] may ask the server again.
+  static const _accountMaxAge = Duration(minutes: 1);
 
   AuthStatus get status => _status;
   Stream<AuthStatus> get statusChanges => _statusController.stream;
@@ -51,10 +55,7 @@ class AuthRepository {
     } on AuthFailure catch (failure) {
       // Only the server rejecting the login ends it. No signal or a server
       // error keeps the person signed in with the cached account.
-      final rejected =
-          failure.code == AuthFailureCode.sessionExpired ||
-          failure.code == AuthFailureCode.invalidCredentials;
-      if (rejected) return await _endSession();
+      if (_isRejected(failure)) return await _endSession();
       if (cached == null) _emit(const AuthUnauthenticated());
     }
   }
@@ -63,12 +64,14 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
+    String? phone,
   }) => _call(
     () => _api.signup(
       signupRequest: api.SignupRequest(
         name: name,
         email: email,
         password: password,
+        phone: phone,
       ),
     ),
   );
@@ -118,8 +121,39 @@ class AuthRepository {
       throw const AuthFailure(AuthFailureCode.unknown);
     }
     _session = _sessionFrom(tokens).withAccount(_json(body.user));
+    _accountCheckedAt = _now();
     await _store.write(_session!);
     _emit(AuthAuthenticated(_toAccount(body.user)));
+  }
+
+  /// Re-reads the account, so a new membership, a removal or a suspended
+  /// company shows without logging out. At most once a minute unless
+  /// [force]. No signal or a server error is ignored; only the server
+  /// rejecting the login ends it.
+  Future<void> refreshAccount({bool force = false}) async {
+    if (_session == null) return;
+    final checked = _accountCheckedAt;
+    final now = _now();
+    if (!force && checked != null && now.difference(checked) < _accountMaxAge) {
+      return;
+    }
+    _accountCheckedAt = now;
+    try {
+      await _loadAccount();
+    } on AuthFailure catch (failure) {
+      if (_isRejected(failure)) await _endSession();
+    }
+  }
+
+  /// Takes an updated account the server returned (after accepting an
+  /// invite, say), so the app reflects it at once.
+  Future<void> applyAccount(api.Me me) async {
+    final session = _session;
+    if (session == null) return;
+    _accountCheckedAt = _now();
+    _session = session.withAccount(_json(me));
+    await _store.write(_session!);
+    _emit(AuthAuthenticated(_toAccount(me)));
   }
 
   /// Ends this login. Works offline: the server call is best effort.
@@ -173,13 +207,21 @@ class AuthRepository {
     final me = response.data;
     final session = _session;
     if (me == null || session == null) return;
+    _accountCheckedAt = _now();
     _session = session.withAccount(_json(me));
     await _store.write(_session!);
     _emit(AuthAuthenticated(_toAccount(me)));
   }
 
+  /// The server refused the login itself, as opposed to no signal or a
+  /// server error.
+  static bool _isRejected(AuthFailure failure) =>
+      failure.code == AuthFailureCode.sessionExpired ||
+      failure.code == AuthFailureCode.invalidCredentials;
+
   Future<void> _endSession() async {
     _session = null;
+    _accountCheckedAt = null;
     await _store.clear();
     _emit(const AuthUnauthenticated());
   }
@@ -211,6 +253,7 @@ class AuthRepository {
     id: me.id,
     name: me.name,
     email: me.email,
+    phone: me.phone,
     isPlatformAdmin: me.isPlatformAdmin,
     memberships: [
       for (final m in me.memberships)
@@ -226,7 +269,14 @@ class AuthRepository {
             api.Role.orgAdmin => OrgRole.orgAdmin,
             api.Role.worker => OrgRole.worker,
             api.Role.agent => OrgRole.agent,
+            api.Role.customer => OrgRole.customer,
           },
+          payType: switch (m.payType) {
+            api.MembershipPayTypeEnum.commission => PayType.commission,
+            api.MembershipPayTypeEnum.salary => PayType.salary,
+            _ => m.role == api.Role.agent ? PayType.commission : null,
+          },
+          orgPhone: m.org.phone,
         ),
     ],
   );

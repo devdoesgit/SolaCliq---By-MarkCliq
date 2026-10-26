@@ -21,16 +21,16 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F0 | Foundation | building |
 | F1 | Accounts and login | building |
 | F2 | Org signup, GSTIN autofill, platform approval | planned |
-| F3 | Team: org admin creates worker and agent accounts | building |
-| F4 | Customers and install stages | planned |
+| F3 | Team: org admin creates worker and agent accounts | building (mobile done) |
+| F4 | Customers and install stages | building (Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |
 | F5 | Documents | planned |
-| F6 | Worker jobs and geotagged installation photos | planned |
-| F7 | Expenses and the approvals queue | planned |
-| F8 | Agent commission | planned |
-| F9 | Customer app: stage, cost breakdown, payments | planned |
+| F6 | Worker jobs and geotagged installation photos | building (worker screens on the mock; spec and endpoints await owner review) |
+| F7 | Expenses and the approvals queue | building (worker: log, sent, list, detail, replace receipt; spec to write) |
+| F8 | Agent commission | building (mobile: commission on review, earnings, payout bank; endpoints await owner review) |
+| F9 | Customer app: stage, cost breakdown, payments | building (mobile: track, payments with UPI or bank claim, documents; endpoints await owner review) |
 | F10 | Customer linking | planned |
 | F11 | Referrals | planned |
-| F12 | Notifications | planned |
+| F12 | Notifications | building (in-app lists for every role and Personal; settings; spec to write) |
 | F13 | Distribution and updates | planned |
 | F14 | Platform admin: suspend, support access | planned |
 

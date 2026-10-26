@@ -29,3 +29,32 @@ String groupIndian(String digits) {
   }
   return '${groups.join(',')},$tail';
 }
+
+/// Formats paise as whole rupees, for estimates and headline figures where
+/// paise would be noise: `₹78,000`. Rounds to the nearest rupee.
+String formatRupees(int paise) {
+  final rupees = (paise / 100).round();
+  final sign = rupees < 0 ? minusSign : '';
+  return '$sign₹${groupIndian(rupees.abs().toString())}';
+}
+
+/// Paise in lakh of rupees with at most one decimal, for price ranges:
+/// 24000000 → `2.4`, 30000000 → `3`.
+String formatLakh(int paise) {
+  final tenths = (paise / 1000000).round();
+  final whole = tenths ~/ 10;
+  final rest = tenths % 10;
+  return rest == 0 ? '$whole' : '$whole.$rest';
+}
+
+/// Paise as thousands of rupees with at most one decimal, for small
+/// figures in tight places: 400000 → `₹4k`, 410000 → `₹4.1k`, 50000 →
+/// `₹500`.
+String formatThousands(int paise) {
+  final rupees = (paise / 100).round();
+  if (rupees.abs() < 1000) return formatRupees(paise);
+  final tenths = (rupees / 100).round();
+  final whole = tenths ~/ 10;
+  final rest = tenths % 10;
+  return rest == 0 ? '₹${whole}k' : '₹$whole.${rest}k';
+}

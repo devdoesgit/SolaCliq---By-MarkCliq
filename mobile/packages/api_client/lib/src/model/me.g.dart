@@ -13,6 +13,8 @@ abstract class _$MeCWProxy {
 
   Me email(String email);
 
+  Me phone(String? phone);
+
   Me emailVerified(bool emailVerified);
 
   Me isPlatformAdmin(bool isPlatformAdmin);
@@ -29,6 +31,7 @@ abstract class _$MeCWProxy {
     String id,
     String name,
     String email,
+    String? phone,
     bool emailVerified,
     bool isPlatformAdmin,
     List<Membership> memberships,
@@ -49,6 +52,9 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
 
   @override
   Me email(String email) => this(email: email);
+
+  @override
+  Me phone(String? phone) => this(phone: phone);
 
   @override
   Me emailVerified(bool emailVerified) => this(emailVerified: emailVerified);
@@ -72,6 +78,7 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
     Object? id = const $CopyWithPlaceholder(),
     Object? name = const $CopyWithPlaceholder(),
     Object? email = const $CopyWithPlaceholder(),
+    Object? phone = const $CopyWithPlaceholder(),
     Object? emailVerified = const $CopyWithPlaceholder(),
     Object? isPlatformAdmin = const $CopyWithPlaceholder(),
     Object? memberships = const $CopyWithPlaceholder(),
@@ -89,6 +96,10 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
           ? _value.email
           // ignore: cast_nullable_to_non_nullable
           : email as String,
+      phone: phone == const $CopyWithPlaceholder()
+          ? _value.phone
+          // ignore: cast_nullable_to_non_nullable
+          : phone as String?,
       emailVerified: emailVerified == const $CopyWithPlaceholder()
           ? _value.emailVerified
           // ignore: cast_nullable_to_non_nullable
@@ -134,6 +145,7 @@ Me _$MeFromJson(Map<String, dynamic> json) => $checkedCreate(
       id: $checkedConvert('id', (v) => v as String),
       name: $checkedConvert('name', (v) => v as String),
       email: $checkedConvert('email', (v) => v as String),
+      phone: $checkedConvert('phone', (v) => v as String?),
       emailVerified: $checkedConvert('email_verified', (v) => v as bool),
       isPlatformAdmin: $checkedConvert('is_platform_admin', (v) => v as bool),
       memberships: $checkedConvert(
@@ -155,6 +167,7 @@ Map<String, dynamic> _$MeToJson(Me instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
   'email': instance.email,
+  'phone': ?instance.phone,
   'email_verified': instance.emailVerified,
   'is_platform_admin': instance.isPlatformAdmin,
   'memberships': instance.memberships.map((e) => e.toJson()).toList(),

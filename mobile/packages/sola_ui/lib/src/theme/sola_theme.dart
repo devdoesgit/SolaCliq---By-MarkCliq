@@ -2,114 +2,90 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/src/theme/sola_text.dart';
 import 'package:sola_ui/src/tokens/tokens.g.dart';
 
-/// The SolaCliq [ThemeData]: flat, square, rust red on warm paper.
-///
-/// Matches markcliq.com: Space Grotesk and Space Mono (bundled), square
-/// corners, 1px rules, no shadows. Light only for now. Material widgets not
-/// wrapped by `sola_ui` still pick up the tokens here.
+/// The SolaCliq [ThemeData], iOS v2: warm cream, white cards with soft
+/// shadows, one sun-yellow accent. Screens draw with `sola_ui` widgets;
+/// this theme makes any Material widget they don't wrap match.
 abstract final class SolaTheme {
   /// The light theme.
   static ThemeData light() {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: SolaColors.accent,
-      onPrimary: SolaColors.onAccent,
-      primaryContainer: SolaColors.accentTint,
+      primary: SolaColors.brown,
+      onPrimary: SolaColors.cream,
+      primaryContainer: SolaColors.sun,
       onPrimaryContainer: SolaColors.ink,
-      secondary: SolaColors.ink,
-      onSecondary: SolaColors.surface,
+      secondary: SolaColors.sun,
+      onSecondary: SolaColors.ink,
       error: SolaColors.danger,
       onError: SolaColors.surface,
       errorContainer: SolaColors.dangerTint,
       onErrorContainer: SolaColors.danger,
-      surface: SolaColors.surface,
+      surface: SolaColors.cream,
       onSurface: SolaColors.ink,
-      onSurfaceVariant: SolaColors.inkMuted,
+      onSurfaceVariant: SolaColors.muted,
       surfaceContainerLowest: SolaColors.surface,
-      surfaceContainerLow: SolaColors.surface,
-      surfaceContainer: SolaColors.surfaceSunken,
-      surfaceContainerHigh: SolaColors.surfaceSunken,
-      surfaceContainerHighest: SolaColors.surfaceSunken,
-      outline: SolaColors.lineStrong,
+      surfaceContainerLow: SolaColors.cream,
+      surfaceContainer: SolaColors.cream,
+      surfaceContainerHigh: SolaColors.creamDeep,
+      surfaceContainerHighest: SolaColors.tan,
+      outline: SolaColors.dashed,
       outlineVariant: SolaColors.line,
-      shadow: Color(0x00000000),
-      scrim: Color(0x66000000),
+      shadow: SolaColors.brown,
+      scrim: Color(0x591E1612),
       surfaceTint: Color(0x00000000),
     );
-
-    const square = RoundedRectangleBorder();
 
     return ThemeData(
       useMaterial3: true,
       fontFamily: solaSansFontFamily,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: SolaColors.surface,
-      canvasColor: SolaColors.surface,
-      // Flat: tap feedback is a colour change, not a ripple.
+      scaffoldBackgroundColor: SolaColors.cream,
+      canvasColor: SolaColors.cream,
       splashFactory: NoSplash.splashFactory,
-      highlightColor: SolaColors.surfaceSunken,
-      hoverColor: SolaColors.surfaceSunken,
+      highlightColor: SolaColors.tan,
+      hoverColor: SolaColors.tan,
       focusColor: const Color(0x00000000),
       materialTapTargetSize: MaterialTapTargetSize.padded,
       textTheme: TextTheme(
-        displaySmall: SolaTextStyle.display.textStyle(),
-        headlineMedium: SolaTextStyle.h1.textStyle(),
-        titleLarge: SolaTextStyle.h2.textStyle(),
-        titleMedium: SolaTextStyle.title.textStyle(),
-        bodyLarge: SolaTextStyle.body.textStyle(),
+        headlineMedium: SolaTextStyle.title.textStyle(),
+        titleLarge: SolaTextStyle.section.textStyle(),
+        titleMedium: SolaTextStyle.rowTitle.textStyle(),
+        bodyLarge: SolaTextStyle.bodyLg.textStyle(),
         bodyMedium: SolaTextStyle.body.textStyle(),
-        bodySmall: SolaTextStyle.bodySm.textStyle(color: SolaColors.inkMuted),
+        bodySmall: SolaTextStyle.meta.textStyle(color: SolaColors.muted),
         labelLarge: SolaTextStyle.button.textStyle(),
-        labelSmall: SolaTextStyle.label.textStyle(),
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: SolaColors.surface,
-        foregroundColor: SolaColors.ink,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: const Color(0x00000000),
-        centerTitle: false,
-        titleTextStyle: SolaTextStyle.h2.textStyle(),
-        shape: const Border(bottom: BorderSide(color: SolaColors.line)),
+        labelSmall: SolaTextStyle.eyebrow.textStyle(),
       ),
       dividerTheme: const DividerThemeData(
         color: SolaColors.line,
         thickness: SolaSize.hairline,
         space: SolaSize.hairline,
       ),
-      cardTheme: const CardThemeData(
-        elevation: 0,
-        color: SolaColors.surface,
-        shape: RoundedRectangleBorder(side: BorderSide(color: SolaColors.line)),
-        margin: EdgeInsets.zero,
-      ),
-      dialogTheme: const DialogThemeData(
-        elevation: 0,
-        backgroundColor: SolaColors.surface,
-        shape: RoundedRectangleBorder(side: BorderSide(color: SolaColors.ink)),
-      ),
       bottomSheetTheme: const BottomSheetThemeData(
         elevation: 0,
-        backgroundColor: SolaColors.surface,
-        shape: Border(top: BorderSide(color: SolaColors.ink)),
+        backgroundColor: SolaColors.cream,
+        modalBarrierColor: Color(0x591E1612),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(SolaRadius.radius34),
+          ),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         elevation: 0,
-        backgroundColor: SolaColors.ink,
-        contentTextStyle: SolaTextStyle.body.textStyle(
-          color: SolaColors.surface,
-        ),
-        shape: square,
+        backgroundColor: SolaColors.brown,
+        contentTextStyle: SolaTextStyle.body.textStyle(color: SolaColors.cream),
+        shape: const StadiumBorder(),
         behavior: SnackBarBehavior.floating,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: SolaColors.accent,
-        linearTrackColor: SolaColors.surfaceSunken,
+        color: SolaColors.brown,
+        linearTrackColor: SolaColors.track,
       ),
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: SolaColors.ink,
-        selectionColor: SolaColors.accentTint,
-        selectionHandleColor: SolaColors.accent,
+        cursorColor: SolaColors.sunDeep,
+        selectionColor: SolaColors.butter,
+        selectionHandleColor: SolaColors.sunDeep,
       ),
     );
   }

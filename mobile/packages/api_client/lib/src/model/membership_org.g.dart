@@ -13,13 +13,15 @@ abstract class _$MembershipOrgCWProxy {
 
   MembershipOrg status(OrgStatus status);
 
+  MembershipOrg phone(String? phone);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `MembershipOrg(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
   /// ```dart
   /// MembershipOrg(...).copyWith(id: 12, name: "My name")
   /// ````
-  MembershipOrg call({String id, String name, OrgStatus status});
+  MembershipOrg call({String id, String name, OrgStatus status, String? phone});
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfMembershipOrg.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfMembershipOrg.copyWith.fieldName(...)`
@@ -38,6 +40,9 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
   MembershipOrg status(OrgStatus status) => this(status: status);
 
   @override
+  MembershipOrg phone(String? phone) => this(phone: phone);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `MembershipOrg(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -48,6 +53,7 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
     Object? id = const $CopyWithPlaceholder(),
     Object? name = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
+    Object? phone = const $CopyWithPlaceholder(),
   }) {
     return MembershipOrg(
       id: id == const $CopyWithPlaceholder()
@@ -62,6 +68,10 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
           ? _value.status
           // ignore: cast_nullable_to_non_nullable
           : status as OrgStatus,
+      phone: phone == const $CopyWithPlaceholder()
+          ? _value.phone
+          // ignore: cast_nullable_to_non_nullable
+          : phone as String?,
     );
   }
 }
@@ -86,6 +96,7 @@ MembershipOrg _$MembershipOrgFromJson(Map<String, dynamic> json) =>
           'status',
           (v) => $enumDecode(_$OrgStatusEnumMap, v),
         ),
+        phone: $checkedConvert('phone', (v) => v as String?),
       );
       return val;
     });
@@ -95,6 +106,7 @@ Map<String, dynamic> _$MembershipOrgToJson(MembershipOrg instance) =>
       'id': instance.id,
       'name': instance.name,
       'status': _$OrgStatusEnumMap[instance.status]!,
+      'phone': ?instance.phone,
     };
 
 const _$OrgStatusEnumMap = {

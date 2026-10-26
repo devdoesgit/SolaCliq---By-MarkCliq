@@ -98,4 +98,5 @@ const _$RoleEnumMap = {
   Role.orgAdmin: 'org_admin',
   Role.worker: 'worker',
   Role.agent: 'agent',
+  Role.customer: 'customer',
 };

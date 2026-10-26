@@ -24,8 +24,8 @@ void main() {
       );
       await tester.pumpApp(const HealthStatus(), healthRepository: repository);
       await tester.pump();
-      expect(find.text('SERVER OK'), findsOneWidget);
-      expect(find.text('VERSION 0.1.0'), findsOneWidget);
+      expect(find.text('Server ok'), findsOneWidget);
+      expect(find.textContaining('0.1.0'), findsOneWidget);
     });
 
     testWidgets('shows when the database is down', (tester) async {
@@ -34,7 +34,7 @@ void main() {
       );
       await tester.pumpApp(const HealthStatus(), healthRepository: repository);
       await tester.pump();
-      expect(find.text('DATABASE UNAVAILABLE'), findsOneWidget);
+      expect(find.text('Database unavailable'), findsOneWidget);
     });
 
     testWidgets('unreachable shows a notice and retries', (tester) async {
@@ -49,7 +49,7 @@ void main() {
       await tester.tap(find.byKey(const Key('health_retry')));
       await tester.pump();
       await tester.pump();
-      expect(find.text('SERVER OK'), findsOneWidget);
+      expect(find.text('Server ok'), findsOneWidget);
     });
   });
 }

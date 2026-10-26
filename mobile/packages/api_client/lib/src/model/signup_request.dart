@@ -23,6 +23,8 @@ class SignupRequest {
 
     required this.email,
 
+    this.phone,
+
     required this.password,
   });
 
@@ -32,6 +34,11 @@ class SignupRequest {
   @JsonKey(name: r'email', required: true, includeIfNull: false)
   final String email;
 
+  /// Indian mobile number, 10 digits, without +91.
+  @JsonKey(name: r'phone', required: false, includeIfNull: false)
+  final String? phone;
+
+  /// At least 8 characters, including a number.
   @JsonKey(name: r'password', required: true, includeIfNull: false)
   final String password;
 
@@ -40,14 +47,14 @@ class SignupRequest {
         other is SignupRequest &&
             runtimeType == other.runtimeType &&
             equals(
-              [name, email, password],
-              [other.name, other.email, other.password],
+              [name, email, phone, password],
+              [other.name, other.email, other.phone, other.password],
             );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([name, email, password]);
+      runtimeType.hashCode ^ mapPropsToHashCode([name, email, phone, password]);
 
   factory SignupRequest.fromJson(Map<String, dynamic> json) =>
       _$SignupRequestFromJson(json);

@@ -15,9 +15,12 @@ Stack, distribution, updates and tooling: `../docs/architecture.md`.
   gallery, with GPS, accuracy and time recorded at capture.
 - Writes carry an `Idempotency-Key`.
 - Money is integer paise; format only for display.
-- Brand: matches markcliq.com (see `../CLAUDE.md`). Theme, tokens, fonts
-  and widgets live in `packages/sola_ui`; screens use its widgets and
-  tokens, never raw colours, sizes or `TextStyle`s.
+- Brand: the iOS v2 design (see `../CLAUDE.md`). Theme, tokens, fonts,
+  icons, photos and widgets live in `packages/sola_ui`; screens use its
+  widgets and tokens, never raw colours, sizes or `TextStyle`s.
+- Every screen meets the tap target (48px), label and WCAG AA contrast
+  guidelines; `test/app/accessibility_test.dart` checks them. Add new
+  screens to it.
 
 ## Skills
 
@@ -54,20 +57,39 @@ After editing any `.dart` file under `mobile/lib/`:
 
 ## Screens by role
 
-Shared: sign up (customers), log in, org switcher, notifications, profile.
+Shared: sign up (customers), log in, company picker and switcher (F3),
+notifications, account tab.
+
+Every home is a workspace, one `(company, role)` pair (see
+`lib/workspace/`). Home tabs come from `lib/home/view/home_page.dart`; add
+a feature's tab there when its feature is built, never as an empty
+placeholder. Org admins get only a "use the website" screen.
+
+In development, pick the mock person (personal, customer, worker, agent,
+sales, multi_org, org_admin) in the workspace sheet (tap the avatar) under
+Development, or run with `--dart-define=MOCK_PERSONA=<name>`. The same
+section simulates an invite and a customer whose system is handed over
+(live energy home).
+
+**Quick forms** (development only, on by default): submitting a form with
+nothing typed fills every blank with an illustrative sample and every
+choice with a default, so you can walk all the screens against the mock.
+Switch it in the same Development section, or start with
+`--dart-define=QUICK_FORMS=false` to test validation. Production never
+has it (`lib/app/dev/quick_forms.dart`).
 
 | Role | Screens | Feature |
 |---|---|---|
-| Worker | My jobs, job detail (customer, address, directions) | F6 |
-| Worker | Installation capture (camera + GPS) | F6 |
-| Worker | My expenses, log expense with receipt | F7 |
-| Agent | My customers; register a customer (email code, details, submit) | F4/F10 |
-| Agent | My expenses, log expense | F7 |
-| Agent | My commission, enter commission | F8 |
-| Agent | Share referral link | F11 |
-| Customer | My installation: stage timeline | F9 |
-| Customer | Cost breakdown, payments made | F9 |
-| Customer | Share referral link | F11 |
+| Worker | Home, tasks (today, upcoming, done), task (every status), history (built) | F6 |
+| Worker | Proof camera (live camera + GPS), report a problem (built) | F6 |
+| Worker | My expenses, expense detail, log expense with receipt and task (built) | F7 |
+| Worker | Notifications, profile, personal details, ID documents, bank (built) | F12 |
+| Sales | Home, customers (filter, search), customer, fix a returned document (built) | F4 |
+| Sales | Add customer with commission (commission pay type) (built) | F4/F8 |
+| Sales | Earnings, payout bank (commission) or Alerts tab (salary) (built) | F8 |
+| Customer | Home, track install, payments (UPI or bank, claim), documents (built) | F9 |
+| Everyone | Profile, settings, help sheet, workspaces; Personal: Learn, notifications (built) | F1/F12 |
+| Sales, Customer | Share referral link | F11 |
 
 Not settled (see `../questioner.md`): whether customers see their documents
 and installation photos.

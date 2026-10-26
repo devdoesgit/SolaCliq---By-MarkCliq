@@ -57,4 +57,20 @@ void main() {
       expect(groupIndian('1234567'), '12,34,567');
     });
   });
+
+  group('formatRupees', () {
+    test('whole rupees with Indian grouping', () {
+      expect(formatRupees(7800000), '₹78,000');
+      expect(formatRupees(28500000), '₹2,85,000');
+      expect(formatRupees(-50000), '$minusSign₹500');
+    });
+  });
+
+  group('formatLakh', () {
+    test('one decimal at most', () {
+      expect(formatLakh(24000000), '2.4');
+      expect(formatLakh(30000000), '3');
+      expect(formatLakh(29000000), '2.9');
+    });
+  });
 }

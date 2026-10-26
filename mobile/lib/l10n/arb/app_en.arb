@@ -176,14 +176,6 @@
             }
         }
     },
-    "accountYourOrgs": "Your companies",
-    "@accountYourOrgs": {
-        "description": "Heading above the person's memberships."
-    },
-    "accountEmpty": "Your account is ready. When your installer adds you, your installation will appear here.",
-    "@accountEmpty": {
-        "description": "Shown to a new customer with nothing linked yet."
-    },
     "logOut": "Log out",
     "@logOut": {
         "description": "Button."
@@ -192,11 +184,11 @@
     "@roleOrgAdmin": {
         "description": "Role name."
     },
-    "roleWorker": "Installer",
+    "roleWorker": "Worker",
     "@roleWorker": {
         "description": "Role name for a worker."
     },
-    "roleAgent": "Agent",
+    "roleAgent": "Sales",
     "@roleAgent": {
         "description": "Role name."
     },
@@ -313,5 +305,4048 @@
     "firstTimeHere": "First time? Set up your account",
     "@firstTimeHere": {
         "description": "Link on the log in screen for accounts created by an agent."
+    },
+    "tabJobs": "Jobs",
+    "@tabJobs": {
+        "description": "Bottom tab for a worker's jobs."
+    },
+    "tabCustomers": "Customers",
+    "@tabCustomers": {
+        "description": "Tab."
+    },
+    "tabInstallation": "Installation",
+    "@tabInstallation": {
+        "description": "Bottom tab for a customer's own installation."
+    },
+    "tabAccount": "Account",
+    "@tabAccount": {
+        "description": "Bottom tab with the person's account."
+    },
+    "topBarSwitch": "{org}, {role}. Switch company",
+    "@topBarSwitch": {
+        "description": "Spoken label of the top bar when the person can switch company.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "jobsEmptyTitle": "No jobs yet",
+    "@jobsEmptyTitle": {
+        "description": "Worker home with no jobs."
+    },
+    "jobsEmptyBody": "When {org} assigns you an installation, it shows here with the address and what to photograph.",
+    "@jobsEmptyBody": {
+        "description": "Worker home with no jobs.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "customersEmptyTitle": "No customers yet",
+    "@customersEmptyTitle": {
+        "description": "Agent home with no customers."
+    },
+    "customersEmptyBody": "Customers you register for {org} show here, with the stage each one is at.",
+    "@customersEmptyBody": {
+        "description": "Agent home with no customers.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "installationEmptyTitle": "Your account is ready",
+    "@installationEmptyTitle": {
+        "description": "Customer home before any installer links them."
+    },
+    "installationEmptyBody": "When your solar installer adds you, your installation shows here: its stage, what it costs and what you have paid.",
+    "@installationEmptyBody": {
+        "description": "Customer home before any installer links them."
+    },
+    "chooseTitle": "Choose a company",
+    "@chooseTitle": {
+        "description": "Title when the person works for several companies."
+    },
+    "chooseIntro": "You work with more than one company. Pick one to start; you can switch any time from the top of the screen.",
+    "@chooseIntro": {
+        "description": "Intro on the company picker."
+    },
+    "switchTitle": "Switch company",
+    "@switchTitle": {
+        "description": "Title of the company switcher sheet, and its button."
+    },
+    "companyOption": "{org}, {role}",
+    "@companyOption": {
+        "description": "Spoken label of a company in the picker.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "companyOptionStatus": "{org}, {role}, {status}",
+    "@companyOptionStatus": {
+        "description": "Spoken label of a company that is not active.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            },
+            "status": {
+                "type": "String"
+            }
+        }
+    },
+    "companyCurrent": "In use",
+    "@companyCurrent": {
+        "description": "Spoken after the company now in use."
+    },
+    "pendingTitle": "Waiting for approval",
+    "@pendingTitle": {
+        "description": "Company not yet approved."
+    },
+    "pendingBody": "{org} is waiting for MarkCliq to approve it. You can start as soon as it is approved.",
+    "@pendingBody": {
+        "description": "Company not yet approved.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "suspendedTitle": "Access paused",
+    "@suspendedTitle": {
+        "description": "Company suspended."
+    },
+    "suspendedBody": "{org}'s access to SolaCliq is paused. Your manager there can tell you more.",
+    "@suspendedBody": {
+        "description": "Company suspended.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "checkAgain": "Check again",
+    "@checkAgain": {
+        "description": "Button that re-reads the company status."
+    },
+    "adminOnlyTitle": "Use the website",
+    "@adminOnlyTitle": {
+        "description": "Shown to org admins, who work on the website only."
+    },
+    "adminOnlyBody": "Your admin tools for {orgs} are on the SolaCliq website. Log in there with the same email and password.",
+    "@adminOnlyBody": {
+        "description": "Shown to org admins.",
+        "placeholders": {
+            "orgs": {
+                "type": "String"
+            }
+        }
+    },
+    "copyAddress": "Copy address",
+    "@copyAddress": {
+        "description": "Button that copies the website address."
+    },
+    "addressCopied": "Address copied",
+    "@addressCopied": {
+        "description": "Confirmation after copying."
+    },
+    "accountWorkingFor": "Working for",
+    "@accountWorkingFor": {
+        "description": "Label above the company in use on the account tab."
+    },
+    "devTitle": "Development",
+    "@devTitle": {
+        "description": "Heading of the development-only tools."
+    },
+    "devPersona": "Mock person: {name}",
+    "@devPersona": {
+        "description": "Development only: which mock account the app asks for.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "devPersonaDefault": "contract default",
+    "@devPersonaDefault": {
+        "description": "Development only."
+    },
+    "byMarkCliq": "By MarkCliq",
+    "@byMarkCliq": {
+        "description": "Under the app name on the welcome screen: who makes it."
+    },
+    "roleCustomer": "Customer",
+    "@roleCustomer": {
+        "description": "Role name for a customer of a company."
+    },
+    "roleCustomerHub": "Your installer",
+    "@roleCustomerHub": {
+        "description": "Shown after the company on a customer's home."
+    },
+    "welcomeHeadline": "Every solar install,\nin one place.",
+    "@welcomeHeadline": {
+        "description": "Welcome headline."
+    },
+    "welcomeStartPrompt": "How do you want to start?",
+    "@welcomeStartPrompt": {
+        "description": "Above the two ways in."
+    },
+    "welcomeUseTitle": "Use SolaCliq",
+    "@welcomeUseTitle": {
+        "description": "Option on the welcome screen."
+    },
+    "welcomeUseSub": "Log in or create a free account",
+    "@welcomeUseSub": {
+        "description": "Option on the welcome screen."
+    },
+    "welcomeEpcTitle": "I run a solar EPC company",
+    "@welcomeEpcTitle": {
+        "description": "Option on the welcome screen."
+    },
+    "welcomeEpcSub": "Request SolaCliq for your business",
+    "@welcomeEpcSub": {
+        "description": "Option on the welcome screen."
+    },
+    "welcomeNewHere": "New here? ",
+    "@welcomeNewHere": {
+        "description": "Before the create account link."
+    },
+    "createFreeAccount": "Create a free account",
+    "@createFreeAccount": {
+        "description": "Link to sign up."
+    },
+    "needHelp": "Need help?",
+    "@needHelp": {
+        "description": "Opens contact options."
+    },
+    "continueLabel": "Continue",
+    "@continueLabel": {
+        "description": "Button."
+    },
+    "requestAccess": "Request access",
+    "@requestAccess": {
+        "description": "Button and link for solar companies."
+    },
+    "houseArtLabel": "Illustrative energy view of a solar home: rooftop panels producing 4.2 kilowatts, home using 1.8 kilowatts, 0.3 kilowatts from the grid.",
+    "@houseArtLabel": {
+        "description": "Spoken description of the welcome illustration."
+    },
+    "helpBody": "Talk to the MarkCliq team. We reply on WhatsApp the same day.",
+    "@helpBody": {
+        "description": "Help sheet."
+    },
+    "helpWhatsApp": "WhatsApp MarkCliq",
+    "@helpWhatsApp": {
+        "description": "Help option."
+    },
+    "helpCall": "Call MarkCliq",
+    "@helpCall": {
+        "description": "Help option."
+    },
+    "helpEmail": "Email MarkCliq",
+    "@helpEmail": {
+        "description": "Help option."
+    },
+    "loginHeadline": "Welcome back.",
+    "@loginHeadline": {
+        "description": "Log in headline."
+    },
+    "loginSubtitle": "One login for homeowners, workers and agents.",
+    "@loginSubtitle": {
+        "description": "Log in subtitle."
+    },
+    "forgotShort": "Forgot?",
+    "@forgotShort": {
+        "description": "Link beside the password label."
+    },
+    "emailPlaceholder": "you@example.com",
+    "@emailPlaceholder": {
+        "description": "Example in the email field."
+    },
+    "newToSolaCliq": "New to SolaCliq?",
+    "@newToSolaCliq": {
+        "description": "Card on the log in screen."
+    },
+    "newToSolaCliqLink": "Create a free account.",
+    "@newToSolaCliqLink": {
+        "description": "Link in the card."
+    },
+    "newToSolaCliqAfter": " If a solar company added you, log in with that email.",
+    "@newToSolaCliqAfter": {
+        "description": "After the link in the card."
+    },
+    "runEpcBefore": "Run a solar EPC company? ",
+    "@runEpcBefore": {
+        "description": "Before the request access link."
+    },
+    "securedBy": "Secured by MarkCliq",
+    "@securedBy": {
+        "description": "Footer on the log in screen."
+    },
+    "requestAccessHeadline": "Get SolaCliq for your EPC.",
+    "@requestAccessHeadline": {
+        "description": "Request access headline."
+    },
+    "stepYouRequest": "You request",
+    "@stepYouRequest": {
+        "description": "Step 1."
+    },
+    "stepMarkCliqCalls": "MarkCliq calls",
+    "@stepMarkCliqCalls": {
+        "description": "Step 2."
+    },
+    "stepWeSetUp": "We set you up",
+    "@stepWeSetUp": {
+        "description": "Step 3."
+    },
+    "fieldCompanyName": "Company name",
+    "@fieldCompanyName": {
+        "description": "Field."
+    },
+    "fieldPhone": "Phone",
+    "@fieldPhone": {
+        "description": "Field."
+    },
+    "fieldCity": "City",
+    "@fieldCity": {
+        "description": "Field."
+    },
+    "fieldWorkEmail": "Work email",
+    "@fieldWorkEmail": {
+        "description": "Field."
+    },
+    "companyPlaceholder": "Registered company name",
+    "@companyPlaceholder": {
+        "description": "Example in the company field."
+    },
+    "fullNamePlaceholder": "Full name",
+    "@fullNamePlaceholder": {
+        "description": "Example in a name field."
+    },
+    "phonePlaceholder": "98765 43210",
+    "@phonePlaceholder": {
+        "description": "Example in a phone field."
+    },
+    "cityPlaceholder": "Jaipur",
+    "@cityPlaceholder": {
+        "description": "Example in the city field."
+    },
+    "workEmailPlaceholder": "you@yourcompany.in",
+    "@workEmailPlaceholder": {
+        "description": "Example in the work email field."
+    },
+    "requestAccessNote": "The MarkCliq team reviews every request and onboards your company. Your admin dashboard runs on the web, where you manage your team and customers.",
+    "@requestAccessNote": {
+        "description": "Under the request access form."
+    },
+    "sendRequest": "Send request",
+    "@sendRequest": {
+        "description": "Button."
+    },
+    "haveLoginBefore": "Already have a login? ",
+    "@haveLoginBefore": {
+        "description": "Before the log in link."
+    },
+    "requestSentHeadline": "Request sent.",
+    "@requestSentHeadline": {
+        "description": "Success headline."
+    },
+    "requestSentBody": "MarkCliq has been notified. We will be in touch at {email}.",
+    "@requestSentBody": {
+        "description": "Success text.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "requestLabel": "Request",
+    "@requestLabel": {
+        "description": "Label on the request card."
+    },
+    "underReview": "Under review",
+    "@underReview": {
+        "description": "Status."
+    },
+    "whatHappensNext": "What happens next",
+    "@whatHappensNext": {
+        "description": "Heading of the steps."
+    },
+    "accessStep1Title": "MarkCliq calls you",
+    "@accessStep1Title": {
+        "description": "Step."
+    },
+    "accessStep1Sub": "We learn how your EPC runs",
+    "@accessStep1Sub": {
+        "description": "Step."
+    },
+    "accessStep2Title": "We onboard your company",
+    "@accessStep2Title": {
+        "description": "Step."
+    },
+    "accessStep2Sub": "Company details, stages and pricing set up for you",
+    "@accessStep2Sub": {
+        "description": "Step."
+    },
+    "accessStep3Title": "Your admin dashboard goes live",
+    "@accessStep3Title": {
+        "description": "Step."
+    },
+    "accessStep3Sub": "On the web. Add workers and agents, approve expenses, track every customer",
+    "@accessStep3Sub": {
+        "description": "Step."
+    },
+    "done": "Done",
+    "@done": {
+        "description": "Button."
+    },
+    "onboardingByMarkCliq": "Onboarding by MarkCliq",
+    "@onboardingByMarkCliq": {
+        "description": "Footer."
+    },
+    "close": "Close",
+    "@close": {
+        "description": "Button."
+    },
+    "signupHeadline": "Join SolaCliq.",
+    "@signupHeadline": {
+        "description": "Sign up headline."
+    },
+    "signupSubtitle": "Free for homeowners. Track your solar and get quotes from verified installers.",
+    "@signupSubtitle": {
+        "description": "Sign up subtitle."
+    },
+    "fieldFullName": "Full name",
+    "@fieldFullName": {
+        "description": "Field."
+    },
+    "fieldMobile": "Mobile",
+    "@fieldMobile": {
+        "description": "Field."
+    },
+    "passwordRuleHelp": "At least 8 characters with a number",
+    "@passwordRuleHelp": {
+        "description": "Help under a new password."
+    },
+    "signupNote": "Work for a solar company? Sign up with the email they have for you. Your work screens appear once they add you.",
+    "@signupNote": {
+        "description": "Under the sign up form."
+    },
+    "haveAccountBefore": "Already have an account? ",
+    "@haveAccountBefore": {
+        "description": "Before the log in link."
+    },
+    "errorPhone": "Enter a 10-digit mobile number.",
+    "@errorPhone": {
+        "description": "Field error."
+    },
+    "errorPasswordNumber": "Include at least one number.",
+    "@errorPasswordNumber": {
+        "description": "Field error."
+    },
+    "errorPasswordsDiffer": "The passwords don't match.",
+    "@errorPasswordsDiffer": {
+        "description": "Field error."
+    },
+    "verifyBandTitle": "Verify email",
+    "@verifyBandTitle": {
+        "description": "Top row title."
+    },
+    "verifyHeadline": "Check your email.",
+    "@verifyHeadline": {
+        "description": "Verify headline."
+    },
+    "verifySent": "We sent a 6 digit code to {email}",
+    "@verifySent": {
+        "description": "Verify subtitle.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "codeLabel": "Code",
+    "@codeLabel": {
+        "description": "Label above the code boxes."
+    },
+    "resendIn": "Resend code in {time}",
+    "@resendIn": {
+        "description": "Countdown before resending.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "changeEmail": "Change email",
+    "@changeEmail": {
+        "description": "Link."
+    },
+    "verifyAndContinue": "Verify and continue",
+    "@verifyAndContinue": {
+        "description": "Button."
+    },
+    "forgotHeadline": "Reset your password.",
+    "@forgotHeadline": {
+        "description": "Forgot headline."
+    },
+    "setupHeadline": "Set up your account.",
+    "@setupHeadline": {
+        "description": "First-time set up headline."
+    },
+    "setPasswordTitle": "Set password",
+    "@setPasswordTitle": {
+        "description": "Top row title."
+    },
+    "createPasswordHeadline": "Create your password.",
+    "@createPasswordHeadline": {
+        "description": "Set password headline."
+    },
+    "newPasswordHeadline": "Choose a new password.",
+    "@newPasswordHeadline": {
+        "description": "Reset headline."
+    },
+    "logInWith": "You will log in with {email}",
+    "@logInWith": {
+        "description": "Set password subtitle.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "codeFromEmail": "Enter the code we sent to {email}.",
+    "@codeFromEmail": {
+        "description": "Above the code boxes.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "fieldConfirmPassword": "Confirm password",
+    "@fieldConfirmPassword": {
+        "description": "Field."
+    },
+    "ruleLength": "At least 8 characters",
+    "@ruleLength": {
+        "description": "Password rule."
+    },
+    "ruleNumber": "Has a number",
+    "@ruleNumber": {
+        "description": "Password rule."
+    },
+    "ruleMatch": "Both passwords match",
+    "@ruleMatch": {
+        "description": "Password rule."
+    },
+    "saveAndLogIn": "Save and log in",
+    "@saveAndLogIn": {
+        "description": "Button."
+    },
+    "brandEyebrow": "SolaCliq · by MarkCliq",
+    "@brandEyebrow": {
+        "description": "Eyebrow at the top of the homes."
+    },
+    "hello": "Hello, {name}",
+    "@hello": {
+        "description": "Greeting on the homes.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "personalAccount": "Personal account",
+    "@personalAccount": {
+        "description": "Under the greeting on the personal home."
+    },
+    "workspaceLine": "{company} · {role}",
+    "@workspaceLine": {
+        "description": "Under the greeting on a company home.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "switchWorkspaceHint": "{company}, {role}. Switch workspace",
+    "@switchWorkspaceHint": {
+        "description": "Spoken label of the workspace chip.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "notifications": "Notifications",
+    "@notifications": {
+        "description": "Bell button."
+    },
+    "profileAndWorkspaces": "Profile and workspaces",
+    "@profileAndWorkspaces": {
+        "description": "Avatar button."
+    },
+    "timeNow": "Now",
+    "@timeNow": {
+        "description": "Notice time."
+    },
+    "timeMinutes": "{n} min",
+    "@timeMinutes": {
+        "description": "Notice time.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "timeHours": "{n} hr",
+    "@timeHours": {
+        "description": "Notice time.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "timeDays": "{n} d",
+    "@timeDays": {
+        "description": "Notice time.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "illustrativeLabel": "Illustrative",
+    "@illustrativeLabel": {
+        "description": "Marks sample data from the development mock."
+    },
+    "homeLoadFailed": "Couldn't load your home",
+    "@homeLoadFailed": {
+        "description": "Error title."
+    },
+    "tabHome": "Home",
+    "@tabHome": {
+        "description": "Tab."
+    },
+    "tabTasks": "Tasks",
+    "@tabTasks": {
+        "description": "Tab."
+    },
+    "tabUploadProof": "Upload proof",
+    "@tabUploadProof": {
+        "description": "Tab, main action for workers."
+    },
+    "tabExpenses": "Expenses",
+    "@tabExpenses": {
+        "description": "Tab."
+    },
+    "tabProfile": "Profile",
+    "@tabProfile": {
+        "description": "Tab."
+    },
+    "tabAddCustomer": "Add customer",
+    "@tabAddCustomer": {
+        "description": "Tab, main action for agents."
+    },
+    "tabKyc": "KYC",
+    "@tabKyc": {
+        "description": "Tab."
+    },
+    "tabTrack": "Track",
+    "@tabTrack": {
+        "description": "Tab."
+    },
+    "tabSupport": "Support",
+    "@tabSupport": {
+        "description": "Tab, main action for customers."
+    },
+    "tabPayments": "Payments",
+    "@tabPayments": {
+        "description": "Tab."
+    },
+    "tabQuotes": "Quotes",
+    "@tabQuotes": {
+        "description": "Tab."
+    },
+    "tabLearn": "Learn",
+    "@tabLearn": {
+        "description": "Tab."
+    },
+    "comingSoonBody": "This part of SolaCliq is on its way in the next update.",
+    "@comingSoonBody": {
+        "description": "Sheet for a tab not built yet."
+    },
+    "invitedYou": "{company} invited you",
+    "@invitedYou": {
+        "description": "Invite banner.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "toJoinAs": "to join as a {role}",
+    "@toJoinAs": {
+        "description": "Invite banner.",
+        "placeholders": {
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "review": "Review",
+    "@review": {
+        "description": "Button."
+    },
+    "quoteEyebrow": "Free solar quote",
+    "@quoteEyebrow": {
+        "description": "Eyebrow on the quote card."
+    },
+    "quoteCardTitle": "Thinking of going solar?",
+    "@quoteCardTitle": {
+        "description": "Quote card."
+    },
+    "quoteCardBody": "Verified solar companies near you can accept your request and contact you directly.",
+    "@quoteCardBody": {
+        "description": "Quote card."
+    },
+    "getSolarQuote": "Get a solar quote",
+    "@getSolarQuote": {
+        "description": "Button."
+    },
+    "statSubsidy": "Subsidy",
+    "@statSubsidy": {
+        "description": "Stat label."
+    },
+    "statSubsidyValue": "₹78,000",
+    "@statSubsidyValue": {
+        "description": "PM Surya Ghar maximum subsidy."
+    },
+    "statSubsidyNote": "max for 3 kW+ homes",
+    "@statSubsidyNote": {
+        "description": "Stat note."
+    },
+    "statTypicalHome": "Typical home",
+    "@statTypicalHome": {
+        "description": "Stat label."
+    },
+    "statTypicalValue": "3 to 5 kW",
+    "@statTypicalValue": {
+        "description": "Stat value."
+    },
+    "statTypicalNote": "for a ₹2,500 to ₹5,000 bill",
+    "@statTypicalNote": {
+        "description": "Stat note."
+    },
+    "haveInstallerTitle": "Already have an installer?",
+    "@haveInstallerTitle": {
+        "description": "Card title."
+    },
+    "haveInstallerBody": "Ask them to add you with {email}. Your install, or your work, shows up here.",
+    "@haveInstallerBody": {
+        "description": "Card text.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "switchWorkspace": "Switch workspace",
+    "@switchWorkspace": {
+        "description": "Sheet title."
+    },
+    "personal": "Personal",
+    "@personal": {
+        "description": "The personal workspace."
+    },
+    "personalSub": "Your quotes and your own solar",
+    "@personalSub": {
+        "description": "Under Personal in the sheet."
+    },
+    "workspacesNote": "Workspaces come from the companies you work with. You never pick a role at login.",
+    "@workspacesNote": {
+        "description": "Note in the sheet."
+    },
+    "devInviteWaiting": "Mock invite waiting: {state}",
+    "@devInviteWaiting": {
+        "description": "Development only.",
+        "placeholders": {
+            "state": {
+                "type": "String"
+            }
+        }
+    },
+    "on": "on",
+    "@on": {
+        "description": "Development only."
+    },
+    "off": "off",
+    "@off": {
+        "description": "Development only."
+    },
+    "quoteBandTitle": "Solar quote",
+    "@quoteBandTitle": {
+        "description": "Top row title."
+    },
+    "quoteHeadline": "Get a solar quote",
+    "@quoteHeadline": {
+        "description": "Quote headline."
+    },
+    "quoteSubtitle": "Two minutes, free. Only verified solar companies see it.",
+    "@quoteSubtitle": {
+        "description": "Quote subtitle."
+    },
+    "quoteFor": "Quote for",
+    "@quoteFor": {
+        "description": "Field."
+    },
+    "quoteForHome": "Home",
+    "@quoteForHome": {
+        "description": "Choice."
+    },
+    "quoteForBusiness": "Business",
+    "@quoteForBusiness": {
+        "description": "Choice."
+    },
+    "quoteForFarm": "Farm",
+    "@quoteForFarm": {
+        "description": "Choice."
+    },
+    "fieldPinCode": "PIN code",
+    "@fieldPinCode": {
+        "description": "Field."
+    },
+    "monthlyBill": "Monthly electricity bill",
+    "@monthlyBill": {
+        "description": "Field."
+    },
+    "billUnder1500": "Under ₹1,500",
+    "@billUnder1500": {
+        "description": "Choice."
+    },
+    "bill1500To3000": "₹1,500 to 3,000",
+    "@bill1500To3000": {
+        "description": "Choice."
+    },
+    "bill3000To6000": "₹3,000 to 6,000",
+    "@bill3000To6000": {
+        "description": "Choice."
+    },
+    "billOver6000": "₹6,000+",
+    "@billOver6000": {
+        "description": "Choice."
+    },
+    "roof": "Roof",
+    "@roof": {
+        "description": "Field."
+    },
+    "roofRcc": "RCC (concrete)",
+    "@roofRcc": {
+        "description": "Choice."
+    },
+    "roofTin": "Tin shed",
+    "@roofTin": {
+        "description": "Choice."
+    },
+    "roofOther": "Other",
+    "@roofOther": {
+        "description": "Choice."
+    },
+    "when": "When",
+    "@when": {
+        "description": "Field."
+    },
+    "whenThisMonth": "This month",
+    "@whenThisMonth": {
+        "description": "Choice."
+    },
+    "when1To3": "1 to 3 months",
+    "@when1To3": {
+        "description": "Choice."
+    },
+    "whenExploring": "Just exploring",
+    "@whenExploring": {
+        "description": "Choice."
+    },
+    "quoteConsent": "Share my request with verified solar companies near me. The one that accepts it can contact me on +91 {phone}.",
+    "@quoteConsent": {
+        "description": "Consent line.",
+        "placeholders": {
+            "phone": {
+                "type": "String"
+            }
+        }
+    },
+    "quoteConsentNoPhone": "Share my request with verified solar companies near me. The one that accepts it can contact me on this number.",
+    "@quoteConsentNoPhone": {
+        "description": "Consent line when the number is typed here."
+    },
+    "getMyQuote": "Get my quote",
+    "@getMyQuote": {
+        "description": "Button."
+    },
+    "errorPinCode": "Enter the 6-digit PIN code.",
+    "@errorPinCode": {
+        "description": "Field error."
+    },
+    "errorChoose": "Choose one.",
+    "@errorChoose": {
+        "description": "Field error for chips."
+    },
+    "errorConsent": "Tick this so companies can contact you.",
+    "@errorConsent": {
+        "description": "Consent error."
+    },
+    "quoteSentBody": "Solar companies near {city} can now see it. The one that accepts will contact you directly.",
+    "@quoteSentBody": {
+        "description": "Success text.",
+        "placeholders": {
+            "city": {
+                "type": "String"
+            }
+        }
+    },
+    "indicativeEstimate": "Indicative estimate",
+    "@indicativeEstimate": {
+        "description": "Card label."
+    },
+    "kwRange": "{min} to {max} kW",
+    "@kwRange": {
+        "description": "Estimate.",
+        "placeholders": {
+            "min": {
+                "type": "String"
+            },
+            "max": {
+                "type": "String"
+            }
+        }
+    },
+    "priceRange": "₹{min} to {max} lakh",
+    "@priceRange": {
+        "description": "Estimate.",
+        "placeholders": {
+            "min": {
+                "type": "String"
+            },
+            "max": {
+                "type": "String"
+            }
+        }
+    },
+    "subsidyUpTo": "Subsidy up to {amount}",
+    "@subsidyUpTo": {
+        "description": "Estimate.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "beforeSubsidy": "before subsidy",
+    "@beforeSubsidy": {
+        "description": "Estimate."
+    },
+    "quoteStep1Title": "A solar company accepts",
+    "@quoteStep1Title": {
+        "description": "Step."
+    },
+    "quoteStep1Sub": "Verified companies on SolaCliq near you",
+    "@quoteStep1Sub": {
+        "description": "Step."
+    },
+    "quoteStep2Title": "They contact you directly",
+    "@quoteStep2Title": {
+        "description": "Step."
+    },
+    "quoteStep2Sub": "Call or WhatsApp on +91 {phone}",
+    "@quoteStep2Sub": {
+        "description": "Step.",
+        "placeholders": {
+            "phone": {
+                "type": "String"
+            }
+        }
+    },
+    "quoteStep3Title": "You decide",
+    "@quoteStep3Title": {
+        "description": "Step."
+    },
+    "quoteStep3Sub": "No obligation. Pick one and track the install here",
+    "@quoteStep3Sub": {
+        "description": "Step."
+    },
+    "estimateNote": "Estimate is based on your bill. Final price comes after the site visit.",
+    "@estimateNote": {
+        "description": "Fine print."
+    },
+    "backToHome": "Back to home",
+    "@backToHome": {
+        "description": "Button."
+    },
+    "inviteBandTitle": "Invite",
+    "@inviteBandTitle": {
+        "description": "Top row title."
+    },
+    "inviteHeadline": "Join {company}?",
+    "@inviteHeadline": {
+        "description": "Invite headline.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "inviteSubtitle": "They want to add you to their team on SolaCliq.",
+    "@inviteSubtitle": {
+        "description": "Invite subtitle."
+    },
+    "invitedBy": "Invited by {name} · {when}",
+    "@invitedBy": {
+        "description": "Invite card.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "when": {
+                "type": "String"
+            }
+        }
+    },
+    "today": "today",
+    "@today": {
+        "description": "Relative day."
+    },
+    "youllBeAbleTo": "You'll be able to",
+    "@youllBeAbleTo": {
+        "description": "Label."
+    },
+    "workerCan1": "See tasks assigned to you",
+    "@workerCan1": {
+        "description": "Ability."
+    },
+    "workerCan2": "Upload proof photos from site",
+    "@workerCan2": {
+        "description": "Ability."
+    },
+    "workerCan3": "Log expenses for approval",
+    "@workerCan3": {
+        "description": "Ability."
+    },
+    "agentCan1": "Register customers on site",
+    "@agentCan1": {
+        "description": "Ability."
+    },
+    "agentCan2": "Upload their KYC documents",
+    "@agentCan2": {
+        "description": "Ability."
+    },
+    "agentCan3": "Track commission and expenses",
+    "@agentCan3": {
+        "description": "Ability."
+    },
+    "customerCan1": "Follow every stage of your install",
+    "@customerCan1": {
+        "description": "Ability."
+    },
+    "customerCan2": "See your costs and payments",
+    "@customerCan2": {
+        "description": "Ability."
+    },
+    "customerCan3": "Talk to your installer",
+    "@customerCan3": {
+        "description": "Ability."
+    },
+    "companyWillSee": "{company} will see",
+    "@companyWillSee": {
+        "description": "Label.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "companySeesWork": "Your name, email and phone, plus the task updates, photos and expenses you send them.",
+    "@companySeesWork": {
+        "description": "What the company sees (worker, agent)."
+    },
+    "companySeesCustomer": "Your name, email and phone, and the documents for your install.",
+    "@companySeesCustomer": {
+        "description": "What the company sees (customer)."
+    },
+    "invitePrivacy": "Your personal quotes stay private. If you leave the company, you keep your account.",
+    "@invitePrivacy": {
+        "description": "Note."
+    },
+    "acceptAndJoin": "Accept and join",
+    "@acceptAndJoin": {
+        "description": "Button."
+    },
+    "decline": "Decline",
+    "@decline": {
+        "description": "Button."
+    },
+    "welcomeBody": "Track projects, KYC, proof photos and expenses with your installer and your team.",
+    "@welcomeBody": {
+        "description": "Welcome text."
+    },
+    "welcomeFor": "For installers, agents and homes",
+    "@welcomeFor": {
+        "description": "Beside the avatars."
+    },
+    "welcomeLive": "4.2 kW live",
+    "@welcomeLive": {
+        "description": "Sample pill on the welcome photo."
+    },
+    "welcomeStage": "Stage 4 of 7",
+    "@welcomeStage": {
+        "description": "Sample pill on the welcome photo."
+    },
+    "welcomePhotoLabel": "An installer fitting rooftop solar panels",
+    "@welcomePhotoLabel": {
+        "description": "Spoken description of the welcome photo."
+    },
+    "getStarted": "Get started",
+    "@getStarted": {
+        "description": "Button."
+    },
+    "runEpc": "I run a solar EPC company",
+    "@runEpc": {
+        "description": "Link for solar companies."
+    },
+    "skip": "Skip",
+    "@skip": {
+        "description": "Link."
+    },
+    "next": "Next",
+    "@next": {
+        "description": "Button."
+    },
+    "intro1Title": "Every install, stage by stage",
+    "@intro1Title": {
+        "description": "Intro slide 1."
+    },
+    "intro1Body": "See where each project is, from site survey to handover.",
+    "@intro1Body": {
+        "description": "Intro slide 1."
+    },
+    "intro2Title": "Proof photos straight from site",
+    "@intro2Title": {
+        "description": "Intro slide 2."
+    },
+    "intro2Body": "Snap, tag and upload. Your admin sees them instantly.",
+    "@intro2Body": {
+        "description": "Intro slide 2."
+    },
+    "intro3Title": "Expenses approved, not lost",
+    "@intro3Title": {
+        "description": "Intro slide 3."
+    },
+    "intro3Body": "Log a cost with its receipt. Get a yes or a note the same day.",
+    "@intro3Body": {
+        "description": "Intro slide 3."
+    },
+    "introSampleCustomer": "Rajinder · 5 kW",
+    "@introSampleCustomer": {
+        "description": "Sample card on the intro."
+    },
+    "introPanelsFitted": "Panels fitted",
+    "@introPanelsFitted": {
+        "description": "Sample row on the intro."
+    },
+    "introPanelsWhen": "Today · Ramesh",
+    "@introPanelsWhen": {
+        "description": "Sample row on the intro."
+    },
+    "introPhotos": "6 proof photos · GPS tagged",
+    "@introPhotos": {
+        "description": "Sample pill on the intro."
+    },
+    "introExpense": "Expense · fuel",
+    "@introExpense": {
+        "description": "Sample card label on the intro."
+    },
+    "introExpenseNote": "Approved by Harjit · paid with salary",
+    "@introExpenseNote": {
+        "description": "Sample card text on the intro."
+    },
+    "introReply": "Receipt looks good, thanks for the photo.",
+    "@introReply": {
+        "description": "Sample admin reply on the intro."
+    },
+    "introSampleLabel": "Illustration with sample data",
+    "@introSampleLabel": {
+        "description": "Spoken for the intro pictures."
+    },
+    "slideOf": "Slide {n} of {total}",
+    "@slideOf": {
+        "description": "Spoken page indicator.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "stageSurvey": "Survey",
+    "@stageSurvey": {
+        "description": "Stage name."
+    },
+    "stageInstall": "Install",
+    "@stageInstall": {
+        "description": "Stage name."
+    },
+    "stageHandover": "Handover",
+    "@stageHandover": {
+        "description": "Stage name."
+    },
+    "loginTitle": "Welcome back",
+    "@loginTitle": {
+        "description": "Log in title."
+    },
+    "loginBody": "One login for homeowners, workers and agents. Your company decides what you see.",
+    "@loginBody": {
+        "description": "Log in text."
+    },
+    "show": "Show",
+    "@show": {
+        "description": "Show password."
+    },
+    "hide": "Hide",
+    "@hide": {
+        "description": "Hide password."
+    },
+    "newToSolaCliqBefore": "New to SolaCliq? ",
+    "@newToSolaCliqBefore": {
+        "description": "Before the link."
+    },
+    "createAccountLink": "Create account",
+    "@createAccountLink": {
+        "description": "Link."
+    },
+    "signupTitle": "Join SolaCliq",
+    "@signupTitle": {
+        "description": "Sign up title."
+    },
+    "signupBody": "Free for homeowners. If you work for a solar company, use the email they have for you.",
+    "@signupBody": {
+        "description": "Sign up text."
+    },
+    "signupPasswordRule": "At least 8 characters, with a number.",
+    "@signupPasswordRule": {
+        "description": "Under the sign up form."
+    },
+    "alreadyOnBefore": "Already on SolaCliq? ",
+    "@alreadyOnBefore": {
+        "description": "Before the link."
+    },
+    "verifyTitle2": "Check your email",
+    "@verifyTitle2": {
+        "description": "Verify title."
+    },
+    "verifyBody": "Enter the 6 digit code we sent to {email}",
+    "@verifyBody": {
+        "description": "Verify text.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "resendIn2": "Resend in {time}",
+    "@resendIn2": {
+        "description": "Countdown.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "verify": "Verify",
+    "@verify": {
+        "description": "Button."
+    },
+    "forgotTitle2": "Reset your password",
+    "@forgotTitle2": {
+        "description": "Forgot title."
+    },
+    "forgotBody": "Enter your email. If it has an account, we'll send a 6 digit code.",
+    "@forgotBody": {
+        "description": "Forgot text."
+    },
+    "setupTitle2": "Set up your account",
+    "@setupTitle2": {
+        "description": "First-time set up title."
+    },
+    "setupBody2": "Enter the email your installer or agent used. We'll send a 6 digit code so you can create your password.",
+    "@setupBody2": {
+        "description": "Set up text."
+    },
+    "createPasswordTitle": "Create your password",
+    "@createPasswordTitle": {
+        "description": "Set password title."
+    },
+    "newPasswordTitle": "Choose a new password",
+    "@newPasswordTitle": {
+        "description": "Reset title."
+    },
+    "logInWith2": "You'll log in with {email}",
+    "@logInWith2": {
+        "description": "Set password text.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "codeFromEmail2": "Code from the email",
+    "@codeFromEmail2": {
+        "description": "Above the code boxes."
+    },
+    "ruleMatch2": "Both match",
+    "@ruleMatch2": {
+        "description": "Password rule."
+    },
+    "saveAndContinue": "Save and continue",
+    "@saveAndContinue": {
+        "description": "Button."
+    },
+    "requestEyebrow": "For solar EPC companies",
+    "@requestEyebrow": {
+        "description": "Eyebrow."
+    },
+    "requestTitle": "Bring your team onto SolaCliq",
+    "@requestTitle": {
+        "description": "Request access title."
+    },
+    "requestBody": "Tell us about your company. MarkCliq calls you and sets everything up.",
+    "@requestBody": {
+        "description": "Request access text."
+    },
+    "requestSentBody2": "MarkCliq has been notified. We'll be in touch at {email}.",
+    "@requestSentBody2": {
+        "description": "Request sent text.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "accessStep2Title2": "We set up your company",
+    "@accessStep2Title2": {
+        "description": "Step."
+    },
+    "accessStep2Sub2": "Stages, pricing and team",
+    "@accessStep2Sub2": {
+        "description": "Step."
+    },
+    "accessStep3Title2": "Your dashboard goes live",
+    "@accessStep3Title2": {
+        "description": "Step."
+    },
+    "accessStep3Sub2": "Add workers and agents on the web",
+    "@accessStep3Sub2": {
+        "description": "Step."
+    },
+    "requestSentTitle": "Request sent",
+    "@requestSentTitle": {
+        "description": "Success title."
+    },
+    "goodMorning": "Good morning",
+    "@goodMorning": {
+        "description": "Greeting."
+    },
+    "goodAfternoon": "Good afternoon",
+    "@goodAfternoon": {
+        "description": "Greeting."
+    },
+    "goodEvening": "Good evening",
+    "@goodEvening": {
+        "description": "Greeting."
+    },
+    "subsidyHeadline": "₹78k",
+    "@subsidyHeadline": {
+        "description": "PM Surya Ghar maximum subsidy, short."
+    },
+    "subsidyLabel": "subsidy",
+    "@subsidyLabel": {
+        "description": "After the subsidy figure."
+    },
+    "subsidyDetail": "PM Surya Ghar, 3 kW and up",
+    "@subsidyDetail": {
+        "description": "Under the subsidy figure."
+    },
+    "inviteLine": "to join as a {role}",
+    "@inviteLine": {
+        "description": "Invite banner.",
+        "placeholders": {
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "freeQuote": "Free solar quote",
+    "@freeQuote": {
+        "description": "Eyebrow on the quote card."
+    },
+    "quoteCardTitle2": "Thinking of going solar?",
+    "@quoteCardTitle2": {
+        "description": "Quote card."
+    },
+    "getAQuote": "Get a quote",
+    "@getAQuote": {
+        "description": "Button."
+    },
+    "typicalSystem": "Typical home system",
+    "@typicalSystem": {
+        "description": "Row."
+    },
+    "typicalSystemDetail": "3 to 5 kW suits most homes",
+    "@typicalSystemDetail": {
+        "description": "Row."
+    },
+    "guide": "Guide",
+    "@guide": {
+        "description": "Pill."
+    },
+    "haveInstaller": "Already have an installer?",
+    "@haveInstaller": {
+        "description": "Row."
+    },
+    "haveInstallerDetail": "Share your email with them",
+    "@haveInstallerDetail": {
+        "description": "Row."
+    },
+    "seeAll": "See all",
+    "@seeAll": {
+        "description": "Link."
+    },
+    "workspaceLine2": "{company} · {role}",
+    "@workspaceLine2": {
+        "description": "Under the title on company homes.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            },
+            "role": {
+                "type": "String"
+            }
+        }
+    },
+    "workspaces": "Workspaces",
+    "@workspaces": {
+        "description": "Sheet title."
+    },
+    "done2": "Done",
+    "@done2": {
+        "description": "Sheet close link."
+    },
+    "roleWorker2": "Worker",
+    "@roleWorker2": {
+        "description": "Role."
+    },
+    "tabEnergy": "Energy",
+    "@tabEnergy": {
+        "description": "Tab."
+    },
+    "quoteFor2": "Quote for",
+    "@quoteFor2": {
+        "description": "Spoken segment label."
+    },
+    "billUnder1500b": "Under ₹1.5k",
+    "@billUnder1500b": {
+        "description": "Chip."
+    },
+    "bill1500To3000b": "₹1.5k to 3k",
+    "@bill1500To3000b": {
+        "description": "Chip."
+    },
+    "bill3000To6000b": "₹3k to 6k",
+    "@bill3000To6000b": {
+        "description": "Chip."
+    },
+    "billOver6000b": "₹6k+",
+    "@billOver6000b": {
+        "description": "Chip."
+    },
+    "roofRcc2": "RCC",
+    "@roofRcc2": {
+        "description": "Chip."
+    },
+    "quoteConsent2": "Share my request with verified solar companies near me",
+    "@quoteConsent2": {
+        "description": "Consent toggle."
+    },
+    "estimateKw": "{min}–{max} kW",
+    "@estimateKw": {
+        "description": "Estimate.",
+        "placeholders": {
+            "min": {
+                "type": "String"
+            },
+            "max": {
+                "type": "String"
+            }
+        }
+    },
+    "estimateLakh": "₹{min}–{max} L",
+    "@estimateLakh": {
+        "description": "Estimate in lakh.",
+        "placeholders": {
+            "min": {
+                "type": "String"
+            },
+            "max": {
+                "type": "String"
+            }
+        }
+    },
+    "estimateNote2": "Before subsidy. Final price after the site visit.",
+    "@estimateNote2": {
+        "description": "Estimate note."
+    },
+    "quoteStep1Sub2": "Verified installers near you",
+    "@quoteStep1Sub2": {
+        "description": "Step."
+    },
+    "quoteStep2Title2": "They contact you",
+    "@quoteStep2Title2": {
+        "description": "Step."
+    },
+    "quoteStep2Sub2": "Call or WhatsApp, directly",
+    "@quoteStep2Sub2": {
+        "description": "Step."
+    },
+    "quoteStep3Sub2": "No obligation to go ahead",
+    "@quoteStep3Sub2": {
+        "description": "Step."
+    },
+    "quoteSentBody2": "Solar companies near {city} can now see it. The one that accepts will contact you directly.",
+    "@quoteSentBody2": {
+        "description": "Success text.",
+        "placeholders": {
+            "city": {
+                "type": "String"
+            }
+        }
+    },
+    "mobileForQuote": "Mobile for the installer to call",
+    "@mobileForQuote": {
+        "description": "Field label when no phone is on file."
+    },
+    "invitedByAdmin": "Invited by {name}, Admin",
+    "@invitedByAdmin": {
+        "description": "Pill.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "workerCan1Sub": "Daily jobs and site details",
+    "@workerCan1Sub": {
+        "description": "Ability."
+    },
+    "workerCan2b": "Upload proof photos",
+    "@workerCan2b": {
+        "description": "Ability."
+    },
+    "workerCan2Sub": "From site, stage by stage",
+    "@workerCan2Sub": {
+        "description": "Ability."
+    },
+    "workerCan3b": "Log expenses",
+    "@workerCan3b": {
+        "description": "Ability."
+    },
+    "workerCan3Sub": "Sent to your admin to approve",
+    "@workerCan3Sub": {
+        "description": "Ability."
+    },
+    "agentCan1Sub": "Details, site and KYC in one go",
+    "@agentCan1Sub": {
+        "description": "Ability."
+    },
+    "agentCan2Sub": "Photo or file, all four corners",
+    "@agentCan2Sub": {
+        "description": "Ability."
+    },
+    "agentCan3Sub": "Approved by your admin",
+    "@agentCan3Sub": {
+        "description": "Ability."
+    },
+    "customerCan1Sub": "From survey to handover",
+    "@customerCan1Sub": {
+        "description": "Ability."
+    },
+    "customerCan2Sub": "Every payment and the subsidy",
+    "@customerCan2Sub": {
+        "description": "Ability."
+    },
+    "customerCan3Sub": "Questions answered in the app",
+    "@customerCan3Sub": {
+        "description": "Ability."
+    },
+    "invitePrivacy2": "{company} will see your name, email and phone. Your personal quotes stay private.",
+    "@invitePrivacy2": {
+        "description": "Note.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "logExpense": "Log expense",
+    "@logExpense": {
+        "description": "Screen title."
+    },
+    "amount": "Amount",
+    "@amount": {
+        "description": "Label."
+    },
+    "categoryFuel": "Fuel",
+    "@categoryFuel": {
+        "description": "Chip."
+    },
+    "categoryMaterial": "Material",
+    "@categoryMaterial": {
+        "description": "Chip."
+    },
+    "categoryLabour": "Labour",
+    "@categoryLabour": {
+        "description": "Chip."
+    },
+    "categoryOther": "Other",
+    "@categoryOther": {
+        "description": "Chip."
+    },
+    "category": "Category",
+    "@category": {
+        "description": "Spoken chip group."
+    },
+    "noteForAdmin": "Note for admin",
+    "@noteForAdmin": {
+        "description": "Field."
+    },
+    "notePlaceholder": "What was it for?",
+    "@notePlaceholder": {
+        "description": "Field placeholder."
+    },
+    "date": "Date",
+    "@date": {
+        "description": "Field."
+    },
+    "today2": "Today, {date}",
+    "@today2": {
+        "description": "Date value.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "addReceipt": "Add receipt",
+    "@addReceipt": {
+        "description": "Receipt tile."
+    },
+    "receiptAdded": "Receipt added",
+    "@receiptAdded": {
+        "description": "Spoken for the receipt tile."
+    },
+    "sendToAdmin": "Send to admin",
+    "@sendToAdmin": {
+        "description": "Button."
+    },
+    "deleteDigit": "Delete",
+    "@deleteDigit": {
+        "description": "Keypad."
+    },
+    "errorAmount": "Enter the amount.",
+    "@errorAmount": {
+        "description": "Error."
+    },
+    "errorNote": "Say what it was for.",
+    "@errorNote": {
+        "description": "Error."
+    },
+    "sentToAdmin": "Sent to admin",
+    "@sentToAdmin": {
+        "description": "Success title."
+    },
+    "expenseSentBody": "Your admin will approve it or send it back with a note.",
+    "@expenseSentBody": {
+        "description": "Success text."
+    },
+    "expenseRef": "{ref} · {amount} · In review",
+    "@expenseRef": {
+        "description": "Pill.",
+        "placeholders": {
+            "ref": {
+                "type": "String"
+            },
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "statusInReview": "In review",
+    "@statusInReview": {
+        "description": "Status."
+    },
+    "statusApproved": "Approved",
+    "@statusApproved": {
+        "description": "Status."
+    },
+    "statusNeedsFix": "Fix receipt",
+    "@statusNeedsFix": {
+        "description": "Status."
+    },
+    "expenseRowTitle": "{category} · {amount}",
+    "@expenseRowTitle": {
+        "description": "Row.",
+        "placeholders": {
+            "category": {
+                "type": "String"
+            },
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "receiptAttached": "receipt attached",
+    "@receiptAttached": {
+        "description": "Row detail."
+    },
+    "noReceipt": "no receipt",
+    "@noReceipt": {
+        "description": "Row detail."
+    },
+    "takePhoto": "Take photo",
+    "@takePhoto": {
+        "description": "Sheet option."
+    },
+    "chooseFile": "Choose from gallery",
+    "@chooseFile": {
+        "description": "Sheet option."
+    },
+    "newCustomer": "New customer",
+    "@newCustomer": {
+        "description": "Screen title."
+    },
+    "stepOf": "Step {n} of {total}",
+    "@stepOf": {
+        "description": "Nav subtitle.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "cancel": "Cancel",
+    "@cancel": {
+        "description": "Link."
+    },
+    "whoIsCustomer": "Who is the customer?",
+    "@whoIsCustomer": {
+        "description": "Title."
+    },
+    "asOnAadhaar": "As written on their Aadhaar.",
+    "@asOnAadhaar": {
+        "description": "Subtitle."
+    },
+    "fieldMobile2": "Mobile",
+    "@fieldMobile2": {
+        "description": "Field."
+    },
+    "emailLoginNote": "Email · login and welcome email",
+    "@emailLoginNote": {
+        "description": "Field."
+    },
+    "fieldHouse": "House no. and street",
+    "@fieldHouse": {
+        "description": "Field."
+    },
+    "fieldCityPin": "City and PIN",
+    "@fieldCityPin": {
+        "description": "Field."
+    },
+    "fieldState": "State",
+    "@fieldState": {
+        "description": "Field."
+    },
+    "chooseState": "Choose a state",
+    "@chooseState": {
+        "description": "Placeholder."
+    },
+    "errorCityPin": "Enter the city and the 6-digit PIN.",
+    "@errorCityPin": {
+        "description": "Error."
+    },
+    "siteTitle": "Site and connection",
+    "@siteTitle": {
+        "description": "Title."
+    },
+    "siteSubtitle": "From the latest electricity bill.",
+    "@siteSubtitle": {
+        "description": "Subtitle."
+    },
+    "fieldDiscom": "Electricity provider",
+    "@fieldDiscom": {
+        "description": "Field."
+    },
+    "chooseDiscom": "Choose the provider",
+    "@chooseDiscom": {
+        "description": "Placeholder."
+    },
+    "fieldConsumerNo": "Consumer number",
+    "@fieldConsumerNo": {
+        "description": "Field."
+    },
+    "fieldSanctioned": "Sanctioned load",
+    "@fieldSanctioned": {
+        "description": "Field."
+    },
+    "connectionType": "Connection type",
+    "@connectionType": {
+        "description": "Spoken segment label."
+    },
+    "connResidential": "Residential",
+    "@connResidential": {
+        "description": "Segment."
+    },
+    "connCommercial": "Commercial",
+    "@connCommercial": {
+        "description": "Segment."
+    },
+    "connIndustrial": "Industrial",
+    "@connIndustrial": {
+        "description": "Segment."
+    },
+    "fieldProposed": "Proposed system",
+    "@fieldProposed": {
+        "description": "Field."
+    },
+    "fieldRoof": "Roof",
+    "@fieldRoof": {
+        "description": "Field."
+    },
+    "roofRccFull": "RCC (concrete)",
+    "@roofRccFull": {
+        "description": "Roof."
+    },
+    "roofTinShed": "Tin shed",
+    "@roofTinShed": {
+        "description": "Roof."
+    },
+    "roofOther2": "Other",
+    "@roofOther2": {
+        "description": "Roof."
+    },
+    "subsidyToggle": "PM Surya Ghar subsidy",
+    "@subsidyToggle": {
+        "description": "Toggle."
+    },
+    "subsidyToggleSub": "Needs a bank proof in step 3",
+    "@subsidyToggleSub": {
+        "description": "Toggle subtitle."
+    },
+    "kwSuffix": "kW",
+    "@kwSuffix": {
+        "description": "Unit."
+    },
+    "errorKw": "Enter the kW.",
+    "@errorKw": {
+        "description": "Error."
+    },
+    "kycTitle": "KYC documents",
+    "@kycTitle": {
+        "description": "Title."
+    },
+    "kycSubtitle": "Clear photos, all four corners visible.",
+    "@kycSubtitle": {
+        "description": "Subtitle."
+    },
+    "docAadhaar": "Aadhaar card",
+    "@docAadhaar": {
+        "description": "Document."
+    },
+    "docAadhaarSub": "Front and back",
+    "@docAadhaarSub": {
+        "description": "Document."
+    },
+    "docPan": "PAN card",
+    "@docPan": {
+        "description": "Document."
+    },
+    "docPanSub": "Name must match Aadhaar",
+    "@docPanSub": {
+        "description": "Document."
+    },
+    "docBill": "Electricity bill",
+    "@docBill": {
+        "description": "Document."
+    },
+    "docBillSub": "Latest month",
+    "@docBillSub": {
+        "description": "Document."
+    },
+    "docBank": "Bank passbook",
+    "@docBank": {
+        "description": "Document."
+    },
+    "docBankSub": "Needed for subsidy",
+    "@docBankSub": {
+        "description": "Document."
+    },
+    "docRoof": "Rooftop photo",
+    "@docRoof": {
+        "description": "Document."
+    },
+    "docRoofSub": "Optional · helps the survey",
+    "@docRoofSub": {
+        "description": "Document."
+    },
+    "uploaded": "Uploaded",
+    "@uploaded": {
+        "description": "Pill."
+    },
+    "add": "Add",
+    "@add": {
+        "description": "Button."
+    },
+    "consentShare": "{name} agreed to share these with {company}",
+    "@consentShare": {
+        "description": "Consent toggle.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "docsCount": "{done} of {total} required documents added.",
+    "@docsCount": {
+        "description": "Count.",
+        "placeholders": {
+            "done": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "docsAll": "All {total} required documents added.",
+    "@docsAll": {
+        "description": "Count.",
+        "placeholders": {
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "addMore": "Add {n} more to continue",
+    "@addMore": {
+        "description": "Disabled button.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "reviewLabel": "Review",
+    "@reviewLabel": {
+        "description": "Button and title."
+    },
+    "checkSubmit": "Check and submit",
+    "@checkSubmit": {
+        "description": "Review title."
+    },
+    "checkSubmitBody": "Your admin approves before {name} gets their login.",
+    "@checkSubmitBody": {
+        "description": "Review text.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "sectionCustomer": "Customer",
+    "@sectionCustomer": {
+        "description": "Review section."
+    },
+    "sectionSite": "Site",
+    "@sectionSite": {
+        "description": "Review section."
+    },
+    "sectionDocs": "Documents",
+    "@sectionDocs": {
+        "description": "Review section."
+    },
+    "edit": "Edit",
+    "@edit": {
+        "description": "Link."
+    },
+    "kvName": "Name",
+    "@kvName": {
+        "description": "Review row."
+    },
+    "kvMobile": "Mobile",
+    "@kvMobile": {
+        "description": "Review row."
+    },
+    "kvEmail": "Email",
+    "@kvEmail": {
+        "description": "Review row."
+    },
+    "kvDiscom": "DISCOM",
+    "@kvDiscom": {
+        "description": "Review row."
+    },
+    "kvSystem": "System",
+    "@kvSystem": {
+        "description": "Review row."
+    },
+    "kvSubsidy": "Subsidy",
+    "@kvSubsidy": {
+        "description": "Review row."
+    },
+    "kvAdded": "Added",
+    "@kvAdded": {
+        "description": "Review row."
+    },
+    "subsidyNone": "Not applied",
+    "@subsidyNone": {
+        "description": "Review value."
+    },
+    "pmSuryaGhar": "PM Surya Ghar",
+    "@pmSuryaGhar": {
+        "description": "Review value."
+    },
+    "submitToAdmin": "Submit to admin",
+    "@submitToAdmin": {
+        "description": "Button."
+    },
+    "custSentBody": "{name}'s details and {n} documents are waiting for approval.",
+    "@custSentBody": {
+        "description": "Success text.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "reqInReview": "REQ {ref} · In review",
+    "@reqInReview": {
+        "description": "Pill.",
+        "placeholders": {
+            "ref": {
+                "type": "String"
+            }
+        }
+    },
+    "custStep1": "Admin checks the documents",
+    "@custStep1": {
+        "description": "Step."
+    },
+    "custStep1Sub": "On the web, usually the same day",
+    "@custStep1Sub": {
+        "description": "Step."
+    },
+    "custStep2": "Account is created",
+    "@custStep2": {
+        "description": "Step."
+    },
+    "custStep2Sub": "Or it comes back with a note",
+    "@custStep2Sub": {
+        "description": "Step."
+    },
+    "custStep3": "{name} gets a welcome email",
+    "@custStep3": {
+        "description": "Step.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "custStep3Sub": "With a link to set their password",
+    "@custStep3Sub": {
+        "description": "Step."
+    },
+    "addAnother": "Add another customer",
+    "@addAnother": {
+        "description": "Button."
+    },
+    "fileTooBig": "That file is over 10 MB. Take a photo instead.",
+    "@fileTooBig": {
+        "description": "Error."
+    },
+    "uploadFailed": "Couldn't upload. Check your connection and try again.",
+    "@uploadFailed": {
+        "description": "Error."
+    },
+    "devLiveEnergy": "Mock customer handed over: {state}",
+    "@devLiveEnergy": {
+        "description": "Development only.",
+        "placeholders": {
+            "state": {
+                "type": "String"
+            }
+        }
+    },
+    "welcomeEyebrow": "SolaCliq · by MarkCliq",
+    "@welcomeEyebrow": {
+        "description": "Eyebrow on the welcome screen."
+    },
+    "energyNow": "Generating now",
+    "@energyNow": {
+        "description": "Energy card label."
+    },
+    "energyKw": "{kw} kW",
+    "@energyKw": {
+        "description": "Live power.",
+        "placeholders": {
+            "kw": {
+                "type": "String"
+            }
+        }
+    },
+    "energyToday": "kWh today",
+    "@energyToday": {
+        "description": "Unit under the energy figure."
+    },
+    "energySunset": "Sunset {time}",
+    "@energySunset": {
+        "description": "Energy card.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "selected": "current",
+    "@selected": {
+        "description": "Spoken after the workspace in use."
+    },
+    "todayTitle": "Today",
+    "@todayTitle": {
+        "description": "A day, at the start of a line."
+    },
+    "errorCustomerConsent": "Confirm they agreed to share these.",
+    "@errorCustomerConsent": {
+        "description": "Error on the documents step."
+    },
+    "uploading": "Uploading",
+    "@uploading": {
+        "description": "Spoken while a document uploads."
+    },
+    "chooseRoof": "Choose the roof",
+    "@chooseRoof": {
+        "description": "Placeholder."
+    },
+    "discomOther": "Type the provider",
+    "@discomOther": {
+        "description": "Placeholder for a provider not in the list."
+    },
+    "kwValue": "{kw} kW",
+    "@kwValue": {
+        "description": "A system size.",
+        "placeholders": {
+            "kw": {
+                "type": "String"
+            }
+        }
+    },
+    "systemValue": "{kw} kW · {roof} roof",
+    "@systemValue": {
+        "description": "Review row.",
+        "placeholders": {
+            "kw": {
+                "type": "String"
+            },
+            "roof": {
+                "type": "String"
+            }
+        }
+    },
+    "discomValue": "{discom} · {number}",
+    "@discomValue": {
+        "description": "Review row.",
+        "placeholders": {
+            "discom": {
+                "type": "String"
+            },
+            "number": {
+                "type": "String"
+            }
+        }
+    },
+    "discomInState": "{discom} · {state}",
+    "@discomInState": {
+        "description": "Provider row value.",
+        "placeholders": {
+            "discom": {
+                "type": "String"
+            },
+            "state": {
+                "type": "String"
+            }
+        }
+    },
+    "connectionLabel": "Connection",
+    "@connectionLabel": {
+        "description": "Spoken segment label."
+    },
+    "docShortAadhaar": "Aadhaar",
+    "@docShortAadhaar": {
+        "description": "Short document name in the review list."
+    },
+    "docShortPan": "PAN",
+    "@docShortPan": {
+        "description": "Short document name in the review list."
+    },
+    "docShortBill": "bill",
+    "@docShortBill": {
+        "description": "Short document name in the review list."
+    },
+    "docShortBank": "bank",
+    "@docShortBank": {
+        "description": "Short document name in the review list."
+    },
+    "docShortRoof": "roof photo",
+    "@docShortRoof": {
+        "description": "Short document name in the review list."
+    },
+    "devQuickForms": "Quick forms, no typing: {state}",
+    "@devQuickForms": {
+        "description": "Development only.",
+        "placeholders": {
+            "state": {
+                "type": "String"
+            }
+        }
+    },
+    "addPhotoOptional": "Add a photo (optional)",
+    "@addPhotoOptional": {
+        "description": "Problem sheet."
+    },
+    "atSite": "At site",
+    "@atSite": {
+        "description": "Camera: within 200 m of the customer."
+    },
+    "avgOnSite": "avg on site",
+    "@avgOnSite": {
+        "description": "Profile stat."
+    },
+    "backToTasks": "Back to tasks",
+    "@backToTasks": {
+        "description": "Button."
+    },
+    "cameraDenied": "Camera not allowed",
+    "@cameraDenied": {
+        "description": "Camera problem."
+    },
+    "cameraDeniedBody": "Allow SolaCliq to use the camera to take proof photos.",
+    "@cameraDeniedBody": {
+        "description": "Camera problem."
+    },
+    "cameraUnavailable": "Camera can't start",
+    "@cameraUnavailable": {
+        "description": "Camera problem."
+    },
+    "cameraUnavailableBody": "Close other apps using the camera and try again.",
+    "@cameraUnavailableBody": {
+        "description": "Camera problem."
+    },
+    "cancelledByAdmin": "cancelled by admin",
+    "@cancelledByAdmin": {
+        "description": "Task row line."
+    },
+    "cancelledByAdminTitle": "Cancelled by admin",
+    "@cancelledByAdminTitle": {
+        "description": "Banner."
+    },
+    "cancelledFooter": "Cancelled tasks stay in Done with their history. Only admins can cancel or close a task.",
+    "@cancelledFooter": {
+        "description": "Footer."
+    },
+    "checklist": "Checklist",
+    "@checklist": {
+        "description": "Section."
+    },
+    "claim": "Claim",
+    "@claim": {
+        "description": "Expense detail row."
+    },
+    "closeCamera": "Close camera",
+    "@closeCamera": {
+        "description": "Button."
+    },
+    "currentReceipt": "Current receipt",
+    "@currentReceipt": {
+        "description": "Expense detail."
+    },
+    "directions": "Directions",
+    "@directions": {
+        "description": "Button."
+    },
+    "earlier": "Earlier",
+    "@earlier": {
+        "description": "Notifications section."
+    },
+    "errorWhatHappened": "Say what happened.",
+    "@errorWhatHappened": {
+        "description": "Error."
+    },
+    "errorWriteMessage": "Write a message.",
+    "@errorWriteMessage": {
+        "description": "Error."
+    },
+    "eventApproved": "Approved",
+    "@eventApproved": {
+        "description": "History."
+    },
+    "eventAssigned": "Assigned to you",
+    "@eventAssigned": {
+        "description": "History."
+    },
+    "eventCancelled": "Cancelled",
+    "@eventCancelled": {
+        "description": "History."
+    },
+    "eventMessage": "Message",
+    "@eventMessage": {
+        "description": "History."
+    },
+    "eventPhotos": "Photos uploaded",
+    "@eventPhotos": {
+        "description": "History."
+    },
+    "eventProblem": "Problem reported",
+    "@eventProblem": {
+        "description": "History."
+    },
+    "eventReassigned": "Reassigned",
+    "@eventReassigned": {
+        "description": "History."
+    },
+    "eventRescheduled": "Rescheduled",
+    "@eventRescheduled": {
+        "description": "History."
+    },
+    "eventResubmitted": "Submitted again",
+    "@eventResubmitted": {
+        "description": "History."
+    },
+    "eventReturned": "Returned by admin",
+    "@eventReturned": {
+        "description": "History."
+    },
+    "eventSubmitted": "Submitted",
+    "@eventSubmitted": {
+        "description": "History."
+    },
+    "expenseLoadFailed": "Couldn't load this expense",
+    "@expenseLoadFailed": {
+        "description": "Error."
+    },
+    "expensesLoadFailed": "Couldn't load your expenses",
+    "@expensesLoadFailed": {
+        "description": "Error."
+    },
+    "expenseTitle": "Expense",
+    "@expenseTitle": {
+        "description": "Screen title."
+    },
+    "findingLocation": "Finding your location…",
+    "@findingLocation": {
+        "description": "Camera."
+    },
+    "flashOff": "Flash off",
+    "@flashOff": {
+        "description": "Camera button."
+    },
+    "flashOn": "Flash on",
+    "@flashOn": {
+        "description": "Camera button."
+    },
+    "help": "Help",
+    "@help": {
+        "description": "Profile row."
+    },
+    "helpSub": "Call your admin or MarkCliq support",
+    "@helpSub": {
+        "description": "Profile row."
+    },
+    "history": "History",
+    "@history": {
+        "description": "Screen title."
+    },
+    "historyFooter": "History is kept for every task and can't be edited",
+    "@historyFooter": {
+        "description": "Footer."
+    },
+    "historyLoadFailed": "Couldn't load the history",
+    "@historyLoadFailed": {
+        "description": "Error."
+    },
+    "idDocuments": "ID and documents",
+    "@idDocuments": {
+        "description": "Profile row."
+    },
+    "idDocumentsSub": "Aadhaar, PAN, bank for salary",
+    "@idDocumentsSub": {
+        "description": "Profile row."
+    },
+    "locationDenied": "Location not allowed",
+    "@locationDenied": {
+        "description": "Camera problem."
+    },
+    "locationDeniedBody": "Proof photos record where they were taken. Allow location for SolaCliq.",
+    "@locationDeniedBody": {
+        "description": "Camera problem."
+    },
+    "locationOff": "Location is off",
+    "@locationOff": {
+        "description": "Camera problem."
+    },
+    "locationOffBody": "Turn on location to take proof photos.",
+    "@locationOffBody": {
+        "description": "Camera problem."
+    },
+    "locked": "Locked",
+    "@locked": {
+        "description": "Photos while with the admin."
+    },
+    "message": "Message",
+    "@message": {
+        "description": "Field."
+    },
+    "nextTaskForYou": "Next task for you",
+    "@nextTaskForYou": {
+        "description": "Section."
+    },
+    "noExpenses": "No expenses yet.",
+    "@noExpenses": {
+        "description": "Empty list."
+    },
+    "noNotifications": "Nothing new.",
+    "@noNotifications": {
+        "description": "Empty list."
+    },
+    "noTasksDone": "Finished and cancelled tasks show here.",
+    "@noTasksDone": {
+        "description": "Empty list."
+    },
+    "noTasksToday": "Nothing due today.",
+    "@noTasksToday": {
+        "description": "Empty list."
+    },
+    "noTasksUpcoming": "Nothing planned yet.",
+    "@noTasksUpcoming": {
+        "description": "Empty list."
+    },
+    "note": "Note",
+    "@note": {
+        "description": "Expense detail row."
+    },
+    "noteForAdminOptional": "Note for admin (optional)",
+    "@noteForAdminOptional": {
+        "description": "Field."
+    },
+    "noteFromAdmin": "Note from admin",
+    "@noteFromAdmin": {
+        "description": "Banner."
+    },
+    "notificationsLoadFailed": "Couldn't load notifications",
+    "@notificationsLoadFailed": {
+        "description": "Error."
+    },
+    "notificationsUnread": "Notifications, new",
+    "@notificationsUnread": {
+        "description": "Bell with unread."
+    },
+    "openSettings": "Open settings",
+    "@openSettings": {
+        "description": "Button."
+    },
+    "personalDetails": "Personal details",
+    "@personalDetails": {
+        "description": "Profile row."
+    },
+    "personalDetailsSub": "Phone, address, emergency contact",
+    "@personalDetailsSub": {
+        "description": "Profile row."
+    },
+    "photoTaken": "Photo taken · tap to retake",
+    "@photoTaken": {
+        "description": "Problem sheet."
+    },
+    "problemBadWeather": "Bad weather",
+    "@problemBadWeather": {
+        "description": "Reason."
+    },
+    "problemCustomerAway": "Customer not home",
+    "@problemCustomerAway": {
+        "description": "Reason."
+    },
+    "problemMaterialMissing": "Material missing",
+    "@problemMaterialMissing": {
+        "description": "Reason."
+    },
+    "problemOther": "Other",
+    "@problemOther": {
+        "description": "Reason."
+    },
+    "problemReason": "Reason",
+    "@problemReason": {
+        "description": "Spoken chip group."
+    },
+    "problemSafety": "Safety issue",
+    "@problemSafety": {
+        "description": "Reason."
+    },
+    "problemSent": "problem sent",
+    "@problemSent": {
+        "description": "Task row line."
+    },
+    "problemSiteNotReady": "Site not ready",
+    "@problemSiteNotReady": {
+        "description": "Reason."
+    },
+    "proofPhotos": "Proof photos",
+    "@proofPhotos": {
+        "description": "Section."
+    },
+    "readAll": "Read all",
+    "@readAll": {
+        "description": "Link."
+    },
+    "readyToSubmit": "All photos added · ready to submit",
+    "@readyToSubmit": {
+        "description": "Task line."
+    },
+    "recent": "Recent",
+    "@recent": {
+        "description": "Section."
+    },
+    "reportProblem": "Report a problem",
+    "@reportProblem": {
+        "description": "Link and sheet title."
+    },
+    "retake": "Retake",
+    "@retake": {
+        "description": "Photo badge."
+    },
+    "retakeAsked": "retake asked",
+    "@retakeAsked": {
+        "description": "Task row line."
+    },
+    "returnedLabel": "returned",
+    "@returnedLabel": {
+        "description": "Profile stat."
+    },
+    "returnedTitle": "Returned by admin",
+    "@returnedTitle": {
+        "description": "Banner."
+    },
+    "roleAdmin": "Admin",
+    "@roleAdmin": {
+        "description": "Role."
+    },
+    "send": "Send",
+    "@send": {
+        "description": "Button."
+    },
+    "sentBackByAdmin": "Sent back by admin",
+    "@sentBackByAdmin": {
+        "description": "Banner."
+    },
+    "settings": "Settings",
+    "@settings": {
+        "description": "Button."
+    },
+    "statusPaid": "Paid",
+    "@statusPaid": {
+        "description": "Status."
+    },
+    "submitAgain": "Submit again",
+    "@submitAgain": {
+        "description": "Button."
+    },
+    "submitTask": "Submit task",
+    "@submitTask": {
+        "description": "Button."
+    },
+    "taskAssigned": "Assigned",
+    "@taskAssigned": {
+        "description": "Status."
+    },
+    "taskCancelled": "Cancelled",
+    "@taskCancelled": {
+        "description": "Status."
+    },
+    "taskDone": "Done",
+    "@taskDone": {
+        "description": "Status."
+    },
+    "taskHistory": "Task history",
+    "@taskHistory": {
+        "description": "Button and row."
+    },
+    "taskHistorySub": "All tasks you've worked on",
+    "@taskHistorySub": {
+        "description": "Profile row."
+    },
+    "taskLabel": "Task",
+    "@taskLabel": {
+        "description": "Expense detail row."
+    },
+    "taskLoadFailed": "Couldn't load this task",
+    "@taskLoadFailed": {
+        "description": "Error."
+    },
+    "taskOnHold": "On hold",
+    "@taskOnHold": {
+        "description": "Status with an open problem."
+    },
+    "taskReturned": "Returned",
+    "@taskReturned": {
+        "description": "Status."
+    },
+    "tasksDone": "Done",
+    "@tasksDone": {
+        "description": "Segment."
+    },
+    "tasksDoneFooter": "Finished and cancelled tasks stay here with their full history.",
+    "@tasksDoneFooter": {
+        "description": "Footer."
+    },
+    "tasksLoadFailed": "Couldn't load your tasks",
+    "@tasksLoadFailed": {
+        "description": "Error."
+    },
+    "tasksThisMonth": "tasks this month",
+    "@tasksThisMonth": {
+        "description": "Profile stat."
+    },
+    "tasksToday": "Today",
+    "@tasksToday": {
+        "description": "Segment."
+    },
+    "tasksTodayFooter": "Do the work, add the photos, then submit. Your admin approves each stage.",
+    "@tasksTodayFooter": {
+        "description": "Footer."
+    },
+    "tasksUpcoming": "Upcoming",
+    "@tasksUpcoming": {
+        "description": "Segment."
+    },
+    "taskTitle": "Task",
+    "@taskTitle": {
+        "description": "Screen title."
+    },
+    "thisMonth": "This month",
+    "@thisMonth": {
+        "description": "Card label."
+    },
+    "unread": "New",
+    "@unread": {
+        "description": "Spoken before an unread notification."
+    },
+    "uploadNewReceipt": "Upload new receipt",
+    "@uploadNewReceipt": {
+        "description": "Button."
+    },
+    "viewTaskHistory": "View task history",
+    "@viewTaskHistory": {
+        "description": "Link."
+    },
+    "waitingForApproval": "Waiting for approval",
+    "@waitingForApproval": {
+        "description": "Banner."
+    },
+    "whatHappened": "What happened?",
+    "@whatHappened": {
+        "description": "Field."
+    },
+    "whatWasDone": "What was done",
+    "@whatWasDone": {
+        "description": "Section."
+    },
+    "you": "You",
+    "@you": {
+        "description": "Who did it."
+    },
+    "yourAdmin": "your admin",
+    "@yourAdmin": {
+        "description": "When the admin is unknown."
+    },
+    "accuracyM": "±{m} m",
+    "@accuracyM": {
+        "description": "GPS accuracy.",
+        "placeholders": {
+            "m": {
+                "type": "int"
+            }
+        }
+    },
+    "addMorePhotos": "{n, plural, =1{Add 1 more photo} other{Add {n} more photos}}",
+    "@addMorePhotos": {
+        "description": "Button.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "amountApproved": "{amount} approved",
+    "@amountApproved": {
+        "description": "Legend.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "amountFix": "{amount} fix",
+    "@amountFix": {
+        "description": "Legend.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "amountReview": "{amount} review",
+    "@amountReview": {
+        "description": "Legend.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "approvedOn": "approved {date}",
+    "@approvedOn": {
+        "description": "Line.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "assignedOn": "Assigned {date}",
+    "@assignedOn": {
+        "description": "Line.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "callName": "Call {name}",
+    "@callName": {
+        "description": "Button.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "claimCount": "{n, plural, =1{1 claim} other{{n} claims}}",
+    "@claimCount": {
+        "description": "Headline.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "customerSite": "{name} site",
+    "@customerSite": {
+        "description": "Expense line.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "distanceKm": "{km} km",
+    "@distanceKm": {
+        "description": "Distance.",
+        "placeholders": {
+            "km": {
+                "type": "String"
+            }
+        }
+    },
+    "dueAt": "due {time}",
+    "@dueAt": {
+        "description": "Task row.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "dueOn": "Due {when}",
+    "@dueOn": {
+        "description": "Task line.",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            }
+        }
+    },
+    "dueToday": "Due today, {time}",
+    "@dueToday": {
+        "description": "Task line.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "fromName": "from {name}",
+    "@fromName": {
+        "description": "Task line.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "fromSiteKm": "{km} km from site",
+    "@fromSiteKm": {
+        "description": "Camera.",
+        "placeholders": {
+            "km": {
+                "type": "String"
+            }
+        }
+    },
+    "hoursValue": "{h} h",
+    "@hoursValue": {
+        "description": "Hours.",
+        "placeholders": {
+            "h": {
+                "type": "String"
+            }
+        }
+    },
+    "photoAdded": "{label}, photo added",
+    "@photoAdded": {
+        "description": "Spoken.",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            }
+        }
+    },
+    "photoMissing": "{label}, take photo",
+    "@photoMissing": {
+        "description": "Spoken.",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            }
+        }
+    },
+    "photoRetake": "{label}, retake photo",
+    "@photoRetake": {
+        "description": "Spoken.",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            }
+        }
+    },
+    "problemFooter": "If {name} reschedules or reassigns the task, your list updates on its own.",
+    "@problemFooter": {
+        "description": "Footer.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "problemIntro": "{name} gets this right away and decides what happens next: reschedule, reassign or cancel.",
+    "@problemIntro": {
+        "description": "Sheet.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "problemSentBody": "{reason}: {note} You'll get a notification when it's decided.",
+    "@problemSentBody": {
+        "description": "Banner.",
+        "placeholders": {
+            "reason": {
+                "type": "String"
+            },
+            "note": {
+                "type": "String"
+            }
+        }
+    },
+    "problemSentTo": "Problem sent to {name}",
+    "@problemSentTo": {
+        "description": "Banner.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "replyTo": "Reply to {name}",
+    "@replyTo": {
+        "description": "Link and sheet.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "retakePhotos": "{n, plural, =1{Retake photo} other{Retake {n} photos}}",
+    "@retakePhotos": {
+        "description": "Button.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "returnCount": "{n, plural, =1{1 return} other{{n} returns}}",
+    "@returnCount": {
+        "description": "Line.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "returnedLine": "Returned {at} · was submitted {submitted}",
+    "@returnedLine": {
+        "description": "Task line.",
+        "placeholders": {
+            "at": {
+                "type": "String"
+            },
+            "submitted": {
+                "type": "String"
+            }
+        }
+    },
+    "returnedRetake": "{n, plural, =1{Returned: retake 1 photo} other{Returned: retake {n} photos}}",
+    "@returnedRetake": {
+        "description": "Banner.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "sentAt": "sent {time}",
+    "@sentAt": {
+        "description": "Task row.",
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "shotOf": "Shot {n} of {total}",
+    "@shotOf": {
+        "description": "Camera.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "stageApproved": "Stage {n} approved",
+    "@stageApproved": {
+        "description": "Success title.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "stageApprovedBody": "{admin} approved your work and moved {customer} to Stage {n}.",
+    "@stageApprovedBody": {
+        "description": "Success.",
+        "placeholders": {
+            "admin": {
+                "type": "String"
+            },
+            "customer": {
+                "type": "String"
+            },
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "stageDoneLabel": "{title} done",
+    "@stageDoneLabel": {
+        "description": "Stage label.",
+        "placeholders": {
+            "title": {
+                "type": "String"
+            }
+        }
+    },
+    "stageNextLabel": "{title} next",
+    "@stageNextLabel": {
+        "description": "Stage label.",
+        "placeholders": {
+            "title": {
+                "type": "String"
+            }
+        }
+    },
+    "stageOf": "Stage {n} of {total}",
+    "@stageOf": {
+        "description": "Stage.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "submitFooter": "{admin} checks it and moves {customer} to the next stage",
+    "@submitFooter": {
+        "description": "Footer.",
+        "placeholders": {
+            "admin": {
+                "type": "String"
+            },
+            "customer": {
+                "type": "String"
+            }
+        }
+    },
+    "submittedLine": "{n, plural, =1{Submitted {at} · 1 photo · checklist done} other{Submitted {at} · {n} photos · checklist done}}",
+    "@submittedLine": {
+        "description": "Task line.",
+        "placeholders": {
+            "at": {
+                "type": "String"
+            },
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "taskEyebrow": "{ref} · Stage {n} of {total}",
+    "@taskEyebrow": {
+        "description": "Card eyebrow.",
+        "placeholders": {
+            "ref": {
+                "type": "String"
+            },
+            "n": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "tickMoreSteps": "{n, plural, =1{Tick 1 more step} other{Tick {n} more steps}}",
+    "@tickMoreSteps": {
+        "description": "Disabled button.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "toRetake": "{n} to retake",
+    "@toRetake": {
+        "description": "Photos.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "waitingBody": "Sent to {admin} at {time}. You'll get a notification when it's checked.",
+    "@waitingBody": {
+        "description": "Banner.",
+        "placeholders": {
+            "admin": {
+                "type": "String"
+            },
+            "time": {
+                "type": "String"
+            }
+        }
+    },
+    "workspacesSub": "{company} · Personal",
+    "@workspacesSub": {
+        "description": "Profile row.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "xOfY": "{n} of {total}",
+    "@xOfY": {
+        "description": "Count.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "expenseForTask": "Spent on",
+    "@expenseForTask": {
+        "description": "Sheet title: the task an expense is for."
+    },
+    "noTask": "No task",
+    "@noTask": {
+        "description": "Expense not linked to a task."
+    },
+    "expenseForTaskValue": "Spent on: {task}",
+    "@expenseForTaskValue": {
+        "description": "Spoken.",
+        "placeholders": {
+            "task": {
+                "type": "String"
+            }
+        }
+    },
+    "fixKyc": "Fix KYC",
+    "@fixKyc": {
+        "description": "Pill: a customer's documents were sent back."
+    },
+    "payable": "Payable",
+    "@payable": {
+        "description": "Pill: commission can be paid out."
+    },
+    "docBankProof": "Bank passbook",
+    "@docBankProof": {
+        "description": "Document."
+    },
+    "kwPlace": "{kw} kW · {place}",
+    "@kwPlace": {
+        "description": "System size and place.",
+        "placeholders": {
+            "kw": {
+                "type": "String"
+            },
+            "place": {
+                "type": "String"
+            }
+        }
+    },
+    "loadFailed": "Couldn't load this",
+    "@loadFailed": {
+        "description": "Title when a screen fails to load."
+    },
+    "searchCustomers": "Search by name or phone",
+    "@searchCustomers": {
+        "description": "Search field placeholder."
+    },
+    "searchLabel": "Search",
+    "@searchLabel": {
+        "description": "Search button."
+    },
+    "filterAll": "All",
+    "@filterAll": {
+        "description": "Filter: every customer."
+    },
+    "filterFix": "Fix",
+    "@filterFix": {
+        "description": "Filter: documents sent back."
+    },
+    "customersFooter": "You see the customers you added and how far their install has got.",
+    "@customersFooter": {
+        "description": "Footer under the customers list."
+    },
+    "noCustomersMatch": "No customers here yet.",
+    "@noCustomersMatch": {
+        "description": "Empty customers list."
+    },
+    "customerTitle": "Customer",
+    "@customerTitle": {
+        "description": "Customer page title."
+    },
+    "callPerson": "Call {name}",
+    "@callPerson": {
+        "description": "Call button label.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "installProgress": "Install progress",
+    "@installProgress": {
+        "description": "Section."
+    },
+    "notStarted": "Not started",
+    "@notStarted": {
+        "description": "Install not started."
+    },
+    "startsAfterKyc": "Starts after KYC",
+    "@startsAfterKyc": {
+        "description": "Install waits for KYC approval."
+    },
+    "handover": "Handover",
+    "@handover": {
+        "description": "Last install stage."
+    },
+    "stageXofY": "Stage {n} of {total}",
+    "@stageXofY": {
+        "description": "Install stage.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "withAdmin": "With your admin",
+    "@withAdmin": {
+        "description": "Customer is being reviewed."
+    },
+    "withAdminSent": "Sent {when}.",
+    "@withAdminSent": {
+        "description": "When the documents were sent.",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            }
+        }
+    },
+    "yourCommission": "Your commission",
+    "@yourCommission": {
+        "description": "Section."
+    },
+    "commissionWaits": "Becomes payable when {name} pays the advance.",
+    "@commissionWaits": {
+        "description": "Commission waits for advance.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "commissionAfterFix": "Reviewed after the documents are fixed.",
+    "@commissionAfterFix": {
+        "description": "Commission waits for fix."
+    },
+    "commissionPayableBody": "Advance paid {date}. Your admin pays your commission in the next payout.",
+    "@commissionPayableBody": {
+        "description": "Commission payable.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "commissionPaidBody": "Paid to your bank on {date}.",
+    "@commissionPaidBody": {
+        "description": "Commission paid.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "changedByAdmin": "Changed by admin",
+    "@changedByAdmin": {
+        "description": "Banner: admin changed the commission."
+    },
+    "docReturned": "Returned: {what}",
+    "@docReturned": {
+        "description": "Banner: a document came back.",
+        "placeholders": {
+            "what": {
+                "type": "String"
+            }
+        }
+    },
+    "uploadNew": "Upload new {doc}",
+    "@uploadNew": {
+        "description": "Button: replace a document.",
+        "placeholders": {
+            "doc": {
+                "type": "String"
+            }
+        }
+    },
+    "documentsLabel": "Documents",
+    "@documentsLabel": {
+        "description": "Row."
+    },
+    "advanceLabel": "Advance",
+    "@advanceLabel": {
+        "description": "Row: the customer's advance payment."
+    },
+    "advancePaid": "Paid {date}",
+    "@advancePaid": {
+        "description": "Advance paid on a date.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "advanceDue": "Not paid yet",
+    "@advanceDue": {
+        "description": "Advance not paid."
+    },
+    "verified": "Verified",
+    "@verified": {
+        "description": "Pill."
+    },
+    "customerLoadFailed": "Couldn't load this customer",
+    "@customerLoadFailed": {
+        "description": "Error."
+    },
+    "customersLoadFailed": "Couldn't load your customers",
+    "@customersLoadFailed": {
+        "description": "Error."
+    },
+    "commissionAsked": "You asked {amount}",
+    "@commissionAsked": {
+        "description": "The commission the agent entered, before the admin changed it.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "fixDocsTitle": "Fix documents",
+    "@fixDocsTitle": {
+        "description": "Page title."
+    },
+    "fixDocsHeading": "Upload a clear photo",
+    "@fixDocsHeading": {
+        "description": "Heading."
+    },
+    "fixDocsBody": "{name}'s {doc} was returned by your admin.",
+    "@fixDocsBody": {
+        "description": "Explains what to fix.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "doc": {
+                "type": "String"
+            }
+        }
+    },
+    "adminNote": "Admin note",
+    "@adminNote": {
+        "description": "Banner title."
+    },
+    "retakePhoto": "Retake",
+    "@retakePhoto": {
+        "description": "Button: take the photo again."
+    },
+    "newPhotoAdded": "New photo added",
+    "@newPhotoAdded": {
+        "description": "Status of a replaced document."
+    },
+    "addNewPhotoFirst": "Add the new photo first",
+    "@addNewPhotoFirst": {
+        "description": "Hint before sending."
+    },
+    "sentAgain": "Sent again",
+    "@sentAgain": {
+        "description": "Banner."
+    },
+    "sentAgainBody": "Your admin gets it for review.",
+    "@sentAgainBody": {
+        "description": "Banner body."
+    },
+    "backToCustomers": "Back to customers",
+    "@backToCustomers": {
+        "description": "Button."
+    },
+    "tabEarnings": "Earnings",
+    "@tabEarnings": {
+        "description": "Tab."
+    },
+    "tabAlerts": "Alerts",
+    "@tabAlerts": {
+        "description": "Tab: notifications."
+    },
+    "paidThisMonth": "paid",
+    "@paidThisMonth": {
+        "description": "Under the month's paid commission."
+    },
+    "paidMonthLine": "{month} · {n} customers",
+    "@paidMonthLine": {
+        "description": "Month and how many customers were paid.",
+        "placeholders": {
+            "month": {
+                "type": "String"
+            },
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "inThePipeline": "In the pipeline",
+    "@inThePipeline": {
+        "description": "Commission not paid yet."
+    },
+    "legendPayable": "{amount} payable",
+    "@legendPayable": {
+        "description": "Legend.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "legendWaiting": "{amount} waiting",
+    "@legendWaiting": {
+        "description": "Legend: waits for the advance.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "legendReview": "{amount} review",
+    "@legendReview": {
+        "description": "Legend.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "commissionsTitle": "Commissions",
+    "@commissionsTitle": {
+        "description": "Section."
+    },
+    "nameAmount": "{name} · {amount}",
+    "@nameAmount": {
+        "description": "Row title.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "waitsForAdvance": "Waits for advance",
+    "@waitsForAdvance": {
+        "description": "Commission approved, advance not paid."
+    },
+    "sentWhen": "Sent {when}",
+    "@sentWhen": {
+        "description": "Row line.",
+        "placeholders": {
+            "when": {
+                "type": "String"
+            }
+        }
+    },
+    "earningsFooter": "Commission becomes payable once the customer pays the advance. Your admin marks it paid.",
+    "@earningsFooter": {
+        "description": "Footer."
+    },
+    "noCommissions": "Commissions show here once you add customers.",
+    "@noCommissions": {
+        "description": "Empty earnings."
+    },
+    "yourInstall": "Your install",
+    "@yourInstall": {
+        "description": "Track tab title."
+    },
+    "visitsOn": "{name} visits {day}",
+    "@visitsOn": {
+        "description": "Next visit card title.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "day": {
+                "type": "String"
+            }
+        }
+    },
+    "visitWindow": "{title} · {from} to {to}",
+    "@visitWindow": {
+        "description": "Next visit time.",
+        "placeholders": {
+            "title": {
+                "type": "String"
+            },
+            "from": {
+                "type": "String"
+            },
+            "to": {
+                "type": "String"
+            }
+        }
+    },
+    "visitAt": "{title} · {at}",
+    "@visitAt": {
+        "description": "Next visit time without an end.",
+        "placeholders": {
+            "title": {
+                "type": "String"
+            },
+            "at": {
+                "type": "String"
+            }
+        }
+    },
+    "stageNumbered": "{n}. {name}",
+    "@stageNumbered": {
+        "description": "Install stage row.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            },
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "stageNext": "Next",
+    "@stageNext": {
+        "description": "Pill."
+    },
+    "stageDone": "Done",
+    "@stageDone": {
+        "description": "Pill."
+    },
+    "installLoadFailed": "Couldn't load your install",
+    "@installLoadFailed": {
+        "description": "Error."
+    },
+    "handedOverAllDone": "Your system is handed over. Every stage is done.",
+    "@handedOverAllDone": {
+        "description": "Track tab after handover."
+    },
+    "paymentsTitle": "Payments",
+    "@paymentsTitle": {
+        "description": "Tab title."
+    },
+    "advanceDueTitle": "{label} due",
+    "@advanceDueTitle": {
+        "description": "Due payment card eyebrow.",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            }
+        }
+    },
+    "dueOnPill": "Due {date}",
+    "@dueOnPill": {
+        "description": "Pill.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "bookedOnceReceived": "Your install is booked once {org} receives this.",
+    "@bookedOnceReceived": {
+        "description": "Due payment explanation.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "paymentClaimedTitle": "Payment sent",
+    "@paymentClaimedTitle": {
+        "description": "Banner after claiming a payment."
+    },
+    "paymentClaimedBody": "{org} confirms it, usually the same day. Your receipt will appear here.",
+    "@paymentClaimedBody": {
+        "description": "Banner.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "paymentPlan": "Payment plan",
+    "@paymentPlan": {
+        "description": "Section."
+    },
+    "statusDue": "Due",
+    "@statusDue": {
+        "description": "Pill."
+    },
+    "statusClaimed": "Confirming",
+    "@statusClaimed": {
+        "description": "Pill: customer paid, company confirming."
+    },
+    "subsidyRow": "PM Surya Ghar subsidy",
+    "@subsidyRow": {
+        "description": "Row title."
+    },
+    "subsidyRowSub": "Credited to your bank by the government",
+    "@subsidyRowSub": {
+        "description": "Row subtitle."
+    },
+    "backToYou": "Back to you",
+    "@backToYou": {
+        "description": "Pill: subsidy comes back to the customer."
+    },
+    "payByUpi": "Pay {amount} by UPI",
+    "@payByUpi": {
+        "description": "Button.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "paidByBank": "I paid by bank transfer",
+    "@paidByBank": {
+        "description": "Button."
+    },
+    "noUpiApp": "No UPI app found on this phone. Pay by bank transfer instead.",
+    "@noUpiApp": {
+        "description": "Error."
+    },
+    "payCommission": "Commission",
+    "@payCommission": {
+        "description": "Pay type pill."
+    },
+    "paySalaried": "Salaried",
+    "@paySalaried": {
+        "description": "Pay type pill."
+    },
+    "solacliqUser": "SolaCliq user",
+    "@solacliqUser": {
+        "description": "Pill for a person with no company."
+    },
+    "statCustomers": "customers",
+    "@statCustomers": {
+        "description": "Profile stat."
+    },
+    "statPaidIn": "paid in {month}",
+    "@statPaidIn": {
+        "description": "Profile stat.",
+        "placeholders": {
+            "month": {
+                "type": "String"
+            }
+        }
+    },
+    "statPayable": "payable",
+    "@statPayable": {
+        "description": "Profile stat."
+    },
+    "statToFix": "to fix",
+    "@statToFix": {
+        "description": "Profile stat."
+    },
+    "statSystem": "system",
+    "@statSystem": {
+        "description": "Profile stat: system size."
+    },
+    "statStage": "stage",
+    "@statStage": {
+        "description": "Profile stat."
+    },
+    "statSubsidy2": "subsidy",
+    "@statSubsidy2": {
+        "description": "Profile stat."
+    },
+    "bankForPayouts": "Bank for payouts",
+    "@bankForPayouts": {
+        "description": "Row and page title."
+    },
+    "bankForSalary": "Bank for salary",
+    "@bankForSalary": {
+        "description": "Row title."
+    },
+    "bankSub": "{bank} · account {last4}",
+    "@bankSub": {
+        "description": "Row subtitle.",
+        "placeholders": {
+            "bank": {
+                "type": "String"
+            },
+            "last4": {
+                "type": "String"
+            }
+        }
+    },
+    "bankNone": "Add the account you're paid into",
+    "@bankNone": {
+        "description": "Row subtitle with no bank yet."
+    },
+    "notificationsSubSales": "KYC, commission, payouts",
+    "@notificationsSubSales": {
+        "description": "Row subtitle."
+    },
+    "notificationsSubCustomer": "Visits and payments",
+    "@notificationsSubCustomer": {
+        "description": "Row subtitle."
+    },
+    "notificationsSubUser": "Quotes and invites",
+    "@notificationsSubUser": {
+        "description": "Row subtitle."
+    },
+    "documentsSubCustomer": "Aadhaar, PAN, bill, bank",
+    "@documentsSubCustomer": {
+        "description": "Row subtitle."
+    },
+    "helpCallOrg": "Call {org}",
+    "@helpCallOrg": {
+        "description": "Help row.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "helpCallOrgSub": "{org} · 9 am to 7 pm",
+    "@helpCallOrgSub": {
+        "description": "Help row subtitle.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "statApproved": "approved",
+    "@statApproved": {
+        "description": "Profile stat: customers approved."
+    },
+    "pushNotifications": "Push notifications",
+    "@pushNotifications": {
+        "description": "Setting."
+    },
+    "pushNotificationsSub": "New work, approvals, returns",
+    "@pushNotificationsSub": {
+        "description": "Setting."
+    },
+    "whatsappUpdates": "WhatsApp updates",
+    "@whatsappUpdates": {
+        "description": "Setting."
+    },
+    "whatsappUpdatesSub": "A daily summary at 8 pm",
+    "@whatsappUpdatesSub": {
+        "description": "Setting."
+    },
+    "soundSetting": "Sound",
+    "@soundSetting": {
+        "description": "Setting."
+    },
+    "soundSettingSub": "For new tasks and messages",
+    "@soundSettingSub": {
+        "description": "Setting."
+    },
+    "languageLabel": "Language",
+    "@languageLabel": {
+        "description": "Setting."
+    },
+    "languageEnglish": "English",
+    "@languageEnglish": {
+        "description": "Language."
+    },
+    "languageHindi": "हिंदी",
+    "@languageHindi": {
+        "description": "Language: Hindi, in Hindi."
+    },
+    "languagePunjabi": "ਪੰਜਾਬੀ",
+    "@languagePunjabi": {
+        "description": "Language: Punjabi, in Punjabi."
+    },
+    "languageSoon": "Hindi and Punjabi arrive in an update. Your choice is saved for then.",
+    "@languageSoon": {
+        "description": "Note under the language choice."
+    },
+    "appVersion": "SolaCliq by MarkCliq · version {version}",
+    "@appVersion": {
+        "description": "Footer.",
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsLoadFailed": "Couldn't load your settings",
+    "@settingsLoadFailed": {
+        "description": "Error."
+    },
+    "detailsLoadFailed": "Couldn't load your details",
+    "@detailsLoadFailed": {
+        "description": "Error."
+    },
+    "fullNameLabel": "Full name",
+    "@fullNameLabel": {
+        "description": "Field."
+    },
+    "mobileLabel": "Mobile",
+    "@mobileLabel": {
+        "description": "Field."
+    },
+    "emailLabel": "Email",
+    "@emailLabel": {
+        "description": "Field."
+    },
+    "addressLabel": "Address",
+    "@addressLabel": {
+        "description": "Field."
+    },
+    "emergencyContactLabel": "Emergency contact",
+    "@emergencyContactLabel": {
+        "description": "Field."
+    },
+    "emergencyPlaceholder": "Name · phone",
+    "@emergencyPlaceholder": {
+        "description": "Field placeholder."
+    },
+    "saveLabel": "Save",
+    "@saveLabel": {
+        "description": "Button."
+    },
+    "savedTitle": "Saved",
+    "@savedTitle": {
+        "description": "Banner."
+    },
+    "detailsSavedBody": "Your admin sees the new details.",
+    "@detailsSavedBody": {
+        "description": "Banner."
+    },
+    "bankSavedBody": "Your admin uses this for your next payout.",
+    "@bankSavedBody": {
+        "description": "Banner."
+    },
+    "bankIntro": "Your commission or salary is paid to this account.",
+    "@bankIntro": {
+        "description": "Bank page intro."
+    },
+    "accountHolder": "Account holder",
+    "@accountHolder": {
+        "description": "Field."
+    },
+    "accountNumber": "Account number",
+    "@accountNumber": {
+        "description": "Field."
+    },
+    "accountNumberSaved": "Saved, ending {last4}. Type a new one to change it.",
+    "@accountNumberSaved": {
+        "description": "Field hint.",
+        "placeholders": {
+            "last4": {
+                "type": "String"
+            }
+        }
+    },
+    "ifscLabel": "IFSC",
+    "@ifscLabel": {
+        "description": "Field."
+    },
+    "bankNameLabel": "Bank",
+    "@bankNameLabel": {
+        "description": "Row."
+    },
+    "errorAccountNumber": "Enter the account number, 6 to 18 digits.",
+    "@errorAccountNumber": {
+        "description": "Validation."
+    },
+    "errorIfsc": "Enter an IFSC like HDFC0001234.",
+    "@errorIfsc": {
+        "description": "Validation."
+    },
+    "errorHolder": "Enter the name on the account.",
+    "@errorHolder": {
+        "description": "Validation."
+    },
+    "documentsTitle": "Documents",
+    "@documentsTitle": {
+        "description": "Page title."
+    },
+    "documentsWorkerNote": "Only your admin can see these. They are used for salary and site entry passes.",
+    "@documentsWorkerNote": {
+        "description": "Footer."
+    },
+    "documentsCustomerNote": "Uploaded by {name} and verified by {org}. Call them if anything changes.",
+    "@documentsCustomerNote": {
+        "description": "Footer.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "documentsCustomerNoteNoAgent": "Verified by {org}. Call them if anything changes.",
+    "@documentsCustomerNoteNoAgent": {
+        "description": "Footer.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
+    "documentsLoadFailed": "Couldn't load your documents",
+    "@documentsLoadFailed": {
+        "description": "Error."
+    },
+    "noDocuments": "No documents yet.",
+    "@noDocuments": {
+        "description": "Empty."
+    },
+    "learnTitle": "Learn",
+    "@learnTitle": {
+        "description": "Page title."
+    },
+    "learn1Title": "How rooftop solar works",
+    "@learn1Title": {
+        "description": "Guide."
+    },
+    "learn1Body": "Panels make DC power, the inverter turns it into AC for your home, and the net meter sends extra to the grid.",
+    "@learn1Body": {
+        "description": "Guide."
+    },
+    "learn2Title": "PM Surya Ghar subsidy",
+    "@learn2Title": {
+        "description": "Guide."
+    },
+    "learn2Body": "₹30,000 per kW for the first 2 kW and ₹18,000 for the third. Up to ₹78,000 for 3 kW and above.",
+    "@learn2Body": {
+        "description": "Guide."
+    },
+    "learn3Title": "What size do I need?",
+    "@learn3Title": {
+        "description": "Guide."
+    },
+    "learn3Body": "Roughly 1 kW for every ₹1,000 of monthly bill. A 3 to 5 kW system suits most homes.",
+    "@learn3Body": {
+        "description": "Guide."
+    },
+    "learn4Title": "How long does install take?",
+    "@learn4Title": {
+        "description": "Guide."
+    },
+    "learn4Body": "About 2 to 4 weeks from survey to handover, including the net meter visit.",
+    "@learn4Body": {
+        "description": "Guide."
+    },
+    "commissionAmountLabel": "Amount for this customer",
+    "@commissionAmountLabel": {
+        "description": "Field: the agent's commission."
+    },
+    "commissionNoteLabel": "How you worked it out (optional)",
+    "@commissionNoteLabel": {
+        "description": "Field."
+    },
+    "commissionNotePlaceholder": "5 kW, ₹1,200 per kW as discussed",
+    "@commissionNotePlaceholder": {
+        "description": "Field placeholder."
+    },
+    "commissionReviewNote": "Your admin reviews it. It becomes payable when {name} pays the advance.",
+    "@commissionReviewNote": {
+        "description": "Under the commission fields.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "salariedNoCommission": "You are salaried, so there is no commission step.",
+    "@salariedNoCommission": {
+        "description": "Review step for salaried sales."
+    },
+    "errorCommission": "Enter your commission for this customer.",
+    "@errorCommission": {
+        "description": "Validation."
+    },
+    "custStepCommission": "Your admin reviews your {amount}",
+    "@custStepCommission": {
+        "description": "Sent step.",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "custStepCommissionSub": "Approves it or changes the amount",
+    "@custStepCommissionSub": {
+        "description": "Sent step."
+    },
+    "custStepPaid": "Paid after the advance",
+    "@custStepPaid": {
+        "description": "Sent step."
+    },
+    "custStepPaidSub": "When {name} pays the first instalment",
+    "@custStepPaidSub": {
+        "description": "Sent step.",
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "totalLine": "total · {kw} kW system",
+    "@totalLine": {
+        "description": "Under the system price.",
+        "placeholders": {
+            "kw": {
+                "type": "String"
+            }
+        }
     }
 }

@@ -37,6 +37,7 @@ class SolaTappable extends StatefulWidget {
     required this.onTap,
     required this.builder,
     this.isButton = true,
+    this.selected,
     this.identifier,
     super.key,
   });
@@ -49,6 +50,10 @@ class SolaTappable extends StatefulWidget {
 
   /// Whether screen readers announce it as a button.
   final bool isButton;
+
+  /// For one of a set, such as a tab: whether it is the chosen one. Null
+  /// when the element isn't selectable.
+  final bool? selected;
 
   /// Stable id exposed to the platform's accessibility tree.
   final String? identifier;
@@ -88,6 +93,7 @@ class _SolaTappableState extends State<SolaTappable> {
       container: true,
       button: widget.isButton,
       enabled: enabled,
+      selected: widget.selected,
       label: widget.semanticsLabel,
       identifier: widget.identifier,
       excludeSemantics: true,

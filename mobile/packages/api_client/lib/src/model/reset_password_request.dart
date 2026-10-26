@@ -33,6 +33,7 @@ class ResetPasswordRequest {
   @JsonKey(name: r'code', required: true, includeIfNull: false)
   final String code;
 
+  /// At least 8 characters, including a number.
   @JsonKey(name: r'new_password', required: true, includeIfNull: false)
   final String newPassword;
 

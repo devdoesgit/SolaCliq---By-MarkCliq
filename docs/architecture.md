@@ -29,7 +29,11 @@ choice are in `decisions.md`.
   short-lived presigned URLs; nothing public.
 - **Public R2 bucket:** APK files and the `latest.json` update manifest only.
 - Uploads go straight from the client to R2 with presigned URLs, never
-  through the VPS.
+  through the VPS: `POST /uploads` returns a short-lived URL, method and
+  headers; the app sends the bytes there (with a separate HTTP client that
+  never carries the API token) and attaches the returned `upload_id` to the
+  record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
+  `.invalid` URLs, which the app treats as already uploaded.
 
 ## API contract
 
@@ -49,6 +53,11 @@ One OpenAPI spec is the contract between backend and frontends.
    the real backend serves them under `/api/v1`. Pointing at a local
    backend: mobile `--dart-define=API_BASE_URL=http://10.0.2.2:<port>/api/v1`,
    admin `BACKEND_URL=http://localhost:<port> npm run dev`.
+   Named examples let one mock play different people: `/me` and
+   `/auth/login` have `customer`, `worker`, `agent`, `multi_org` and
+   `org_admin`, picked with Prism's `Prefer: example=<name>` header. The
+   app's development flavor sends it: choose the person under Account →
+   Development, or start with `--dart-define=MOCK_PERSONA=<name>`.
 5. **Contract testing:** Schemathesis runs generated requests against the
    real API and reports anything that breaks the spec.
 
@@ -88,8 +97,19 @@ One OpenAPI spec is the contract between backend and frontends.
 - **Server-side rules:** pricing, approvals and stage rules live in the
   backend, so most fixes need no app update.
 
-Mobile code structure (state management, routing, folder layout) is decided
-when F0 starts and recorded here.
+- **Server-composed homes:** each role's home comes from
+  `GET /orgs/{org_id}/home` as parts the app knows how to draw, so homes
+  change without an app update.
+
+- **Stateless mock:** the Prism mock picks named examples per request
+  (`MockPersonaInterceptor`) and keeps no state, so screens that build up
+  progress (a task's photos and checklist) keep it locally until the
+  server's answer settles it.
+
+Mobile code structure: Bloc/Cubit per feature, GoRouter with one redirect
+(`appRedirect`) driven by the workspace, repositories wrapping the
+generated client, and `packages/sola_ui` for every visual. Features live in
+`lib/<feature>/{data,cubit,view}`.
 
 ## Distribution and updates
 

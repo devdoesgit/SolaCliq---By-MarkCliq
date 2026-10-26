@@ -28,3 +28,12 @@ String formatDateTime(DateTime value) {
   final mm = local.minute.toString().padLeft(2, '0');
   return '${formatDate(local)}, $hh:$mm';
 }
+
+/// Formats a calendar day without the year: `23 Oct`.
+String formatDayMonth(DateTime value) =>
+    '${value.day} ${_months[value.month - 1]}';
+
+const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+/// The short day name: `Mon`.
+String formatWeekday(DateTime value) => _weekdays[value.weekday - 1];

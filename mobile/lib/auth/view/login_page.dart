@@ -5,11 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
+import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
+import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
-import 'package:solacliq/auth/widgets/auth_layout.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/auth/widgets/password_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
@@ -63,6 +64,9 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _submit() async {
+    context
+      ..fillBlank(_email, 'asha@example.com')
+      ..fillBlank(_password, 'solarpanel26');
     final l10n = context.l10n;
     final email = _email.text.trim();
     setState(() {
@@ -97,11 +101,17 @@ class _LoginViewState extends State<LoginView> {
     AuthFailureCode.emailUnverified => SolaButton(
       key: const Key('login_verify_now'),
       label: context.l10n.verifyNow,
+      variant: SolaButtonVariant.white,
+      compact: true,
+      expand: false,
       onPressed: _verifyInstead,
     ),
     AuthFailureCode.passwordNotSet => SolaButton(
       key: const Key('login_set_up_now'),
       label: context.l10n.setUpAccount,
+      variant: SolaButtonVariant.white,
+      compact: true,
+      expand: false,
       onPressed: _setUpAccount,
     ),
     _ => null,
@@ -112,65 +122,116 @@ class _LoginViewState extends State<LoginView> {
     final l10n = context.l10n;
     final state = context.watch<SubmitCubit>().state;
     final notice = widget.notice;
-    return AutofillGroup(
-      child: AuthLayout(
-        title: l10n.logIn,
-        onBack: context.canPop() ? context.pop : null,
-        notice: state.status == SubmitStatus.failure
-            ? FailureNotice(state: state, action: _failureAction(state.failure))
-            : notice == null
-            ? null
-            : SolaNotice(
-                title: switch (notice) {
-                  LoginNotice.emailVerified => l10n.emailVerified,
-                  LoginNotice.passwordChanged => l10n.passwordChanged,
-                  LoginNotice.passwordCreated => l10n.passwordCreated,
-                },
-                tone: SolaTone.success,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: AutofillGroup(
+        child: SolaScreen(
+          navBar: const SolaNavBar(
+            leading: BackTo(fallback: AppRoutes.welcome),
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: SolaSpace.space14),
+              SolaTitleBlock(
+                title: l10n.loginTitle,
+                subtitle: l10n.loginBody,
+                style: SolaTextStyle.largeTitle,
               ),
-        primaryAction: SolaButton(
-          key: const Key('login_submit'),
-          label: l10n.logIn,
-          variant: SolaButtonVariant.primary,
-          expand: true,
-          onPressed: state.isSubmitting ? null : _submit,
+              const SizedBox(height: SolaSpace.space26),
+              if (state.status == SubmitStatus.failure) ...[
+                FailureNotice(
+                  state: state,
+                  action: _failureAction(state.failure),
+                ),
+                const SizedBox(height: SolaSpace.space14),
+              ] else if (notice != null) ...[
+                SolaNotice(
+                  title: switch (notice) {
+                    LoginNotice.emailVerified => l10n.emailVerified,
+                    LoginNotice.passwordChanged => l10n.passwordChanged,
+                    LoginNotice.passwordCreated => l10n.passwordCreated,
+                  },
+                  tone: SolaTone.success,
+                ),
+                const SizedBox(height: SolaSpace.space14),
+              ],
+              SolaGroup(
+                children: [
+                  SolaFieldRow(
+                    key: const ValueKey('login_email'),
+                    label: l10n.fieldEmail,
+                    placeholder: l10n.emailPlaceholder,
+                    controller: _email,
+                    error: _emailError,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    onChanged: _edited,
+                  ),
+                  PasswordField(
+                    key: const ValueKey('login_password'),
+                    label: l10n.fieldPassword,
+                    controller: _password,
+                    error: _passwordError,
+                    onChanged: _edited,
+                    onSubmitted: (_) => unawaited(_submit()),
+                  ),
+                ],
+              ),
+              const SizedBox(height: SolaSpace.space14),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: SolaTextLink(
+                  l10n.forgotPassword,
+                  key: const Key('login_forgot_password'),
+                  style: SolaTextStyle.body,
+                  onPressed: () => unawaited(
+                    context.push(AppRoutes.forgotPassword(_email.text.trim())),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          bottom: SolaBottomBar(
+            children: [
+              SolaButton(
+                key: const Key('login_submit'),
+                label: l10n.logIn,
+                onPressed: state.isSubmitting ? null : _submit,
+              ),
+              SolaLinkText(
+                key: const Key('login_create_account'),
+                before: l10n.newToSolaCliqBefore,
+                link: l10n.createAccountLink,
+                onTap: () => unawaited(context.push(AppRoutes.signup)),
+              ),
+              const _SecuredBy(),
+            ],
+          ),
         ),
-        secondaryActions: [
-          SolaButton(
-            key: const Key('login_forgot_password'),
-            label: l10n.forgotPassword,
-            variant: SolaButtonVariant.ghost,
-            onPressed: () =>
-                context.push(AppRoutes.forgotPassword(_email.text.trim())),
-          ),
-          SolaButton(
-            key: const Key('login_first_time'),
-            label: l10n.firstTimeHere,
-            variant: SolaButtonVariant.ghost,
-            onPressed: _setUpAccount,
-          ),
-        ],
-        children: [
-          SolaTextField(
-            key: const Key('login_email'),
-            label: l10n.fieldEmail,
-            controller: _email,
-            error: _emailError,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.email],
-            onChanged: _edited,
-          ),
-          PasswordField(
-            key: const Key('login_password'),
-            label: l10n.fieldPassword,
-            controller: _password,
-            error: _passwordError,
-            onChanged: _edited,
-            onSubmitted: (_) => unawaited(_submit()),
-          ),
-        ],
       ),
+    );
+  }
+}
+
+/// "Secured by MarkCliq" with a padlock, under the log in button.
+class _SecuredBy extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      spacing: SolaSpace.space6,
+      children: [
+        const SolaIcon(SolaIcons.lock, size: 12, color: SolaColors.muted),
+        SolaText(
+          context.l10n.securedBy,
+          style: SolaTextStyle.eyebrowSm,
+          color: SolaColors.muted,
+        ),
+      ],
     );
   }
 }

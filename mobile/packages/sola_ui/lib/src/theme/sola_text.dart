@@ -1,11 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/src/tokens/tokens.g.dart';
 
-// Bundled with this package (OFL). Space Grotesk is a variable font, so the
-// weight is also set on its `wght` axis.
+// Bundled with this package (OFL). Inter is a variable font, so the weight
+// is also set on its `wght` axis. It stands in for SF Pro, which the designs
+// name first.
 const _package = 'sola_ui';
-const _sansFamily = 'SpaceGrotesk';
-const _monoFamily = 'SpaceMono';
+const _sansFamily = 'Inter';
 
 /// The sans family name as `ThemeData.fontFamily` needs it from another
 /// package.
@@ -13,38 +13,110 @@ const solaSansFontFamily = 'packages/$_package/$_sansFamily';
 
 /// A style from the SolaCliq type scale.
 ///
-/// Headings and `label` are set in uppercase by [SolaText]; [textStyle] can't
+/// Uppercase styles are set in uppercase by [SolaText]; [textStyle] can't
 /// carry case, so use [SolaText] rather than a raw [Text] with these styles.
 enum SolaTextStyle {
-  /// Admin page titles and the customer's install screen title.
+  /// The welcome headline.
   display(SolaTextTokens.display, header: true),
 
-  /// Mobile screen titles.
-  h1(SolaTextTokens.h1, header: true),
+  /// Intro slide titles.
+  intro(SolaTextTokens.intro, header: true),
 
-  /// Groups within a screen.
-  h2(SolaTextTokens.h2, header: true),
+  /// Log in title.
+  largeTitle(SolaTextTokens.largeTitle, header: true),
 
-  /// The first line of a list row or job.
-  title(SolaTextTokens.title),
+  /// Screen titles.
+  title(SolaTextTokens.title, header: true),
 
-  /// Running text, field values, buttons.
-  body(SolaTextTokens.body),
+  /// Invite title.
+  titleSm(SolaTextTokens.titleSm, header: true),
 
-  /// Second lines and help text. Nothing on mobile is smaller, except label.
-  bodySm(SolaTextTokens.bodySm),
+  /// Sheet titles.
+  sheetTitle(SolaTextTokens.sheetTitle, header: true),
 
-  /// Field labels, eyebrows, timestamps, IDs. Mono, uppercase.
-  label(SolaTextTokens.label),
+  /// Photo card title.
+  cardTitle(SolaTextTokens.cardTitle),
 
-  /// Button labels. Mono, uppercase, widely tracked.
+  /// Section titles: Up next.
+  section(SolaTextTokens.section, header: true),
+
+  /// The word after a big number: tasks.
+  headlineLabel(SolaTextTokens.headlineLabel),
+
+  /// The home's headline number.
+  numberXl(SolaTextTokens.numberXl),
+
+  /// Smaller headline numbers.
+  numberLg(SolaTextTokens.numberLg),
+
+  /// An amount being typed.
+  amount(SolaTextTokens.amount),
+
+  /// Energy today.
+  energy(SolaTextTokens.energy),
+
+  /// The quote estimate.
+  estimate(SolaTextTokens.estimate),
+
+  /// Tile values.
+  stat(SolaTextTokens.stat),
+
+  /// Keypad digits and code boxes.
+  keypad(SolaTextTokens.keypad),
+
+  /// Navigation bar titles, names in headers.
+  navTitle(SolaTextTokens.navTitle),
+
+  /// Buttons.
   button(SolaTextTokens.button),
 
-  /// Amounts, kW, counts, coordinates. Mono, tabular figures.
-  num(SolaTextTokens.num),
+  /// Navigation links: Cancel, Done.
+  link(SolaTextTokens.link),
 
-  /// The one headline figure on a screen.
-  numLg(SolaTextTokens.numLg);
+  /// Intro text.
+  bodyLg(SolaTextTokens.bodyLg),
+
+  /// First line of a row.
+  rowTitle(SolaTextTokens.rowTitle),
+
+  /// Typed values and read-only values.
+  input(SolaTextTokens.input),
+
+  /// Subtitles under titles, link lines.
+  body(SolaTextTokens.body),
+
+  /// Emphasised lines.
+  bodyStrong(SolaTextTokens.bodyStrong),
+
+  /// Values in review rows.
+  rowValue(SolaTextTokens.rowValue),
+
+  /// Labels in review rows, paragraphs in cards.
+  small(SolaTextTokens.small),
+
+  /// Chips and segments.
+  chip(SolaTextTokens.chip),
+
+  /// Second lines of rows, notes.
+  meta(SolaTextTokens.meta),
+
+  /// Labels above inputs.
+  fieldLabel(SolaTextTokens.fieldLabel),
+
+  /// Captions under bars.
+  caption(SolaTextTokens.caption),
+
+  /// Status pills.
+  pill(SolaTextTokens.pill),
+
+  /// Eyebrows and section labels.
+  eyebrow(SolaTextTokens.eyebrow),
+
+  /// Week strip day names.
+  day(SolaTextTokens.day),
+
+  /// Footer marks.
+  eyebrowSm(SolaTextTokens.eyebrowSm);
 
   new(this.token, {this.header = false});
 
@@ -59,9 +131,7 @@ enum SolaTextStyle {
     if (weight == null) return base;
     return base.copyWith(
       fontWeight: weight,
-      fontVariations: token.mono
-          ? null
-          : [FontVariation.weight(weight.value.toDouble())],
+      fontVariations: [FontVariation.weight(weight.value.toDouble())],
     );
   }
 
@@ -74,11 +144,9 @@ enum SolaTextStyle {
   ];
 
   static TextStyle _fromToken(SolaTextToken t) => TextStyle(
-    fontFamily: t.mono ? _monoFamily : _sansFamily,
+    fontFamily: _sansFamily,
     package: _package,
-    fontVariations: t.mono
-        ? null
-        : [FontVariation.weight(t.fontWeight.toDouble())],
+    fontVariations: [FontVariation.weight(t.fontWeight.toDouble())],
     fontSize: t.fontSize,
     height: t.lineHeight / t.fontSize,
     leadingDistribution: TextLeadingDistribution.even,

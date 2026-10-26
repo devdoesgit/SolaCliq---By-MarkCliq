@@ -43,6 +43,9 @@ class AppConfig {
   /// Base URL of the API, including `/api/v1`.
   final String apiBaseUrl;
 
+  /// The admin website, where org admins work.
+  String get websiteUrl => 'https://solacliq.markcliq.com';
+
   /// Development-only tools, such as the component gallery.
   bool get showDevTools => flavor == AppFlavor.development;
 }
