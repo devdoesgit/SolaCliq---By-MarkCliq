@@ -5,6 +5,39 @@ Rust API for SolaCliq. **Built by the owner.** Claude drafts the API spec in
 backend code unless the owner asks.
 
 Stack, API conventions and design patterns: `../docs/architecture.md`.
+What to build first, and the rules the app relies on:
+`../docs/backend-handoff.md`. The same work split into phases, each tested
+before the next: `../docs/backend-phases.md`.
+
+## Running it
+
+```
+make db          # local Postgres 17 in a container (dev only)
+cp backend/.env.example backend/.env
+make api         # migrates, then serves localhost:8080
+make api-test    # fmt check, clippy -D warnings, tests
+cargo run -- openapi   # (in backend/) print the generated spec
+```
+
+`GET /api/v1/health` answers 200, or 503 when the database is down;
+interactive docs at `/api/docs`.
+
+## Skeleton (set up by Claude, 2026-11-09; the owner builds from here)
+
+- `src/main.rs`: config, tracing, Postgres pool, migrations at start,
+  graceful shutdown on Ctrl-C/SIGTERM.
+- `src/lib.rs`: `app(state)` builds the router (also used by tests): every
+  route under `/api/v1`, request ids (`x-request-id`), 30 s timeout,
+  request tracing, problem-JSON 404 fallback.
+- `src/config.rs`: environment variables (`.env.example` lists them).
+- `src/error.rs`: `ApiError` → RFC 9457 `Problem` with `code`; database
+  errors are logged and returned as a plain 500.
+- `src/routes/`: one module per area with a `router()`, merged in
+  `routes/mod.rs`; handlers carry `#[utoipa::path]`.
+- `src/openapi.rs`: generated spec and the Scalar docs page.
+- `migrations/`: sqlx migrations (empty so far).
+- `tests/`: router tests without a database; use `#[sqlx::test]` for
+  database ones.
 
 ## Responsibilities
 

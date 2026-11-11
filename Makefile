@@ -14,7 +14,7 @@ SPEC := api/openapi.yaml
 API_CLIENT := mobile/packages/api_client
 SOLA_UI := mobile/packages/sola_ui
 
-.PHONY: help setup tokens gen gen-dart gen-ts mock lint test check
+.PHONY: help setup tokens gen gen-dart gen-ts mock lint test check db api api-test
 
 help: ## List tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -65,3 +65,17 @@ test: ## Run both apps' tests
 check: ## Fail if generated files are out of date
 	$(MAKE) tokens gen
 	git diff --exit-code -- design admin/src/styles/tokens.css admin/src/api $(SOLA_UI)/lib/src/tokens $(API_CLIENT)
+
+CONTAINER := $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
+
+db: ## Start local Postgres 17 for the backend (dev only, matches backend/.env.example)
+	$(CONTAINER) start solacliq-pg 2>/dev/null || $(CONTAINER) run -d --name solacliq-pg \
+	  -e POSTGRES_USER=solacliq -e POSTGRES_PASSWORD=solacliq -e POSTGRES_DB=solacliq \
+	  -p 127.0.0.1:5432:5432 -v solacliq-pgdata:/var/lib/postgresql/data \
+	  docker.io/library/postgres:17
+
+api: ## Run the Rust API on localhost:8080 (needs backend/.env)
+	cd backend && cargo run
+
+api-test: ## Run the backend's tests, clippy and format check
+	cd backend && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test

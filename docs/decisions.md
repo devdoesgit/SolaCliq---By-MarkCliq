@@ -281,3 +281,19 @@ Change a decision by adding a new line, not by editing an old one.
   any open screen and opens the new home; a different person no longer
   inherits the last one's Personal workspace.
 
+## 2026-11-09
+
+- **Backend skeleton set up; the owner builds the rest.** Axum 0.8, sqlx
+  0.9 (Postgres, migrations at start), utoipa 6 with Scalar docs at
+  `/api/docs`, tower-http request ids, timeout and tracing. Only
+  `GET /health` exists. Local Postgres runs with `make db` (podman or
+  docker, no compose needed); `make api` and `make api-test` run and
+  check it.
+- **Sessions use opaque tokens, not JWTs.** Random 32-byte tokens, stored
+  only as SHA-256 in a `sessions` table and looked up on each request.
+  Log out, password reset and suspension take effect at once, there is no
+  signing key to protect or rotate, and one lookup per request is cheap
+  at this scale. Access 15 minutes, refresh 30 days, website cookie 12
+  hours.
+- **Any 401 other than refresh is `auth.unauthenticated`.** The app
+  refreshes and retries on every 401, so no finer codes are needed.
