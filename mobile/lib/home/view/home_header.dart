@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
-import 'package:solacliq/app/widgets/coming_soon.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/workspace/view/workspace_sheet.dart';
 
@@ -109,17 +108,18 @@ class HomeHeader extends StatelessWidget {
                     builder: (context, state) => titles,
                   ),
           ),
-          SolaCircleButton(
-            key: const Key('home_bell'),
-            icon: SolaIcons.bell,
-            semanticsLabel: unread
-                ? l10n.notificationsUnread
-                : l10n.notifications,
-            badge: unread,
-            onPressed:
-                onBell ??
-                () => unawaited(showComingSoon(context, l10n.notifications)),
-          ),
+          // No bell where there is nothing to notify yet (a company that
+          // isn't active).
+          if (onBell case final bell?)
+            SolaCircleButton(
+              key: const Key('home_bell'),
+              icon: SolaIcons.bell,
+              semanticsLabel: unread
+                  ? l10n.notificationsUnread
+                  : l10n.notifications,
+              badge: unread,
+              onPressed: bell,
+            ),
         ],
       ),
     );

@@ -7,7 +7,6 @@ import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/app/config/app_config.dart';
 import 'package:solacliq/app/dev/mock_persona.dart';
 import 'package:solacliq/app/routes.dart';
-import 'package:solacliq/app/widgets/coming_soon.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/home/cubit/org_home_cubit.dart';
@@ -110,13 +109,8 @@ class _OrgHomeViewState extends State<OrgHomeView> {
     _ => SolaBackground.sand,
   };
 
-  void _open(String action) {
-    if (widget.onOpen case final open?) {
-      open(action);
-    } else {
-      unawaited(showComingSoon(context, action));
-    }
-  }
+  /// Outside a role's tabs (a company not active yet) nothing opens.
+  void _open(String action) => widget.onOpen?.call(action);
 
   void _onTile(HomeTile tile) {
     if (tile.action case final action?) _open(action);

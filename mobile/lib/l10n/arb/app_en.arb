@@ -992,10 +992,6 @@
     "@tabLearn": {
         "description": "Tab."
     },
-    "comingSoonBody": "This part of SolaCliq is on its way in the next update.",
-    "@comingSoonBody": {
-        "description": "Sheet for a tab not built yet."
-    },
     "invitedYou": "{company} invited you",
     "@invitedYou": {
         "description": "Invite banner.",
