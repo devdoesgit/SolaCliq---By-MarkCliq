@@ -43,6 +43,10 @@ Keep these current. They are the record of what SolaCliq is and why.
 - `docs/features/F<n>-<name>.md`: spec and notes for each feature, written
   when it starts.
 - `docs/decisions.md`: dated log of decisions and their reasons.
+- `docs/backend-handoff.md`: what the mobile app needs from the API, in
+  build order, with the rules behind each endpoint.
+- `docs/backend-phases.md`: that work in phases, each with how to test
+  it and when it's done.
 - `questioner.md`: open questions for the pilot vendor. Nothing in it is
   settled.
 - Design system: `design/tokens.json` is the source of truth for the
