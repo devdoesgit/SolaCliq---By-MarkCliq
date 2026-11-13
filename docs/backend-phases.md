@@ -28,7 +28,7 @@ vendor needs them.
 | 0 | Skeleton | `GET /health` | Done |
 | 1 | First table: sign up | #2 | Built and tested 2026-11-09; in-app check to do |
 | 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 (app logs in) |
-| 3 | Email codes, refresh, log out | #3, #4, #6–9 | 3a (refresh, log out) done 2026-11-11; 3b codes built 2026-11-13, SMTP mailer to do |
+| 3 | Email codes, refresh, log out | #3, #4, #6–9 | Done 2026-11-14 (SMTP mailer moved to phase 5) |
 | 4 | Companies and memberships | `/me` memberships, team endpoints, seed command | |
 | 5 | First deploy | — | |
 | 6 | Personal workspace | #11–20 | |
@@ -123,9 +123,17 @@ status code out.
   `LogMailer`. Verify and reset each run in one transaction; reset also
   revokes every session (`password_reset`) and verifies the email. Tests:
   `tests/codes.rs` (14), using an in-memory outbox. Checked live: sign-up
-  → code from the server log → verify 204 → login 200. Left: the SMTP
-  mailer (Google Workspace), and production must refuse to start without
-  it.
+  → code from the server log → verify 204 → login 200. The SMTP mailer
+  moved to phase 5 (decision 2026-11-14).
+- **QA (2026-11-14):** 118 scripted API checks (validation, enumeration,
+  races on sign-up, verify, guesses and refresh, cooldowns, session
+  revocation) and 14 scenarios on the emulator, all passing. Fixed in the
+  app: verifying from log in now logs straight in; a failed log in after
+  verifying lands on log in, not a dead code screen; the resend countdown
+  matches the server's 60 s; a new code clears the old one and its error;
+  the log in page rebuilds when only its query changes. Left (minor,
+  backend): 405 has an empty body, an oversized body is 422 not 413,
+  refresh with malformed JSON is 401 not 422.
 
 ## Phase 4. Companies and memberships
 
@@ -150,7 +158,9 @@ Everything after this is per company.
 
 Put it on the VPS early so the pilot can test on real phones.
 
-- **Build:** release build, a `systemd` service, nginx proxying
+- **Build:** the SMTP mailer (Google Workspace), and the API refuses to
+  start in production without its settings, so codes never go only to
+  the log. Release build, a `systemd` service, nginx proxying
   `solacliq.markcliq.com/api` to it, production `.env` on the server only,
   daily Postgres backup. CI: `cargo test`, clippy, and the spec check
   (`cargo run -- openapi` against `api/openapi.yaml`).

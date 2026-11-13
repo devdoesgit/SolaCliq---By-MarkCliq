@@ -331,3 +331,21 @@ Change a decision by adding a new line, not by editing an old one.
 - **Email goes through a `Mailer` trait** whose `send` returns at once,
   so no request waits on a mail server. Development prints emails to the
   server log (`LogMailer`); the SMTP mailer comes before production.
+
+## 2026-11-14
+
+- **Phase 3 is done; the SMTP mailer moves to phase 5 (first deploy).**
+  Phase 3's goal (sign-up, code, log in and forgot password working in
+  the app, codes read from the server log) is met. Real email matters
+  only once real users arrive, so it ships with the production `.env`,
+  together with a start-up check that refuses production without SMTP
+  settings.
+- **Verifying from the log in screen logs straight in.** The server only
+  answers "unverified" after the right password, so the app keeps that
+  password in memory (never stored) and logs in once the code is
+  accepted, as it already did after sign-up. If that log in fails (the
+  held password can be wrong when someone signed up twice), the app opens
+  log in with "Email verified" instead of staying on the used code.
+- **The app's resend countdown is 60 seconds**, matching the server's
+  one-code-a-minute rule; a shorter wait let people ask for a code the
+  server silently didn't send.
