@@ -16,8 +16,8 @@ pub fn is_strong_enough(password: &str) -> bool {
     (8..=128).contains(&len) && password.chars().any(|c| c.is_ascii_digit())
 }
 
-/// Hashes a password with a fresh random salt
-
+/// Hashes a password with a fresh random salt.
+///
 /// Argon2 is slow on purpose (that's what makes stolen hashes hard to
 /// crack), so it runs on tokio's blocking thread pool. Doing it directly in
 /// an async handler would stall every other request on that thread.

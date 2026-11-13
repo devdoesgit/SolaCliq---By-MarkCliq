@@ -28,7 +28,7 @@ vendor needs them.
 | 0 | Skeleton | `GET /health` | Done |
 | 1 | First table: sign up | #2 | Built and tested 2026-11-09; in-app check to do |
 | 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 (app logs in) |
-| 3 | Email codes, refresh, log out | #3, #4, #6–9 | |
+| 3 | Email codes, refresh, log out | #3, #4, #6–9 | 3a (refresh, log out) done 2026-11-11; 3b (codes) to do |
 | 4 | Companies and memberships | `/me` memberships, team endpoints, seed command | |
 | 5 | First deploy | — | |
 | 6 | Personal workspace | #11–20 | |
@@ -86,8 +86,11 @@ status code out.
 ## Phase 3. Email codes, refresh, log out
 
 - **Build:** 6-digit codes (hashed, 5 minutes, 5 tries) for verify (#3),
-  resend (#4), forgot and reset (#8, #9). Refresh rotates the token, and
-  reusing an old one revokes the whole family (#6). Log out revokes (#7).
+  resend (#4), forgot and reset (#8, #9). Refresh follows OAuth 2.1 for
+  the app and the website alike: each refresh returns a new access and
+  refresh token, the old refresh token dies, and reusing it revokes the
+  session (#6). The website gets a refresh cookie scoped to
+  `/auth/refresh`, replacing the 12-hour cookie. Log out revokes (#7).
   Email behind a small `Mailer` trait: prints to the log in development,
   sends through Google Workspace SMTP in production.
 - **Learn:** traits (the `Mailer`), transactions (`db.begin()`),
@@ -96,6 +99,20 @@ status code out.
   is 429; reset revokes sessions; refresh reuse logs the family out.
 - **Done when:** sign-up → code → login and forgot password both work in
   the app, with the code read from the server log.
+- **Notes (as built, 3a, 2026-11-11):** migration
+  `20261111000001_session_refresh.sql` makes every session carry a
+  refresh token (old web-only rows are deleted) and adds
+  `previous_refresh_hash` and `revoked_reason`. `session::rotate` checks
+  and swaps both tokens in one `UPDATE`, so two refreshes with the same
+  token can't both win; the loser counts as reuse and revokes the session.
+  The refresh expiry moves forward on every refresh. `POST /auth/refresh`
+  takes the token from the JSON body (app, 200 `TokenPair`) or the
+  `solacliq_refresh` cookie (website, 204 and new cookies); `POST
+  /auth/logout` revokes and clears both cookies. `WEB_SESSION_HOURS` is
+  gone. Tests: `tests/refresh.rs` (7). Checked in the app with
+  `ACCESS_TOKEN_MINUTES=1`: still logged in after the access token
+  expired; log out revokes the session. The admin website refreshes on a
+  401 (`admin/src/api/refresh.ts`).
 
 ## Phase 4. Companies and memberships
 

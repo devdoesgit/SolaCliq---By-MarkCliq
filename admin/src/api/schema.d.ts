@@ -100,7 +100,7 @@ export interface paths {
         /**
          * Log in
          * @description `client: app` returns a token pair in the body. `client: web` sets
-         *     the session cookie and returns no tokens. Wrong email and wrong
+         *     the access and refresh cookies and returns no tokens. Wrong email and wrong
          *     password give the same `auth.invalid_credentials`; an unverified
          *     account gets `account.email_unverified` only after the right
          *     password. An account created for someone (by an agent or org admin)
@@ -124,9 +124,16 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Get a new token pair (app)
-         * @description Rotates the refresh token. Reusing an already-used refresh token
-         *     revokes that login and returns 401 `auth.session_expired`.
+         * Get new tokens
+         * @description OAuth 2.1 rotation, for the app and the website alike: returns a
+         *     new access token and a new refresh token, and the old refresh token
+         *     stops working. Reusing an old refresh token revokes that login. A
+         *     dead refresh token gets 401 `auth.session_expired`; the client logs
+         *     out. Clients run one refresh at a time.
+         *
+         *     The app sends `RefreshRequest` and gets a `TokenPair`. The website
+         *     sends no body (its `solacliq_refresh` cookie goes along) and gets
+         *     204 with new cookies.
          */
         post: operations["refreshSession"];
         delete?: never;
@@ -146,7 +153,8 @@ export interface paths {
         put?: never;
         /**
          * Log out of this session
-         * @description Web clients also get the cookie cleared.
+         * @description Revokes this session: its access and refresh tokens stop working at
+         *     once. Web clients also get both cookies cleared.
          */
         post: operations["logout"];
         delete?: never;
@@ -2219,10 +2227,13 @@ export interface operations {
             200: {
                 headers: {
                     /**
-                     * @description Web clients only. `solacliq_session`, HttpOnly, Secure,
-                     *     SameSite=Lax, Path=/, Max-Age 12 hours. (The example omits
-                     *     Secure so the mock works over plain HTTP in development.)
-                     * @example solacliq_session=mock-session; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200
+                     * @description Web clients only, two cookies, both HttpOnly, Secure and
+                     *     SameSite=Lax: `solacliq_session` (the access token, Path=/,
+                     *     Max-Age = the access lifetime) and `solacliq_refresh` (the
+                     *     refresh token, Path=/api/v1/auth/refresh, Max-Age = the
+                     *     refresh lifetime). (The example omits Secure so the mock
+                     *     works over plain HTTP in development.)
+                     * @example solacliq_session=mock-session; Path=/; HttpOnly; SameSite=Lax; Max-Age=900
                      */
                     "Set-Cookie"?: string;
                     [name: string]: unknown;
@@ -2243,13 +2254,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["RefreshRequest"];
             };
         };
         responses: {
-            /** @description New tokens. */
+            /** @description New tokens (app). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2257,6 +2268,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TokenPair"];
                 };
+            };
+            /** @description New cookies (website), as set by /auth/login. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["Problem"];
         };
@@ -2274,7 +2292,7 @@ export interface operations {
             204: {
                 headers: {
                     /**
-                     * @description Web clients only. Clears `solacliq_session`.
+                     * @description Web clients only. Clears `solacliq_session` and `solacliq_refresh`.
                      * @example solacliq_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0
                      */
                     "Set-Cookie"?: string;

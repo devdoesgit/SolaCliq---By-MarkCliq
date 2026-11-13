@@ -3,7 +3,7 @@
 mod common;
 
 use axum::http::StatusCode;
-use common::{get, post, verified_user};
+use common::{cookie_value, get, post, set_cookies, verified_user};
 use serde_json::json;
 use sqlx::PgPool;
 
@@ -96,7 +96,7 @@ async fn account_without_password_is_told_to_set_one(db: PgPool) {
 }
 
 #[sqlx::test]
-async fn web_login_sets_a_cookie_and_no_tokens(db: PgPool) {
+async fn web_login_sets_cookies_and_no_tokens(db: PgPool) {
     verified_user(&db, "asha@example.com", "sunlight1").await;
     let res = post(
         &db,
@@ -107,18 +107,22 @@ async fn web_login_sets_a_cookie_and_no_tokens(db: PgPool) {
 
     assert_eq!(res.status, StatusCode::OK);
     assert!(res.body.get("tokens").is_none());
-    let cookie = res.headers["set-cookie"].to_str().unwrap();
-    assert!(cookie.starts_with("solacliq_session="));
-    assert!(cookie.contains("HttpOnly"));
-    assert!(cookie.contains("SameSite=Lax"));
-    assert!(cookie.contains("Max-Age=43200"));
+    let cookies = set_cookies(&res);
+    assert_eq!(cookies.len(), 2);
+    let access = &cookies[0];
+    assert!(access.starts_with("solacliq_session="));
+    assert!(access.contains("Path=/;"));
+    assert!(access.contains("HttpOnly"));
+    assert!(access.contains("SameSite=Lax"));
+    assert!(access.contains("Max-Age=900"));
+    let refresh = &cookies[1];
+    assert!(refresh.starts_with("solacliq_refresh="));
+    assert!(refresh.contains("Path=/api/v1/auth/refresh;"));
+    assert!(refresh.contains("HttpOnly"));
+    assert!(refresh.contains("Max-Age=2592000"));
 
-    // The cookie alone opens /me.
-    let token = cookie
-        .trim_start_matches("solacliq_session=")
-        .split(';')
-        .next()
-        .unwrap();
+    // The access cookie alone opens /me.
+    let token = cookie_value(access);
     let req = axum::http::Request::get("/api/v1/me")
         .header("cookie", format!("theme=dark; solacliq_session={token}"))
         .body(axum::body::Body::empty())

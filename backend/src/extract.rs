@@ -34,8 +34,10 @@ pub struct AuthUser {
     pub session_id: uuid::Uuid,
 }
 
-/// Name of the website's session cookie.
+/// The website's access token cookie, sent on every request.
 pub const SESSION_COOKIE: &str = "solacliq_session";
+/// The website's refresh token cookie, sent only to `/auth/refresh`.
+pub const REFRESH_COOKIE: &str = "solacliq_refresh";
 
 impl axum::extract::FromRequestParts<crate::AppState> for AuthUser {
     type Rejection = ApiError;
@@ -45,7 +47,7 @@ impl axum::extract::FromRequestParts<crate::AppState> for AuthUser {
         state: &crate::AppState,
     ) -> Result<Self, Self::Rejection> {
         let token = bearer_token(&parts.headers)
-            .or_else(|| session_cookie(&parts.headers))
+            .or_else(|| cookie(&parts.headers, SESSION_COOKIE))
             .ok_or_else(ApiError::unauthenticated)?;
         let (session_id, user_id) = crate::session::find(&state.db, token)
             .await?
@@ -67,15 +69,16 @@ fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
         .filter(|t| !t.is_empty())
 }
 
+/// `cookie(headers, "solacliq_session")` with
 /// `Cookie: a=1; solacliq_session=abc` → `Some("abc")`.
-fn session_cookie(headers: &axum::http::HeaderMap) -> Option<&str> {
+pub fn cookie<'a>(headers: &'a axum::http::HeaderMap, name: &str) -> Option<&'a str> {
     headers
         .get_all(axum::http::header::COOKIE)
         .iter()
         .filter_map(|v| v.to_str().ok())
         .flat_map(|v| v.split(';'))
         .find_map(|pair| {
-            let (name, value) = pair.trim().split_once('=')?;
-            (name == SESSION_COOKIE && !value.is_empty()).then_some(value)
+            let (key, value) = pair.trim().split_once('=')?;
+            (key == name && !value.is_empty()).then_some(value)
         })
 }

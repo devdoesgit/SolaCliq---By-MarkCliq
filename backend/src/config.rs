@@ -15,7 +15,7 @@ pub struct Config {
     pub log_json: bool,
     /// Mark the website's cookie `Secure` (HTTPS only). Off for local HTTP.
     pub cookie_secure: bool,
-    /// How long tokens and the website's cookie last.
+    /// How long access and refresh tokens last.
     pub session_lifetimes: Lifetimes,
 }
 
@@ -55,7 +55,6 @@ fn lifetimes_from_env() -> Result<Lifetimes, ConfigError> {
             d.refresh.num_days(),
             Duration::try_days,
         )?,
-        web: duration("WEB_SESSION_HOURS", d.web.num_hours(), Duration::try_hours)?,
     };
     // An access token outliving its refresh token makes refresh pointless.
     if lifetimes.access >= lifetimes.refresh {

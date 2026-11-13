@@ -297,3 +297,15 @@ Change a decision by adding a new line, not by editing an old one.
   hours.
 - **Any 401 other than refresh is `auth.unauthenticated`.** The app
   refreshes and retries on every 401, so no finer codes are needed.
+
+## 2026-11-11
+
+- **The app and the website both refresh, by OAuth 2.1 rules.** Access
+  token 15 minutes, refresh token 30 days. Every refresh returns a new
+  access and refresh token and the old refresh token stops working;
+  reusing one revokes the session. The app keeps tokens in secure storage;
+  the website gets them as HttpOnly cookies, the refresh cookie scoped to
+  `/auth/refresh`. No grace window: each client runs one refresh at a
+  time. Replaces the website's fixed 12-hour cookie. Lifetimes are set in
+  the backend's environment (`ACCESS_TOKEN_MINUTES`,
+  `REFRESH_TOKEN_DAYS`).

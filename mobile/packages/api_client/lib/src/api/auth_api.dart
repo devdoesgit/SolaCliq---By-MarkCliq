@@ -161,7 +161,7 @@ class AuthApi {
   }
 
   /// Log in
-  /// &#x60;client: app&#x60; returns a token pair in the body. &#x60;client: web&#x60; sets the session cookie and returns no tokens. Wrong email and wrong password give the same &#x60;auth.invalid_credentials&#x60;; an unverified account gets &#x60;account.email_unverified&#x60; only after the right password. An account created for someone (by an agent or org admin) that has no password yet gets 403 &#x60;account.password_not_set&#x60;; the person sets one through /auth/password/forgot and /reset.
+  /// &#x60;client: app&#x60; returns a token pair in the body. &#x60;client: web&#x60; sets the access and refresh cookies and returns no tokens. Wrong email and wrong password give the same &#x60;auth.invalid_credentials&#x60;; an unverified account gets &#x60;account.email_unverified&#x60; only after the right password. An account created for someone (by an agent or org admin) that has no password yet gets 403 &#x60;account.password_not_set&#x60;; the person sets one through /auth/password/forgot and /reset.
   ///
   /// Parameters:
   /// * [loginRequest]
@@ -248,7 +248,7 @@ class AuthApi {
   }
 
   /// Log out of this session
-  /// Web clients also get the cookie cleared.
+  /// Revokes this session: its access and refresh tokens stop working at once. Web clients also get both cookies cleared.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -298,8 +298,8 @@ class AuthApi {
     return _response;
   }
 
-  /// Get a new token pair (app)
-  /// Rotates the refresh token. Reusing an already-used refresh token revokes that login and returns 401 &#x60;auth.session_expired&#x60;.
+  /// Get new tokens
+  /// OAuth 2.1 rotation, for the app and the website alike: returns a new access token and a new refresh token, and the old refresh token stops working. Reusing an old refresh token revokes that login. A dead refresh token gets 401 &#x60;auth.session_expired&#x60;; the client logs out. Clients run one refresh at a time.  The app sends &#x60;RefreshRequest&#x60; and gets a &#x60;TokenPair&#x60;. The website sends no body (its &#x60;solacliq_refresh&#x60; cookie goes along) and gets 204 with new cookies.
   ///
   /// Parameters:
   /// * [refreshRequest]
@@ -313,7 +313,7 @@ class AuthApi {
   /// Returns a [Future] containing a [Response] with a [TokenPair] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<TokenPair>> refreshSession({
-    required RefreshRequest refreshRequest,
+    RefreshRequest? refreshRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,

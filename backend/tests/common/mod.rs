@@ -72,3 +72,31 @@ pub async fn verified_user(db: &PgPool, email: &str, password: &str) {
         .await
         .unwrap();
 }
+
+/// Every `Set-Cookie` header of a response, in order.
+pub fn set_cookies(res: &Res) -> Vec<String> {
+    res.headers
+        .get_all("set-cookie")
+        .iter()
+        .map(|v| v.to_str().unwrap().to_owned())
+        .collect()
+}
+
+/// `solacliq_session=abc; Path=/; ...` → `abc`.
+pub fn cookie_value(set_cookie: &str) -> &str {
+    set_cookie
+        .split(';')
+        .next()
+        .and_then(|pair| pair.split_once('='))
+        .map(|(_, value)| value)
+        .unwrap()
+}
+
+/// POST with no body and the given headers.
+pub async fn post_with(db: &PgPool, path: &str, headers: &[(&str, &str)]) -> Res {
+    let mut req = Request::post(path);
+    for (name, value) in headers {
+        req = req.header(*name, *value);
+    }
+    send(db, req.body(Body::empty()).unwrap()).await
+}
