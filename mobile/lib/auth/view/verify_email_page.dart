@@ -88,12 +88,20 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     await context.read<SubmitCubit>().submit(() async {
       await auth.verifyEmail(email: email, code: _code.text.trim());
       final password = pending.take(email);
-      if (password == null) {
-        router.go(AppRoutes.loginAfterVerify(email));
-      } else {
-        // The router sends the signed-in person home.
-        await auth.logIn(email: email, password: password);
+      if (password != null) {
+        try {
+          // The router sends the signed-in person home.
+          return await auth.logIn(email: email, password: password);
+        } on AuthFailure {
+          /*
+            The email is verified either way, so never leave the person
+            here, where the used code can only fail. The held password can
+            be wrong: signing up again with a taken, unverified email keeps
+            the account's first password. Logging in by hand sorts it out.
+          */
+        }
       }
+      router.go(AppRoutes.loginAfterVerify(email));
     });
   }
 

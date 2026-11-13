@@ -84,6 +84,9 @@ class _LoginViewState extends State<LoginView> {
 
   void _verifyInstead() {
     final email = _email.text.trim();
+    // The server only says "unverified" after the right password, so keep
+    // it: verifying then logs straight in, as it does after signing up.
+    context.read<PendingLogin>().hold(email: email, password: _password.text);
     unawaited(
       context
           .read<AuthRepository>()

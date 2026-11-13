@@ -100,7 +100,11 @@ class AppRouter {
           path: AppRoutes.login,
           builder: (context, state) {
             final params = state.uri.queryParameters;
+            // Keyed by the full location: go_router reuses the page when
+            // only the query changes, which would keep the last failure
+            // ("verify your email") after coming back from verifying.
             return LoginPage(
+              key: ValueKey(state.uri.toString()),
               initialEmail: params['email'],
               notice: switch (params['notice']) {
                 'verified' => LoginNotice.emailVerified,
