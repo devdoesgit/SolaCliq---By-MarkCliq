@@ -1,5 +1,11 @@
-//! Accounts and sessions (F1). Phase 1: sign up. Phase 2: log in.
-//! Phase 3a: refresh and log out. Email codes arrive in phase 3b.
+/*
+    Accounts and sessions (F1)
+    --------------------------------------------------------------------
+    - phase 1: sign up
+    - phase 2: log in
+    - phase 3a: refresh and log out
+    - phase 3b: email codes (verify, resend, forgot and reset password)
+*/
 
 use axum::{
     Json,
@@ -14,9 +20,11 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    API_PREFIX, AppState,
+    API_PREFIX, AppState, PRODUCT_NAME,
+    codes::{self, Purpose},
     error::{ApiError, ApiResult, FieldError},
     extract::{ApiJson, AuthUser, REFRESH_COOKIE, SESSION_COOKIE, cookie},
+    mail::Email,
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
@@ -25,9 +33,13 @@ use crate::{
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(signup))
+        .routes(routes!(verify_email))
+        .routes(routes!(resend_verification))
         .routes(routes!(login))
         .routes(routes!(refresh))
         .routes(routes!(logout))
+        .routes(routes!(forgot_password))
+        .routes(routes!(reset_password))
 }
 
 /// The request body. `Deserialize` lets serde build it from JSON; a missing
@@ -45,8 +57,10 @@ pub struct SignupRequest {
     Create a customer account
     --------------------------------------------------------------------
     - creates unverified account
-    - emails a 5 digit code
+    - emails a 6 digit code
     - return 202 regardless
+    - email already taken: unverified gets a new code, verified gets an
+      "you already have an account" email
 */
 #[utoipa::path(
     post,
@@ -80,12 +94,13 @@ async fn signup(
         $1, $2... are bound parameters: the values never become part of
         the SQL text, so there's no SQL injection.
     */
+    let new_id = Uuid::now_v7();
     let inserted = sqlx::query(
         "INSERT INTO users (id, email, name, phone, password_hash)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (email) DO NOTHING",
     )
-    .bind(Uuid::now_v7())
+    .bind(new_id)
     .bind(&input.email)
     .bind(&input.name)
     .bind(&input.phone)
@@ -97,10 +112,124 @@ async fn signup(
 
     if inserted {
         tracing::info!(email = %input.email, "signup: new account");
+        send_code(&state, new_id, &input.email, Purpose::VerifyEmail).await?;
     } else {
         tracing::info!(email = %input.email, "signup: email already has an account");
+        /*
+            The password sent now is ignored: the account keeps its own.
+                - not verified yet -> a fresh code (they likely lost the first)
+                - verified -> tell the owner, who can log in or reset
+        */
+        match find_user(&state.db, &input.email).await? {
+            Some(user) if !user.verified => {
+                send_code(&state, user.id, &input.email, Purpose::VerifyEmail).await?;
+            }
+            Some(_) => state.mailer.send(already_registered_email(&input.email)),
+            None => {} // deleted in the meantime; nothing to send
+        }
     }
 
+    Ok(StatusCode::ACCEPTED)
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct EmailRequest {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifyEmailRequest {
+    pub email: String,
+    // 6 digits, from the email.
+    pub code: String,
+}
+
+/*
+    Verify an email with its code
+    --------------------------------------------------------------------
+    - right code -> email verified, the account can log in (204)
+    - codes last 5 minutes and allow 5 tries (see codes.rs for the errors)
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/email/verify",
+    operation_id = "verifyEmail",
+    tag = "auth",
+    security(()),
+    request_body = VerifyEmailRequest,
+    responses(
+        (status = 204, description = "Email verified; the account can log in."),
+        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn verify_email(
+    State(state): State<AppState>,
+    ApiJson(req): ApiJson<VerifyEmailRequest>,
+) -> ApiResult<StatusCode> {
+    let email = normalize_email(&req.email);
+    let user_id = find_user(&state.db, &email).await?.map(|u| u.id);
+    let checked = codes::check(
+        &state.db,
+        &state.code_secret,
+        user_id,
+        Purpose::VerifyEmail,
+        &req.code,
+    )
+    .await?;
+
+    /*
+        use up the code and mark the email verified together:
+        both happen or neither
+    */
+    let user_id = checked.user_id();
+    let mut tx = state.db.begin().await?;
+    codes::consume(&mut tx, checked).await?;
+    sqlx::query(
+        "UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()),
+                          updated_at = now()
+         WHERE id = $1",
+    )
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+
+    tracing::info!(%user_id, "email verified");
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/*
+    Send a new verification code
+    --------------------------------------------------------------------
+    - only for an account that isn't verified yet
+    - always 202, so it can't be used to find out who has an account
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/email/resend",
+    operation_id = "resendVerification",
+    tag = "auth",
+    security(()),
+    request_body = EmailRequest,
+    responses(
+        (status = 202, description = "Accepted."),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn resend_verification(
+    State(state): State<AppState>,
+    ApiJson(req): ApiJson<EmailRequest>,
+) -> ApiResult<StatusCode> {
+    let email = normalize_email(&req.email);
+    if let Some(user) = find_user(&state.db, &email).await?
+        && !user.verified
+    {
+        send_code(&state, user.id, &email, Purpose::VerifyEmail).await?;
+    }
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -159,7 +288,7 @@ async fn login(
     State(state): State<AppState>,
     ApiJson(req): ApiJson<LoginRequest>,
 ) -> ApiResult<Response> {
-    let email = req.email.trim().to_lowercase();
+    let email = normalize_email(&req.email);
     if req.password.is_empty() || req.password.chars().count() > 128 {
         return Err(invalid_credentials());
     }
@@ -275,8 +404,10 @@ pub struct RefreshRequest {
 async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
-    // The raw body, because the website sends none: `ApiJson` would reject
-    // that before this function ran.
+    /*
+        the raw body, because the website sends none: `ApiJson` would
+        reject that before this function ran
+    */
     body: Bytes,
 ) -> ApiResult<Response> {
     /*
@@ -333,6 +464,174 @@ async fn logout(State(state): State<AppState>, user: AuthUser) -> ApiResult<Resp
     );
     Ok(res)
 }
+
+/*
+    Email a password reset or set-up code
+    --------------------------------------------------------------------
+    - any account, verified or not, with or without a password (an account
+      an agent or admin created sets its first password this way)
+    - always 202, so it can't be used to find out who has an account
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/password/forgot",
+    operation_id = "forgotPassword",
+    tag = "auth",
+    security(()),
+    request_body = EmailRequest,
+    responses(
+        (status = 202, description = "Accepted."),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn forgot_password(
+    State(state): State<AppState>,
+    ApiJson(req): ApiJson<EmailRequest>,
+) -> ApiResult<StatusCode> {
+    let email = normalize_email(&req.email);
+    if let Some(user) = find_user(&state.db, &email).await? {
+        send_code(&state, user.id, &email, Purpose::ResetPassword).await?;
+    }
+    Ok(StatusCode::ACCEPTED)
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ResetPasswordRequest {
+    pub email: String,
+    // 6 digits, from the email.
+    pub code: String,
+    pub new_password: String,
+}
+
+/*
+    Set a new password with the reset code
+    --------------------------------------------------------------------
+    - weak password -> 422, checked first so it doesn't use up a try
+    - right code -> new password, and every session of the account ends
+      (whoever had the old password is logged out everywhere)
+    - the code came to the inbox, so this also verifies the email
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/password/reset",
+    operation_id = "resetPassword",
+    tag = "auth",
+    security(()),
+    request_body = ResetPasswordRequest,
+    responses(
+        (status = 204, description = "Password changed; log in again."),
+        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn reset_password(
+    State(state): State<AppState>,
+    ApiJson(req): ApiJson<ResetPasswordRequest>,
+) -> ApiResult<StatusCode> {
+    if !password::is_strong_enough(&req.new_password) {
+        return Err(password_too_weak("new_password"));
+    }
+    let email = normalize_email(&req.email);
+    let user_id = find_user(&state.db, &email).await?.map(|u| u.id);
+    let checked = codes::check(
+        &state.db,
+        &state.code_secret,
+        user_id,
+        Purpose::ResetPassword,
+        &req.code,
+    )
+    .await?;
+
+    /*
+        hash before the transaction: Argon2 is slow on purpose, and the
+        transaction should hold its locks as briefly as possible
+    */
+    let password_hash = password::hash(req.new_password).await?;
+
+    let user_id = checked.user_id();
+    let mut tx = state.db.begin().await?;
+    codes::consume(&mut tx, checked).await?;
+    sqlx::query(
+        "UPDATE users SET password_hash = $2,
+                          email_verified_at = COALESCE(email_verified_at, now()),
+                          updated_at = now()
+         WHERE id = $1",
+    )
+    .bind(user_id)
+    .bind(&password_hash)
+    .execute(&mut *tx)
+    .await?;
+    session::revoke_all(&mut tx, user_id, "password_reset").await?;
+    tx.commit().await?;
+
+    tracing::info!(%user_id, "password reset; all sessions ended");
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// What the code flows need to know about an account.
+struct FoundUser {
+    id: Uuid,
+    verified: bool,
+}
+
+// The account with this (already normalized) email, if any.
+async fn find_user(db: &sqlx::PgPool, email: &str) -> ApiResult<Option<FoundUser>> {
+    let row: Option<(Uuid, bool)> =
+        sqlx::query_as("SELECT id, email_verified_at IS NOT NULL FROM users WHERE email = $1")
+            .bind(email)
+            .fetch_optional(db)
+            .await?;
+    Ok(row.map(|(id, verified)| FoundUser { id, verified }))
+}
+
+// Makes a code and emails it, unless one went out in the last minute.
+async fn send_code(
+    state: &AppState,
+    user_id: Uuid,
+    email: &str,
+    purpose: Purpose,
+) -> ApiResult<()> {
+    if let Some(code) = codes::issue(&state.db, &state.code_secret, user_id, purpose).await? {
+        state.mailer.send(codes::email(email, purpose, &code));
+    }
+    Ok(())
+}
+
+fn already_registered_email(to: &str) -> Email {
+    Email {
+        to: to.to_owned(),
+        subject: format!("You already have a {PRODUCT_NAME} account"),
+        body: format!(
+            "Someone tried to sign up to {PRODUCT_NAME} with this email, \
+             which already has an account.\n\n\
+             If it was you, log in, or use \"Forgot password\" if you don't \
+             remember your password. If it wasn't you, ignore this email."
+        ),
+    }
+}
+
+// Emails are stored trimmed and lowercased (see the users migration).
+fn normalize_email(email: &str) -> String {
+    email.trim().to_lowercase()
+}
+
+// 422 `auth.password_too_weak`, shown under `field`.
+fn password_too_weak(field: &str) -> ApiError {
+    ApiError::new(
+        StatusCode::UNPROCESSABLE_ENTITY,
+        "auth.password_too_weak",
+        "Password too weak",
+    )
+    .detail(WEAK_PASSWORD)
+    .field(field, WEAK_PASSWORD)
+}
+
+const WEAK_PASSWORD: &str = "Use at least 8 characters, including a number.";
 
 impl From<Tokens> for TokenPair {
     fn from(t: Tokens) -> Self {
@@ -415,7 +714,7 @@ struct ValidSignup {
 /// `auth.password_too_weak`, which the app shows under the password field.
 fn validate(req: SignupRequest) -> Result<ValidSignup, ApiError> {
     let name = req.name.trim().to_owned();
-    let email = req.email.trim().to_lowercase();
+    let email = normalize_email(&req.email);
     // `.filter(...)` turns Some("") into None: a blank phone means no phone.
     let phone = req
         .phone
@@ -438,20 +737,13 @@ fn validate(req: SignupRequest) -> Result<ValidSignup, ApiError> {
         ));
     }
 
-    const WEAK: &str = "Use at least 8 characters, including a number.";
     let weak = !password::is_strong_enough(&req.password);
     if weak && errors.is_empty() {
         // Only the password is wrong: use its own code.
-        return Err(ApiError::new(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            "auth.password_too_weak",
-            "Password too weak",
-        )
-        .detail(WEAK)
-        .field("password", WEAK));
+        return Err(password_too_weak("password"));
     }
     if weak {
-        errors.push(field("password", WEAK));
+        errors.push(field("password", WEAK_PASSWORD));
     }
     if !errors.is_empty() {
         return Err(ApiError::validation(errors));

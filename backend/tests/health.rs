@@ -17,6 +17,10 @@ fn unreachable_db() -> AppState {
         db,
         cookie_secure: false,
         lifetimes: Default::default(),
+        mailer: std::sync::Arc::new(backend::mail::LogMailer),
+        code_secret: backend::codes::CodeSecret::new(
+            b"test-secret-at-least-32-bytes-long".to_vec(),
+        ),
     }
 }
 

@@ -1,15 +1,17 @@
 //! SolaCliq API. `app` builds the router; `main.rs` wires config, the
 //! database and the server around it, so tests can build the same router.
 
+pub mod codes;
 pub mod config;
 pub mod error;
 pub mod extract;
+pub mod mail;
 pub mod openapi;
 pub mod password;
 pub mod routes;
 pub mod session;
 
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::{Router, http::StatusCode};
 use sqlx::PgPool;
@@ -27,7 +29,20 @@ pub struct AppState {
     pub cookie_secure: bool,
     /// See `Config::session_lifetimes`.
     pub lifetimes: session::Lifetimes,
+    /*
+        Sends email. `Arc` because AppState is cloned for every request:
+        each clone points at the same mailer instead of copying it
+    */
+    pub mailer: Arc<dyn mail::Mailer>,
+    // Key for the email codes' HMAC. See `codes::CodeSecret`.
+    pub code_secret: codes::CodeSecret,
 }
+
+/*
+    The product's name, as users see it in emails. A working name:
+    change it here
+*/
+pub const PRODUCT_NAME: &str = "SolaCliq";
 
 /// Every endpoint is under this prefix (`solacliq.markcliq.com/api/v1`).
 pub const API_PREFIX: &str = "/api/v1";

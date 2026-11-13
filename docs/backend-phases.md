@@ -28,7 +28,7 @@ vendor needs them.
 | 0 | Skeleton | `GET /health` | Done |
 | 1 | First table: sign up | #2 | Built and tested 2026-11-09; in-app check to do |
 | 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 (app logs in) |
-| 3 | Email codes, refresh, log out | #3, #4, #6–9 | 3a (refresh, log out) done 2026-11-11; 3b (codes) to do |
+| 3 | Email codes, refresh, log out | #3, #4, #6–9 | 3a (refresh, log out) done 2026-11-11; 3b codes built 2026-11-13, SMTP mailer to do |
 | 4 | Companies and memberships | `/me` memberships, team endpoints, seed command | |
 | 5 | First deploy | — | |
 | 6 | Personal workspace | #11–20 | |
@@ -113,6 +113,19 @@ status code out.
   `ACCESS_TOKEN_MINUTES=1`: still logged in after the access token
   expired; log out revokes the session. The admin website refreshes on a
   401 (`admin/src/api/refresh.ts`).
+- **Notes (as built, 3b, 2026-11-13):** migration
+  `20261113000001_email_codes.sql` adds `email_codes`, one row per
+  account and purpose, holding an HMAC of the code (`CODE_SECRET`).
+  `src/codes.rs`: `issue` (upsert, skipped within 60 seconds of the last
+  code), `check` (counts the try in its own statement so a wrong guess
+  sticks, then compares in constant time), `consume` (deletes the code
+  inside the caller's transaction). `src/mail.rs`: the `Mailer` trait and
+  `LogMailer`. Verify and reset each run in one transaction; reset also
+  revokes every session (`password_reset`) and verifies the email. Tests:
+  `tests/codes.rs` (14), using an in-memory outbox. Checked live: sign-up
+  → code from the server log → verify 204 → login 200. Left: the SMTP
+  mailer (Google Workspace), and production must refuse to start without
+  it.
 
 ## Phase 4. Companies and memberships
 

@@ -70,13 +70,13 @@ milestone, top to bottom.
 |---|---|---|---|---|---|
 | 1 | `GET /health` | public | — | `Health` | 503 when the DB is down; shows on the welcome screen in dev |
 | 2 | `POST /auth/signup` | public | `SignupRequest` | 202 | Creates the account unverified and emails a 6-digit code. 202 even if the email exists (no account probing) |
-| 3 | `POST /auth/email/verify` | public | `VerifyEmailRequest` | 204 | Codes last 5 minutes, 5 tries |
-| 4 | `POST /auth/email/resend` | public | `EmailRequest` | 202 | Rate-limit per email |
+| 3 | `POST /auth/email/verify` | public | `VerifyEmailRequest` | 204 | Codes last 5 minutes, 5 tries; the sixth is 429 |
+| 4 | `POST /auth/email/resend` | public | `EmailRequest` | 202 | One new code per minute per email; within it, 202 and nothing sent |
 | 5 | `POST /auth/login` | public | `LoginRequest` | `LoginResponse` | Tokens for the app (`access_expires_in` in seconds; lifetimes are yours to set). For the website, sets two HttpOnly, SameSite=Lax cookies: `solacliq_session` (access) and `solacliq_refresh` (refresh, `Path=/api/v1/auth/refresh`) |
 | 6 | `POST /auth/refresh` | public | `RefreshRequest` | `TokenPair` | OAuth 2.1 rotation, app and website alike: every refresh returns a new access **and** refresh token and the old refresh token dies; reusing an old one revokes the session → `auth.session_expired`. The website sends the refresh cookie instead of a body and gets new cookies |
 | 7 | `POST /auth/logout` | auth | — | 204 | Revokes the session; the website's cookies are cleared |
 | 8 | `POST /auth/password/forgot` | public | `EmailRequest` | 202 | Emails a 6-digit code (5 minutes). Same flow sets a first password (`account.password_not_set`) |
-| 9 | `POST /auth/password/reset` | public | `ResetPasswordRequest` | 204 | Revokes all sessions |
+| 9 | `POST /auth/password/reset` | public | `ResetPasswordRequest` | 204 | Revokes all sessions; also verifies the email |
 | 10 | `GET /me` | auth | — | `Me` | **Drives the whole app.** `memberships[]` with `org {id, name, status, phone}`, `role`, and for agents `pay_type` (`commission`/`salary`) |
 
 ### M2. Personal workspace and joining a company

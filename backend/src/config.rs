@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 
 use chrono::Duration;
 
-use crate::session::Lifetimes;
+use crate::{codes::CodeSecret, session::Lifetimes};
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -17,6 +17,8 @@ pub struct Config {
     pub cookie_secure: bool,
     /// How long access and refresh tokens last.
     pub session_lifetimes: Lifetimes,
+    // Key for the email codes' HMAC. Required, at least 32 characters.
+    pub code_secret: CodeSecret,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -36,8 +38,27 @@ impl Config {
             log_json: parsed("LOG_JSON", "false")?,
             cookie_secure: parsed("COOKIE_SECURE", "true")?,
             session_lifetimes: lifetimes_from_env()?,
+            code_secret: code_secret_from_env()?,
         })
     }
+}
+
+/*
+    Required, with no default: a default secret would be the same on
+    every server that forgot to set one
+*/
+fn code_secret_from_env() -> Result<CodeSecret, ConfigError> {
+    let raw = required("CODE_SECRET")?;
+    if raw.len() < CodeSecret::MIN_LEN {
+        return Err(ConfigError::Invalid(
+            "CODE_SECRET",
+            format!(
+                "use at least {} characters (openssl rand -hex 32)",
+                CodeSecret::MIN_LEN
+            ),
+        ));
+    }
+    Ok(CodeSecret::new(raw.into_bytes()))
 }
 
 /// Each lifetime in its natural unit, so `.env` reads plainly. Unset means

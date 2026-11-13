@@ -6,7 +6,13 @@ use axum::{
     body::Body,
     http::{HeaderMap, Request, StatusCode},
 };
-use backend::{AppState, app};
+use std::sync::{Arc, Mutex};
+
+use backend::{
+    AppState, app,
+    codes::CodeSecret,
+    mail::{Email, Mailer},
+};
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use sqlx::PgPool;
@@ -17,7 +23,49 @@ pub fn state(db: &PgPool) -> AppState {
         db: db.clone(),
         cookie_secure: false,
         lifetimes: Default::default(),
+        mailer: Arc::new(Outbox),
+        code_secret: CodeSecret::new(b"test-secret-at-least-32-bytes-long".to_vec()),
     }
+}
+
+/*
+    Every email the app sent during this test run, oldest first
+    --------------------------------------------------------------------
+    - one list for the whole test binary
+    - tests run at the same time, so each test uses its own email
+      addresses and reads only those
+*/
+static OUTBOX: Mutex<Vec<Email>> = Mutex::new(Vec::new());
+
+// The test mailer: keeps emails in OUTBOX instead of sending them.
+struct Outbox;
+
+impl Mailer for Outbox {
+    fn send(&self, email: Email) {
+        OUTBOX.lock().unwrap().push(email);
+    }
+}
+
+// Every email sent to `to`, oldest first.
+pub fn emails_to(to: &str) -> Vec<Email> {
+    OUTBOX
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|e| e.to == to)
+        .cloned()
+        .collect()
+}
+
+// The 6-digit code in the latest email to `to`.
+pub fn last_code(to: &str) -> String {
+    let email = emails_to(to).pop().expect("no email sent to this address");
+    email
+        .body
+        .split(|c: char| !c.is_ascii_digit())
+        .find(|word| word.len() == 6)
+        .expect("no 6-digit code in the email")
+        .to_owned()
 }
 
 /// A finished response: status, headers and the body as JSON (Null if none).

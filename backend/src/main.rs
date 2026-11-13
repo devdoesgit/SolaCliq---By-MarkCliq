@@ -47,6 +47,9 @@ async fn run(config: Config) -> Result<(), Box<dyn std::error::Error>> {
         db,
         cookie_secure: config.cookie_secure,
         lifetimes: config.session_lifetimes,
+        // The SMTP mailer replaces this before production (phase 3b).
+        mailer: std::sync::Arc::new(backend::mail::LogMailer),
+        code_secret: config.code_secret,
     });
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "listening");

@@ -132,6 +132,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "getrandom 0.4.3",
+ "hmac",
  "http-body-util",
  "serde",
  "serde_json",

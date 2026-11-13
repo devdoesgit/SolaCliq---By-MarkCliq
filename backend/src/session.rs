@@ -189,6 +189,29 @@ pub async fn revoke(db: &PgPool, session_id: Uuid, reason: &str) -> Result<(), A
     Ok(())
 }
 
+/*
+    End every live session of a user
+    --------------------------------------------------------------------
+    - e.g. after a password reset
+    - takes a connection, not the pool, so it can run inside the
+      caller's transaction
+*/
+pub async fn revoke_all(
+    conn: &mut sqlx::PgConnection,
+    user_id: Uuid,
+    reason: &str,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "UPDATE sessions SET revoked_at = now(), revoked_reason = $2
+         WHERE user_id = $1 AND revoked_at IS NULL",
+    )
+    .bind(user_id)
+    .bind(reason)
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
 /// The refresh token is no good: the app logs out on this code.
 pub fn session_expired() -> ApiError {
     ApiError::new(

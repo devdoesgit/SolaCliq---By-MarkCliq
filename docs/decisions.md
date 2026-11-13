@@ -309,3 +309,25 @@ Change a decision by adding a new line, not by editing an old one.
   time. Replaces the website's fixed 12-hour cookie. Lifetimes are set in
   the backend's environment (`ACCESS_TOKEN_MINUTES`,
   `REFRESH_TOKEN_DAYS`).
+
+## 2026-11-13
+
+- **Email codes are stored as HMAC-SHA256 with a server secret.** A
+  6-digit code has a million values, so a plain hash could be reversed
+  by trying them all; the HMAC key (`CODE_SECRET`, at least 32
+  characters, required) is never in the database. One live code per
+  account and purpose (`email_codes`, keyed on both): asking again
+  replaces it and resets the tries; a right code is deleted, so it works
+  once. 5 minutes, 5 tries (the sixth is 429).
+- **One new code per minute per account and purpose.** Within the minute
+  the request still answers 202 and sends nothing, so the cooldown
+  doesn't reveal which emails have accounts. Stops inbox flooding through
+  sign-up, resend and forgot.
+- **A password reset also verifies the email** (the code reached the
+  inbox) **and ends every session** of the account.
+- **Signing up again with a taken email**: an unverified account gets a
+  new code; a verified one gets a "you already have an account" email.
+  The password sent with it is ignored.
+- **Email goes through a `Mailer` trait** whose `send` returns at once,
+  so no request waits on a mail server. Development prints emails to the
+  server log (`LogMailer`); the SMTP mailer comes before production.
