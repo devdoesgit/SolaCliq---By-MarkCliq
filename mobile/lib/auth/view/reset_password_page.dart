@@ -68,7 +68,13 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     super.dispose();
   }
 
-  void _edited(String _) => context.read<SubmitCubit>().reset();
+  void _edited(String _) {
+    context.read<SubmitCubit>().reset();
+    // A field's message is about what was there; editing it clears them.
+    if (_passwordError != null || _confirmError != null) {
+      setState(() => _passwordError = _confirmError = null);
+    }
+  }
 
   Future<void> _submit() async {
     context

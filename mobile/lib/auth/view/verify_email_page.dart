@@ -51,8 +51,10 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   Timer? _timer;
   int _wait = _resendDelay;
 
-  /// Seconds before another code can be sent.
-  static const _resendDelay = 30;
+  /// Seconds before another code can be sent. Matches the server's
+  /// one-code-a-minute rule (`COOLDOWN_SECONDS` in backend/src/codes.rs):
+  /// asking sooner gets a silent 202 and no email.
+  static const _resendDelay = 60;
 
   @override
   void initState() {
@@ -107,6 +109,10 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
 
   Future<void> _resend() async {
     final auth = context.read<AuthRepository>();
+    // The new code replaces the old one, so clear what was typed and any
+    // "wrong code" message, which would otherwise hide "new code sent".
+    _code.clear();
+    context.read<SubmitCubit>().reset();
     await context.read<ResendCubit>().submit(
       () => auth.resendVerification(email: widget.email),
     );
@@ -118,7 +124,8 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     final l10n = context.l10n;
     final state = context.watch<SubmitCubit>().state;
     final resend = context.watch<ResendCubit>().state;
-    final seconds = _wait.toString().padLeft(2, '0');
+    final countdown =
+        '${_wait ~/ 60}:${(_wait % 60).toString().padLeft(2, '0')}';
     return SolaScreen(
       navBar: const SolaNavBar(leading: BackTo(fallback: AppRoutes.login)),
       body: Column(
@@ -163,7 +170,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (_wait > 0)
-                SolaText(l10n.resendIn2('0:$seconds'), color: SolaColors.muted)
+                SolaText(l10n.resendIn2(countdown), color: SolaColors.muted)
               else
                 SolaTextLink(
                   l10n.resendCode,

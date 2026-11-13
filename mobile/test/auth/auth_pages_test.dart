@@ -224,12 +224,46 @@ void main() {
         const VerifyEmailPage(email: 'asha@example.com'),
         authRepository: auth,
       );
-      // Another code can be sent once the countdown ends.
-      expect(find.byKey(const Key('verify_resend')), findsNothing);
+      // The countdown matches the server's one-code-a-minute rule: asking
+      // sooner would be dropped by the server without an email.
+      expect(find.text('Resend in 1:00'), findsOneWidget);
       await tester.pump(const Duration(seconds: 31));
+      expect(find.text('Resend in 0:29'), findsOneWidget);
+      expect(find.byKey(const Key('verify_resend')), findsNothing);
+      await tester.pump(const Duration(seconds: 30));
       await tester.tapKey('verify_resend');
       await tester.pump();
       expect(find.text('New code sent'), findsOneWidget);
+    });
+
+    testWidgets('a new code clears the wrong one and its message', (
+      tester,
+    ) async {
+      when(
+        () => auth.verifyEmail(
+          email: any(named: 'email'),
+          code: any(named: 'code'),
+        ),
+      ).thenThrow(const AuthFailure(AuthFailureCode.codeInvalid));
+      when(() => auth.resendVerification(email: any(named: 'email')))
+          .thenAnswer((_) async {});
+      await tester.pumpApp(
+        const VerifyEmailPage(email: 'asha@example.com'),
+        authRepository: auth,
+      );
+      await tester.enterText(_input('verify_code'), '111111');
+      await tester.tapKey('verify_submit');
+      await tester.pump();
+      const wrong = 'That code is wrong. Check the email and try again.';
+      expect(find.text(wrong), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 61));
+      await tester.tapKey('verify_resend');
+      await tester.pump();
+      expect(find.text(wrong), findsNothing);
+      expect(find.text('New code sent'), findsOneWidget);
+      final field = tester.widget<TextField>(_input('verify_code'));
+      expect(field.controller!.text, isEmpty);
     });
   });
 
@@ -284,6 +318,23 @@ void main() {
       verify(
         () => auth.logIn(email: 'asha@example.com', password: 'newpassword1'),
       ).called(1);
+    });
+
+    testWidgets('fixing a field clears its message', (tester) async {
+      await tester.pumpApp(
+        const ResetPasswordPage(email: 'asha@example.com'),
+        authRepository: auth,
+      );
+      await tester.enterText(_input('reset_code'), '111222');
+      await tester.enterText(_input('reset_password'), 'newpassword1');
+      await tester.enterText(_input('reset_confirm'), 'newpassword2');
+      await tester.tapKey('reset_submit');
+      await tester.pump();
+      const differ = "The passwords don't match.";
+      expect(find.text(differ), findsOneWidget);
+      await tester.enterText(_input('reset_confirm'), 'newpassword1');
+      await tester.pump();
+      expect(find.text(differ), findsNothing);
     });
 
     testWidgets('passwords that differ are caught before sending', (
