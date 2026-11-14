@@ -53,6 +53,9 @@ extension KycKindText on KycKind {
     KycKind.electricityBill => l10n.docBill,
     KycKind.bankProof => l10n.docBankProof,
     KycKind.roofPhoto => l10n.docRoof,
+    KycKind.landDocument => l10n.docLand,
+    KycKind.signature => l10n.docSignature,
+    KycKind.nameChange => l10n.docNameChange,
   };
 }
 

@@ -14,7 +14,7 @@ import 'package:solacliq/customers/view/customer_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
-import 'package:solacliq/uploads/view/pick_photo.dart';
+import 'package:solacliq/uploads/view/pick_document.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// Sends a clearer copy of the customer document the admin returned:
@@ -42,7 +42,7 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
   );
 
   Future<void> _take(String title) async {
-    final file = await pickDocumentPhoto(context, title);
+    final file = await pickDocument(context, title);
     if (file != null && mounted) setState(() => _photo = file);
   }
 

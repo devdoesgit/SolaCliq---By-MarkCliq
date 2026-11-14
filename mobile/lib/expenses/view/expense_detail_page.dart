@@ -13,7 +13,7 @@ import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
-import 'package:solacliq/uploads/view/pick_photo.dart';
+import 'package:solacliq/uploads/view/pick_document.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// One expense: its amount and status, what the admin said, the details
@@ -40,7 +40,7 @@ class _ExpenseDetailPageState extends State<ExpenseDetailPage> {
 
   Future<void> _newReceipt() async {
     final l10n = context.l10n;
-    final file = await pickDocumentPhoto(context, l10n.uploadNewReceipt);
+    final file = await pickDocument(context, l10n.uploadNewReceipt);
     if (file == null || !mounted) return;
     final uploads = context.read<UploadRepository>();
     final expenses = context.read<ExpenseRepository>();

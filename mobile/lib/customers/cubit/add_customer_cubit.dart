@@ -51,10 +51,13 @@ class AddCustomerState extends Equatable {
   final String? reference;
 
   /// The documents the admin needs: the bank proof only with the subsidy.
+  /// The roof photo and the name change document are optional.
   static List<KycKind> required({required bool subsidy}) => [
     KycKind.aadhaar,
     KycKind.pan,
     KycKind.electricityBill,
+    KycKind.landDocument,
+    KycKind.signature,
     if (subsidy) KycKind.bankProof,
   ];
 

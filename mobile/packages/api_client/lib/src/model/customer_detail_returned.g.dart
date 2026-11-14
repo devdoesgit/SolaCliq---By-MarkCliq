@@ -107,4 +107,7 @@ const _$KycKindEnumMap = {
   KycKind.electricityBill: 'electricity_bill',
   KycKind.bankProof: 'bank_proof',
   KycKind.roofPhoto: 'roof_photo',
+  KycKind.landDocument: 'land_document',
+  KycKind.signature: 'signature',
+  KycKind.nameChange: 'name_change',
 };

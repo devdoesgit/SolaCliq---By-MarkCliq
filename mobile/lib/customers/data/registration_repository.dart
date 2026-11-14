@@ -6,7 +6,20 @@ enum ConnectionType { residential, commercial, industrial }
 enum Roof { rcc, tinShed, other }
 
 /// The KYC papers an agent photographs, in the order asked for.
-enum KycKind { aadhaar, pan, electricityBill, bankProof, roofPhoto }
+enum KycKind {
+  aadhaar,
+  pan,
+  electricityBill,
+  bankProof,
+  roofPhoto,
+  landDocument,
+
+  /// A photo of the customer's signature.
+  signature,
+
+  /// Why the electricity bill is in another person's name.
+  nameChange,
+}
 
 /// A new customer as the agent entered them, for the admin to approve.
 class CustomerDraft {

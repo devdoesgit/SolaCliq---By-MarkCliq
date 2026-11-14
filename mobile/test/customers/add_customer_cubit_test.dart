@@ -48,6 +48,24 @@ void main() {
   AddCustomerCubit build() =>
       AddCustomerCubit(uploads, registrations, orgId: 'o1');
 
+  test('the land document and signature are required; name change is not', () {
+    expect(AddCustomerState.required(subsidy: false), [
+      KycKind.aadhaar,
+      KycKind.pan,
+      KycKind.electricityBill,
+      KycKind.landDocument,
+      KycKind.signature,
+    ]);
+    expect(
+      AddCustomerState.required(subsidy: true),
+      contains(KycKind.bankProof),
+    );
+    expect(
+      AddCustomerState.required(subsidy: true),
+      isNot(contains(KycKind.nameChange)),
+    );
+  });
+
   group(AddCustomerCubit, () {
     blocTest<AddCustomerCubit, AddCustomerState>(
       'uploads a document as KYC and records its id',
@@ -82,6 +100,8 @@ void main() {
           KycKind.aadhaar: DocUploaded('a'),
           KycKind.pan: DocUploaded('b'),
           KycKind.electricityBill: DocUploaded('c'),
+          KycKind.landDocument: DocUploaded('d'),
+          KycKind.signature: DocUploaded('e'),
         },
       );
       expect(state.missing(subsidy: false), 0);

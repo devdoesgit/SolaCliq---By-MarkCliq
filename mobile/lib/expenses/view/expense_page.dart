@@ -16,7 +16,7 @@ import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
-import 'package:solacliq/uploads/view/pick_photo.dart';
+import 'package:solacliq/uploads/view/pick_document.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 import 'package:uuid/uuid.dart';
 
@@ -135,7 +135,7 @@ class _ExpenseViewState extends State<ExpenseView> {
   void _delete() => setState(() => _amount = _amount.delete());
 
   Future<void> _pickReceipt() async {
-    final file = await pickDocumentPhoto(context, context.l10n.addReceipt);
+    final file = await pickDocument(context, context.l10n.addReceipt);
     if (file == null || !mounted) return;
     if (file.bytes.length > UploadRepository.maxBytes) {
       setState(() => _errors['receipt'] = context.l10n.fileTooBig);

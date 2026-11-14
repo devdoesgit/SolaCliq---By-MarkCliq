@@ -14,7 +14,7 @@ import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/customers/view/add_customer_sent_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
-import 'package:solacliq/uploads/view/pick_photo.dart';
+import 'package:solacliq/uploads/view/pick_document.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// An agent registers a customer in three steps (who, site, KYC), checks
@@ -632,7 +632,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
 
   Future<void> _addDocument(KycKind kind, String title) async {
     final cubit = context.read<AddCustomerCubit>();
-    final file = await pickDocumentPhoto(context, title);
+    final file = await pickDocument(context, title);
     if (file != null) await cubit.addDocument(kind, file);
   }
 
@@ -641,8 +641,11 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
       (KycKind.aadhaar, l10n.docAadhaar, l10n.docAadhaarSub, SolaGlyph.card),
       (KycKind.pan, l10n.docPan, l10n.docPanSub, SolaGlyph.card),
       (KycKind.electricityBill, l10n.docBill, l10n.docBillSub, SolaGlyph.bill),
+      (KycKind.landDocument, l10n.docLand, l10n.docLandSub, SolaGlyph.bill),
+      (KycKind.signature, l10n.docSignature, l10n.docSignatureSub, null),
       if (_subsidy)
         (KycKind.bankProof, l10n.docBank, l10n.docBankSub, SolaGlyph.passbook),
+      (KycKind.nameChange, l10n.docNameChange, l10n.docNameChangeSub, null),
       (KycKind.roofPhoto, l10n.docRoof, l10n.docRoofSub, null),
     ];
     final company = widget.workspace.orgName;
@@ -703,6 +706,9 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
       if (documents.containsKey(KycKind.aadhaar)) l10n.docShortAadhaar,
       if (documents.containsKey(KycKind.pan)) l10n.docShortPan,
       if (documents.containsKey(KycKind.electricityBill)) l10n.docShortBill,
+      if (documents.containsKey(KycKind.landDocument)) l10n.docShortLand,
+      if (documents.containsKey(KycKind.signature)) l10n.docShortSignature,
+      if (documents.containsKey(KycKind.nameChange)) l10n.docShortNameChange,
       if (_subsidy && documents.containsKey(KycKind.bankProof))
         l10n.docShortBank,
       if (documents.containsKey(KycKind.roofPhoto)) l10n.docShortRoof,

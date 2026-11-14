@@ -609,8 +609,11 @@ export interface paths {
          * @description Agents only. Submits details, site, connection and KYC documents for
          *     the org admin to approve. On approval the customer's account is
          *     created (or an existing one linked) and they get a welcome email
-         *     with a link to set their password. Bank proof is required when the
-         *     subsidy is on (`registration.bank_proof_required`, 422).
+         *     with a link to set their password. Required documents: Aadhaar,
+         *     PAN, electricity bill, land document and signature
+         *     (`registration.document_required`, 422, naming the kind); bank
+         *     proof too when the subsidy is on (`registration.bank_proof_required`,
+         *     422). Roof photo and name change are optional.
          */
         post: operations["submitCustomerRegistration"];
         delete?: never;
@@ -1880,8 +1883,15 @@ export interface components {
         };
         /** @enum {string} */
         ConnectionType: "residential" | "commercial" | "industrial";
-        /** @enum {string} */
-        KycKind: "aadhaar" | "pan" | "electricity_bill" | "bank_proof" | "roof_photo";
+        /**
+         * @description `land_document`: proof the customer owns the property. `signature`:
+         *     a photo of the customer's signature. `name_change`: when the
+         *     electricity bill is in another person's name, the paper that
+         *     explains it; the admin judges it. Any kind can be a JPEG, PNG or
+         *     PDF upload.
+         * @enum {string}
+         */
+        KycKind: "aadhaar" | "pan" | "electricity_bill" | "bank_proof" | "roof_photo" | "land_document" | "signature" | "name_change";
         CustomerRegistrationCreate: {
             name: string;
             phone: components["schemas"]["Phone"];

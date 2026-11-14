@@ -4449,5 +4449,45 @@
                 "type": "String"
             }
         }
+    },
+    "choosePdf": "Choose a PDF",
+    "@choosePdf": {
+        "description": "Document picker option."
+    },
+    "docLand": "Land document",
+    "@docLand": {
+        "description": "KYC document."
+    },
+    "docLandSub": "Sale deed, property tax receipt or jamabandi",
+    "@docLandSub": {
+        "description": "KYC document hint."
+    },
+    "docSignature": "Customer's signature",
+    "@docSignature": {
+        "description": "KYC document."
+    },
+    "docSignatureSub": "A clear photo of their signature on paper",
+    "@docSignatureSub": {
+        "description": "KYC document hint."
+    },
+    "docNameChange": "Name change document",
+    "@docNameChange": {
+        "description": "KYC document."
+    },
+    "docNameChangeSub": "Optional · if the bill is in another person's name",
+    "@docNameChangeSub": {
+        "description": "KYC document hint."
+    },
+    "docShortLand": "land document",
+    "@docShortLand": {
+        "description": "Short document name in a list."
+    },
+    "docShortSignature": "signature",
+    "@docShortSignature": {
+        "description": "Short document name in a list."
+    },
+    "docShortNameChange": "name change",
+    "@docShortNameChange": {
+        "description": "Short document name in a list."
     }
 }
