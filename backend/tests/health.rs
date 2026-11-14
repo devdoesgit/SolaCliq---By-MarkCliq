@@ -21,6 +21,7 @@ fn unreachable_db() -> AppState {
         code_secret: backend::codes::CodeSecret::new(
             b"test-secret-at-least-32-bytes-long".to_vec(),
         ),
+        review_email: "review@example.com".into(),
     }
 }
 

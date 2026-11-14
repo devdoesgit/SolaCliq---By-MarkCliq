@@ -25,6 +25,7 @@ pub fn state(db: &PgPool) -> AppState {
         lifetimes: Default::default(),
         mailer: Arc::new(Outbox),
         code_secret: CodeSecret::new(b"test-secret-at-least-32-bytes-long".to_vec()),
+        review_email: "review@example.com".into(),
     }
 }
 
@@ -147,4 +148,96 @@ pub async fn post_with(db: &PgPool, path: &str, headers: &[(&str, &str)]) -> Res
         req = req.header(*name, *value);
     }
     send(db, req.body(Body::empty()).unwrap()).await
+}
+
+/*
+    Phase 4 helpers: companies and members, made straight in SQL so each
+    test sets up exactly the state it needs
+*/
+
+// A company with this status ('pending', 'active' or 'suspended').
+pub async fn org(db: &PgPool, name: &str, status: &str) -> uuid::Uuid {
+    let id = uuid::Uuid::now_v7();
+    // Dummy GST details; the id as GSTIN keeps each one unique.
+    sqlx::query(
+        "INSERT INTO orgs (id, name, status, phone, gstin, pan, legal_name,
+                           business_type, address_line_1, city, state, pin_code)
+         VALUES ($1, $2, $3::org_status, '9814000000', $1::text, 'AAAAA0000A', $2,
+                 'other', 'Plot 1', 'Mohali', 'Punjab', '160062')",
+    )
+    .bind(id)
+    .bind(name)
+    .bind(status)
+    .execute(db)
+    .await
+    .unwrap();
+    id
+}
+
+/*
+    A verified account with password "sunlight1" that belongs to `org`
+    with `role` ('agent' gets pay type `pay_type`); returns an access token
+*/
+pub async fn member(
+    db: &PgPool,
+    org: uuid::Uuid,
+    email: &str,
+    role: &str,
+    pay_type: Option<&str>,
+) -> String {
+    if !user_exists(db, email).await {
+        verified_user(db, email, "sunlight1").await;
+    }
+    join(db, org, email, role, pay_type).await;
+    token(db, email).await
+}
+
+// Adds an existing account to `org`.
+pub async fn join(db: &PgPool, org: uuid::Uuid, email: &str, role: &str, pay_type: Option<&str>) {
+    sqlx::query(
+        "INSERT INTO memberships (id, user_id, org_id, role, pay_type)
+         SELECT $1, id, $2, $3::member_role, $4::pay_type FROM users WHERE email = $5",
+    )
+    .bind(uuid::Uuid::now_v7())
+    .bind(org)
+    .bind(role)
+    .bind(pay_type)
+    .bind(email)
+    .execute(db)
+    .await
+    .unwrap();
+}
+
+async fn user_exists(db: &PgPool, email: &str) -> bool {
+    sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)")
+        .bind(email)
+        .fetch_one(db)
+        .await
+        .unwrap()
+}
+
+// Logs in as the app ("sunlight1") and returns the access token.
+pub async fn token(db: &PgPool, email: &str) -> String {
+    let res = post(
+        db,
+        "/api/v1/auth/login",
+        json!({ "email": email, "password": "sunlight1", "client": "app" }),
+    )
+    .await;
+    assert_eq!(res.status, StatusCode::OK, "{}", res.body);
+    res.body["tokens"]["access_token"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+// Any method, with a bearer token and an optional JSON body.
+pub async fn call(db: &PgPool, method: &str, path: &str, token: &str, body: Option<Value>) -> Res {
+    let req = Request::builder()
+        .method(method)
+        .uri(path)
+        .header("authorization", format!("Bearer {token}"))
+        .header("content-type", "application/json");
+    let body = body.map_or_else(Body::empty, |b| Body::from(b.to_string()));
+    send(db, req.body(body).unwrap()).await
 }

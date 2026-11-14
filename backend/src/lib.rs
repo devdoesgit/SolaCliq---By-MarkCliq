@@ -5,11 +5,16 @@ pub mod codes;
 pub mod config;
 pub mod error;
 pub mod extract;
+pub mod gstin;
 pub mod mail;
 pub mod openapi;
+pub mod org;
+pub mod page;
 pub mod password;
 pub mod routes;
+pub mod seed;
 pub mod session;
+pub mod validate;
 
 use std::{sync::Arc, time::Duration};
 
@@ -36,6 +41,8 @@ pub struct AppState {
     pub mailer: Arc<dyn mail::Mailer>,
     // Key for the email codes' HMAC. See `codes::CodeSecret`.
     pub code_secret: codes::CodeSecret,
+    // MarkCliq's inbox for new company registrations (REVIEW_EMAIL).
+    pub review_email: String,
 }
 
 /*

@@ -5,6 +5,9 @@
 pub mod auth;
 pub mod health;
 pub mod me;
+pub mod platform;
+pub mod registration;
+pub mod team;
 
 use utoipa_axum::router::OpenApiRouter;
 
@@ -16,6 +19,9 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(health::router())
         .merge(auth::router())
         .merge(me::router())
+        .merge(team::router())
+        .merge(registration::router())
+        .merge(platform::router())
 }
 
 /// Any path no route matches.

@@ -19,6 +19,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
+use crate::validate::{is_indian_mobile, looks_like_email, normalize_email};
 use crate::{
     API_PREFIX, AppState, PRODUCT_NAME,
     codes::{self, Purpose},
@@ -377,15 +378,15 @@ pub struct RefreshRequest {
 
 /*
     Get new token
-///
-/// OAuth 2.1 rotation: returns a new access token *and* a new refresh
-/// token, and the old refresh token stops working. Reusing an old refresh
-/// token revokes the login. Either way a dead refresh token gets 401
-/// `auth.session_expired`, and the client logs out.
-///
-/// The app sends `{ "refresh_token": ... }` and gets a `TokenPair`. The
-/// website sends its `solacliq_refresh` cookie, no body, and gets 204 with
-/// new cookies.
+
+    OAuth 2.1 rotation: returns a new access token *and* a new refresh
+    token, and the old refresh token stops working. Reusing an old refresh
+    token revokes the login. Either way a dead refresh token gets 401
+    `auth.session_expired`, and the client logs out.
+
+    The app sends `{ "refresh_token": ... }` and gets a `TokenPair`. The
+    website sends its `solacliq_refresh` cookie, no body, and gets 204 with
+    new cookies.
 */
 #[utoipa::path(
     post,
@@ -615,11 +616,6 @@ fn already_registered_email(to: &str) -> Email {
     }
 }
 
-// Emails are stored trimmed and lowercased (see the users migration).
-fn normalize_email(email: &str) -> String {
-    email.trim().to_lowercase()
-}
-
 // 422 `auth.password_too_weak`, shown under `field`.
 fn password_too_weak(field: &str) -> ApiError {
     ApiError::new(
@@ -761,47 +757,5 @@ fn field(name: &str, message: &str) -> FieldError {
     FieldError {
         field: name.to_owned(),
         message: message.to_owned(),
-    }
-}
-
-fn looks_like_email(email: &str) -> bool {
-    let Some((local, domain)) = email.split_once('@') else {
-        return false;
-    };
-    email.len() <= 254
-        && !local.is_empty()
-        && domain.contains('.')
-        && !domain.starts_with('.')
-        && !domain.ends_with('.')
-        && !email.contains(char::is_whitespace)
-        && !domain.contains('@')
-}
-
-/// `^[6-9][0-9]{9}$`.
-fn is_indian_mobile(phone: &str) -> bool {
-    phone.len() == 10
-        && phone.starts_with(['6', '7', '8', '9'])
-        && phone.chars().all(|c| c.is_ascii_digit())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn emails() {
-        assert!(looks_like_email("asha@example.com"));
-        assert!(!looks_like_email("asha@example"));
-        assert!(!looks_like_email("@example.com"));
-        assert!(!looks_like_email("asha @example.com"));
-        assert!(!looks_like_email("a@b@example.com"));
-    }
-
-    #[test]
-    fn phones() {
-        assert!(is_indian_mobile("9876511223"));
-        assert!(!is_indian_mobile("5876511223")); // starts with 5
-        assert!(!is_indian_mobile("987651122")); // 9 digits
-        assert!(!is_indian_mobile("+919876511"));
     }
 }

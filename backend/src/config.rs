@@ -8,6 +8,8 @@ use crate::{codes::CodeSecret, session::Lifetimes};
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    // Which kind of server this is (APP_ENV). See `Environment`.
+    pub environment: Environment,
     pub database_url: String,
     pub bind_addr: SocketAddr,
     pub db_max_connections: u32,
@@ -19,6 +21,37 @@ pub struct Config {
     pub session_lifetimes: Lifetimes,
     // Key for the email codes' HMAC. Required, at least 32 characters.
     pub code_secret: CodeSecret,
+    /*
+        Where MarkCliq is told about new company registrations
+        (REVIEW_EMAIL). Required: a registration nobody hears about
+        would wait forever
+    */
+    pub review_email: String,
+}
+
+/*
+    Development or production (APP_ENV)
+    --------------------------------------------------------------------
+    - unset means production: a server that forgot to say is treated as
+      the real one, so development-only tools (the seed) stay off
+    - `.env.example` sets development for local work
+*/
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Environment {
+    Development,
+    Production,
+}
+
+impl std::str::FromStr for Environment {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "development" => Ok(Environment::Development),
+            "production" => Ok(Environment::Production),
+            other => Err(format!("\"{other}\"; use development or production")),
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -32,6 +65,7 @@ pub enum ConfigError {
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
         Ok(Self {
+            environment: parsed("APP_ENV", "production")?,
             database_url: required("DATABASE_URL")?,
             bind_addr: parsed("BIND_ADDR", "127.0.0.1:8080")?,
             db_max_connections: parsed("DB_MAX_CONNECTIONS", "10")?,
@@ -39,8 +73,20 @@ impl Config {
             cookie_secure: parsed("COOKIE_SECURE", "true")?,
             session_lifetimes: lifetimes_from_env()?,
             code_secret: code_secret_from_env()?,
+            review_email: review_email_from_env()?,
         })
     }
+}
+
+fn review_email_from_env() -> Result<String, ConfigError> {
+    let email = crate::validate::normalize_email(&required("REVIEW_EMAIL")?);
+    if !crate::validate::looks_like_email(&email) {
+        return Err(ConfigError::Invalid(
+            "REVIEW_EMAIL",
+            "not an email address".into(),
+        ));
+    }
+    Ok(email)
 }
 
 /*

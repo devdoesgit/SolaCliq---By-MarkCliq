@@ -8,7 +8,12 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
-use crate::{AppState, error::ApiResult, extract::AuthUser};
+use crate::{
+    AppState,
+    error::ApiResult,
+    extract::AuthUser,
+    org::{OrgStatus, PayType, Role},
+};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(get_me))
@@ -29,7 +34,11 @@ pub struct Me {
     pub memberships: Vec<Membership>,
 }
 
-/// One (company, role) the person has. Each is a workspace in the app.
+/*
+    One (company, role) the person has. Each is a workspace in the app.
+    Companies that are pending or suspended are listed too, so the app can
+    say so; removed memberships are not
+*/
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Membership {
     pub org: OrgSummary,
@@ -46,30 +55,6 @@ pub struct OrgSummary {
     pub status: OrgStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum OrgStatus {
-    Pending,
-    Active,
-    Suspended,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum Role {
-    OrgAdmin,
-    Worker,
-    Agent,
-    Customer,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum PayType {
-    Commission,
-    Salary,
 }
 
 /// The signed-in person and their memberships
@@ -121,7 +106,48 @@ pub async fn load(db: &PgPool, user_id: Uuid) -> ApiResult<Me> {
         phone: u.phone,
         email_verified: u.email_verified,
         is_platform_admin: u.is_platform_admin,
-        // Companies arrive in phase 4 (orgs and memberships tables).
-        memberships: Vec::new(),
+        memberships: memberships(db, user_id).await?,
     })
+}
+
+// One row of the memberships query below.
+#[derive(sqlx::FromRow)]
+struct MembershipRow {
+    org_id: Uuid,
+    org_name: String,
+    org_status: OrgStatus,
+    org_phone: Option<String>,
+    role: Role,
+    pay_type: Option<PayType>,
+}
+
+/*
+    The person's companies, oldest membership first (the app opens the
+    first one when nothing was chosen before). Removed ones are skipped
+*/
+async fn memberships(db: &PgPool, user_id: Uuid) -> ApiResult<Vec<Membership>> {
+    let rows: Vec<MembershipRow> = sqlx::query_as(
+        "SELECT o.id AS org_id, o.name AS org_name, o.status AS org_status,
+                o.phone AS org_phone, m.role, m.pay_type
+         FROM memberships m JOIN orgs o ON o.id = m.org_id
+         WHERE m.user_id = $1 AND m.removed_at IS NULL
+         ORDER BY m.created_at, m.id",
+    )
+    .bind(user_id)
+    .fetch_all(db)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| Membership {
+            org: OrgSummary {
+                id: r.org_id,
+                name: r.org_name,
+                status: r.org_status,
+                phone: r.org_phone,
+            },
+            role: r.role,
+            pay_type: r.pay_type,
+        })
+        .collect())
 }

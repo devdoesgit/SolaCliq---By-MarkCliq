@@ -1,7 +1,10 @@
 //! Our own versions of axum's extractors, so that a bad request gets the
 //! same problem-JSON error as everything else instead of axum's plain text.
 
-use axum::{extract::FromRequest, extract::rejection::JsonRejection};
+use axum::extract::{
+    FromRequest, FromRequestParts,
+    rejection::{JsonRejection, PathRejection, QueryRejection},
+};
 
 use crate::error::ApiError;
 
@@ -19,6 +22,38 @@ impl From<JsonRejection> for ApiError {
     fn from(rejection: JsonRejection) -> Self {
         // body_text() says what was wrong, e.g. "missing field `email`".
         ApiError::validation(Vec::new()).detail(rejection.body_text())
+    }
+}
+
+/*
+    Use `ApiQuery<T>` instead of `axum::extract::Query<T>` for `?a=1&b=2`
+    --------------------------------------------------------------------
+    - the same idea as ApiJson: a bad value (`?limit=abc`) gets a 422
+      problem instead of axum's plain-text 400
+*/
+#[derive(FromRequestParts)]
+#[from_request(via(axum::extract::Query), rejection(ApiError))]
+pub struct ApiQuery<T>(pub T);
+
+impl From<QueryRejection> for ApiError {
+    fn from(rejection: QueryRejection) -> Self {
+        ApiError::validation(Vec::new()).detail(rejection.body_text())
+    }
+}
+
+/*
+    Use `ApiPath<T>` instead of `axum::extract::Path<T>`
+    --------------------------------------------------------------------
+    - a path segment that doesn't parse (`/platform/orgs/abc`) can't name
+      anything that exists, so it's a 404 problem, not axum's plain 400
+*/
+#[derive(FromRequestParts)]
+#[from_request(via(axum::extract::Path), rejection(ApiError))]
+pub struct ApiPath<T>(pub T);
+
+impl From<PathRejection> for ApiError {
+    fn from(_: PathRejection) -> Self {
+        ApiError::not_found()
     }
 }
 
