@@ -30,7 +30,7 @@ class TasksApi {
   /// The photo comes from the live camera only, never the gallery, and carries where and when it was taken. The server flags photos far from the site, with poor accuracy or a mocked location; flags go to the admin, nothing is refused. Replaces an earlier photo in the slot (a retake). 409 &#x60;task.locked&#x60; once submitted.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [proofPhotoCreate]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -140,7 +140,7 @@ class TasksApi {
   /// Workers only. Shown on their profile.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -228,7 +228,7 @@ class TasksApi {
   /// Photo and receipt links in it expire after 15 minutes.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -321,7 +321,7 @@ class TasksApi {
   /// Kept for every task and never edited.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -419,7 +419,7 @@ class TasksApi {
   ///
   /// Parameters:
   /// * [view]
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [cursor] - Opaque cursor from the previous page's `next_cursor`.
   /// * [limit] - Page size.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -520,7 +520,7 @@ class TasksApi {
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [taskProblemCreate]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -634,7 +634,7 @@ class TasksApi {
   /// Shows in the task&#39;s history and notifies the admin.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [sendTaskMessageRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -718,7 +718,7 @@ class TasksApi {
   /// Fails with 409 &#x60;task.locked&#x60; once submitted.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [itemId]
   /// * [setTaskChecklistItemRequest]
@@ -837,7 +837,7 @@ class TasksApi {
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [taskId]
   /// * [submitTaskRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation

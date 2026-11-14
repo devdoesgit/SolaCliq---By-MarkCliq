@@ -202,5 +202,19 @@ void main() {
       expect(find.byKey(const ValueKey('tab_home')), findsNothing);
       verifyNever(() => homes.orgHome(any(), any()));
     });
+
+    testWidgets('a rejected company says so, with nothing to retry', (
+      tester,
+    ) async {
+      final rejected = testMembership(status: OrgStatus.rejected);
+      await pumpHome(
+        tester,
+        MemberWorkspace(rejected),
+        memberships: [rejected],
+      );
+      expect(find.text('Registration not approved'), findsOneWidget);
+      expect(find.byKey(const Key('status_check_again')), findsNothing);
+      verifyNever(() => homes.orgHome(any(), any()));
+    });
   });
 }

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// The org's approval state.
-enum OrgStatus { pending, active, suspended }
+enum OrgStatus { pending, active, suspended, rejected }
 
 /// What a person does in an org.
 enum OrgRole { orgAdmin, worker, agent, customer }

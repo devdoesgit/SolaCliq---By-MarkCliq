@@ -55,6 +55,7 @@ class Me {
   @JsonKey(name: r'is_platform_admin', required: true, includeIfNull: false)
   final bool isPlatformAdmin;
 
+  /// Every company the person belongs to, including ones that aren't active (shown as a message). Removed memberships are left out.
   @JsonKey(name: r'memberships', required: true, includeIfNull: false)
   final List<Membership> memberships;
 

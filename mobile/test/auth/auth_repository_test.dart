@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:api_client/api_client.dart';
+import 'package:api_client/api_client.dart' hide PayType;
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solacliq/auth/auth.dart';

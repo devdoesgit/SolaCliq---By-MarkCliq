@@ -96,7 +96,10 @@ Class | Method | HTTP request | Description
 [*OnboardingApi*](doc/OnboardingApi.md) | [**acceptInvite**](doc/OnboardingApi.md#acceptinvite) | **POST** /invites/{invite_id}/accept | Join the company that sent the invite
 [*OnboardingApi*](doc/OnboardingApi.md) | [**declineInvite**](doc/OnboardingApi.md#declineinvite) | **POST** /invites/{invite_id}/decline | Turn down an invite
 [*OnboardingApi*](doc/OnboardingApi.md) | [**listMyInvites**](doc/OnboardingApi.md#listmyinvites) | **GET** /me/invites | Invites waiting for the signed-in person
-[*OnboardingApi*](doc/OnboardingApi.md) | [**requestAccess**](doc/OnboardingApi.md#requestaccess) | **POST** /access-requests | A solar company asks for SolaCliq
+[*OnboardingApi*](doc/OnboardingApi.md) | [**registerOrg**](doc/OnboardingApi.md#registerorg) | **POST** /org-registrations | A solar company registers with SolaCliq
+[*PlatformApi*](doc/PlatformApi.md) | [**getPlatformOrg**](doc/PlatformApi.md#getplatformorg) | **GET** /platform/orgs/{org_id} | One company&#39;s registration details
+[*PlatformApi*](doc/PlatformApi.md) | [**listPlatformOrgs**](doc/PlatformApi.md#listplatformorgs) | **GET** /platform/orgs | Every company, newest first
+[*PlatformApi*](doc/PlatformApi.md) | [**setPlatformOrgStatus**](doc/PlatformApi.md#setplatformorgstatus) | **POST** /platform/orgs/{org_id}/status | Approve, reject, suspend or reactivate a company
 [*ProfileApi*](doc/ProfileApi.md) | [**getMyDetails**](doc/ProfileApi.md#getmydetails) | **GET** /me/details | The caller&#39;s personal details and payout bank
 [*ProfileApi*](doc/ProfileApi.md) | [**getMySettings**](doc/ProfileApi.md#getmysettings) | **GET** /me/settings | The caller&#39;s notification and language settings
 [*ProfileApi*](doc/ProfileApi.md) | [**listMyDocuments**](doc/ProfileApi.md#listmydocuments) | **GET** /orgs/{org_id}/me/documents | The caller&#39;s documents this company holds
@@ -121,9 +124,9 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
- - [AccessRequestCreate](doc/AccessRequestCreate.md)
  - [AddMemberRequest](doc/AddMemberRequest.md)
  - [BillBand](doc/BillBand.md)
+ - [BusinessType](doc/BusinessType.md)
  - [ChecklistItem](doc/ChecklistItem.md)
  - [ClaimInstallPaymentRequest](doc/ClaimInstallPaymentRequest.md)
  - [Commission](doc/Commission.md)
@@ -181,11 +184,17 @@ Class | Method | HTTP request | Description
  - [MyDocumentList](doc/MyDocumentList.md)
  - [Notification](doc/Notification.md)
  - [NotificationPage](doc/NotificationPage.md)
+ - [OrgRegistrationCreate](doc/OrgRegistrationCreate.md)
  - [OrgStatus](doc/OrgStatus.md)
+ - [OrgStatusChange](doc/OrgStatusChange.md)
  - [PageInfo](doc/PageInfo.md)
+ - [PayType](doc/PayType.md)
  - [PayoutBank](doc/PayoutBank.md)
  - [Person](doc/Person.md)
  - [PersonalDetails](doc/PersonalDetails.md)
+ - [PlatformOrg](doc/PlatformOrg.md)
+ - [PlatformOrgOwner](doc/PlatformOrgOwner.md)
+ - [PlatformOrgPage](doc/PlatformOrgPage.md)
  - [Problem](doc/Problem.md)
  - [ProblemErrorsInner](doc/ProblemErrorsInner.md)
  - [ProofPhoto](doc/ProofPhoto.md)

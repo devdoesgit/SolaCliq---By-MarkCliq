@@ -651,7 +651,7 @@
     "@requestAccessNote": {
         "description": "Under the request access form."
     },
-    "sendRequest": "Send request",
+    "sendRequest": "Register company",
     "@sendRequest": {
         "description": "Button."
     },
@@ -684,11 +684,11 @@
     "@whatHappensNext": {
         "description": "Heading of the steps."
     },
-    "accessStep1Title": "MarkCliq calls you",
+    "accessStep1Title": "We check your details",
     "@accessStep1Title": {
         "description": "Step."
     },
-    "accessStep1Sub": "We learn how your EPC runs",
+    "accessStep1Sub": "GSTIN and company details",
     "@accessStep1Sub": {
         "description": "Step."
     },
@@ -1130,7 +1130,7 @@
     },
     "fieldPinCode": "PIN code",
     "@fieldPinCode": {
-        "description": "Field."
+        "description": "Field label."
     },
     "monthlyBill": "Monthly electricity bill",
     "@monthlyBill": {
@@ -1637,7 +1637,7 @@
     "@requestTitle": {
         "description": "Request access title."
     },
-    "requestBody": "Tell us about your company. MarkCliq calls you and sets everything up.",
+    "requestBody": "Register your company. MarkCliq checks the details, calls you, and approves your account.",
     "@requestBody": {
         "description": "Request access text."
     },
@@ -1650,19 +1650,19 @@
             }
         }
     },
-    "accessStep2Title2": "We set up your company",
+    "accessStep2Title2": "MarkCliq calls you",
     "@accessStep2Title2": {
         "description": "Step."
     },
-    "accessStep2Sub2": "Stages, pricing and team",
+    "accessStep2Sub2": "To confirm and set things up",
     "@accessStep2Sub2": {
         "description": "Step."
     },
-    "accessStep3Title2": "Your dashboard goes live",
+    "accessStep3Title2": "You're approved",
     "@accessStep3Title2": {
         "description": "Step."
     },
-    "accessStep3Sub2": "Add workers and agents on the web",
+    "accessStep3Sub2": "We email you how to log in",
     "@accessStep3Sub2": {
         "description": "Step."
     },
@@ -4341,6 +4341,111 @@
         "description": "Under the system price.",
         "placeholders": {
             "kw": {
+                "type": "String"
+            }
+        }
+    },
+    "sectionAboutYou": "About you",
+    "@sectionAboutYou": {
+        "description": "Registration form section."
+    },
+    "sectionYourCompany": "Your company",
+    "@sectionYourCompany": {
+        "description": "Registration form section."
+    },
+    "fieldGstin": "GSTIN",
+    "@fieldGstin": {
+        "description": "Field label."
+    },
+    "gstinPlaceholder": "15 characters, from your GST certificate",
+    "@gstinPlaceholder": {
+        "description": "Placeholder."
+    },
+    "errorGstin": "Check the 15-character GSTIN on your GST certificate.",
+    "@errorGstin": {
+        "description": "Field error."
+    },
+    "fieldLegalName": "Legal name",
+    "@fieldLegalName": {
+        "description": "Field label."
+    },
+    "legalNamePlaceholder": "As on your GST certificate",
+    "@legalNamePlaceholder": {
+        "description": "Placeholder."
+    },
+    "fieldTradeName": "Trade name (optional)",
+    "@fieldTradeName": {
+        "description": "Field label."
+    },
+    "tradeNamePlaceholder": "The name your team and customers know",
+    "@tradeNamePlaceholder": {
+        "description": "Placeholder."
+    },
+    "fieldBusinessType": "Business type",
+    "@fieldBusinessType": {
+        "description": "Field label."
+    },
+    "chooseBusinessType": "Choose",
+    "@chooseBusinessType": {
+        "description": "Picker placeholder."
+    },
+    "businessProprietorship": "Proprietorship",
+    "@businessProprietorship": {
+        "description": "Business type."
+    },
+    "businessPartnership": "Partnership",
+    "@businessPartnership": {
+        "description": "Business type."
+    },
+    "businessLlp": "LLP",
+    "@businessLlp": {
+        "description": "Business type."
+    },
+    "businessPrivateLimited": "Private limited",
+    "@businessPrivateLimited": {
+        "description": "Business type."
+    },
+    "businessPublicLimited": "Public limited",
+    "@businessPublicLimited": {
+        "description": "Business type."
+    },
+    "businessOther": "Other",
+    "@businessOther": {
+        "description": "Business type."
+    },
+    "fieldAddress": "Address",
+    "@fieldAddress": {
+        "description": "Field label."
+    },
+    "fieldAddressLine2": "Address line 2 (optional)",
+    "@fieldAddressLine2": {
+        "description": "Field label."
+    },
+    "stateFromGstin": "Filled in from your GSTIN",
+    "@stateFromGstin": {
+        "description": "Value of the state row before a valid GSTIN is typed."
+    },
+    "failGstinInvalid": "That GSTIN isn't valid. Check it on your GST certificate.",
+    "@failGstinInvalid": {
+        "description": "Error from the server."
+    },
+    "failGstinTaken": "A company with this GSTIN is already registered. Contact MarkCliq if this is a mistake.",
+    "@failGstinTaken": {
+        "description": "Error from the server."
+    },
+    "orgRejected": "Not approved",
+    "@orgRejected": {
+        "description": "Company status."
+    },
+    "rejectedTitle": "Registration not approved",
+    "@rejectedTitle": {
+        "description": "Title on a rejected company's home."
+    },
+    "rejectedBody": "{org}'s registration wasn't approved. Check your email for the reason; you can register again with the details corrected.",
+    "@rejectedBody": {
+        "description": "Body on a rejected company's home.",
+        "placeholders": {
+            "org": {
                 "type": "String"
             }
         }

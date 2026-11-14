@@ -113,4 +113,5 @@ const _$OrgStatusEnumMap = {
   OrgStatus.pending: 'pending',
   OrgStatus.active: 'active',
   OrgStatus.suspended: 'suspended',
+  OrgStatus.rejected: 'rejected',
 };

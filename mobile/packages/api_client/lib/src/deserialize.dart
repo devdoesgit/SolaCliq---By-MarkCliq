@@ -1,4 +1,3 @@
-import 'package:api_client/src/model/access_request_create.dart';
 import 'package:api_client/src/model/add_member_request.dart';
 import 'package:api_client/src/model/checklist_item.dart';
 import 'package:api_client/src/model/claim_install_payment_request.dart';
@@ -48,10 +47,15 @@ import 'package:api_client/src/model/my_document.dart';
 import 'package:api_client/src/model/my_document_list.dart';
 import 'package:api_client/src/model/notification.dart';
 import 'package:api_client/src/model/notification_page.dart';
+import 'package:api_client/src/model/org_registration_create.dart';
+import 'package:api_client/src/model/org_status_change.dart';
 import 'package:api_client/src/model/page_info.dart';
 import 'package:api_client/src/model/payout_bank.dart';
 import 'package:api_client/src/model/person.dart';
 import 'package:api_client/src/model/personal_details.dart';
+import 'package:api_client/src/model/platform_org.dart';
+import 'package:api_client/src/model/platform_org_owner.dart';
+import 'package:api_client/src/model/platform_org_page.dart';
 import 'package:api_client/src/model/problem.dart';
 import 'package:api_client/src/model/problem_errors_inner.dart';
 import 'package:api_client/src/model/proof_photo.dart';
@@ -109,13 +113,11 @@ ReturnType deserialize<ReturnType, BaseType>(
       return (valueString == 'true' || valueString == '1') as ReturnType;
     case 'double':
       return (value is double ? value : double.parse('$value')) as ReturnType;
-    case 'AccessRequestCreate':
-      return AccessRequestCreate.fromJson(value as Map<String, dynamic>)
-          as ReturnType;
     case 'AddMemberRequest':
       return AddMemberRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'BillBand':
+    case 'BusinessType':
     case 'ChecklistItem':
       return ChecklistItem.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -243,15 +245,30 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'NotificationPage':
       return NotificationPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'OrgRegistrationCreate':
+      return OrgRegistrationCreate.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'OrgStatus':
+    case 'OrgStatusChange':
+      return OrgStatusChange.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'PageInfo':
       return PageInfo.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'PayType':
     case 'PayoutBank':
       return PayoutBank.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Person':
       return Person.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'PersonalDetails':
       return PersonalDetails.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'PlatformOrg':
+      return PlatformOrg.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'PlatformOrgOwner':
+      return PlatformOrgOwner.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'PlatformOrgPage':
+      return PlatformOrgPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'Problem':
       return Problem.fromJson(value as Map<String, dynamic>) as ReturnType;

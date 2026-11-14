@@ -16,6 +16,7 @@ const STATUS: Record<Membership['org']['status'], { label: string; tone: Tone }>
   pending: { label: 'Pending approval', tone: 'info' },
   active: { label: 'Active', tone: 'success' },
   suspended: { label: 'Suspended', tone: 'danger' },
+  rejected: { label: 'Not approved', tone: 'danger' },
 };
 
 /** The signed-in page until the org dashboard (F2/F3) replaces it. */

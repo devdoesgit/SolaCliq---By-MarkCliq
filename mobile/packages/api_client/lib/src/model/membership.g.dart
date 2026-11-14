@@ -11,7 +11,7 @@ abstract class _$MembershipCWProxy {
 
   Membership role(Role role);
 
-  Membership payType(MembershipPayTypeEnum? payType);
+  Membership payType(PayType? payType);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Membership(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
@@ -19,11 +19,7 @@ abstract class _$MembershipCWProxy {
   /// ```dart
   /// Membership(...).copyWith(id: 12, name: "My name")
   /// ````
-  Membership call({
-    MembershipOrg org,
-    Role role,
-    MembershipPayTypeEnum? payType,
-  });
+  Membership call({MembershipOrg org, Role role, PayType? payType});
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfMembership.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfMembership.copyWith.fieldName(...)`
@@ -39,7 +35,7 @@ class _$MembershipCWProxyImpl implements _$MembershipCWProxy {
   Membership role(Role role) => this(role: role);
 
   @override
-  Membership payType(MembershipPayTypeEnum? payType) => this(payType: payType);
+  Membership payType(PayType? payType) => this(payType: payType);
 
   @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Membership(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -65,7 +61,7 @@ class _$MembershipCWProxyImpl implements _$MembershipCWProxy {
       payType: payType == const $CopyWithPlaceholder()
           ? _value.payType
           // ignore: cast_nullable_to_non_nullable
-          : payType as MembershipPayTypeEnum?,
+          : payType as PayType?,
     );
   }
 }
@@ -91,7 +87,7 @@ Membership _$MembershipFromJson(Map<String, dynamic> json) =>
         role: $checkedConvert('role', (v) => $enumDecode(_$RoleEnumMap, v)),
         payType: $checkedConvert(
           'pay_type',
-          (v) => $enumDecodeNullable(_$MembershipPayTypeEnumEnumMap, v),
+          (v) => $enumDecodeNullable(_$PayTypeEnumMap, v),
         ),
       );
       return val;
@@ -101,7 +97,7 @@ Map<String, dynamic> _$MembershipToJson(Membership instance) =>
     <String, dynamic>{
       'org': instance.org.toJson(),
       'role': _$RoleEnumMap[instance.role]!,
-      'pay_type': ?_$MembershipPayTypeEnumEnumMap[instance.payType],
+      'pay_type': ?_$PayTypeEnumMap[instance.payType],
     };
 
 const _$RoleEnumMap = {
@@ -111,7 +107,7 @@ const _$RoleEnumMap = {
   Role.customer: 'customer',
 };
 
-const _$MembershipPayTypeEnumEnumMap = {
-  MembershipPayTypeEnum.commission: 'commission',
-  MembershipPayTypeEnum.salary: 'salary',
+const _$PayTypeEnumMap = {
+  PayType.commission: 'commission',
+  PayType.salary: 'salary',
 };

@@ -13,13 +13,20 @@ abstract class _$AddMemberRequestCWProxy {
 
   AddMemberRequest role(Role role);
 
+  AddMemberRequest payType(PayType? payType);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `AddMemberRequest(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
   /// ```dart
   /// AddMemberRequest(...).copyWith(id: 12, name: "My name")
   /// ````
-  AddMemberRequest call({String name, String email, Role role});
+  AddMemberRequest call({
+    String name,
+    String email,
+    Role role,
+    PayType? payType,
+  });
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfAddMemberRequest.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfAddMemberRequest.copyWith.fieldName(...)`
@@ -38,6 +45,9 @@ class _$AddMemberRequestCWProxyImpl implements _$AddMemberRequestCWProxy {
   AddMemberRequest role(Role role) => this(role: role);
 
   @override
+  AddMemberRequest payType(PayType? payType) => this(payType: payType);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `AddMemberRequest(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -48,6 +58,7 @@ class _$AddMemberRequestCWProxyImpl implements _$AddMemberRequestCWProxy {
     Object? name = const $CopyWithPlaceholder(),
     Object? email = const $CopyWithPlaceholder(),
     Object? role = const $CopyWithPlaceholder(),
+    Object? payType = const $CopyWithPlaceholder(),
   }) {
     return AddMemberRequest(
       name: name == const $CopyWithPlaceholder()
@@ -62,6 +73,10 @@ class _$AddMemberRequestCWProxyImpl implements _$AddMemberRequestCWProxy {
           ? _value.role
           // ignore: cast_nullable_to_non_nullable
           : role as Role,
+      payType: payType == const $CopyWithPlaceholder()
+          ? _value.payType
+          // ignore: cast_nullable_to_non_nullable
+          : payType as PayType?,
     );
   }
 }
@@ -83,15 +98,20 @@ AddMemberRequest _$AddMemberRequestFromJson(Map<String, dynamic> json) =>
         name: $checkedConvert('name', (v) => v as String),
         email: $checkedConvert('email', (v) => v as String),
         role: $checkedConvert('role', (v) => $enumDecode(_$RoleEnumMap, v)),
+        payType: $checkedConvert(
+          'pay_type',
+          (v) => $enumDecodeNullable(_$PayTypeEnumMap, v),
+        ),
       );
       return val;
-    });
+    }, fieldKeyMap: const {'payType': 'pay_type'});
 
 Map<String, dynamic> _$AddMemberRequestToJson(AddMemberRequest instance) =>
     <String, dynamic>{
       'name': instance.name,
       'email': instance.email,
       'role': _$RoleEnumMap[instance.role]!,
+      'pay_type': ?_$PayTypeEnumMap[instance.payType],
     };
 
 const _$RoleEnumMap = {
@@ -99,4 +119,9 @@ const _$RoleEnumMap = {
   Role.worker: 'worker',
   Role.agent: 'agent',
   Role.customer: 'customer',
+};
+
+const _$PayTypeEnumMap = {
+  PayType.commission: 'commission',
+  PayType.salary: 'salary',
 };

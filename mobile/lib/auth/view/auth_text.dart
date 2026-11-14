@@ -73,6 +73,8 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.passwordTooWeak => l10n.failPasswordTooWeak,
     AuthFailureCode.sessionExpired => l10n.failSessionExpired,
     AuthFailureCode.validation => l10n.failValidation,
+    AuthFailureCode.gstinInvalid => l10n.failGstinInvalid,
+    AuthFailureCode.gstinTaken => l10n.failGstinTaken,
     AuthFailureCode.network => l10n.failNetwork,
     AuthFailureCode.unknown => l10n.failUnknown,
   };
@@ -92,5 +94,6 @@ extension OrgStatusText on OrgStatus {
     OrgStatus.pending => l10n.orgPending,
     OrgStatus.active => l10n.orgActive,
     OrgStatus.suspended => l10n.orgSuspended,
+    OrgStatus.rejected => l10n.orgRejected,
   };
 }

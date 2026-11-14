@@ -15,6 +15,11 @@ enum AuthFailureCode {
   passwordTooWeak('auth.password_too_weak'),
   sessionExpired('auth.session_expired'),
   validation('validation.failed'),
+
+  /// Company registration: a GSTIN that fails the checksum, or one
+  /// already registered.
+  gstinInvalid('org.gstin_invalid'),
+  gstinTaken('org.gstin_taken'),
   network(null),
   unknown(null);
 

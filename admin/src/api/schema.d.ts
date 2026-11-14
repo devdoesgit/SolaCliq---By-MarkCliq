@@ -229,7 +229,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -247,7 +255,10 @@ export interface paths {
          *     your account", F1). If it has an account, only a membership is
          *     added and the person is emailed that they were added. One role per
          *     person per org: `member.already_in_org` (409) otherwise. The role
-         *     must be `worker` or `agent`: `member.role_not_allowed` (422).
+         *     must be `worker` or `agent`: `member.role_not_allowed` (422). Agents
+         *     need a `pay_type` (`member.pay_type_required`, 422) and other roles
+         *     can't have one (`member.pay_type_not_allowed`, 422). Someone removed earlier can be added again: their
+         *     membership comes back with the new role and pay type.
          */
         post: operations["addMember"];
         delete?: never;
@@ -261,7 +272,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 user_id: components["schemas"]["Id"];
             };
@@ -272,8 +291,10 @@ export interface paths {
         post?: never;
         /**
          * Remove a worker or agent from the org
-         * @description Org admin only. Ends the membership, not the account; the person's
-         *     sessions stop working for this org at once. The org admin can't be
+         * @description Org admin only. Ends the membership, not the account: it is marked
+         *     removed (kept, not deleted), drops out of the member list and the
+         *     person's `/me`, and their requests to this org get 403
+         *     `org.not_member` at once. The org admin can't be
          *     removed (`member.cannot_remove_admin`, 422). Their past records
          *     (jobs, expenses, customers) stay with the org.
          */
@@ -283,7 +304,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/access-requests": {
+    "/org-registrations": {
         parameters: {
             query?: never;
             header?: never;
@@ -293,11 +314,91 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * A solar company asks for SolaCliq
-         * @description Public. MarkCliq is notified and onboards the company; its admin
-         *     then gets the web dashboard. Always 202.
+         * A solar company registers with SolaCliq
+         * @description Public. The server checks the details first: GSTIN format and
+         *     checksum (`org.gstin_invalid`, 422), a GSTIN already registered and
+         *     not rejected (`org.gstin_taken`, 409), and the usual field rules
+         *     (`validation.failed`). PAN and state are taken from the GSTIN.
+         *
+         *     Then, in one transaction, it saves the company as `pending`, the
+         *     owner's account (no password; an existing account with this email
+         *     is used as it is) and their `org_admin` membership. MarkCliq is
+         *     emailed to review it, and the owner is emailed that it arrived.
+         *     A platform admin then approves or rejects it
+         *     (`/platform/orgs/{org_id}/status`).
          */
-        post: operations["requestAccess"];
+        post: operations["registerOrg"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/orgs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every company, newest first
+         * @description Platform admins only (`users.is_platform_admin`); anyone else gets
+         *     403 `platform.not_admin`. Filter with `status` (e.g. `pending` for
+         *     the review queue).
+         */
+        get: operations["listPlatformOrgs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/orgs/{org_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * One company's registration details
+         * @description Platform admins only.
+         */
+        get: operations["getPlatformOrg"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/orgs/{org_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve, reject, suspend or reactivate a company
+         * @description Platform admins only. Allowed moves: `pending` → `active`
+         *     (approve) or `rejected` (reject); `active` → `suspended`;
+         *     `suspended` → `active`. Anything else is 409
+         *     `org.status_change_not_allowed`. Rejecting needs a `note`, which is
+         *     emailed to the owner (`validation.failed` without one). Approving
+         *     emails the owner how to log in.
+         */
+        post: operations["setPlatformOrgStatus"];
         delete?: never;
         options?: never;
         head?: never;
@@ -396,7 +497,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -445,7 +554,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -472,7 +589,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -499,7 +624,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -524,7 +657,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -548,7 +689,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -576,7 +725,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
                 item_id: string;
@@ -601,7 +758,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -627,7 +792,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -652,7 +825,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -676,7 +857,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -700,7 +889,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 expense_id: components["parameters"]["ExpenseId"];
             };
@@ -724,7 +921,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 expense_id: components["parameters"]["ExpenseId"];
             };
@@ -748,7 +953,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -771,7 +984,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -794,7 +1015,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -888,7 +1117,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -912,7 +1149,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -937,7 +1182,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 customer_id: components["parameters"]["CustomerId"];
             };
@@ -961,7 +1214,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 customer_id: components["parameters"]["CustomerId"];
                 kind: components["schemas"]["KycKind"];
@@ -986,7 +1247,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -1009,7 +1278,15 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 payment_id: components["schemas"]["Id"];
             };
@@ -1158,8 +1435,13 @@ export interface components {
             code: components["schemas"]["VerificationCode"];
             new_password: components["schemas"]["Password"];
         };
-        /** @enum {string} */
-        OrgStatus: "pending" | "active" | "suspended";
+        /**
+         * @description `pending` until MarkCliq reviews the registration; then `active` or
+         *     `rejected`. `suspended` for non-payment or abuse. Only `active`
+         *     companies give their members any data.
+         * @enum {string}
+         */
+        OrgStatus: "pending" | "active" | "suspended" | "rejected";
         /**
          * @description `customer`: the company installs for this person; they follow the
          *     install in the app.
@@ -1176,13 +1458,7 @@ export interface components {
                 phone?: components["schemas"]["Phone"];
             };
             role: components["schemas"]["Role"];
-            /**
-             * @description Agents (shown as Sales) only. `commission` agents enter a
-             *     commission on each customer they add; `salary` employees have
-             *     no commission step.
-             * @enum {string}
-             */
-            pay_type?: "commission" | "salary";
+            pay_type?: components["schemas"]["PayType"];
         };
         Me: {
             id: components["schemas"]["Id"];
@@ -1192,6 +1468,10 @@ export interface components {
             phone?: components["schemas"]["Phone"];
             email_verified: boolean;
             is_platform_admin: boolean;
+            /**
+             * @description Every company the person belongs to, including ones that aren't
+             *     active (shown as a message). Removed memberships are left out.
+             */
             memberships: components["schemas"]["Membership"][];
         };
         /**
@@ -1205,6 +1485,7 @@ export interface components {
             name: string;
             email: components["schemas"]["Email"];
             role: components["schemas"]["Role"];
+            pay_type?: components["schemas"]["PayType"];
             status: components["schemas"]["MemberStatus"];
             added_at: components["schemas"]["Timestamp"];
         };
@@ -1217,15 +1498,77 @@ export interface components {
             name: string;
             email: components["schemas"]["Email"];
             role: components["schemas"]["Role"];
+            pay_type?: components["schemas"]["PayType"];
         };
-        AccessRequestCreate: {
-            /** @example Example Solar Pvt. Ltd. (illustrative) */
-            company_name: string;
-            owner_name: string;
-            phone: components["schemas"]["Phone"];
-            /** @example Jaipur */
+        /**
+         * @description Agents (shown as Sales) only, and always present for them.
+         *     `commission` agents enter a commission on each customer they add;
+         *     `salary` employees have no commission step. The app treats an agent
+         *     without one as salaried.
+         * @enum {string}
+         */
+        PayType: "commission" | "salary";
+        OrgRegistrationCreate: {
+            /**
+             * @description As on the GST certificate.
+             * @example Example Solar Private Limited (illustrative)
+             */
+            legal_name: string;
+            /** @description The name shown in the app. Left out → the legal name. */
+            trade_name?: string;
+            business_type: components["schemas"]["BusinessType"];
+            /**
+             * @description 15 characters; case and spaces don't matter.
+             * @example 27AAPFU0939F1ZV
+             */
+            gstin: string;
+            address_line_1: string;
+            address_line_2?: string;
             city: string;
+            pin_code: string;
+            owner_name: string;
             email: components["schemas"]["Email"];
+            phone: components["schemas"]["Phone"];
+        };
+        /** @enum {string} */
+        BusinessType: "proprietorship" | "partnership" | "llp" | "private_limited" | "public_limited" | "other";
+        /** @description A company as MarkCliq reviews it. */
+        PlatformOrg: {
+            id: components["schemas"]["Id"];
+            /** @description Shown in the app (the trade name, or the legal name). */
+            name: string;
+            legal_name: string;
+            business_type: components["schemas"]["BusinessType"];
+            gstin: string;
+            /** @description Characters 3–12 of the GSTIN. */
+            pan: string;
+            address_line_1: string;
+            address_line_2?: string;
+            city: string;
+            /** @description From the GSTIN's first two digits. */
+            state: string;
+            pin_code: string;
+            phone: components["schemas"]["Phone"];
+            status: components["schemas"]["OrgStatus"];
+            owner: {
+                user_id: components["schemas"]["Id"];
+                name: string;
+                email: components["schemas"]["Email"];
+                phone?: components["schemas"]["Phone"];
+            };
+            created_at: components["schemas"]["Timestamp"];
+            reviewed_at?: components["schemas"]["Timestamp"];
+            review_note?: string;
+        };
+        PlatformOrgPage: {
+            items: components["schemas"]["PlatformOrg"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        OrgStatusChange: {
+            /** @enum {string} */
+            status: "active" | "rejected" | "suspended";
+            /** @description Required to reject; emailed to the owner. */
+            note?: string;
         };
         Invite: {
             id: components["schemas"]["Id"];
@@ -2092,7 +2435,15 @@ export interface components {
         TaskId: components["schemas"]["Id"];
         ExpenseId: components["schemas"]["Id"];
         InviteId: components["schemas"]["Id"];
-        /** @description The org the request is for; the caller needs a membership in it. */
+        /**
+         * @description The org the request is for; the caller needs a membership in it.
+         *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+         *     (no membership, or it was removed), `org.role_not_allowed` (the
+         *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+         *     approved the company yet), `org.suspended` or `org.rejected`. A
+         *     company that isn't active gives its members none of its data, only
+         *     its name and status in `/me`, so the app shows a message.
+         */
         OrgId: components["schemas"]["Id"];
         /** @description Opaque cursor from the previous page's `next_cursor`. */
         Cursor: string;
@@ -2383,7 +2734,15 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2408,7 +2767,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2439,7 +2806,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 user_id: components["schemas"]["Id"];
             };
@@ -2460,7 +2835,7 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
-    requestAccess: {
+    registerOrg: {
         parameters: {
             query?: never;
             header?: never;
@@ -2469,19 +2844,104 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AccessRequestCreate"];
+                "application/json": components["schemas"]["OrgRegistrationCreate"];
             };
         };
         responses: {
-            /** @description Received; MarkCliq will be in touch. */
+            /** @description Saved as pending; MarkCliq reviews it. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+        };
+    };
+    listPlatformOrgs: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["OrgStatus"];
+                /** @description Opaque cursor from the previous page's `next_cursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. */
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of companies. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformOrgPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getPlatformOrg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformOrg"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    setPlatformOrgStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrgStatusChange"];
+            };
+        };
+        responses: {
+            /** @description The company, with its new status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformOrg"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listMyInvites: {
@@ -2589,7 +3049,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2645,7 +3113,15 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2676,7 +3152,15 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2712,7 +3196,15 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2749,7 +3241,15 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -2775,7 +3275,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -2802,7 +3310,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -2835,7 +3351,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
                 item_id: string;
@@ -2876,7 +3400,15 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -2918,7 +3450,15 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -2950,7 +3490,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -2982,7 +3530,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 task_id: components["parameters"]["TaskId"];
             };
@@ -3009,7 +3565,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 expense_id: components["parameters"]["ExpenseId"];
             };
@@ -3036,7 +3600,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 expense_id: components["parameters"]["ExpenseId"];
             };
@@ -3077,7 +3649,15 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3102,7 +3682,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3125,7 +3713,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3269,7 +3865,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3294,7 +3898,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3319,7 +3931,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 customer_id: components["parameters"]["CustomerId"];
             };
@@ -3346,7 +3966,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 customer_id: components["parameters"]["CustomerId"];
                 kind: components["schemas"]["KycKind"];
@@ -3380,7 +4008,15 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
             };
             cookie?: never;
@@ -3411,7 +4047,15 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
-                /** @description The org the request is for; the caller needs a membership in it. */
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
                 org_id: components["parameters"]["OrgId"];
                 payment_id: components["schemas"]["Id"];
             };

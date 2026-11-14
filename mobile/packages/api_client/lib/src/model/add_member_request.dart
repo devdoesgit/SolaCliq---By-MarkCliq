@@ -4,6 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/role.dart';
+import 'package:api_client/src/model/pay_type.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
@@ -25,6 +26,8 @@ class AddMemberRequest {
     required this.email,
 
     required this.role,
+
+    this.payType,
   });
 
   @JsonKey(name: r'name', required: true, includeIfNull: false)
@@ -36,16 +39,22 @@ class AddMemberRequest {
   @JsonKey(name: r'role', required: true, includeIfNull: false)
   final Role role;
 
+  @JsonKey(name: r'pay_type', required: false, includeIfNull: false)
+  final PayType? payType;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is AddMemberRequest &&
             runtimeType == other.runtimeType &&
-            equals([name, email, role], [other.name, other.email, other.role]);
+            equals(
+              [name, email, role, payType],
+              [other.name, other.email, other.role, other.payType],
+            );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([name, email, role]);
+      runtimeType.hashCode ^ mapPropsToHashCode([name, email, role, payType]);
 
   factory AddMemberRequest.fromJson(Map<String, dynamic> json) =>
       _$AddMemberRequestFromJson(json);

@@ -26,7 +26,7 @@ class ExpensesApi {
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [expenseCreate]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -131,7 +131,7 @@ class ExpensesApi {
   /// With the admin&#39;s note and the receipt link when there is one.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [expenseId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -224,7 +224,7 @@ class ExpensesApi {
   /// Newest first; the screen after logging one shows them.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [cursor] - Opaque cursor from the previous page's `next_cursor`.
   /// * [limit] - Page size.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -322,7 +322,7 @@ class ExpensesApi {
   /// The expense goes back to &#x60;in_review&#x60;. 409 unless it is &#x60;needs_fix&#x60;.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [expenseId]
   /// * [replaceExpenseReceiptRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation

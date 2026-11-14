@@ -14,6 +14,7 @@ import 'package:api_client/src/api/home_api.dart';
 import 'package:api_client/src/api/install_api.dart';
 import 'package:api_client/src/api/notifications_api.dart';
 import 'package:api_client/src/api/onboarding_api.dart';
+import 'package:api_client/src/api/platform_api.dart';
 import 'package:api_client/src/api/profile_api.dart';
 import 'package:api_client/src/api/quotes_api.dart';
 import 'package:api_client/src/api/system_api.dart';
@@ -173,6 +174,12 @@ class ApiClient {
   /// by doing that all interceptors will not be executed
   OnboardingApi getOnboardingApi() {
     return OnboardingApi(dio);
+  }
+
+  /// Get PlatformApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  PlatformApi getPlatformApi() {
+    return PlatformApi(dio);
   }
 
   /// Get ProfileApi instance, base route and serializer can be overridden by a given but be careful,

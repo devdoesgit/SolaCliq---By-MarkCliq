@@ -1,6 +1,7 @@
 import 'package:api_client/api_client.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:solacliq/access/data/company_registration_repository.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
@@ -33,6 +34,9 @@ class MockExpenseRepository extends Mock implements ExpenseRepository;
 class MockUploadRepository extends Mock implements UploadRepository;
 
 class MockRegistrationRepository extends Mock implements RegistrationRepository;
+
+class MockCompanyRegistrationRepository extends Mock
+    implements CompanyRegistrationRepository;
 
 class MockTaskRepository extends Mock implements TaskRepository;
 

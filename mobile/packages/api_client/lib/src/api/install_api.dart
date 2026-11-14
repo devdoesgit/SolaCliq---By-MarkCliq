@@ -24,7 +24,7 @@ class InstallApi {
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [paymentId]
   /// * [claimInstallPaymentRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -138,7 +138,7 @@ class InstallApi {
   /// Customers only. Stages, the next visit and the payment plan.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request

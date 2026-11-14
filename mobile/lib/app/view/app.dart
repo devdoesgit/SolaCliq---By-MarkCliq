@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
-import 'package:solacliq/access/data/access_repository.dart';
+import 'package:solacliq/access/data/company_registration_repository.dart';
 import 'package:solacliq/app/config/app_config.dart';
 import 'package:solacliq/app/dev/mock_persona.dart';
 import 'package:solacliq/app/dev/quick_forms.dart';
@@ -131,7 +131,7 @@ class _AppState extends State<App> {
         RepositoryProvider.value(value: _pendingLogin),
         RepositoryProvider.value(value: _quickForms),
         RepositoryProvider(
-          create: (_) => AccessRepository(_api.getOnboardingApi()),
+          create: (_) => CompanyRegistrationRepository(_api.getOnboardingApi()),
         ),
         RepositoryProvider(create: (_) => HomeRepository(_api.getHomeApi())),
         RepositoryProvider(

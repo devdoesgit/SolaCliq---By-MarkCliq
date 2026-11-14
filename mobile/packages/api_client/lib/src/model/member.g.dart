@@ -15,6 +15,8 @@ abstract class _$MemberCWProxy {
 
   Member role(Role role);
 
+  Member payType(PayType? payType);
+
   Member status(MemberStatus status);
 
   Member addedAt(DateTime addedAt);
@@ -30,6 +32,7 @@ abstract class _$MemberCWProxy {
     String name,
     String email,
     Role role,
+    PayType? payType,
     MemberStatus status,
     DateTime addedAt,
   });
@@ -54,6 +57,9 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
   Member role(Role role) => this(role: role);
 
   @override
+  Member payType(PayType? payType) => this(payType: payType);
+
+  @override
   Member status(MemberStatus status) => this(status: status);
 
   @override
@@ -71,6 +77,7 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
     Object? name = const $CopyWithPlaceholder(),
     Object? email = const $CopyWithPlaceholder(),
     Object? role = const $CopyWithPlaceholder(),
+    Object? payType = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? addedAt = const $CopyWithPlaceholder(),
   }) {
@@ -91,6 +98,10 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
           ? _value.role
           // ignore: cast_nullable_to_non_nullable
           : role as Role,
+      payType: payType == const $CopyWithPlaceholder()
+          ? _value.payType
+          // ignore: cast_nullable_to_non_nullable
+          : payType as PayType?,
       status: status == const $CopyWithPlaceholder()
           ? _value.status
           // ignore: cast_nullable_to_non_nullable
@@ -133,6 +144,10 @@ Member _$MemberFromJson(Map<String, dynamic> json) => $checkedCreate(
       name: $checkedConvert('name', (v) => v as String),
       email: $checkedConvert('email', (v) => v as String),
       role: $checkedConvert('role', (v) => $enumDecode(_$RoleEnumMap, v)),
+      payType: $checkedConvert(
+        'pay_type',
+        (v) => $enumDecodeNullable(_$PayTypeEnumMap, v),
+      ),
       status: $checkedConvert(
         'status',
         (v) => $enumDecode(_$MemberStatusEnumMap, v),
@@ -141,7 +156,11 @@ Member _$MemberFromJson(Map<String, dynamic> json) => $checkedCreate(
     );
     return val;
   },
-  fieldKeyMap: const {'userId': 'user_id', 'addedAt': 'added_at'},
+  fieldKeyMap: const {
+    'userId': 'user_id',
+    'payType': 'pay_type',
+    'addedAt': 'added_at',
+  },
 );
 
 Map<String, dynamic> _$MemberToJson(Member instance) => <String, dynamic>{
@@ -149,6 +168,7 @@ Map<String, dynamic> _$MemberToJson(Member instance) => <String, dynamic>{
   'name': instance.name,
   'email': instance.email,
   'role': _$RoleEnumMap[instance.role]!,
+  'pay_type': ?_$PayTypeEnumMap[instance.payType],
   'status': _$MemberStatusEnumMap[instance.status]!,
   'added_at': instance.addedAt.toIso8601String(),
 };
@@ -158,6 +178,11 @@ const _$RoleEnumMap = {
   Role.worker: 'worker',
   Role.agent: 'agent',
   Role.customer: 'customer',
+};
+
+const _$PayTypeEnumMap = {
+  PayType.commission: 'commission',
+  PayType.salary: 'salary',
 };
 
 const _$MemberStatusEnumMap = {

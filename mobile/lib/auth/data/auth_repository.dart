@@ -264,6 +264,7 @@ class AuthRepository {
             api.OrgStatus.pending => OrgStatus.pending,
             api.OrgStatus.active => OrgStatus.active,
             api.OrgStatus.suspended => OrgStatus.suspended,
+            api.OrgStatus.rejected => OrgStatus.rejected,
           },
           role: switch (m.role) {
             api.Role.orgAdmin => OrgRole.orgAdmin,
@@ -272,8 +273,8 @@ class AuthRepository {
             api.Role.customer => OrgRole.customer,
           },
           payType: switch (m.payType) {
-            api.MembershipPayTypeEnum.commission => PayType.commission,
-            api.MembershipPayTypeEnum.salary => PayType.salary,
+            api.PayType.commission => PayType.commission,
+            api.PayType.salary => PayType.salary,
             _ => null,
           },
           orgPhone: m.org.phone,

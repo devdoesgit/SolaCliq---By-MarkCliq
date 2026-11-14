@@ -4,6 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/role.dart';
+import 'package:api_client/src/model/pay_type.dart';
 import 'package:api_client/src/model/membership_org.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -28,9 +29,8 @@ class Membership {
   @JsonKey(name: r'role', required: true, includeIfNull: false)
   final Role role;
 
-  /// Agents (shown as Sales) only. `commission` agents enter a commission on each customer they add; `salary` employees have no commission step.
   @JsonKey(name: r'pay_type', required: false, includeIfNull: false)
-  final MembershipPayTypeEnum? payType;
+  final PayType? payType;
 
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -55,19 +55,4 @@ class Membership {
   String toString() {
     return toJson().toString();
   }
-}
-
-/// Agents (shown as Sales) only. `commission` agents enter a commission on each customer they add; `salary` employees have no commission step.
-enum MembershipPayTypeEnum {
-  @JsonValue(r'commission')
-  commission(r'commission'),
-  @JsonValue(r'salary')
-  salary(r'salary');
-
-  const MembershipPayTypeEnum(this.value);
-
-  final String value;
-
-  @override
-  String toString() => value;
 }

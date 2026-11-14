@@ -22,10 +22,10 @@ class TeamApi {
   const TeamApi(this._dio);
 
   /// Add a worker or agent
-  /// Org admin only. If the email has no account, one is created with no password and a set-up email is sent (the person then uses \&quot;Set up your account\&quot;, F1). If it has an account, only a membership is added and the person is emailed that they were added. One role per person per org: &#x60;member.already_in_org&#x60; (409) otherwise. The role must be &#x60;worker&#x60; or &#x60;agent&#x60;: &#x60;member.role_not_allowed&#x60; (422).
+  /// Org admin only. If the email has no account, one is created with no password and a set-up email is sent (the person then uses \&quot;Set up your account\&quot;, F1). If it has an account, only a membership is added and the person is emailed that they were added. One role per person per org: &#x60;member.already_in_org&#x60; (409) otherwise. The role must be &#x60;worker&#x60; or &#x60;agent&#x60;: &#x60;member.role_not_allowed&#x60; (422). Agents need a &#x60;pay_type&#x60; (&#x60;member.pay_type_required&#x60;, 422) and other roles can&#39;t have one (&#x60;member.pay_type_not_allowed&#x60;, 422). Someone removed earlier can be added again: their membership comes back with the new role and pay type.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [addMemberRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -126,7 +126,7 @@ class TeamApi {
   /// Org admin only. Used by the admin website&#39;s team page.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [cursor] - Opaque cursor from the previous page's `next_cursor`.
   /// * [limit] - Page size.
   /// * [role]
@@ -224,10 +224,10 @@ class TeamApi {
   }
 
   /// Remove a worker or agent from the org
-  /// Org admin only. Ends the membership, not the account; the person&#39;s sessions stop working for this org at once. The org admin can&#39;t be removed (&#x60;member.cannot_remove_admin&#x60;, 422). Their past records (jobs, expenses, customers) stay with the org.
+  /// Org admin only. Ends the membership, not the account: it is marked removed (kept, not deleted), drops out of the member list and the person&#39;s &#x60;/me&#x60;, and their requests to this org get 403 &#x60;org.not_member&#x60; at once. The org admin can&#39;t be removed (&#x60;member.cannot_remove_admin&#x60;, 422). Their past records (jobs, expenses, customers) stay with the org.
   ///
   /// Parameters:
-  /// * [orgId] - The org the request is for; the caller needs a membership in it.
+  /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [userId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request

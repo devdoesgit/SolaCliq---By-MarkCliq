@@ -5,6 +5,7 @@
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/member_status.dart';
 import 'package:api_client/src/model/role.dart';
+import 'package:api_client/src/model/pay_type.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
@@ -29,6 +30,8 @@ class Member {
 
     required this.role,
 
+    this.payType,
+
     required this.status,
 
     required this.addedAt,
@@ -47,6 +50,9 @@ class Member {
   @JsonKey(name: r'role', required: true, includeIfNull: false)
   final Role role;
 
+  @JsonKey(name: r'pay_type', required: false, includeIfNull: false)
+  final PayType? payType;
+
   @JsonKey(name: r'status', required: true, includeIfNull: false)
   final MemberStatus status;
 
@@ -59,12 +65,13 @@ class Member {
         other is Member &&
             runtimeType == other.runtimeType &&
             equals(
-              [userId, name, email, role, status, addedAt],
+              [userId, name, email, role, payType, status, addedAt],
               [
                 other.userId,
                 other.name,
                 other.email,
                 other.role,
+                other.payType,
                 other.status,
                 other.addedAt,
               ],
@@ -74,7 +81,7 @@ class Member {
   @override
   int get hashCode =>
       runtimeType.hashCode ^
-      mapPropsToHashCode([userId, name, email, role, status, addedAt]);
+      mapPropsToHashCode([userId, name, email, role, payType, status, addedAt]);
 
   factory Member.fromJson(Map<String, dynamic> json) => _$MemberFromJson(json);
 
