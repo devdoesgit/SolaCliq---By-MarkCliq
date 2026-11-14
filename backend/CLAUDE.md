@@ -1,72 +1,54 @@
 # Backend
 
-Rust API for SolaCliq. **Built by the owner.** Claude drafts the API spec in
-`../api/openapi.yaml` and helps when asked, but does not write or change
-backend code unless the owner asks.
+Rust API (Axum + sqlx + Postgres) at `solacliq.markcliq.com/api/v1`, for
+the app (bearer tokens) and the website (cookies) on the same endpoints.
+Written by Claude, reviewed by the owner: ship fast, but clean, tested,
+and commented in the owner's style (multi-line comments in `/* */`).
 
-Stack, API conventions and design patterns: `../docs/architecture.md`.
-What to build first, and the rules the app relies on:
-`../docs/backend-handoff.md`. The same work split into phases, each tested
-before the next: `../docs/backend-phases.md`.
+Work list and rules: `../docs/backend-handoff.md`; phases and status:
+`../docs/backend-phases.md`; conventions: `../docs/architecture.md`.
 
 ## Running it
 
 ```
-make db          # local Postgres 17 in a container (dev only)
+make db          # local Postgres 17 (rootless podman; rerun if it stops)
 cp backend/.env.example backend/.env
-make api         # migrates, then serves localhost:8080
+make api         # migrates, then serves localhost:8080 (docs at /api/docs)
 make api-test    # fmt check, clippy -D warnings, tests
-cargo run -- openapi   # (in backend/) print the generated spec
+cargo run -- openapi                     # (in backend/) the generated spec
+cargo run -- seed                        # illustrative data, APP_ENV=development only
+cargo run -- make-platform-admin <email>
 ```
 
-`GET /api/v1/health` answers 200, or 503 when the database is down;
-interactive docs at `/api/docs`.
+## Rules
 
-## Skeleton (set up by Claude, 2026-11-09; the owner builds from here)
+- Every `/orgs/{org_id}/...` handler takes `OrgMember<Roles>`; every
+  `/platform/...` handler takes `PlatformAdmin` (`src/org.rs`).
+- Errors are `ApiError` with a contract code (`<area>.<reason>`);
+  database errors become a plain 500.
+- Queries are runtime `sqlx::query` with binds, and fixed strings (sqlx
+  refuses SQL built at run time; see `select_org!` in `platform.rs`).
+- Until the first deploy (phase 5) there's no real database: change the
+  migrations freely and reset the local one (`podman rm -f solacliq-pg;
+  podman volume rm solacliq-pgdata; make db; cargo run -- seed`). After
+  it, never edit a migration that has run (sqlx checks a checksum); add a
+  new one, and give a new enum value its own migration before anything
+  uses it.
+- Emails go through `state.mailer` after the transaction commits.
+- Lists page with `page.rs` (`?cursor=&limit=`, newest first).
+- Env: `.env.example` lists every variable; `APP_ENV` unset = production.
 
-- `src/main.rs`: config, tracing, Postgres pool, migrations at start,
-  graceful shutdown on Ctrl-C/SIGTERM.
-- `src/lib.rs`: `app(state)` builds the router (also used by tests): every
-  route under `/api/v1`, request ids (`x-request-id`), 30 s timeout,
-  request tracing, problem-JSON 404 fallback.
-- `src/config.rs`: environment variables (`.env.example` lists them).
-- `src/error.rs`: `ApiError` → RFC 9457 `Problem` with `code`; database
-  errors are logged and returned as a plain 500.
-- `src/routes/`: one module per area with a `router()`, merged in
-  `routes/mod.rs`; handlers carry `#[utoipa::path]`.
-- `src/openapi.rs`: generated spec and the Scalar docs page.
-- `migrations/`: sqlx migrations (empty so far).
-- `tests/`: router tests without a database; use `#[sqlx::test]` for
-  database ones.
+## Layout
 
-## Responsibilities
-
-- REST API at `solacliq.markcliq.com/api/v1`, for both the mobile app and the
-  admin website (bearer tokens and cookies on the same endpoints).
-- Postgres: schema, migrations, row-level security per org.
-- Auth: accounts, email verification, sessions and tokens, roles from
-  memberships.
-- Business rules: stages, approvals, referrals, location flags on captures.
-  Rules live here so most fixes need no app update.
-- R2: presigned upload and download URLs for the private bucket.
-- GST verification API calls (keys stay on the server).
-- Email through Google Workspace; push notifications; SMS later.
-- OpenAPI spec generated with `utoipa`, served at `/api/docs`, checked in CI
-  against `../api/openapi.yaml`.
-
-## Modules
-
-| Module | Feature |
-|---|---|
-| auth, users | F1 |
-| orgs, gstin, platform approval | F2 |
-| memberships | F3 |
-| customers, stages, cost lines, payments | F4 |
-| uploads, documents | F5 |
-| jobs, captures | F6 |
-| expenses, approvals | F7 |
-| commissions | F8 |
-| customer linking | F10 |
-| referrals | F11 |
-| notifications | F12 |
-| org suspension, support access, audit log | F14 |
+- `src/main.rs`: commands (serve, `openapi`, `seed`,
+  `make-platform-admin`), migrations at start, graceful shutdown.
+- `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
+- `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
+  `registration` and `platform` (F2); merged in `routes/mod.rs`.
+- `src/org.rs`: role, pay type, status and business type enums
+  (`sqlx::Type`), `OrgMember`, `PlatformAdmin`.
+- `src/session.rs`, `src/codes.rs`, `src/password.rs`: tokens, email
+  codes, Argon2. `src/mail.rs`: the `Mailer` trait.
+- `src/gstin.rs`, `src/validate.rs`, `src/page.rs`: shared checks and
+  paging. `src/seed.rs`: the seed and platform-admin commands.
+- `tests/`: one file per area; helpers in `tests/common/mod.rs`.

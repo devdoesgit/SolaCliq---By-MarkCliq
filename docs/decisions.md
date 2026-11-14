@@ -349,3 +349,77 @@ Change a decision by adding a new line, not by editing an old one.
 - **The app's resend countdown is 60 seconds**, matching the server's
   one-code-a-minute rule; a shorter wait let people ask for a code the
   server silently didn't send.
+- **An agent without a pay type is treated as salaried.** The app used to
+  assume `commission`, which would show a salaried person the commission
+  step, Earnings and a payout bank, and send a commission the server
+  refuses (`registration.commission_not_allowed`). `pay_type` is always
+  set for agents (the database `CHECK` in phase 4), and the app now sends
+  `commission` and `commission_note` only for commission agents.
+- **Companies register themselves; MarkCliq approves or denies.** A
+  company submits all its details (GSTIN and business details, as in
+  `product.md`), which creates the company as `pending`. MarkCliq does a
+  background check and a call with them, then approves or denies it in
+  the platform admin, and helps them onboard. This replaces the
+  contract's "request access" flow (`POST /access-requests`, a short form
+  MarkCliq acts on by hand); the contract and the app's request-access
+  screen change with F2.
+- **A salaried sales person's profile counts "approved", not
+  "installing".** The design (`Ios2SalesProfile`) shows customers ·
+  installing · to fix; the app shows customers · approved · to fix.
+  Approved (documents accepted) is what a sales person controls, it needs
+  no contract change (the customer list has no install stage), and the
+  install picture is already on their home ("1 installing · 2 not
+  started"). A deliberate deviation from the design.
+- **Phase 4 schema choices.** Roles, pay types and company status are
+  native Postgres enums (`sqlx::Type`): the lists are stable. One role per
+  person per company stays (`PRIMARY KEY (user_id, org_id)`). Removing a
+  member is a soft delete for now: `memberships.removed_at` is set, the
+  person loses access at once (`OrgMember` and `/me` skip removed rows),
+  and adding them back clears it on the same row, with the new role.
+- **A suspended or pending company shows a message, never its data.**
+  Every `/orgs/{org_id}/...` request from its members returns 403
+  `org.suspended` or `org.pending`. `/me` still lists the membership with
+  the company's name and status, so the app shows "Example Solar is
+  suspended" instead of the company vanishing or the app breaking.
+- **Row-level security starts in phase 7, not phase 4.** Phase 4's
+  `OrgMember` check is the first lock; RLS is a second one in Postgres, so
+  a query that forgets its `org_id` filter still can't return another
+  company's rows (KYC documents, bank details). Phase 4 has no
+  company-owned data to protect yet, and `/me` reads `memberships` across
+  companies, so RLS starts with the first company tables in phase 7.
+- **Only companies are suspended.** A person is never suspended; removing
+  a member just drops the company from their `/me`, with no message.
+- **Adding an agent needs a pay type.** `AddMemberRequest.pay_type`
+  (`member.pay_type_required` / `member.pay_type_not_allowed`, 422) was
+  missing, so the website couldn't have added an agent. `PayType` is now
+  one shared schema, used by `Membership`, `Member` and `AddMemberRequest`.
+- **`APP_ENV` says development or production; unset means production.**
+  Development-only tools (the seed) refuse to run unless it is
+  `development`, so a server that forgot to set it is treated as the real
+  one. Phase 5's "no production without SMTP" check will use it too.
+- **Claude writes the backend too; the owner reviews.** From phase 4 the
+  owner asked Claude to be the main developer across the repo, to ship
+  fast without lowering the bar.
+- **A new member sets up their account with "Forgot password?".** The
+  "you were added" email carries no code (it would expire in the inbox);
+  the app's forgot-password flow sends one and sets a first password,
+  which also verifies the email.
+- **Company registration is built now, with phase 4** (F2 pulled
+  forward). Registering saves the company as pending; MarkCliq reviews
+  through `/platform/orgs` endpoints (no website page: the owner calls
+  them directly). Replaces `POST /access-requests`.
+- **A `rejected` status**, separate from `suspended`. Rejecting needs a
+  reason, emailed to the owner; a rejected GSTIN can register again.
+  Allowed moves: pending → active or rejected; active ⇄ suspended.
+- **The GSTIN is checked by its checksum, and the PAN and state are read
+  from it**, in the app and on the server. A GST verification API (to
+  pre-fill and refuse cancelled GSTINs) needs a paid provider; later.
+- **New registrations email `REVIEW_EMAIL`** (info@markcliq.com), a
+  required setting.
+- **Docs trimmed for working context.** Finished backend phases keep a
+  short "what it left behind"; the build history is in git.
+- **Migrations stay editable until the first deploy.** No real database
+  exists yet, so phase 4's three migrations were merged into one that
+  creates `orgs` complete (`rejected` in `org_status` from the start).
+  From phase 5 on, every change is a new migration.
+

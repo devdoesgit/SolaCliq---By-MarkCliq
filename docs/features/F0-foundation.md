@@ -1,6 +1,6 @@
 # F0 Foundation
 
-Status: `building`. Spec approved by the owner on 2026-10-18.
+Status: `done`, except CI (with the first deploy, backend phase 5).
 
 ## Goal
 
@@ -33,7 +33,7 @@ None directly. Builders only: the owner (backend) and Claude (mobile, admin).
 - One endpoint: `GET /health`, no auth, returns `{ "status", "version",
   "database" }`: `ok`/`ok` with 200, or `degraded`/`unavailable` with 503
   when the database can't be reached. Lets both apps and CI check the client, the mock and
-  (once the owner builds it) the real server end to end.
+  the real server end to end.
 - Lint with Spectral (`make lint`).
 - `make mock`: Prism serves the spec on `localhost:4010`.
 - `make gen`: Dart client into `mobile/packages/api_client` (OpenAPI
@@ -90,7 +90,7 @@ None directly. Builders only: the owner (backend) and Claude (mobile, admin).
 ## Out of scope
 
 - Any real feature screen (login is F1).
-- Backend code (owner).
+- Backend code (built later, phase by phase).
 - Shorebird, release signing, the updater, the download page (F13).
 - iOS builds, dark theme, icons, logo, translations.
 - Sentry, `drift`, feature flags (still undecided).

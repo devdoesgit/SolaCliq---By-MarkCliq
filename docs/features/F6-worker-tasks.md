@@ -28,7 +28,7 @@ reassigns or cancels it.
 
 ## In scope
 
-**Backend (owner):** the `tasks` endpoints in `api/openapi.yaml`:
+**Backend:** the `tasks` endpoints in `api/openapi.yaml`:
 
 - `GET /orgs/{org_id}/tasks?view=today|upcoming|done`
 - `GET /orgs/{org_id}/tasks/{task_id}` and `.../history`

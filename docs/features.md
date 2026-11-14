@@ -4,24 +4,23 @@ Built one at a time. Each feature is small, finished and tested before the
 next one starts.
 
 **Build order: mobile first, admin website last** (decided 2026-10-18).
-The mobile side of each feature is built in the order below against the
-mock, while the owner builds the backend. F2 has no mobile screens, so it
-moves to the admin phase. The admin side of every feature is built last,
-with 7–10 days kept for it before the pilot; until then orgs and teams are
-set up by backend command.
+The mobile screens are built and run against the mock; the backend now
+catches up phase by phase (`backend-phases.md`). The admin side of every
+feature is built last; until then MarkCliq and org admins use the API
+directly or the seed.
 
-Mobile order: F3 → F4 → F6 → F7 → F8 → F9 → F10 → F11 → F12 → F13.
-Admin order: F2 → F3 → F4 → F5 → F6 → F7 → F8 → F11 → F12 → F13 → F14.
+Admin order: F3 → F4 → F5 → F6 → F7 → F8 → F11 → F12 → F13 → F14 (F2
+review page if needed).
 
 Status: `planned` → `spec` (spec written, under review) → `building` →
 `done`.
 
 | # | Feature | Status |
 |---|---|---|
-| F0 | Foundation | building |
-| F1 | Accounts and login | building |
-| F2 | Org signup, GSTIN autofill, platform approval | planned |
-| F3 | Team: org admin creates worker and agent accounts | building (mobile done) |
+| F0 | Foundation | done (CI with the first deploy) |
+| F1 | Accounts and login | done (app, website, backend; SMTP with the first deploy) |
+| F2 | Company registration and MarkCliq review | done (app form, backend; review through the API, no website page; GST lookup API later) |
+| F3 | Team: org admin creates worker and agent accounts | building (app and backend done; website Team page to build) |
 | F4 | Customers and install stages | building (Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |
 | F5 | Documents | planned |
 | F6 | Worker jobs and geotagged installation photos | building (worker screens on the mock; spec and endpoints await owner review) |
@@ -36,11 +35,11 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 
 ## Which part each feature touches
 
-| # | Backend (owner) | Mobile (Claude) | Admin (Claude) |
+| # | Backend | Mobile | Admin website |
 |---|---|---|---|
 | F0 | Axum skeleton, DB, CI | Flutter shell, theme, tooling | React shell, theme |
 | F1 | Accounts, auth, tokens and cookies | Sign up, log in | Log in, password reset |
-| F2 | Orgs, GSTIN lookup, approval | — | Org signup; platform approve/deny |
+| F2 | Registration, GSTIN check, review | Registration form | (later) review page |
 | F3 | Memberships | Org switcher | Team accounts |
 | F4 | Customers, stages, costs, payments | Agent: my customers | Customers, pipeline, detail |
 | F5 | Uploads, documents | — (to confirm) | Documents on customer detail |
@@ -64,9 +63,11 @@ theme, OpenAPI spec skeleton, client generation, Prism mock, dev tooling
 verification, login, password reset, bearer tokens (mobile) and cookies
 (admin), roles from memberships.
 
-**F2 Org signup.** Vendor signs up with GSTIN; checksum check, state and PAN
-derived, details pre-filled from a GST verification API; org is pending
-until a platform admin approves or denies it.
+**F2 Company registration.** A company registers in the app with its GST
+details; the server checks the GSTIN (checksum; PAN and state from it)
+and saves it pending with its owner as admin. MarkCliq checks it, calls
+them, and approves or rejects it (with a reason emailed). Later: GST
+verification API to pre-fill the form and catch cancelled GSTINs.
 
 **F3 Team.** Org admin creates worker and agent accounts; an existing email
 gets a membership instead of a new account; org switcher.
@@ -109,13 +110,5 @@ Shorebird patches, signing setup.
 
 ## Per-feature spec
 
-When a feature starts, write `docs/features/F<n>-<name>.md` with:
-
-- Goal: one sentence.
-- Users: which roles touch it.
-- In scope / out of scope.
-- API: endpoints added to `api/openapi.yaml`.
-- Screens: mobile and admin.
-- Data: tables and columns added.
-- Acceptance: the checks that mean it is done.
-- Notes: what was learned or changed while building it.
+`docs/features/F<n>-<name>.md`, written when a feature starts: goal,
+users, in and out of scope, API, screens, data, acceptance checks, notes.

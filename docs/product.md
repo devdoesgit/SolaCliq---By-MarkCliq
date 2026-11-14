@@ -26,7 +26,7 @@ nothing listed there is settled.
 
 | Role | Where | What they do |
 |---|---|---|
-| Platform admin (MarkCliq) | Admin website | Approves or denies new orgs, suspends orgs, gives support access when an org asks |
+| Platform admin (MarkCliq) | API now; admin website later | Approves or rejects new companies, suspends them, gives support access when an org asks |
 | Org admin (one per org) | Admin website | Sees everything in their org, creates worker and agent accounts, approves requests |
 | Worker (installer) | Mobile app | Jobs, geotagged installation photos, own expenses |
 | Agent | Mobile app | Brings customers, shares referral links, logs own expenses and commission |
@@ -34,12 +34,17 @@ nothing listed there is settled.
 
 ## Orgs and accounts
 
-- **Org signup is self-serve, then approved.** A vendor signs up with their
-  GSTIN. The backend checks the checksum, derives state and PAN, and fetches
-  the business details (legal name, trade name, address, status, business
-  type) from a GST verification API to pre-fill the form. A cancelled GSTIN
-  is rejected. The org stays **pending** until a MarkCliq platform admin
-  approves or denies it. MarkCliq offers setup help on request.
+- **Companies register themselves, then MarkCliq approves.** In the app
+  ("I run a solar EPC company") the owner gives their name, email and
+  mobile, and the company's GSTIN, legal and trade name, business type and
+  address. The server checks the GSTIN's checksum and takes the PAN and
+  state from it; a GSTIN can have one live registration. The company is
+  saved **pending**, with the owner as its admin, and MarkCliq is emailed
+  (info@markcliq.com). After a background check and a call, MarkCliq
+  approves it (**active**; the owner is emailed how to log in) or rejects
+  it (**rejected**, with a reason emailed; they can register again).
+  Later: a GST verification API to pre-fill the form and refuse cancelled
+  GSTINs.
 - One admin per org for now (no staff sub-roles).
 - The org admin creates worker and agent accounts and hands out the logins.
 - Login is by **email** (with password) for everyone. Phone number login
@@ -83,9 +88,10 @@ records are kept separate.
 
 Kept small:
 
-- Org list with GSTIN details, signup date, status (pending, active,
-  suspended) and basic counts.
-- Approve or deny new orgs.
+- Company list with GST details, registration date and status (pending,
+  active, suspended, rejected). Through the API for now
+  (`/platform/orgs`); a website page later.
+- Approve or reject new companies.
 - Suspend an org (non-payment, abuse). Its users see a message, not a broken
   app.
 - Support access: enter an org only when it asks, time-limited and logged.

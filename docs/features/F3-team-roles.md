@@ -1,8 +1,8 @@
 # F3 Team and roles
 
-Status: `building`. Spec approved by the owner on 2026-10-18. The mobile
-side is done and tested against the mock; waiting on the backend's team
-endpoints and org checks.
+Status: `building`. App and backend done (backend phase 4, 2026-11-14):
+memberships in `/me`, the org checks, team endpoints, the suspended
+message checked in the app. Left: the website's Team page.
 
 Mobile first (see `../decisions.md`, 2026-10-18): the app side is built now
 against the mock; the team page on the admin website is built in the admin
@@ -27,7 +27,7 @@ org is pending or suspended.
 
 ## In scope
 
-**Backend (owner):**
+**Backend:**
 - `GET/POST /orgs/{org_id}/members`, `DELETE /orgs/{org_id}/members/{user_id}`.
 - Adding an email with no account creates one with no password and sends
   the set-up email; an existing account only gets a membership and an "you

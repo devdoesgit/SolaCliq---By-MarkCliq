@@ -1,9 +1,9 @@
 # Admin website
 
-React + Vite + TypeScript website for **org admins** and the **MarkCliq
-platform admin**. Served as static files at `solacliq.markcliq.com`. **Built
-by Claude.** Workers, agents and customers do not use it; they use the mobile
-app (`../mobile`).
+React + Vite + TypeScript website for **org admins** (and later the
+MarkCliq platform admin). Static files at `solacliq.markcliq.com`. Built
+last, by Claude. Built so far: log in, password reset, account page.
+Workers, agents and customers use the mobile app.
 
 Stack and API conventions: `../docs/architecture.md`.
 
@@ -22,7 +22,6 @@ Stack and API conventions: `../docs/architecture.md`.
 
 | Role | Screens | Feature |
 |---|---|---|
-| Vendor (signing up) | Org signup with GSTIN autofill, "pending approval" | F2 |
 | Org admin | Log in, password reset | F1 |
 | Org admin | Team: create worker and agent accounts | F3 |
 | Org admin | Customers list and pipeline by stage | F4 |
@@ -31,5 +30,5 @@ Stack and API conventions: `../docs/architecture.md`.
 | Org admin | Approvals queue: expenses and commission | F7/F8 |
 | Org admin | Referral settings: bonus or discount | F11 |
 | Org admin | Dashboard overview | after F8 |
-| Platform admin | Pending orgs: approve or deny | F2 |
+| Platform admin | Pending companies: approve or reject (API only for now) | F2 |
 | Platform admin | Org list, suspend, support access | F14 |

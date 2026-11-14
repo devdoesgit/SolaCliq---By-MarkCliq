@@ -5,14 +5,16 @@ choice are in `decisions.md`.
 
 ## Stack
 
-| Part | Choice | Built by |
-|---|---|---|
-| Backend | Rust, Axum + sqlx, `utoipa` for the OpenAPI spec | Owner |
-| Database | Self-managed Postgres on the owner's VPS | Owner |
-| Object storage | Cloudflare R2 (free plan) | Owner |
-| Mobile app (workers, agents, customers) | Flutter (Dart), Android first | Claude |
-| Admin website (org admin, platform admin) | React + Vite + TypeScript, static SPA | Claude |
-| Over-the-air updates | Shorebird (free plan to start) | Claude |
+Claude builds every part; the owner reviews.
+
+| Part | Choice |
+|---|---|
+| Backend | Rust, Axum + sqlx, `utoipa` for the OpenAPI spec |
+| Database | Postgres 17 on the owner's VPS (`make db` locally) |
+| Object storage | Cloudflare R2 (free plan) |
+| Mobile app (workers, agents, customers) | Flutter (Dart), Android first |
+| Admin website (org admins) | React + Vite + TypeScript, static SPA |
+| Over-the-air updates | Shorebird (free plan to start) |
 
 ## Hosting
 
@@ -40,7 +42,7 @@ choice are in `decisions.md`.
 One OpenAPI spec is the contract between backend and frontends.
 
 1. **Spec first.** Claude drafts `api/openapi.yaml` for each feature; the
-   owner reviews; it is committed before code.
+   owner reviews it before code.
 2. **Backend:** spec generated from Axum handlers with `utoipa`; interactive
    docs at `/api/docs`; CI fails if the generated spec differs from the
    committed one; tests with `#[sqlx::test]`.
@@ -54,8 +56,9 @@ One OpenAPI spec is the contract between backend and frontends.
    backend: mobile `--dart-define=API_BASE_URL=http://10.0.2.2:<port>/api/v1`,
    admin `BACKEND_URL=http://localhost:<port> npm run dev`.
    Named examples let one mock play different people: `/me` and
-   `/auth/login` have `customer`, `worker`, `agent`, `multi_org` and
-   `org_admin`, picked with Prism's `Prefer: example=<name>` header. The
+   `/auth/login` have `personal`, `customer`, `worker`, `agent`, `sales`,
+   `multi_org` and `org_admin`, picked with Prism's
+   `Prefer: example=<name>` header. The
    app's development flavor sends it: choose the person under Account →
    Development, or start with `--dart-define=MOCK_PERSONA=<name>`.
 5. **Contract testing:** Schemathesis runs generated requests against the
@@ -69,8 +72,9 @@ One OpenAPI spec is the contract between backend and frontends.
 - Money: integer **paise** (`i64`). Never floats.
 - IDs: UUIDv7. Dates: ISO 8601, UTC.
 - Lists: cursor pagination (`?cursor=&limit=`).
-- Org-scoped endpoints live under `/orgs/{org_id}/...` (decided in F3).
-  The server checks membership, that the org is `active`, and the role.
+- Org-scoped endpoints live under `/orgs/{org_id}/...`. The server checks
+  membership, that the org is `active`, and the role (`OrgMember<Roles>`).
+  MarkCliq's endpoints live under `/platform/...` (`PlatformAdmin`).
 - Auth: `Authorization: Bearer` for mobile, cookies for the admin website,
   same endpoints.
 - Uploads: `POST /uploads` returns a presigned R2 URL.
@@ -80,7 +84,7 @@ One OpenAPI spec is the contract between backend and frontends.
 ## Design patterns
 
 - **Tenancy:** `org_id` on every org-owned table, plus Postgres row-level
-  security as a backstop against a missed `WHERE`.
+  security (from phase 7) as a backstop against a missed `WHERE`.
 - **Identity:** global `users`, `memberships (user, org, role)`, and per-org
   `customers` records linked to a user.
 - **Linking:** auto-link only on verified email or phone; notify the person
@@ -88,7 +92,8 @@ One OpenAPI spec is the contract between backend and frontends.
 - **Approvals:** one request model for expenses and commission (later
   discounts): pending → approved / rejected, with who decided, when, and a
   note. The org admin's dashboard is built around this queue.
-- **Org lifecycle:** pending → active → suspended, set by the platform admin.
+- **Org lifecycle:** registered as pending → active (approved) or
+  rejected; active ⇄ suspended. Set by a platform admin.
 - **Geotagged capture:** photos only from the live camera, never the gallery.
   The device records GPS coordinates, accuracy and time at the moment of
   capture. The server flags captures far from the customer's site, with poor
@@ -134,40 +139,23 @@ generated client, and `packages/sola_ui` for every visual. Features live in
 
 ## Dev tooling
 
-- Installed 2026-10-18 under `~/development` (no sudo; PATH set in
-  `~/.bashrc`, backup at `~/.bashrc.bak-solacliq`). Claude Code started
-  from VS Code doesn't read `~/.bashrc`, so `flutter`, `dart`, `adb` and
-  `emulator` are also symlinked into `~/.local/bin`:
-  - Flutter 3.47.7 stable, Dart 3.13.5 (`~/development/flutter`).
-  - JDK 21 (Temurin) for Gradle, set with `flutter config --jdk-dir`. The
-    system Java is 25, too new for Gradle; it is left untouched.
-  - Android SDK (`~/development/android-sdk`): platform-tools, build-tools
-    36.1.0, platform 36, emulator 37.2.12, system images for API 35 and 36.
-  - `flutter doctor`: Flutter, Android toolchain, Chrome all pass. The Linux
-    desktop toolchain is missing and not needed.
-  - A debug APK builds (verified with a throwaway app).
-- **Emulator: use the host GPU.** AVDs `solacliq_phone` (API 36, main) and
-  `solacliq_phone_35` are set to `hw.gpu.mode=host` (NVIDIA RTX 3060) and
-  boot in about 20 s. Start with `flutter emulators --launch solacliq_phone`.
-  The software renderer (SwiftShader, `-gpu swiftshader_indirect` or
-  `auto`) crashes on this machine because SELinux blocks its JIT code
-  (`execheap` denial). Don't fix that with `setsebool selinuxuser_execheap`;
-  it weakens SELinux for every user program.
-- **Stability (2026-10-18):** the PC froze once while the emulator (GPU
-  mode) and a Gradle build ran together; the emulator had also crashed
-  inside the NVIDIA driver several times. The owner chose to keep GPU mode.
-  Precautions: Gradle heap capped at 3 GB and Kotlin daemon at 1 GB
-  (`mobile/android/gradle.properties`); boot the emulator, start the mock
-  and build one after another. `-gpu guest` doesn't help: it still renders
-  through SwiftShader on the host.
-- mobile-mcp (installed): screenshots, taps, device logs, crashes, GPS
-  override. Works with a real phone too.
-- Dart and Flutter MCP server: widget tree, runtime errors, hot reload,
-  analyzer, tests. Connects once Claude Code starts with Flutter on PATH.
-- Golden tests for screen states.
-- Very Good CLI 1.5.0 (`dart pub global activate`, linked into
-  `~/.local/bin`), needed by the VGV plugin's MCP server.
-- Claude skills for the mobile app are listed in `mobile/CLAUDE.md`.
+- Under `~/development` (no sudo), also symlinked into `~/.local/bin`
+  because Claude Code started from VS Code doesn't read `~/.bashrc`:
+  Flutter (stable) and Dart, JDK 21 for Gradle (`flutter config
+  --jdk-dir`; the system Java 25 is too new), Android SDK
+  (`~/development/android-sdk`). Very Good CLI for the VGV plugin.
+- **Emulator:** AVD `solacliq_phone_35` (mobile-mcp device id
+  `solacliq_phone_35`, adb `emulator-5554`), host GPU
+  (`hw.gpu.mode=host`). The software renderer crashes here (SELinux
+  blocks its JIT); don't loosen SELinux to fix it. The PC once froze with
+  the emulator and a Gradle build running together: Gradle is capped at
+  3 GB and Kotlin at 1 GB; boot the emulator, start the mock and build one
+  after another. If mobile-mcp typing drops characters, type with
+  `adb shell input text`.
+- MCP: mobile-mcp (screens, taps, logs), the Dart and Flutter server
+  (widget tree, hot reload, analyzer). Skills: `mobile/CLAUDE.md`.
+- Local Postgres runs in rootless podman (`make db`); it can stop on its
+  own, so run `make db` again if tests can't connect.
 
 ## Proposed, not confirmed
 

@@ -1,15 +1,10 @@
-# Backend handoff: what the mobile app needs
+# Backend handoff: what the apps need from the API
 
-Written 2026-10-29, when the mobile app's screens were all built and wired
-against the Prism mock. This is the work list for the Rust API. The exact
-shapes (every field, enum and example) are in `../api/openapi.yaml`; this
-page says what to build, in what order, and the rules behind each endpoint
-that a schema can't express.
-
-Every endpoint below is called by the app today (`make mock` serves the
-same contract), so an endpoint is done when the app works against it
-unchanged. Check one by pointing the app at the real API:
-`--dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1`.
+The work list for the Rust API, in build order, with the rules behind
+each endpoint that a schema can't express. Shapes are in
+`../api/openapi.yaml`; progress is in `backend-phases.md`. Every endpoint
+here is called by the app today against the mock (`make mock`), so one is
+done when the app works against it unchanged.
 
 ## Conventions (all endpoints)
 
@@ -19,10 +14,12 @@ From `architecture.md`, restated where the app depends on them:
 - **Auth:** `Authorization: Bearer <access>` from the app; the session
   cookie `solacliq_session` from the admin website, on the same endpoints.
   `security: []` marks the public ones.
-- **Org scope:** every `/orgs/{org_id}/...` call needs a membership of the
-  caller in that org with the role the endpoint names, else 403. Rows are
-  filtered by org (row-level security) and, for "my" endpoints, by the
-  caller.
+- **Org scope:** every `/orgs/{org_id}/...` call needs the caller's
+  membership in an active org with a role the endpoint allows, else 403
+  (`OrgMember<Roles>` in `backend/src/org.rs`). "My" endpoints also filter
+  by the caller. Row-level security joins in phase 7.
+- **Platform scope:** `/platform/...` is for MarkCliq platform admins
+  only (`PlatformAdmin`), else 403 `platform.not_admin`.
 - **Errors:** RFC 9457 `application/problem+json` with `code`
   (`<area>.<reason>`), `detail` safe to show, and `errors[]` per field on
   422. The app reacts to these codes; others show the generic message:
@@ -43,6 +40,10 @@ From `architecture.md`, restated where the app depends on them:
   | `task.locked` | 409 | Change to a task not with the worker |
   | `quote.consent_required` / `quote.phone_required` | 422 | Quote form |
   | `member.*` | 409/422 | Team (admin website) |
+  | `org.not_member` / `org.role_not_allowed` | 403 | Any `/orgs/{org_id}/...` |
+  | `org.pending` / `org.suspended` / `org.rejected` | 403 | Company not active: the app shows a message |
+  | `org.gstin_invalid` | 422 | Registration: GSTIN fails the checksum |
+  | `org.gstin_taken` | 409 | Registration: GSTIN already registered |
 
 - **Money:** integer paise (`i64`) in every amount. Never floats.
 - **IDs:** UUIDv7. **Timestamps:** RFC 3339 UTC. **Plain dates**
@@ -83,7 +84,7 @@ milestone, top to bottom.
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
-| 11 | `POST /access-requests` | public | `AccessRequestCreate` | 202 | An EPC asks to join. Notify MarkCliq (email) |
+| 11 | `POST /org-registrations` | public | `OrgRegistrationCreate` | 202 | **Built (phase 4).** Company registers: GSTIN checked (checksum; PAN and state from it), saved `pending` with the owner (no password) as `org_admin`. Emails MarkCliq (`REVIEW_EMAIL`) and the owner |
 | 12 | `POST /quote-requests` | auth, *idem* | `QuoteRequestCreate` | `QuoteRequest` | Lead for verified EPCs near the PIN code. Returns the indicative estimate |
 | 13 | `GET /me/invites` | auth | — | `InviteList` | Pending invites for the caller's email |
 | 14 | `POST /invites/{invite_id}/accept` | auth | — | `Me` | Creates the membership; returns the updated `Me` |
@@ -138,13 +139,17 @@ milestone, top to bottom.
 | 43 | `GET /orgs/{org_id}/my-install` | customer | — | `Install` | Stages with `done`/`next`/`upcoming`, `next_visit` (who, when, phone), `total`, `subsidy`, `payments[]` (`due`/`claimed`/`paid`/`later`), `upi_uri` for the due one, `handed_over_on` after handover |
 | 44 | `POST .../my-install/payments/{payment_id}/claim` | customer, *idem* | `{method: upi\|bank_transfer}` | `Install` | Only the `due` payment (else 409) → `claimed`, and notify the admin. The company marks it `paid` (website). **Paying the advance makes the agent's commission `payable`** |
 
-### Admin website (already built, F1 and F3)
+### Admin website and MarkCliq (F1–F3, built in phase 4)
 
-`GET/POST /orgs/{org_id}/members`, `DELETE /orgs/{org_id}/members/{user_id}`
-(org admins only), plus login, logout, `/me` and password reset above.
-Adding a member with an email that has an account adds a membership; a new
-email creates the account with no password (`account.password_not_set`) and
-emails a set-up link.
+- Team, org admins only: `GET/POST /orgs/{org_id}/members`,
+  `DELETE /orgs/{org_id}/members/{user_id}`. A new email gets an account
+  with no password and an email saying to set it up with "Forgot
+  password?"; an existing account only gets the membership. Removing is a
+  soft delete. The website's Team page is still to build.
+- Review, platform admins only: `GET /platform/orgs?status=pending`,
+  `GET /platform/orgs/{org_id}`, `POST /platform/orgs/{org_id}/status`
+  (`active`, `rejected` with a note, `suspended`). No website page yet:
+  MarkCliq calls these directly.
 
 ## Server-side rules the app relies on
 
@@ -225,10 +230,8 @@ backend command or SQL so the app has real data:
 - No earnings endpoint: summed in the app from `my-customers`.
 - No "my quote requests" list yet.
 
-## Open for you to decide
+## Open
 
-- `pay_type` lives on the membership; default `commission` for agents if
-  missing. Confirm that's where you want it.
 - Encryption and retention for bank account numbers and KYC files.
 - Where the PM Surya Ghar subsidy figure comes from (fixed table by kW, or
   entered by the admin).

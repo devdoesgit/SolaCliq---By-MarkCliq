@@ -1,6 +1,7 @@
 # F1 Accounts and login
 
-Status: `building`. Spec approved by the owner on 2026-10-18.
+Status: `done` in the app, the website and the backend (phases 1–3).
+Left: the SMTP mailer (backend phase 5).
 
 ## Goal
 
@@ -16,8 +17,8 @@ feature knows who is using it and in which orgs.
 - **Org admins:** log in to the admin website (their account is created at
   org signup, F2).
 - **Platform admin (MarkCliq):** logs in to the admin website. The account is
-  created on the server by the owner (a backend command), not through any
-  screen.
+  created on the server (`cargo run -- make-platform-admin <email>`), not
+  through any screen.
 
 ## In scope
 
@@ -185,5 +186,5 @@ Errors use problem+json codes: `auth.invalid_credentials`,
   only followed for paths on this site. 40 admin tests.
 - The contract's login and logout responses carry example `Set-Cookie`
   headers so the mock keeps a browser signed in during development.
-- Claude's side of F1 is done. Left: the backend endpoints (owner), then
-  running both apps against them with only the base URL changed.
+- Done end to end (backend phases 1–3): the app runs against the real API
+  with only the base URL changed.

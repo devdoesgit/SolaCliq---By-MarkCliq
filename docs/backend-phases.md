@@ -1,176 +1,86 @@
 # Backend phases
 
-The backend work list (`backend-handoff.md`) split into small phases. Each
-phase is built, tested and working in the app before the next starts.
-Exact request and response shapes are in `../api/openapi.yaml`; the rules
-behind each endpoint are in `backend-handoff.md` (numbers like #5 refer to
-its tables).
+The backend work list (`backend-handoff.md`, whose numbers like #5 this
+page uses) in small phases. Each phase is built, tested and working in
+the app before the next. Shapes are in `../api/openapi.yaml`.
 
-Written 2026-11-09. The month ends 2026-11-18, so phases 1–5 are the
-must-haves for a pilot; the role phases (7–9) go in the order the pilot
-vendor needs them.
+The month ends 2026-11-18: phases 1–5 are the must-haves for the pilot;
+the role phases (8–10) go in the order the pilot vendor needs them.
 
-## How to test every phase
+## How a phase is tested
 
-1. **Rust tests** (`cargo test`): `#[sqlx::test]` gives each test its own
-   empty database with migrations applied. Call the router with
-   `app(state).oneshot(request)` as in `backend/tests/health.rs`.
-2. **By hand** (`curl` or the docs page at `localhost:8080/api/docs`).
-3. **In the app**: run it against the real API instead of the mock:
-   `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1`
-   (10.0.2.2 is the computer, seen from the Android emulator). A phase is
-   done when its screens work unchanged.
+1. `make api-test`: fmt, clippy `-D warnings`, `cargo test`. Tests call
+   `app(state)` directly; `#[sqlx::test]` gives each test an empty
+   database (needs `make db`). Helpers: `backend/tests/common/mod.rs`.
+2. By hand: `make api`, then `curl` or `localhost:8080/api/docs`.
+   `cargo run -- seed` gives illustrative people (password `sunlight1`).
+3. In the app, against the real API:
+   `flutter run --flavor development -t lib/main_development.dart
+   --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1`.
+   A phase is done when its screens work unchanged.
 
 ## Status
 
 | Phase | What | Endpoints | Status |
 |---|---|---|---|
 | 0 | Skeleton | `GET /health` | Done |
-| 1 | First table: sign up | #2 | Built and tested 2026-11-09; in-app check to do |
-| 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 (app logs in) |
-| 3 | Email codes, refresh, log out | #3, #4, #6–9 | Done 2026-11-14 (SMTP mailer moved to phase 5) |
-| 4 | Companies and memberships | `/me` memberships, team endpoints, seed command | |
-| 5 | First deploy | — | |
-| 6 | Personal workspace | #11–20 | |
-| 7 | Shared company plumbing | #21–24 | |
+| 1 | Sign up | #2 | Done 2026-11-09 |
+| 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 |
+| 3 | Email codes, refresh, log out | #3, #4, #6–9 | Done 2026-11-14 |
+| 4 | Companies, memberships, team; company registration and review (F2) | #10, #11, team, platform | Done 2026-11-14 |
+| 5 | First deploy | — | Next |
+| 6 | Personal workspace | #12–20 | |
+| 7 | Shared company plumbing, row-level security | #21–24 | |
 | 8 | Worker | #25–38 | |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |
 
-## Phase 1. First table: sign up
+## Done: what each phase left behind
 
-The first real round trip: a migration, an insert, a JSON body in, a
-status code out.
-
-- **Build:** a `users` migration (id UUIDv7, email unique and lowercased,
-  name, password hash, `email_verified_at`, timestamps). `POST /auth/signup`
-  hashes the password with `argon2` and inserts the user. Always 202, even
-  if the email exists. Rejects a weak password with 422
-  `auth.password_too_weak`.
-- **Learn:** migrations, `sqlx::query(...).bind(...)`, the `ApiJson<T>`
-  extractor, `serde::Deserialize`, returning `ApiError`.
-- **Notes (as built):** files `migrations/20261109000001_users.sql`,
-  `src/routes/auth.rs`, `src/password.rs`, `src/extract.rs`,
-  `tests/signup.rs`. Queries are checked at run time (`sqlx::query`), not
-  compile time (`sqlx::query!`), so a new migration never blocks the build;
-  switch later with `cargo sqlx prepare` if wanted. No email and no 429
-  yet: both arrive in phase 3 (the log says which email would go).
-- **Test:** signing up creates one row; signing up twice still returns
-  202 and doesn't create a second; a short password is 422 with the code.
-- **Done when:** the app's sign-up screen gets past "Create account".
-  (The code screen comes in phase 3.)
-
-## Phase 2. Log in and `/me`
-
-- **Build:** `POST /auth/login` checks the hash and returns
-  `LoginResponse` (short-lived access token, long-lived refresh token).
-  Store refresh tokens hashed in a `sessions` table. An `AuthUser`
-  extractor reads `Authorization: Bearer` and rejects a missing or bad
-  token with 401. `GET /me` returns the user with empty `memberships`.
-  Until phase 3, mark accounts verified by hand in SQL.
-- **Learn:** writing your own extractor (`FromRequestParts`), JWT or
-  random opaque tokens (your choice), `Option` and `?` for errors.
-- **Test:** wrong password is 401 `auth.invalid_credentials`; unverified
-  is 403 `account.email_unverified`; `/me` without a token is 401, with
-  one returns the user.
-- **Done when:** the app logs in and lands on the Personal workspace.
-- **Notes (as built):** opaque tokens, not JWTs: 32 random bytes, only
-  the SHA-256 stored (`sessions` table, `src/session.rs`). Access 15
-  minutes, refresh 30 days, web cookie 12 hours. `AuthUser` in
-  `src/extract.rs` takes a bearer token or the `solacliq_session` cookie;
-  a missing, expired or revoked one is 401 `auth.unauthenticated`, which
-  makes the app refresh (phase 3) and retry. Unknown emails are checked
-  against a dummy hash so they take as long as a wrong password.
-  `COOKIE_SECURE=false` only for local HTTP. Tests: `tests/login.rs`.
-
-## Phase 3. Email codes, refresh, log out
-
-- **Build:** 6-digit codes (hashed, 5 minutes, 5 tries) for verify (#3),
-  resend (#4), forgot and reset (#8, #9). Refresh follows OAuth 2.1 for
-  the app and the website alike: each refresh returns a new access and
-  refresh token, the old refresh token dies, and reusing it revokes the
-  session (#6). The website gets a refresh cookie scoped to
-  `/auth/refresh`, replacing the 12-hour cookie. Log out revokes (#7).
-  Email behind a small `Mailer` trait: prints to the log in development,
-  sends through Google Workspace SMTP in production.
-- **Learn:** traits (the `Mailer`), transactions (`db.begin()`),
-  `chrono` for expiry.
-- **Test:** expired and wrong codes give the right codes; the sixth try
-  is 429; reset revokes sessions; refresh reuse logs the family out.
-- **Done when:** sign-up → code → login and forgot password both work in
-  the app, with the code read from the server log.
-- **Notes (as built, 3a, 2026-11-11):** migration
-  `20261111000001_session_refresh.sql` makes every session carry a
-  refresh token (old web-only rows are deleted) and adds
-  `previous_refresh_hash` and `revoked_reason`. `session::rotate` checks
-  and swaps both tokens in one `UPDATE`, so two refreshes with the same
-  token can't both win; the loser counts as reuse and revokes the session.
-  The refresh expiry moves forward on every refresh. `POST /auth/refresh`
-  takes the token from the JSON body (app, 200 `TokenPair`) or the
-  `solacliq_refresh` cookie (website, 204 and new cookies); `POST
-  /auth/logout` revokes and clears both cookies. `WEB_SESSION_HOURS` is
-  gone. Tests: `tests/refresh.rs` (7). Checked in the app with
-  `ACCESS_TOKEN_MINUTES=1`: still logged in after the access token
-  expired; log out revokes the session. The admin website refreshes on a
-  401 (`admin/src/api/refresh.ts`).
-- **Notes (as built, 3b, 2026-11-13):** migration
-  `20261113000001_email_codes.sql` adds `email_codes`, one row per
-  account and purpose, holding an HMAC of the code (`CODE_SECRET`).
-  `src/codes.rs`: `issue` (upsert, skipped within 60 seconds of the last
-  code), `check` (counts the try in its own statement so a wrong guess
-  sticks, then compares in constant time), `consume` (deletes the code
-  inside the caller's transaction). `src/mail.rs`: the `Mailer` trait and
-  `LogMailer`. Verify and reset each run in one transaction; reset also
-  revokes every session (`password_reset`) and verifies the email. Tests:
-  `tests/codes.rs` (14), using an in-memory outbox. Checked live: sign-up
-  → code from the server log → verify 204 → login 200. The SMTP mailer
-  moved to phase 5 (decision 2026-11-14).
-- **QA (2026-11-14):** 118 scripted API checks (validation, enumeration,
-  races on sign-up, verify, guesses and refresh, cooldowns, session
-  revocation) and 14 scenarios on the emulator, all passing. Fixed in the
-  app: verifying from log in now logs straight in; a failed log in after
-  verifying lands on log in, not a dead code screen; the resend countdown
-  matches the server's 60 s; a new code clears the old one and its error;
-  the log in page rebuilds when only its query changes. Left (minor,
-  backend): 405 has an empty body, an oversized body is 422 not 413,
-  refresh with malformed JSON is 401 not 422.
-
-## Phase 4. Companies and memberships
-
-Everything after this is per company.
-
-- **Build:** `orgs` and `memberships (user, org, role, pay_type)` tables,
-  `/me` returns memberships as in #10. An `OrgMember` extractor for
-  `/orgs/{org_id}/...` that loads the caller's role and returns 403 when
-  they aren't a member or have the wrong role. Row-level security on
-  org-owned tables. A seed command (`cargo run -- seed`) that creates an
-  illustrative company with one person per role. The admin website's
-  team endpoints (members list, add, remove).
-- **Learn:** enums in Postgres and Rust (`sqlx::Type`), path extractors
-  (`Path<Uuid>`), RLS with `set_config` per request.
-- **Test:** a worker can't call an agent's endpoint (403); a member of
-  org A can't read org B (403, and RLS returns no rows even if a check is
-  missed).
-- **Done when:** a seeded worker, agent and customer each log in and see
-  their workspace in the app; the website's Team page works.
+- **1–2.** `users`, `sessions`. Passwords: Argon2. Tokens: 32 random
+  bytes, only their SHA-256 stored; access 15 min, refresh 30 days
+  (`ACCESS_TOKEN_MINUTES`, `REFRESH_TOKEN_DAYS`). `AuthUser` takes a
+  bearer token or the `solacliq_session` cookie. Unknown emails take as
+  long as a wrong password. Runtime queries (`sqlx::query`), not `query!`.
+- **3.** OAuth 2.1 refresh rotation for app and website alike; reusing an
+  old refresh token revokes the session. `email_codes`: one per account
+  and purpose, an HMAC of the code (`CODE_SECRET`), 5 minutes, 5 tries,
+  one per minute. Reset revokes every session and verifies the email.
+  `Mailer` trait; development uses `LogMailer` (codes in the server log).
+  Known minor gaps: 405 has an empty body, an oversized body is 422 not
+  413, refresh with malformed JSON is 401 not 422.
+- **4.** `orgs`, `memberships` (Postgres enums; one role per person per
+  company; one admin per company; `pay_type` only for agents; soft delete
+  with `removed_at`). `OrgMember<Roles>` guards every `/orgs/{org_id}/...`
+  handler: 403 `org.not_member`, `org.pending`, `org.suspended`,
+  `org.rejected`, `org.role_not_allowed`. Team endpoints. Company
+  registration (`POST /org-registrations`: GSTIN checksum, PAN and state
+  from it; saved pending with its owner as `org_admin`; MarkCliq emailed
+  at `REVIEW_EMAIL`) and review (`/platform/orgs`, `PlatformAdmin`;
+  approve, reject with a note, suspend, reactivate). `APP_ENV`, the seed
+  and `make-platform-admin`. Checked in the app: companies, the suspended
+  message. Not checked on a device: the new registration form (widget
+  tests cover it).
 
 ## Phase 5. First deploy
 
 Put it on the VPS early so the pilot can test on real phones.
 
 - **Build:** the SMTP mailer (Google Workspace), and the API refuses to
-  start in production without its settings, so codes never go only to
-  the log. Release build, a `systemd` service, nginx proxying
-  `solacliq.markcliq.com/api` to it, production `.env` on the server only,
-  daily Postgres backup. CI: `cargo test`, clippy, and the spec check
-  (`cargo run -- openapi` against `api/openapi.yaml`).
+  start with `APP_ENV=production` without its settings, so codes never go
+  only to the log. Release build, a `systemd` service, nginx proxying
+  `solacliq.markcliq.com/api`, production `.env` on the server only
+  (`CODE_SECRET`, `REVIEW_EMAIL=info@markcliq.com`, `COOKIE_SECURE=true`),
+  daily Postgres backup. CI: `make api-test` and the spec check
+  (`cargo run -- openapi` against `api/openapi.yaml`). Make the first
+  platform admin with `make-platform-admin`.
 - **Done when:** the app, built with the production URL, logs in on a
-  real phone.
+  real phone, and a test registration reaches info@markcliq.com.
 
-## Phase 6. Personal workspace (#11–20)
+## Phase 6. Personal workspace (#12–20)
 
-Access and quote requests, invites (accept creates a membership), personal
-notifications, details (bank number encrypted, only last 4 returned),
+Quote requests, invites (accept creates a membership), personal
+notifications, details (bank number encrypted, only the last 4 returned),
 settings with defaults.
 
 - **Done when:** the Personal workspace's screens all work, and accepting
@@ -180,8 +90,13 @@ settings with defaults.
 
 `GET /orgs/{org_id}/home` composed per role (see "Home" in the handoff),
 `POST /uploads` with presigned R2 URLs, company notifications and mark
-read.
+read. Row-level security starts here, with the first company-owned
+tables: the API connects as a role that doesn't own the tables, policies
+filter on `current_setting('app.org_id')`, and each company request runs
+in a transaction that sets it.
 
+- **Test:** a query with its `org_id` filter left out still returns no
+  other company's rows.
 - **Done when:** each role's home loads, and a test upload reaches R2.
 
 ## Phases 8–10. Worker, Sales, Customer

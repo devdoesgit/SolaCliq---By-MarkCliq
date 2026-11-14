@@ -39,26 +39,15 @@ Stack, distribution, updates and tooling: `../docs/architecture.md`.
 
 ## Hot reload
 
-From the official Flutter rules
-(https://github.com/flutter/agent-plugins/tree/main/rules,
-`flutter-hot-reload.md`).
-
-After editing any `.dart` file under `mobile/lib/`:
-
-- **Skip** edits outside `lib/` (`test/`, `integration_test/`, `benchmark/`,
-  `test_driver/`, `example/`) and edits that only touch comments, docs or
-  whitespace.
-- **Connect:** find the running app with the Dart MCP server (`dtd`,
-  `list_running_apps` or `vm_service`).
-- **Hot reload** (`hot_reload`) straight after changing widgets, including
-  `build` methods, or simple methods.
-- **Hot restart** (`hot_restart`) after changing core logic, state
-  initialisation (`initState`), global or static state, or `main()`.
+When the app is running, after editing `mobile/lib/` code (not tests or
+comments): connect with the Dart MCP server (`dtd`), then `hot_reload`
+for widget changes or `hot_restart` for state, `initState` or `main()`.
 
 ## Screens by role
 
-Shared: sign up (customers), log in, company picker and switcher (F3),
-notifications, account tab.
+Shared: sign up (customers), log in, company registration ("I run a
+solar EPC company", F2), company picker and switcher (F3), notifications,
+account tab, the message for a pending, suspended or rejected company.
 
 Every home is a workspace, one `(company, role)` pair (see
 `lib/workspace/`). Home tabs come from `lib/home/view/home_page.dart`; add

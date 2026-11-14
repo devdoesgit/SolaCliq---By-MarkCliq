@@ -69,7 +69,8 @@ metering → service.
   they can open on the spot?** If not, what do they use (a family member's
   email, WhatsApp only)? Login is email-only until SMS is set up.
 - **Is anyone both a worker and an agent for you** (installs and also brings
-  customers)? The app assumes one role per person per vendor for now.
+  customers)? Decided for now: one role per person per company
+  (2026-11-14); ask whether that fits them.
 
 ## 7. Referrals
 

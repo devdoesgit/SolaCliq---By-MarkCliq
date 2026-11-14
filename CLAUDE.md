@@ -16,9 +16,9 @@ that repo moves, update this path.
   there, and never reach into the website repo except to read `AGENCY.md`.
 - Timeline: **one month**, starting 2026-10-18. Scope accordingly — an MVP solar
   vendors can actually use, not a platform.
-- Builders: the owner writes the Rust backend; Claude writes the Flutter
-  mobile app and the React admin website.
-- Building has **not** started. The owner will say when to begin.
+- Builders: Claude writes all three parts (Rust backend, Flutter mobile
+  app, React admin website); the owner reviews. Since 2026-11-14 for the
+  backend.
 
 ## Layout
 
@@ -28,7 +28,7 @@ One repo, three parts sharing one API contract. Each part has its own
 | Folder | What | Users | Built by |
 |---|---|---|---|
 | `api/` | OpenAPI contract (`openapi.yaml`) | — | Claude drafts, owner reviews |
-| `backend/` | Rust API, Postgres, R2 | — | Owner |
+| `backend/` | Rust API, Postgres, R2 | — | Claude, owner reviews |
 | `mobile/` | Flutter app | Workers, agents, customers | Claude |
 | `admin/` | React + Vite website | Org admins, platform admin | Claude |
 
