@@ -422,4 +422,9 @@ Change a decision by adding a new line, not by editing an old one.
   exists yet, so phase 4's three migrations were merged into one that
   creates `orgs` complete (`rejected` in `org_status` from the start).
   From phase 5 on, every change is a new migration.
+- **Customer registration takes three more documents.** A land document
+  (property ownership; required), the customer's signature (a photo of
+  it on paper; required), and a name change document (optional, for a
+  bill in another person's name; the admin judges it, no extra fields).
+  Document pickers take a PDF as well as a photo (`file_picker`).
 

@@ -35,6 +35,7 @@ From `architecture.md`, restated where the app depends on them:
   | `auth.session_expired` | 401 | Refresh token dead: app logs out |
   | `validation.failed` | 422 | Any other field error |
   | `registration.bank_proof_required` | 422 | Subsidy on, no bank proof |
+  | `registration.document_required` | 422 | A required document is missing |
   | `registration.commission_not_allowed` | 422 | Salaried agent sent a commission |
   | `task.incomplete` | 422 | Submit with photos or checklist missing |
   | `task.locked` | 409 | Change to a task not with the worker |
@@ -127,7 +128,7 @@ milestone, top to bottom.
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
-| 39 | `POST /orgs/{org_id}/customer-registrations` | agent, *idem* | `CustomerRegistrationCreate` | `CustomerRegistration` | Details, site, connection, KYC `documents[]` (upload ids), `consent` must be true. `commission` (paise) + `commission_note` only for `pay_type=commission` (else 422 `registration.commission_not_allowed`). Bank proof required when `subsidy` (422). 409 if the email is already this org's customer. Reference `SC-nnnn` |
+| 39 | `POST /orgs/{org_id}/customer-registrations` | agent, *idem* | `CustomerRegistrationCreate` | `CustomerRegistration` | Details, site, connection, KYC `documents[]` (upload ids), `consent` must be true. `commission` (paise) + `commission_note` only for `pay_type=commission` (else 422 `registration.commission_not_allowed`). Required documents: Aadhaar, PAN, electricity bill, land document, signature (422 `registration.document_required`); bank proof too when `subsidy` (422 `registration.bank_proof_required`). Roof photo and name change are optional. Any document can be a JPEG, PNG or PDF. 409 if the email is already this org's customer. Reference `SC-nnnn` |
 | 40 | `GET /orgs/{org_id}/my-customers` | agent | — | `CustomerList` | Customers the caller registered, newest first, each with `kyc_status`, a one-line `detail` you compose ("Bill photo blurry", "Stage 2 · structure", "Sent today") and, for commission agents, `commission`. **The app sums Earnings from this list**, so include every customer with a commission |
 | 41 | `GET /orgs/{org_id}/my-customers/{customer_id}` | agent (registrar) | — | `CustomerDetail` | Adds `phone`, `stage {index, count, label}` once approved, `returned {kind, title, note}` when a document is sent back, `documents`, `advance {status, paid_on}`, and `commission` with `proposed_amount` + `admin_note` when the admin changed it. 404 for someone else's customer |
 | 42 | `PUT .../my-customers/{customer_id}/documents/{kind}` | agent (registrar) | `{upload_id}` | `CustomerDetail` | Only the returned document (else 409); → `in_review` |
