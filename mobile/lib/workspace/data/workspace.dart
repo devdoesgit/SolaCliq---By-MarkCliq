@@ -36,9 +36,11 @@ final class MemberWorkspace extends Workspace {
   OrgStatus get orgStatus => membership.orgStatus;
   String? get orgPhone => membership.orgPhone;
 
-  /// Sales who earn a commission on each customer they add.
+  /// Sales who earn a commission on each customer they add. Without a pay
+  /// type they are treated as salaried, so no commission is ever offered
+  /// that the server would refuse.
   bool get earnsCommission =>
-      role == OrgRole.agent && membership.payType != PayType.salary;
+      role == OrgRole.agent && membership.payType == PayType.commission;
 
   /// Up to two initials of the company, for its avatar.
   String get orgInitials => companyInitials(orgName);

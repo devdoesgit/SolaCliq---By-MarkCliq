@@ -274,7 +274,7 @@ class AuthRepository {
           payType: switch (m.payType) {
             api.MembershipPayTypeEnum.commission => PayType.commission,
             api.MembershipPayTypeEnum.salary => PayType.salary,
-            _ => m.role == api.Role.agent ? PayType.commission : null,
+            _ => null,
           },
           orgPhone: m.org.phone,
         ),

@@ -185,7 +185,7 @@ void main() {
       final me = meJson(
         name: 'Kiran',
         memberships: [
-          membershipJson(role: 'agent'),
+          membershipJson(role: 'agent', payType: 'commission'),
           membershipJson(
             orgId: '0192a000-0000-7000-8000-0000000000a2',
             orgName: 'Sample Rooftops',

@@ -221,6 +221,8 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
   CustomerDraft _draft(Map<KycKind, String> uploaded) {
     final documents = _documents(uploaded);
     final cityPin = _cityPinPattern.firstMatch(_cityPin.text.trim())!;
+    final earns = widget.workspace.earnsCommission;
+    final note = _commissionNote.text.trim();
     return CustomerDraft(
       name: _name.text.trim(),
       phone: AuthValidators.digits(_mobile.text),
@@ -238,12 +240,9 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
       subsidy: _subsidy,
       documents: documents,
       consent: _consent,
-      commissionPaise: widget.workspace.earnsCommission
-          ? _commissionPaise
-          : null,
-      commissionNote: _commissionNote.text.trim().isEmpty
-          ? null
-          : _commissionNote.text.trim(),
+      // Salaried sales send neither; the server refuses a commission.
+      commissionPaise: earns ? _commissionPaise : null,
+      commissionNote: earns && note.isNotEmpty ? note : null,
     );
   }
 

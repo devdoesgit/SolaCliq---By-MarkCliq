@@ -109,9 +109,11 @@ Map<String, Object?> membershipJson({
   String orgName = 'Example Solar',
   String status = 'active',
   String role = 'worker',
+  String? payType,
 }) => {
   'org': {'id': orgId, 'name': orgName, 'status': status},
   'role': role,
+  'pay_type': ?payType,
 };
 
 AccountMembership testMembership({

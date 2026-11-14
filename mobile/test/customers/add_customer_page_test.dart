@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/customers/view/add_customer_page.dart';
@@ -15,7 +17,9 @@ Finder _input(String key) => find.descendant(
 );
 
 void main() {
-  final workspace = MemberWorkspace(testMembership(role: OrgRole.agent));
+  final workspace = MemberWorkspace(
+    testMembership(role: OrgRole.agent, payType: PayType.commission),
+  );
 
   Future<void> pump(WidgetTester tester) => tester.pumpApp(
     AddCustomerPage(workspace: workspace),
@@ -63,6 +67,115 @@ void main() {
       await tester.tapKey('nav_back');
       await tester.pumpAndSettle();
       expect(find.text('Test Customer'), findsOneWidget);
+    });
+
+    group('what is sent', () {
+      setUpAll(
+        () => registerFallbackValue(
+          const CustomerDraft(
+            name: '',
+            phone: '',
+            email: '',
+            address: '',
+            city: '',
+            pinCode: '',
+            state: '',
+            discom: '',
+            consumerNumber: '',
+            sanctionedLoadKw: 0,
+            connectionType: ConnectionType.residential,
+            proposedKw: 0,
+            roof: Roof.rcc,
+            subsidy: false,
+            documents: {},
+            consent: true,
+          ),
+        ),
+      );
+
+      /// Walks the whole flow with quick forms filling every step, types
+      /// [commission] and [note] on the review step when the fields are
+      /// there, submits, and returns the draft sent.
+      Future<CustomerDraft> submitAs(
+        WidgetTester tester,
+        PayType payType, {
+        String commission = '',
+        String note = '',
+      }) async {
+        final registrations = MockRegistrationRepository();
+        when(
+          () => registrations.submit(
+            orgId: any(named: 'orgId'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+            draft: any(named: 'draft'),
+          ),
+        ).thenAnswer((_) async => 'SC-1');
+        await tester.pumpApp(
+          AddCustomerPage(
+            workspace: MemberWorkspace(
+              testMembership(role: OrgRole.agent, payType: payType),
+            ),
+          ),
+          repositories: [
+            RepositoryProvider<UploadRepository>.value(
+              value: MockUploadRepository(),
+            ),
+            RepositoryProvider<RegistrationRepository>.value(
+              value: registrations,
+            ),
+            RepositoryProvider<QuickForms>(
+              create: (_) => QuickForms(available: true),
+              dispose: (quick) => quick.dispose(),
+            ),
+          ],
+        );
+        for (final key in ['add_customer_next', 'add_customer_next']) {
+          await tester.tapKey(key);
+          await tester.pumpAndSettle();
+        }
+        await tester.tapKey('add_customer_review');
+        await tester.pumpAndSettle();
+        final fields = find.byKey(const ValueKey('add_customer_commission'));
+        if (fields.evaluate().isNotEmpty) {
+          await tester.enterText(_input('add_customer_commission'), commission);
+          await tester.enterText(_input('add_customer_commission_note'), note);
+        }
+        await tester.tapKey('add_customer_submit');
+        await tester.pumpAndSettle();
+        return verify(
+              () => registrations.submit(
+                orgId: 'o1',
+                idempotencyKey: any(named: 'idempotencyKey'),
+                draft: captureAny(named: 'draft'),
+              ),
+            ).captured.single
+            as CustomerDraft;
+      }
+
+      testWidgets('commission agents send their commission in paise', (
+        tester,
+      ) async {
+        final draft = await submitAs(
+          tester,
+          PayType.commission,
+          commission: '5000',
+          note: '1,000 per kW',
+        );
+        expect(draft.commissionPaise, 500000);
+        expect(draft.commissionNote, '1,000 per kW');
+      });
+
+      testWidgets('salaried sales see no commission step and send none', (
+        tester,
+      ) async {
+        final draft = await submitAs(tester, PayType.salary);
+        expect(
+          find.byKey(const ValueKey('add_customer_commission')),
+          findsNothing,
+        );
+        expect(draft.commissionPaise, isNull);
+        expect(draft.commissionNote, isNull);
+      });
     });
 
     testWidgets('cancel leaves the flow', (tester) async {

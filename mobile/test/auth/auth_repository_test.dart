@@ -98,6 +98,36 @@ void main() {
     });
   });
 
+  group('pay type', () {
+    Future<List<PayType?>> payTypes(List<Map<String, Object?>> ms) async {
+      answer = (_) async => jsonBody(200, {
+        'user': meJson(memberships: ms),
+        'tokens': tokensJson(),
+      });
+      await repository.logIn(email: 'p@example.com', password: 'secret');
+      final account = (repository.status as AuthAuthenticated).account;
+      return [for (final m in account.memberships) m.payType];
+    }
+
+    test('is read for agents', () async {
+      expect(
+        await payTypes([
+          membershipJson(role: 'agent', payType: 'commission'),
+          membershipJson(
+            orgId: '0192a000-0000-7000-8000-0000000000a2',
+            role: 'agent',
+            payType: 'salary',
+          ),
+        ]),
+        [PayType.commission, PayType.salary],
+      );
+    });
+
+    test('an agent without one is not taken to earn commission', () async {
+      expect(await payTypes([membershipJson(role: 'agent')]), [null]);
+    });
+  });
+
   group('restore', () {
     test('nothing stored: signed out', () async {
       await repository.restore();
