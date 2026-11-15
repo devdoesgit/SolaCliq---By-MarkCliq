@@ -511,3 +511,5 @@ Change a decision by adding a new line, not by editing an old one.
 - **One support address: `info@markcliq.com`.** Every email's Reply-To
   is it (`SUPPORT_EMAIL` in `lib.rs`); emails are still sent from
   `support@solacliq.markcliq.com`.
+- **The staging app points at the production API on purpose**, for
+  testing while there's no real data; revisit before real vendors.
