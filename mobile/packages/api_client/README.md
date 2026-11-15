@@ -94,6 +94,7 @@ Class | Method | HTTP request | Description
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listNotifications**](doc/NotificationsApi.md#listnotifications) | **GET** /orgs/{org_id}/notifications | The caller&#39;s notifications in this company, newest first
 [*NotificationsApi*](doc/NotificationsApi.md) | [**markMyNotificationsRead**](doc/NotificationsApi.md#markmynotificationsread) | **POST** /me/notifications/read | Mark all of the caller&#39;s own notifications as read
 [*NotificationsApi*](doc/NotificationsApi.md) | [**markNotificationsRead**](doc/NotificationsApi.md#marknotificationsread) | **POST** /orgs/{org_id}/notifications/read | Mark all of the caller&#39;s notifications here as read
+[*NotificationsApi*](doc/NotificationsApi.md) | [**registerMyDevice**](doc/NotificationsApi.md#registermydevice) | **PUT** /me/device | Save this phone&#39;s push token
 [*OnboardingApi*](doc/OnboardingApi.md) | [**registerOrg**](doc/OnboardingApi.md#registerorg) | **POST** /org-registrations | A solar company registers with SolaCliq
 [*PlatformApi*](doc/PlatformApi.md) | [**getPlatformOrg**](doc/PlatformApi.md#getplatformorg) | **GET** /platform/orgs/{org_id} | One company&#39;s registration details
 [*PlatformApi*](doc/PlatformApi.md) | [**listPlatformOrgs**](doc/PlatformApi.md#listplatformorgs) | **GET** /platform/orgs | Every company, newest first
@@ -140,6 +141,7 @@ Class | Method | HTTP request | Description
  - [CustomerRegistrationCreate](doc/CustomerRegistrationCreate.md)
  - [CustomerRegistrationCreateDocumentsInner](doc/CustomerRegistrationCreateDocumentsInner.md)
  - [CustomerSummary](doc/CustomerSummary.md)
+ - [DeviceRegistration](doc/DeviceRegistration.md)
  - [DocumentStatus](doc/DocumentStatus.md)
  - [EmailRequest](doc/EmailRequest.md)
  - [Expense](doc/Expense.md)

@@ -1033,6 +1033,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/device": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save this phone's push token
+         * @description The Firebase Cloud Messaging token for the caller's session (one
+         *     login on one phone). Send it after log in, on each app start
+         *     while logged in, and whenever Firebase issues a new one. It
+         *     replaces this session's earlier token, and is taken from any
+         *     other session that had it, so pushes go to whoever logged in on
+         *     the phone last. Log out (or any revoked session) stops pushes to
+         *     it; there is no separate call. App sessions only: the website
+         *     gets 403 (`auth.app_only`). Pushes carry the notification's
+         *     `title` and `body`, with `data` holding `notification_id`,
+         *     `kind`, and whichever of `org_id`, `task_id`, `expense_id` and
+         *     `customer_id` it has (see docs/features/F12-notifications.md).
+         */
+        put: operations["registerMyDevice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/notifications": {
         parameters: {
             query?: never;
@@ -2229,6 +2259,21 @@ export interface components {
             address?: string;
             emergency_contact?: string;
             bank?: components["schemas"]["PayoutBank"];
+        };
+        /**
+         * @example {
+         *       "token": "fGx1…(illustrative)",
+         *       "platform": "android"
+         *     }
+         */
+        DeviceRegistration: {
+            /** @description The FCM registration token. */
+            token: string;
+            /**
+             * @description iOS joins later, with an APNs key.
+             * @enum {string}
+             */
+            platform: "android";
         };
         /**
          * @example {
@@ -3713,6 +3758,31 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    registerMyDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceRegistration"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

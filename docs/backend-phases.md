@@ -92,8 +92,21 @@ Put it on the VPS early so the pilot can test on real phones.
 
 ## Phase 7. Push notifications, then shared company plumbing (#21–24)
 
-**First, push (decided 2026-11-15)**, through Firebase Cloud Messaging;
-spec to write.
+**First, push (decided 2026-11-15).** Firebase Cloud Messaging. Spec:
+`features/F12-notifications.md` (drafted, waiting for review). The app
+sends its FCM token with `PUT /me/device`; a `devices` table ties it to
+the session, so log out stops pushes with no extra call, and a token
+moves to whoever logged in on the phone last. A push worker picks up new
+notifications (`pushed_at` empty), skips people with push off, sends to
+FCM's HTTP v1 API with a service-account key and deletes tokens FCM
+reports dead. The app opens the notification's screen on tap. Needs from
+the owner: a Firebase project (`google-services.json` for the `.dev`,
+`.stg` and production app ids; a service-account key for the server).
+
+- **Test:** the worker's device choice and its handling of FCM's
+  answers, against a stand-in for FCM.
+- **Done when:** a notification written on the server shows on a real
+  phone with the app closed, and tapping it opens its screen.
 
 **Then:**
 

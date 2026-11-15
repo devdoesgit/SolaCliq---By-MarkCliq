@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:api_client/src/deserialize.dart';
 import 'package:dio/dio.dart';
 
+import 'package:api_client/src/model/device_registration.dart';
 import 'package:api_client/src/model/notification_page.dart';
 import 'package:api_client/src/model/problem.dart';
 
@@ -307,6 +308,74 @@ class NotificationsApi {
 
     final _response = await _dio.request<Object>(
       _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    return _response;
+  }
+
+  /// Save this phone&#39;s push token
+  /// The Firebase Cloud Messaging token for the caller&#39;s session (one login on one phone). Send it after log in, on each app start while logged in, and whenever Firebase issues a new one. It replaces this session&#39;s earlier token, and is taken from any other session that had it, so pushes go to whoever logged in on the phone last. Log out (or any revoked session) stops pushes to it; there is no separate call. App sessions only: the website gets 403 (&#x60;auth.app_only&#x60;). Pushes carry the notification&#39;s &#x60;title&#x60; and &#x60;body&#x60;, with &#x60;data&#x60; holding &#x60;notification_id&#x60;, &#x60;kind&#x60;, and whichever of &#x60;org_id&#x60;, &#x60;task_id&#x60;, &#x60;expense_id&#x60; and &#x60;customer_id&#x60; it has (see docs/features/F12-notifications.md).
+  ///
+  /// Parameters:
+  /// * [deviceRegistration]
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future]
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<void>> registerMyDevice({
+    required DeviceRegistration deviceRegistration,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/me/device';
+    final _options = Options(
+      method: r'PUT',
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'cookie',
+            'keyName': 'solacliq_session',
+            'where': '',
+          },
+          {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      _bodyData = jsonEncode(deviceRegistration);
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _options.compose(_dio.options, _path),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
       options: _options,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,

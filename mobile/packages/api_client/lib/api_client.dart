@@ -41,6 +41,7 @@ export 'package:api_client/src/model/customer_registration.dart';
 export 'package:api_client/src/model/customer_registration_create.dart';
 export 'package:api_client/src/model/customer_registration_create_documents_inner.dart';
 export 'package:api_client/src/model/customer_summary.dart';
+export 'package:api_client/src/model/device_registration.dart';
 export 'package:api_client/src/model/document_status.dart';
 export 'package:api_client/src/model/email_request.dart';
 export 'package:api_client/src/model/expense.dart';

@@ -1396,6 +1396,39 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
 
+  /me/device:
+    put:
+      operationId: registerMyDevice
+      summary: Save this phone's push token
+      description: |
+        The Firebase Cloud Messaging token for the caller's session (one
+        login on one phone). Send it after log in, on each app start
+        while logged in, and whenever Firebase issues a new one. It
+        replaces this session's earlier token, and is taken from any
+        other session that had it, so pushes go to whoever logged in on
+        the phone last. Log out (or any revoked session) stops pushes to
+        it; there is no separate call. App sessions only: the website
+        gets 403 (`auth.app_only`). Pushes carry the notification's
+        `title` and `body`, with `data` holding `notification_id`,
+        `kind`, and whichever of `org_id`, `task_id`, `expense_id` and
+        `customer_id` it has (see docs/features/F12-notifications.md).
+      tags: [notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceRegistration"
+      responses:
+        "204":
+          description: Saved.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
   /me/notifications:
     get:
       operationId: listMyNotifications
@@ -3089,6 +3122,22 @@ components:
           maxLength: 120
         bank:
           $ref: "#/components/schemas/PayoutBank"
+
+    DeviceRegistration:
+      type: object
+      required: [token, platform]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          description: The FCM registration token.
+        platform:
+          type: string
+          enum: [android]
+          description: iOS joins later, with an APNs key.
+      examples:
+        - {token: "fGx1…(illustrative)", platform: android}
 
     Settings:
       type: object

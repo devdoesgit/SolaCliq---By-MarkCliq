@@ -12,6 +12,7 @@ import 'package:api_client/src/model/customer_registration.dart';
 import 'package:api_client/src/model/customer_registration_create.dart';
 import 'package:api_client/src/model/customer_registration_create_documents_inner.dart';
 import 'package:api_client/src/model/customer_summary.dart';
+import 'package:api_client/src/model/device_registration.dart';
 import 'package:api_client/src/model/email_request.dart';
 import 'package:api_client/src/model/expense.dart';
 import 'package:api_client/src/model/expense_create.dart';
@@ -154,6 +155,9 @@ ReturnType deserialize<ReturnType, BaseType>(
       ) as ReturnType;
     case 'CustomerSummary':
       return CustomerSummary.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'DeviceRegistration':
+      return DeviceRegistration.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'DocumentStatus':
     case 'EmailRequest':
