@@ -334,9 +334,12 @@ fn validate_add(req: AddMemberRequest) -> ApiResult<ValidAdd> {
         return Err(ApiError::new(
             StatusCode::UNPROCESSABLE_ENTITY,
             "member.role_not_allowed",
-            "Add a worker or an agent",
+            "Add an EPC installer or a sales agent",
         )
-        .field("role", "Only workers and agents are added here."));
+        .field(
+            "role",
+            "Only EPC installers and sales agents are added here.",
+        ));
     }
     match (req.role, req.pay_type) {
         (Role::Agent, None) => Err(ApiError::new(
@@ -457,13 +460,16 @@ async fn remove_member(
 fn added_email(to: &str, org_name: &str, role: Role, new_account: bool) -> Email {
     let role_label = match role {
         Role::OrgAdmin => "Admin",
-        Role::Worker => "Worker",
-        Role::Agent => "Agent",
+        Role::Worker => "EPC Installer",
+        Role::Agent => "Sales Agent",
         Role::Customer => "Customer",
     };
+    // "an EPC installer": the article follows the sound, not the letter.
     let a_role = match role {
-        Role::OrgAdmin | Role::Agent => format!("an {}", role_label.to_lowercase()),
-        Role::Worker | Role::Customer => format!("a {}", role_label.to_lowercase()),
+        Role::OrgAdmin => "an admin",
+        Role::Worker => "an EPC installer",
+        Role::Agent => "a sales agent",
+        Role::Customer => "a customer",
     };
     let intro = format!("{org_name} added you to their team on {PRODUCT_NAME} as {a_role}.");
     let note = format!(

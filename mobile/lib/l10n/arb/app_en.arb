@@ -105,11 +105,11 @@
     "@roleOrgAdmin": {
         "description": "Role name."
     },
-    "roleWorker": "Worker",
+    "roleWorker": "EPC Installer",
     "@roleWorker": {
         "description": "Role name for a worker."
     },
-    "roleAgent": "Sales",
+    "roleAgent": "Sales Agent",
     "@roleAgent": {
         "description": "Role name."
     },
@@ -612,7 +612,7 @@
     "@welcomeBody": {
         "description": "Welcome text."
     },
-    "welcomeFor": "For installers, agents and homes",
+    "welcomeFor": "For EPC installers, sales agents and homes",
     "@welcomeFor": {
         "description": "Beside the avatars."
     },
@@ -728,7 +728,7 @@
     "@loginTitle": {
         "description": "Log in title."
     },
-    "loginBody": "One login for homeowners, workers and agents. Your company decides what you see.",
+    "loginBody": "One login for homeowners, EPC installers and sales agents. Your company decides what you see.",
     "@loginBody": {
         "description": "Log in text."
     },

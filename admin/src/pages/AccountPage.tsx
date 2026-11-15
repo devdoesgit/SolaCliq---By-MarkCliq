@@ -7,8 +7,8 @@ type Membership = Me['memberships'][number];
 
 const ROLE: Record<Membership['role'], string> = {
   org_admin: 'Admin',
-  worker: 'Installer',
-  agent: 'Agent',
+  worker: 'EPC Installer',
+  agent: 'Sales Agent',
   customer: 'Customer',
 };
 

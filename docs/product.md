@@ -27,9 +27,9 @@ nothing listed there is settled.
 | Role | Where | What they do |
 |---|---|---|
 | Platform admin (MarkCliq) | API now; admin website later | Approves or rejects new companies, suspends them, gives support access when an org asks |
-| Org admin (one per org) | Admin website | Sees everything in their org, creates worker and agent accounts, approves requests |
-| Worker (installer) | Mobile app | Jobs, geotagged installation photos, own expenses |
-| Agent | Mobile app | Brings customers, shares referral links, logs own expenses and commission |
+| Org admin (one per org) | Admin website | Sees everything in their org, creates EPC installer and sales agent accounts, approves requests |
+| EPC Installer (`worker` in code) | Mobile app | Jobs, geotagged installation photos, own expenses |
+| Sales Agent (`agent` in code) | Mobile app | Brings customers, shares referral links, logs own expenses and commission |
 | Customer | Mobile app | Sees stage, cost breakdown and payments; shares referral links |
 
 ## Orgs and accounts

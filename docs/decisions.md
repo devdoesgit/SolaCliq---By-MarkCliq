@@ -504,3 +504,7 @@ Change a decision by adding a new line, not by editing an old one.
   submission (`product.md`, the contract and the handoff updated).
 - **Admins get notifications on the website only**, no push or email:
   they check the site.
+- **Role names users see: "EPC Installer" (`worker`) and "Sales Agent"
+  (`agent`)**, in the app, website and emails. The code keeps `worker`
+  and `agent`. "Installer" alone still means the solar company in
+  customer copy ("your installer").

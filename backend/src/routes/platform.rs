@@ -400,7 +400,7 @@ fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option
             "Log in at {} with this email address.",
             WEBSITE.trim_start_matches("https://")
         );
-        let team = "Create accounts for your workers and agents. We email each of \
+        let team = "Create accounts for your EPC installers and sales agents. We email each of \
                     them how to set up the app.";
         return Email {
             to: owner.email.clone(),
@@ -429,7 +429,7 @@ fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option
                     t::company(org_name, "Approved by MarkCliq", "Live", Tone::Success),
                     t::para(&format!(
                         "Your company runs from the {PRODUCT_NAME} dashboard, on the web. \
-                         Your workers and agents use the app."
+                         Your EPC installers and sales agents use the app."
                     )),
                     t::button(&dashboard, "Open your dashboard"),
                     t::eyebrow("What's next"),
