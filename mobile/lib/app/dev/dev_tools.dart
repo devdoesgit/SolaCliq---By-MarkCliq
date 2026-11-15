@@ -10,8 +10,8 @@ import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
-/// Development flavor only: which mock person to play, the prototype's
-/// "simulate an invite", and the component gallery. Shown in the workspace
+/// Development flavor only: which mock person to play, the mock switches,
+/// and the component gallery. Shown in the workspace
 /// sheet, dashed like the prototype controls in the designs.
 class DevToolsSection extends StatelessWidget {
   const new({super.key});
@@ -59,7 +59,6 @@ class DevToolsSection extends StatelessWidget {
         ListenableBuilder(
           listenable: Listenable.merge([
             mock.persona,
-            mock.inviteWaiting,
             mock.handedOver,
             quick.enabled,
           ]),
@@ -73,14 +72,6 @@ class DevToolsSection extends StatelessWidget {
                   mock.persona.value?.example ?? l10n.devPersonaDefault,
                 ),
                 onTap: () => unawaited(_pickPersona(context)),
-              ),
-              _DevButton(
-                key: const Key('dev_invite'),
-                label: l10n.devInviteWaiting(
-                  mock.inviteWaiting.value ? l10n.on : l10n.off,
-                ),
-                onTap: () =>
-                    mock.inviteWaiting.value = !mock.inviteWaiting.value,
               ),
               _DevButton(
                 key: const Key('dev_handed_over'),

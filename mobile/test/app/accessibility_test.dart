@@ -23,8 +23,6 @@ import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/install/view/payments_tab.dart';
 import 'package:solacliq/install/view/track_tab.dart';
-import 'package:solacliq/invites/data/invite_repository.dart';
-import 'package:solacliq/invites/view/invite_page.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
@@ -106,7 +104,6 @@ void main() {
   );
   late MockWorkspaceCubit workspace;
   late MockHomeRepository homes;
-  late MockInviteRepository invites;
   late MockExpenseRepository expenses;
   late MockTaskRepository tasks;
   late MockNotificationRepository notifications;
@@ -170,7 +167,6 @@ void main() {
     when(() => installs.mine(any())).thenAnswer((_) async => install);
     workspace = MockWorkspaceCubit();
     homes = MockHomeRepository();
-    invites = MockInviteRepository();
     expenses = MockExpenseRepository();
     when(() => expenses.mine(any())).thenAnswer((_) async => [expense]);
     when(() => expenses.get(any(), any())).thenAnswer((_) async => expense);
@@ -218,7 +214,6 @@ void main() {
         ),
       ],
     );
-    when(() => invites.pending()).thenAnswer((_) async => []);
     when(() => homes.orgHome(any(), any())).thenAnswer(
       (_) async => const HomeSummary(
         eyebrow: 'Today',
@@ -254,7 +249,6 @@ void main() {
       workspaceCubit: workspace,
       repositories: [
         RepositoryProvider<HomeRepository>.value(value: homes),
-        RepositoryProvider<InviteRepository>.value(value: invites),
         RepositoryProvider<ExpenseRepository>.value(value: expenses),
         RepositoryProvider<TaskRepository>.value(value: tasks),
         RepositoryProvider<NotificationRepository>.value(value: notifications),
@@ -282,19 +276,6 @@ void main() {
     'worker home': (const HomePage(), worker),
     'quote': (
       QuoteRequestPage(account: testAccount()),
-      const PersonalWorkspace(),
-    ),
-    'invite': (
-      InvitePage(
-        invite: Invite(
-          id: 'i1',
-          orgId: 'o1',
-          orgName: 'Example Solar',
-          role: OrgRole.worker,
-          invitedBy: 'Dev',
-          invitedAt: DateTime(2026, 10, 20),
-        ),
-      ),
       const PersonalWorkspace(),
     ),
     'log expense': (ExpensePage(workspace: worker), worker),

@@ -28,9 +28,9 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 2 | Log in and `/me` | #5, #10 | Done 2026-11-09 |
 | 3 | Email codes, refresh, log out | #3, #4, #6–9 | Done 2026-11-14 |
 | 4 | Companies, memberships, team; company registration and review (F2) | #10, #11, team, platform | Done 2026-11-14 |
-| 5 | First deploy | — | Next |
-| 6 | Personal workspace | #12–20 | |
-| 7 | Shared company plumbing, row-level security | #21–24 | |
+| 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
+| 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
+| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Next |
 | 8 | Worker | #25–38 | |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |
@@ -59,8 +59,15 @@ the role phases (8–10) go in the order the pilot vendor needs them.
   at `REVIEW_EMAIL`) and review (`/platform/orgs`, `PlatformAdmin`;
   approve, reject with a note, suspend, reactivate). `APP_ENV`, the seed
   and `make-platform-admin`. Checked in the app: companies, the suspended
-  message. Not checked on a device: the new registration form (widget
-  tests cover it).
+  message, the registration form (state from the GSTIN).
+- **6.** Quote requests: saved with a general estimate (figures in
+  `routes/quotes.rs`), emailed to `REVIEW_EMAIL`, a `quote_shared`
+  notification. Idempotency keys for app writes (`idempotency.rs`; a
+  retry or a race with one key does the work once). Details with the
+  bank number encrypted (AES-256-GCM, `BANK_KEY`; last 4 and bank name
+  from the IFSC returned). Settings with defaults. Personal notifications
+  and `POST /me/notifications/read`. Invites dropped. Checked in the app:
+  quote, notification and read all, settings, details, bank.
 
 ## Phase 5. First deploy
 
@@ -70,23 +77,20 @@ Put it on the VPS early so the pilot can test on real phones.
   start with `APP_ENV=production` without its settings, so codes never go
   only to the log. Release build, a `systemd` service, nginx proxying
   `solacliq.markcliq.com/api`, production `.env` on the server only
-  (`CODE_SECRET`, `REVIEW_EMAIL=info@markcliq.com`, `COOKIE_SECURE=true`),
+  (`CODE_SECRET`, `BANK_KEY`, `REVIEW_EMAIL=info@markcliq.com`,
+  `COOKIE_SECURE=true`),
   daily Postgres backup. CI: `make api-test` and the spec check
   (`cargo run -- openapi` against `api/openapi.yaml`). Make the first
   platform admin with `make-platform-admin`.
 - **Done when:** the app, built with the production URL, logs in on a
   real phone, and a test registration reaches info@markcliq.com.
 
-## Phase 6. Personal workspace (#12–20)
+## Phase 7. Push notifications, then shared company plumbing (#21–24)
 
-Quote requests, invites (accept creates a membership), personal
-notifications, details (bank number encrypted, only the last 4 returned),
-settings with defaults.
+**First, push (decided 2026-11-15)**, through Firebase Cloud Messaging;
+spec to write.
 
-- **Done when:** the Personal workspace's screens all work, and accepting
-  an invite opens the company's workspace.
-
-## Phase 7. Shared company plumbing (#21–24)
+**Then:**
 
 `GET /orgs/{org_id}/home` composed per role (see "Home" in the handoff),
 `POST /uploads` with presigned R2 URLs, company notifications and mark

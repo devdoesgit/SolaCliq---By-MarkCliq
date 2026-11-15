@@ -7,7 +7,6 @@ import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/install/data/install_repository.dart';
-import 'package:solacliq/invites/data/invite_repository.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/workspace/cubit/workspace_cubit.dart';
@@ -18,7 +17,6 @@ import '../helpers/helpers.dart';
 void main() {
   late MockWorkspaceCubit workspace;
   late MockHomeRepository homes;
-  late MockInviteRepository invites;
 
   final worker = testMembership();
   final agent = testMembership(orgId: 'o2', role: OrgRole.agent);
@@ -76,8 +74,6 @@ void main() {
     when(() => notifications.list(any())).thenAnswer((_) async => []);
     workspace = MockWorkspaceCubit();
     homes = MockHomeRepository();
-    invites = MockInviteRepository();
-    when(() => invites.pending()).thenAnswer((_) async => []);
     when(() => homes.orgHome(any(), any())).thenAnswer((_) async => workerHome);
   });
 
@@ -100,7 +96,6 @@ void main() {
       workspaceCubit: workspace,
       repositories: [
         RepositoryProvider<HomeRepository>.value(value: homes),
-        RepositoryProvider<InviteRepository>.value(value: invites),
         RepositoryProvider<CustomerRepository>.value(value: customers),
         RepositoryProvider<InstallRepository>.value(value: installs),
         RepositoryProvider<ProfileRepository>.value(value: profiles),
@@ -117,24 +112,6 @@ void main() {
       expect(find.text('₹78k'), findsOneWidget);
       expect(find.byKey(const Key('home_get_quote')), findsOneWidget);
       expect(find.byKey(const ValueKey('tab_get_quote')), findsOneWidget);
-    });
-
-    testWidgets('personal: an invite shows a banner to review', (tester) async {
-      when(() => invites.pending()).thenAnswer(
-        (_) async => [
-          Invite(
-            id: 'i1',
-            orgId: 'o1',
-            orgName: 'Example Solar',
-            role: OrgRole.worker,
-            invitedBy: 'Dev',
-            invitedAt: DateTime(2026, 10, 20),
-          ),
-        ],
-      );
-      await pumpHome(tester, const PersonalWorkspace());
-      expect(find.text('Example Solar invited you'), findsOneWidget);
-      expect(find.byKey(const ValueKey('invite_review_i1')), findsOneWidget);
     });
 
     testWidgets('worker: the server-composed home and worker tabs', (

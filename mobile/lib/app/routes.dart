@@ -14,7 +14,6 @@ abstract final class AppRoutes {
   static const useWebsite = '/use-website';
   static const quote = '/quote';
   static const quoteSent = '/quote/sent';
-  static const invite = '/invite';
   static const expense = '/expense';
   static const expenseSent = '/expense/sent';
   static const addCustomer = '/customers/new';
@@ -79,8 +78,6 @@ abstract final class AppRoutes {
     path: requestSent,
     queryParameters: {'company': company, 'email': email},
   ).toString();
-
-  static String inviteDetail(String id) => '$invite/$id';
 
   static String task(String id) => '$tasks/$id';
 

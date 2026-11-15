@@ -22,7 +22,6 @@ enum NotificationKind {
   paymentDue,
   documentsVerified,
   quoteShared,
-  inviteReceived,
   guide,
 }
 
@@ -86,7 +85,7 @@ class NotificationRepository {
   final api.NotificationsApi _api;
 
   /// In one company, or with no [orgId] the person's own (quotes,
-  /// invites, guides).
+  /// guides).
   Future<List<AppNotification>> list(String? orgId) async {
     final response = await apiCall(
       () => orgId == null
@@ -109,6 +108,10 @@ class NotificationRepository {
     ];
   }
 
-  Future<void> markAllRead(String orgId) =>
-      apiCall(() => _api.markNotificationsRead(orgId: orgId));
+  /// In one company, or with no [orgId] the person's own.
+  Future<void> markAllRead(String? orgId) => apiCall(
+    () => orgId == null
+        ? _api.markMyNotificationsRead()
+        : _api.markNotificationsRead(orgId: orgId),
+  );
 }

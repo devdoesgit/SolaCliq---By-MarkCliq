@@ -145,17 +145,6 @@ class AuthRepository {
     }
   }
 
-  /// Takes an updated account the server returned (after accepting an
-  /// invite, say), so the app reflects it at once.
-  Future<void> applyAccount(api.Me me) async {
-    final session = _session;
-    if (session == null) return;
-    _accountCheckedAt = _now();
-    _session = session.withAccount(_json(me));
-    await _store.write(_session!);
-    _emit(AuthAuthenticated(_toAccount(me)));
-  }
-
   /// Ends this login. Works offline: the server call is best effort.
   Future<void> logOut() async {
     try {

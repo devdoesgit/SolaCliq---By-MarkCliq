@@ -155,8 +155,6 @@ enum NotificationKindEnum {
   documentsVerified(r'documents_verified'),
   @JsonValue(r'quote_shared')
   quoteShared(r'quote_shared'),
-  @JsonValue(r'invite_received')
-  inviteReceived(r'invite_received'),
   @JsonValue(r'guide')
   guide(r'guide');
 

@@ -57,8 +57,8 @@ placeholder. Org admins get only a "use the website" screen.
 In development, pick the mock person (personal, customer, worker, agent,
 sales, multi_org, org_admin) in the workspace sheet (tap the avatar) under
 Development, or run with `--dart-define=MOCK_PERSONA=<name>`. The same
-section simulates an invite and a customer whose system is handed over
-(live energy home).
+section simulates a customer whose system is handed over (live energy
+home).
 
 **Quick forms** (development only, on by default): submitting a form with
 nothing typed fills every blank with an illustrative sample and every

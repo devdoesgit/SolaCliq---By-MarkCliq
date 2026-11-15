@@ -38,10 +38,6 @@ class MockPersonaInterceptor extends Interceptor {
   /// The person the mock plays; null for the contract's default.
   final ValueNotifier<MockPersona?> persona;
 
-  /// Whether the mock has an invite waiting (the prototype's "simulate an
-  /// invite").
-  final ValueNotifier<bool> inviteWaiting = ValueNotifier(false);
-
   /// Whether the mock customer's system is handed over, so their home
   /// shows live energy.
   final ValueNotifier<bool> handedOver = ValueNotifier(false);
@@ -62,7 +58,6 @@ class MockPersonaInterceptor extends Interceptor {
     '01928f6e-0000-7000-8000-000000000a07': 'cancelled',
     '01928f6e-0000-7000-8000-000000000a09': 'approved',
   };
-  static final _accept = RegExp(r'^/invites/[^/]+/accept$');
   static final _notifications = RegExp(r'^/orgs/[^/]+/notifications$');
   static final _customers = RegExp(r'^/orgs/[^/]+/my-customers$');
   static final _customer = RegExp(
@@ -95,8 +90,6 @@ class MockPersonaInterceptor extends Interceptor {
   String? _exampleFor(RequestOptions options) {
     final path = options.path;
     if (path == '/me' || path == '/auth/login') return persona.value?.example;
-    if (path == '/me/invites') return inviteWaiting.value ? 'one' : 'none';
-    if (_accept.hasMatch(path)) return 'worker';
     if (_tasks.hasMatch(path)) {
       return options.queryParameters['view'] as String?;
     }
@@ -150,7 +143,6 @@ class MockPersonaInterceptor extends Interceptor {
 
   void dispose() {
     persona.dispose();
-    inviteWaiting.dispose();
     handedOver.dispose();
   }
 }

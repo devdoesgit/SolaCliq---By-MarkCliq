@@ -29,7 +29,7 @@ tags:
   - name: team
     description: An org's workers and agents (F3).
   - name: onboarding
-    description: Solar companies registering with SolaCliq, and invites to join one.
+    description: Solar companies registering with SolaCliq.
   - name: platform
     description: MarkCliq reviewing and managing companies (platform admins only).
   - name: quotes
@@ -635,94 +635,17 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
 
-  /me/invites:
-    get:
-      operationId: listMyInvites
-      summary: Invites waiting for the signed-in person
-      description: Shown as a banner on the personal home until answered.
-      tags: [onboarding]
-      responses:
-        "200":
-          description: Pending invites, newest first.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InviteList"
-              examples:
-                none:
-                  summary: Nothing waiting
-                  value: {items: []}
-                one:
-                  summary: A company invited the person as a worker (illustrative)
-                  value:
-                    items:
-                      - id: 01928f6e-0000-7000-8000-0000000000e1
-                        org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative)}
-                        role: worker
-                        invited_by: Dev Example (illustrative)
-                        invited_at: "2026-10-21T09:00:00Z"
-        "401":
-          $ref: "#/components/responses/Problem"
-
-  /invites/{invite_id}/accept:
-    parameters:
-      - $ref: "#/components/parameters/InviteId"
-    post:
-      operationId: acceptInvite
-      summary: Join the company that sent the invite
-      description: Adds the membership and returns the updated person.
-      tags: [onboarding]
-      responses:
-        "200":
-          description: Joined.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Me"
-              examples:
-                worker:
-                  summary: Now a worker at the company (illustrative)
-                  value:
-                    id: 01928f6e-0000-7000-8000-000000000001
-                    name: Asha Example (illustrative)
-                    email: asha@example.com
-                    email_verified: true
-                    is_platform_admin: false
-                    memberships:
-                      - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
-                        role: worker
-        "401":
-          $ref: "#/components/responses/Problem"
-        "404":
-          $ref: "#/components/responses/Problem"
-        "409":
-          $ref: "#/components/responses/Problem"
-
-  /invites/{invite_id}/decline:
-    parameters:
-      - $ref: "#/components/parameters/InviteId"
-    post:
-      operationId: declineInvite
-      summary: Turn down an invite
-      description: The person keeps their account; nothing is shared.
-      tags: [onboarding]
-      responses:
-        "204":
-          description: Declined; the company is told.
-        "401":
-          $ref: "#/components/responses/Problem"
-        "404":
-          $ref: "#/components/responses/Problem"
-
   /quote-requests:
     post:
       operationId: createQuoteRequest
-      summary: Ask verified solar companies nearby for a quote
+      summary: Ask for a solar quote
       description: |
-        Creates a lead that companies near the PIN code can accept; the one
-        that accepts contacts the person on their phone (the account's, or
-        `phone` here if the account has none; 422 `quote.phone_required` if
-        neither). Returns an indicative estimate from the bill band.
+        Saves a lead and emails it to MarkCliq (`REVIEW_EMAIL`), who calls
+        the person on their phone (the account's, or `phone` here if the
+        account has none; 422 `quote.phone_required` if neither). The
+        person gets a `quote_shared` notification. Returns a general,
+        indicative estimate from the bill band. Companies accepting leads
+        comes with the admin website.
       tags: [quotes]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1470,12 +1393,14 @@ paths:
                 $ref: "#/components/schemas/Settings"
         "401":
           $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
 
   /me/notifications:
     get:
       operationId: listMyNotifications
       summary: The caller's own notifications, outside any company
-      description: Quote requests, invites and guides, for the Personal workspace.
+      description: Quote requests and guides, for the Personal workspace.
       tags: [notifications]
       parameters:
         - $ref: "#/components/parameters/Cursor"
@@ -1490,7 +1415,21 @@ paths:
               examples:
                 personal:
                   summary: A normal user's notifications (illustrative)
-                  value: {"unread_count": 1, "page": {"next_cursor": null}, "items": [{"id": "01928f6e-0000-7000-8000-000000000b31", "kind": "quote_shared", "title": "Quote request shared", "body": "3 verified companies near Mohali can see it", "at": "2026-10-23T09:00:00Z", "read": false}, {"id": "01928f6e-0000-7000-8000-000000000b32", "kind": "invite_received", "title": "Example Solar (illustrative) invited you", "body": "To join as a Worker", "at": "2026-10-23T08:00:00Z", "read": true}, {"id": "01928f6e-0000-7000-8000-000000000b33", "kind": "guide", "title": "New guide", "body": "How the PM Surya Ghar subsidy works", "at": "2026-10-20T08:00:00Z", "read": true}]}
+                  value: {"unread_count": 1, "page": {"next_cursor": null}, "items": [{"id": "01928f6e-0000-7000-8000-000000000b31", "kind": "quote_shared", "title": "Quote request sent", "body": "MarkCliq will call you about solar near Mohali", "at": "2026-10-23T09:00:00Z", "read": false}, {"id": "01928f6e-0000-7000-8000-000000000b33", "kind": "guide", "title": "New guide", "body": "How the PM Surya Ghar subsidy works", "at": "2026-10-20T08:00:00Z", "read": true}]}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /me/notifications/read:
+    post:
+      operationId: markMyNotificationsRead
+      summary: Mark all of the caller's own notifications as read
+      description: The "Read all" link in the Personal workspace.
+      tags: [notifications]
+      responses:
+        "204":
+          description: Done.
         "401":
           $ref: "#/components/responses/Problem"
 
@@ -1743,12 +1682,6 @@ components:
         $ref: "#/components/schemas/Id"
     ExpenseId:
       name: expense_id
-      in: path
-      required: true
-      schema:
-        $ref: "#/components/schemas/Id"
-    InviteId:
-      name: invite_id
       in: path
       required: true
       schema:
@@ -2267,39 +2200,6 @@ components:
           type: string
           maxLength: 1000
           description: Required to reject; emailed to the owner.
-
-    Invite:
-      type: object
-      required: [id, org, role, invited_by, invited_at]
-      properties:
-        id:
-          $ref: "#/components/schemas/Id"
-        org:
-          type: object
-          required: [id, name]
-          properties:
-            id:
-              $ref: "#/components/schemas/Id"
-            name:
-              type: string
-              examples: ["Example Solar (illustrative)"]
-        role:
-          $ref: "#/components/schemas/Role"
-        invited_by:
-          type: string
-          description: Name of the admin who sent it.
-          examples: ["Dev Example (illustrative)"]
-        invited_at:
-          $ref: "#/components/schemas/Timestamp"
-
-    InviteList:
-      type: object
-      required: [items]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/Invite"
 
     QuoteFor:
       type: string
@@ -3101,7 +3001,7 @@ components:
           $ref: "#/components/schemas/Id"
         kind:
           type: string
-          enum: [task_assigned, task_approved, task_returned, task_cancelled, task_rescheduled, expense_approved, expense_returned, expense_paid, kyc_returned, kyc_submitted, kyc_approved, install_started, commission_changed, commission_payable, commission_paid, visit_booked, payment_due, documents_verified, quote_shared, invite_received, guide]
+          enum: [task_assigned, task_approved, task_returned, task_cancelled, task_rescheduled, expense_approved, expense_returned, expense_paid, kyc_returned, kyc_submitted, kyc_approved, install_started, commission_changed, commission_payable, commission_paid, visit_booked, payment_due, documents_verified, quote_shared, guide]
         title:
           type: string
         body:

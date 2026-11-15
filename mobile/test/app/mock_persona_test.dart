@@ -17,9 +17,6 @@ void main() {
 
   test('picks the named example for the person and the moment', () {
     expect(prefer('/me'), 'example=worker');
-    expect(prefer('/me/invites'), 'example=none');
-    mock.inviteWaiting.value = true;
-    expect(prefer('/me/invites'), 'example=one');
     expect(prefer('/quote-requests'), isNull);
   });
 

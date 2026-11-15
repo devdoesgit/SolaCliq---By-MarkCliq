@@ -1,12 +1,15 @@
 //! SolaCliq API. `app` builds the router; `main.rs` wires config, the
 //! database and the server around it, so tests can build the same router.
 
+pub mod bank;
 pub mod codes;
 pub mod config;
 pub mod error;
 pub mod extract;
 pub mod gstin;
+pub mod idempotency;
 pub mod mail;
+pub mod notify;
 pub mod openapi;
 pub mod org;
 pub mod page;
@@ -41,8 +44,10 @@ pub struct AppState {
     pub mailer: Arc<dyn mail::Mailer>,
     // Key for the email codes' HMAC. See `codes::CodeSecret`.
     pub code_secret: codes::CodeSecret,
-    // MarkCliq's inbox for new company registrations (REVIEW_EMAIL).
+    // MarkCliq's inbox for new company registrations and leads (REVIEW_EMAIL).
     pub review_email: String,
+    // Encrypts payout bank account numbers (BANK_KEY). See `bank::BankKey`.
+    pub bank_key: bank::BankKey,
 }
 
 /*

@@ -428,3 +428,31 @@ Change a decision by adding a new line, not by editing an old one.
   bill in another person's name; the admin judges it, no extra fields).
   Document pickers take a PDF as well as a photo (`file_picker`).
 
+## 2026-11-15
+
+- **App first, then the admin website and the deploy.** Admin-made data
+  (tasks, approvals, installs) comes from the seed until the website's
+  admin endpoints are built.
+- **Invites are dropped.** Adding a member is direct (they're in at once
+  and emailed); the app's invite banner, page and endpoints are gone.
+- **Quote requests go to MarkCliq** (`REVIEW_EMAIL`) as leads; companies
+  accepting leads comes with the website. The estimate uses general
+  figures, not a vendor's prices: bill band → 1–2, 2–3, 3–5 or 5–10 kW;
+  ₹55,000–65,000 per kW; PM Surya Ghar subsidy for homes only (₹30,000/kW
+  for 2 kW, ₹18,000 for the 3rd, ₹78,000 at most). In `routes/quotes.rs`.
+- **App writes are idempotent by a stored key** (`idempotency_keys`): the
+  response is stored with the key in the same transaction, so a retry or
+  a race with one key does the work once. Forms keep one key for their
+  lifetime (the quote form now does, like add-customer).
+- **Bank account numbers are encrypted with AES-256-GCM** under a
+  required `BANK_KEY`; only the last 4 digits and the bank name (from the
+  IFSC's first four letters; common banks listed) are readable.
+- **`POST /me/notifications/read`** added: "Read all" in the Personal
+  workspace marked them read only on screen.
+- **178 unused app strings removed** (old screen copy, invites).
+- **Push notifications come next, through Firebase Cloud Messaging.**
+  Firebase only delivers: our server keeps which tokens belong to whom (a
+  `devices` table, filled at log in, cleared at log out) and asks
+  Firebase to send each message to each token. Then uploads and the rest
+  of phase 7. Plan in `backend-phases.md`.
+

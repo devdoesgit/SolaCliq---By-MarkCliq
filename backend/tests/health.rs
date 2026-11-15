@@ -22,6 +22,10 @@ fn unreachable_db() -> AppState {
             b"test-secret-at-least-32-bytes-long".to_vec(),
         ),
         review_email: "review@example.com".into(),
+        bank_key: backend::bank::BankKey::from_hex(
+            "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        )
+        .unwrap(),
     }
 }
 

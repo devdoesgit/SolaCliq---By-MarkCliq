@@ -211,6 +211,5 @@ const _$NotificationKindEnumEnumMap = {
   NotificationKindEnum.paymentDue: 'payment_due',
   NotificationKindEnum.documentsVerified: 'documents_verified',
   NotificationKindEnum.quoteShared: 'quote_shared',
-  NotificationKindEnum.inviteReceived: 'invite_received',
   NotificationKindEnum.guide: 'guide',
 };

@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 
 use chrono::Duration;
 
-use crate::{codes::CodeSecret, session::Lifetimes};
+use crate::{bank::BankKey, codes::CodeSecret, session::Lifetimes};
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -27,6 +27,8 @@ pub struct Config {
         would wait forever
     */
     pub review_email: String,
+    // Key for bank account numbers (BANK_KEY): 64 hex characters.
+    pub bank_key: BankKey,
 }
 
 /*
@@ -74,6 +76,12 @@ impl Config {
             session_lifetimes: lifetimes_from_env()?,
             code_secret: code_secret_from_env()?,
             review_email: review_email_from_env()?,
+            bank_key: BankKey::from_hex(&required("BANK_KEY")?).ok_or_else(|| {
+                ConfigError::Invalid(
+                    "BANK_KEY",
+                    "use 64 hex characters (openssl rand -hex 32)".into(),
+                )
+            })?,
         })
     }
 }

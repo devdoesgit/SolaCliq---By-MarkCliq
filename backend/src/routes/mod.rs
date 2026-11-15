@@ -6,6 +6,8 @@ pub mod auth;
 pub mod health;
 pub mod me;
 pub mod platform;
+pub mod profile;
+pub mod quotes;
 pub mod registration;
 pub mod team;
 
@@ -22,6 +24,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(team::router())
         .merge(registration::router())
         .merge(platform::router())
+        .merge(profile::router())
+        .merge(quotes::router())
 }
 
 /// Any path no route matches.

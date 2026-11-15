@@ -32,6 +32,11 @@ pub fn is_indian_mobile(phone: &str) -> bool {
         && phone.chars().all(|c| c.is_ascii_digit())
 }
 
+// `^[1-9][0-9]{5}$`: Indian PIN codes don't start with 0.
+pub fn is_pin_code(pin: &str) -> bool {
+    pin.len() == 6 && !pin.starts_with('0') && pin.chars().all(|c| c.is_ascii_digit())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -33,9 +33,6 @@ import 'package:api_client/src/model/install_next_visit.dart';
 import 'package:api_client/src/model/install_next_visit_person.dart';
 import 'package:api_client/src/model/install_payment.dart';
 import 'package:api_client/src/model/install_stage.dart';
-import 'package:api_client/src/model/invite.dart';
-import 'package:api_client/src/model/invite_list.dart';
-import 'package:api_client/src/model/invite_org.dart';
 import 'package:api_client/src/model/login_request.dart';
 import 'package:api_client/src/model/login_response.dart';
 import 'package:api_client/src/model/me.dart';
@@ -210,12 +207,6 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'InstallStage':
       return InstallStage.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'Invite':
-      return Invite.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'InviteList':
-      return InviteList.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'InviteOrg':
-      return InviteOrg.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'KycKind':
     case 'KycStatus':
     case 'LoginRequest':

@@ -8,10 +8,6 @@
     "@openGallery": {
         "description": "Development-only button that opens the design-system gallery."
     },
-    "galleryTitle": "Components",
-    "@galleryTitle": {
-        "description": "Title of the development-only component gallery."
-    },
     "illustrative": "Illustrative",
     "@illustrative": {
         "description": "Label on demo data that is not real."
@@ -49,10 +45,6 @@
     "@retry": {
         "description": "Button that repeats a failed request."
     },
-    "welcomeTagline": "Your solar installation, jobs and payments in one place.",
-    "@welcomeTagline": {
-        "description": "Line under the product name on the welcome screen."
-    },
     "logIn": "Log in",
     "@logIn": {
         "description": "Button and screen title."
@@ -77,43 +69,6 @@
     "@fieldNewPassword": {
         "description": "New password field label."
     },
-    "fieldCode": "6-digit code",
-    "@fieldCode": {
-        "description": "Verification code field label."
-    },
-    "passwordHelp": "At least 8 characters.",
-    "@passwordHelp": {
-        "description": "Help under a new password field."
-    },
-    "showPassword": "Show password",
-    "@showPassword": {
-        "description": "Button that reveals the password."
-    },
-    "hidePassword": "Hide password",
-    "@hidePassword": {
-        "description": "Button that hides the password."
-    },
-    "signupIntro": "For homeowners getting solar. Installers and agents get their login from their company.",
-    "@signupIntro": {
-        "description": "Explains who signs up here."
-    },
-    "verifyTitle": "Verify your email",
-    "@verifyTitle": {
-        "description": "Screen title."
-    },
-    "verifyIntro": "We sent a 6-digit code to {email}. It works for 5 minutes.",
-    "@verifyIntro": {
-        "description": "Explains where the code went.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
-    "verifyButton": "Verify",
-    "@verifyButton": {
-        "description": "Submit button on the verify screen."
-    },
     "resendCode": "Send a new code",
     "@resendCode": {
         "description": "Asks for another code."
@@ -130,34 +85,9 @@
     "@forgotPassword": {
         "description": "Link on the log in screen."
     },
-    "forgotTitle": "Reset password",
-    "@forgotTitle": {
-        "description": "Screen title."
-    },
-    "forgotIntro": "Enter your email. If it has an account, we'll send a 6-digit code.",
-    "@forgotIntro": {
-        "description": "Explains the reset flow without saying whether the email exists."
-    },
     "sendCode": "Send code",
     "@sendCode": {
         "description": "Button that emails a code."
-    },
-    "resetTitle": "New password",
-    "@resetTitle": {
-        "description": "Screen title."
-    },
-    "resetIntro": "Enter the code we sent to {email} and choose a new password.",
-    "@resetIntro": {
-        "description": "Explains the reset screen.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
-    "resetButton": "Save password",
-    "@resetButton": {
-        "description": "Submit button on the reset screen."
     },
     "passwordChanged": "Password changed. Log in with your new password.",
     "@passwordChanged": {
@@ -166,15 +96,6 @@
     "verifyNow": "Verify email",
     "@verifyNow": {
         "description": "Action when logging in with an unverified email."
-    },
-    "accountGreeting": "Hello, {name}",
-    "@accountGreeting": {
-        "description": "Heading on the signed-in screen.",
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
     },
     "logOut": "Log out",
     "@logOut": {
@@ -277,139 +198,13 @@
     "@setUpAccount": {
         "description": "Action for people whose account was created for them."
     },
-    "setupTitle": "Set up your account",
-    "@setupTitle": {
-        "description": "Title of the code request in set-up mode."
-    },
-    "setupIntro": "Enter the email your installer or agent registered. We'll send a 6-digit code so you can create your password.",
-    "@setupIntro": {
-        "description": "Explains first-time set-up."
-    },
-    "setupResetTitle": "Create your password",
-    "@setupResetTitle": {
-        "description": "Title of the password screen in set-up mode."
-    },
-    "setupResetIntro": "Enter the code we sent to {email} and choose a password.",
-    "@setupResetIntro": {
-        "description": "Explains the set-up password screen.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
     "passwordCreated": "Password created. Log in to continue.",
     "@passwordCreated": {
         "description": "Shown on the log in screen after set-up."
     },
-    "firstTimeHere": "First time? Set up your account",
-    "@firstTimeHere": {
-        "description": "Link on the log in screen for accounts created by an agent."
-    },
-    "tabJobs": "Jobs",
-    "@tabJobs": {
-        "description": "Bottom tab for a worker's jobs."
-    },
     "tabCustomers": "Customers",
     "@tabCustomers": {
         "description": "Tab."
-    },
-    "tabInstallation": "Installation",
-    "@tabInstallation": {
-        "description": "Bottom tab for a customer's own installation."
-    },
-    "tabAccount": "Account",
-    "@tabAccount": {
-        "description": "Bottom tab with the person's account."
-    },
-    "topBarSwitch": "{org}, {role}. Switch company",
-    "@topBarSwitch": {
-        "description": "Spoken label of the top bar when the person can switch company.",
-        "placeholders": {
-            "org": {
-                "type": "String"
-            },
-            "role": {
-                "type": "String"
-            }
-        }
-    },
-    "jobsEmptyTitle": "No jobs yet",
-    "@jobsEmptyTitle": {
-        "description": "Worker home with no jobs."
-    },
-    "jobsEmptyBody": "When {org} assigns you an installation, it shows here with the address and what to photograph.",
-    "@jobsEmptyBody": {
-        "description": "Worker home with no jobs.",
-        "placeholders": {
-            "org": {
-                "type": "String"
-            }
-        }
-    },
-    "customersEmptyTitle": "No customers yet",
-    "@customersEmptyTitle": {
-        "description": "Agent home with no customers."
-    },
-    "customersEmptyBody": "Customers you register for {org} show here, with the stage each one is at.",
-    "@customersEmptyBody": {
-        "description": "Agent home with no customers.",
-        "placeholders": {
-            "org": {
-                "type": "String"
-            }
-        }
-    },
-    "installationEmptyTitle": "Your account is ready",
-    "@installationEmptyTitle": {
-        "description": "Customer home before any installer links them."
-    },
-    "installationEmptyBody": "When your solar installer adds you, your installation shows here: its stage, what it costs and what you have paid.",
-    "@installationEmptyBody": {
-        "description": "Customer home before any installer links them."
-    },
-    "chooseTitle": "Choose a company",
-    "@chooseTitle": {
-        "description": "Title when the person works for several companies."
-    },
-    "chooseIntro": "You work with more than one company. Pick one to start; you can switch any time from the top of the screen.",
-    "@chooseIntro": {
-        "description": "Intro on the company picker."
-    },
-    "switchTitle": "Switch company",
-    "@switchTitle": {
-        "description": "Title of the company switcher sheet, and its button."
-    },
-    "companyOption": "{org}, {role}",
-    "@companyOption": {
-        "description": "Spoken label of a company in the picker.",
-        "placeholders": {
-            "org": {
-                "type": "String"
-            },
-            "role": {
-                "type": "String"
-            }
-        }
-    },
-    "companyOptionStatus": "{org}, {role}, {status}",
-    "@companyOptionStatus": {
-        "description": "Spoken label of a company that is not active.",
-        "placeholders": {
-            "org": {
-                "type": "String"
-            },
-            "role": {
-                "type": "String"
-            },
-            "status": {
-                "type": "String"
-            }
-        }
-    },
-    "companyCurrent": "In use",
-    "@companyCurrent": {
-        "description": "Spoken after the company now in use."
     },
     "pendingTitle": "Waiting for approval",
     "@pendingTitle": {
@@ -462,10 +257,6 @@
     "@addressCopied": {
         "description": "Confirmation after copying."
     },
-    "accountWorkingFor": "Working for",
-    "@accountWorkingFor": {
-        "description": "Label above the company in use on the account tab."
-    },
     "devTitle": "Development",
     "@devTitle": {
         "description": "Heading of the development-only tools."
@@ -483,65 +274,21 @@
     "@devPersonaDefault": {
         "description": "Development only."
     },
-    "byMarkCliq": "By MarkCliq",
-    "@byMarkCliq": {
-        "description": "Under the app name on the welcome screen: who makes it."
-    },
     "roleCustomer": "Customer",
     "@roleCustomer": {
         "description": "Role name for a customer of a company."
-    },
-    "roleCustomerHub": "Your installer",
-    "@roleCustomerHub": {
-        "description": "Shown after the company on a customer's home."
     },
     "welcomeHeadline": "Every solar install,\nin one place.",
     "@welcomeHeadline": {
         "description": "Welcome headline."
     },
-    "welcomeStartPrompt": "How do you want to start?",
-    "@welcomeStartPrompt": {
-        "description": "Above the two ways in."
-    },
-    "welcomeUseTitle": "Use SolaCliq",
-    "@welcomeUseTitle": {
-        "description": "Option on the welcome screen."
-    },
-    "welcomeUseSub": "Log in or create a free account",
-    "@welcomeUseSub": {
-        "description": "Option on the welcome screen."
-    },
-    "welcomeEpcTitle": "I run a solar EPC company",
-    "@welcomeEpcTitle": {
-        "description": "Option on the welcome screen."
-    },
-    "welcomeEpcSub": "Request SolaCliq for your business",
-    "@welcomeEpcSub": {
-        "description": "Option on the welcome screen."
-    },
-    "welcomeNewHere": "New here? ",
-    "@welcomeNewHere": {
-        "description": "Before the create account link."
-    },
-    "createFreeAccount": "Create a free account",
-    "@createFreeAccount": {
-        "description": "Link to sign up."
-    },
     "needHelp": "Need help?",
     "@needHelp": {
         "description": "Opens contact options."
     },
-    "continueLabel": "Continue",
-    "@continueLabel": {
-        "description": "Button."
-    },
     "requestAccess": "Request access",
     "@requestAccess": {
         "description": "Button and link for solar companies."
-    },
-    "houseArtLabel": "Illustrative energy view of a solar home: rooftop panels producing 4.2 kilowatts, home using 1.8 kilowatts, 0.3 kilowatts from the grid.",
-    "@houseArtLabel": {
-        "description": "Spoken description of the welcome illustration."
     },
     "helpBody": "Talk to the MarkCliq team. We reply on WhatsApp the same day.",
     "@helpBody": {
@@ -559,61 +306,13 @@
     "@helpEmail": {
         "description": "Help option."
     },
-    "loginHeadline": "Welcome back.",
-    "@loginHeadline": {
-        "description": "Log in headline."
-    },
-    "loginSubtitle": "One login for homeowners, workers and agents.",
-    "@loginSubtitle": {
-        "description": "Log in subtitle."
-    },
-    "forgotShort": "Forgot?",
-    "@forgotShort": {
-        "description": "Link beside the password label."
-    },
     "emailPlaceholder": "you@example.com",
     "@emailPlaceholder": {
         "description": "Example in the email field."
     },
-    "newToSolaCliq": "New to SolaCliq?",
-    "@newToSolaCliq": {
-        "description": "Card on the log in screen."
-    },
-    "newToSolaCliqLink": "Create a free account.",
-    "@newToSolaCliqLink": {
-        "description": "Link in the card."
-    },
-    "newToSolaCliqAfter": " If a solar company added you, log in with that email.",
-    "@newToSolaCliqAfter": {
-        "description": "After the link in the card."
-    },
-    "runEpcBefore": "Run a solar EPC company? ",
-    "@runEpcBefore": {
-        "description": "Before the request access link."
-    },
     "securedBy": "Secured by MarkCliq",
     "@securedBy": {
         "description": "Footer on the log in screen."
-    },
-    "requestAccessHeadline": "Get SolaCliq for your EPC.",
-    "@requestAccessHeadline": {
-        "description": "Request access headline."
-    },
-    "stepYouRequest": "You request",
-    "@stepYouRequest": {
-        "description": "Step 1."
-    },
-    "stepMarkCliqCalls": "MarkCliq calls",
-    "@stepMarkCliqCalls": {
-        "description": "Step 2."
-    },
-    "stepWeSetUp": "We set you up",
-    "@stepWeSetUp": {
-        "description": "Step 3."
-    },
-    "fieldCompanyName": "Company name",
-    "@fieldCompanyName": {
-        "description": "Field."
     },
     "fieldPhone": "Phone",
     "@fieldPhone": {
@@ -626,10 +325,6 @@
     "fieldWorkEmail": "Work email",
     "@fieldWorkEmail": {
         "description": "Field."
-    },
-    "companyPlaceholder": "Registered company name",
-    "@companyPlaceholder": {
-        "description": "Example in the company field."
     },
     "fullNamePlaceholder": "Full name",
     "@fullNamePlaceholder": {
@@ -647,42 +342,9 @@
     "@workEmailPlaceholder": {
         "description": "Example in the work email field."
     },
-    "requestAccessNote": "The MarkCliq team reviews every request and onboards your company. Your admin dashboard runs on the web, where you manage your team and customers.",
-    "@requestAccessNote": {
-        "description": "Under the request access form."
-    },
     "sendRequest": "Register company",
     "@sendRequest": {
         "description": "Button."
-    },
-    "haveLoginBefore": "Already have a login? ",
-    "@haveLoginBefore": {
-        "description": "Before the log in link."
-    },
-    "requestSentHeadline": "Request sent.",
-    "@requestSentHeadline": {
-        "description": "Success headline."
-    },
-    "requestSentBody": "MarkCliq has been notified. We will be in touch at {email}.",
-    "@requestSentBody": {
-        "description": "Success text.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
-    "requestLabel": "Request",
-    "@requestLabel": {
-        "description": "Label on the request card."
-    },
-    "underReview": "Under review",
-    "@underReview": {
-        "description": "Status."
-    },
-    "whatHappensNext": "What happens next",
-    "@whatHappensNext": {
-        "description": "Heading of the steps."
     },
     "accessStep1Title": "We check your details",
     "@accessStep1Title": {
@@ -692,61 +354,17 @@
     "@accessStep1Sub": {
         "description": "Step."
     },
-    "accessStep2Title": "We onboard your company",
-    "@accessStep2Title": {
-        "description": "Step."
-    },
-    "accessStep2Sub": "Company details, stages and pricing set up for you",
-    "@accessStep2Sub": {
-        "description": "Step."
-    },
-    "accessStep3Title": "Your admin dashboard goes live",
-    "@accessStep3Title": {
-        "description": "Step."
-    },
-    "accessStep3Sub": "On the web. Add workers and agents, approve expenses, track every customer",
-    "@accessStep3Sub": {
-        "description": "Step."
-    },
     "done": "Done",
     "@done": {
         "description": "Button."
-    },
-    "onboardingByMarkCliq": "Onboarding by MarkCliq",
-    "@onboardingByMarkCliq": {
-        "description": "Footer."
     },
     "close": "Close",
     "@close": {
         "description": "Button."
     },
-    "signupHeadline": "Join SolaCliq.",
-    "@signupHeadline": {
-        "description": "Sign up headline."
-    },
-    "signupSubtitle": "Free for homeowners. Track your solar and get quotes from verified installers.",
-    "@signupSubtitle": {
-        "description": "Sign up subtitle."
-    },
     "fieldFullName": "Full name",
     "@fieldFullName": {
         "description": "Field."
-    },
-    "fieldMobile": "Mobile",
-    "@fieldMobile": {
-        "description": "Field."
-    },
-    "passwordRuleHelp": "At least 8 characters with a number",
-    "@passwordRuleHelp": {
-        "description": "Help under a new password."
-    },
-    "signupNote": "Work for a solar company? Sign up with the email they have for you. Your work screens appear once they add you.",
-    "@signupNote": {
-        "description": "Under the sign up form."
-    },
-    "haveAccountBefore": "Already have an account? ",
-    "@haveAccountBefore": {
-        "description": "Before the log in link."
     },
     "errorPhone": "Enter a 10-digit mobile number.",
     "@errorPhone": {
@@ -760,81 +378,13 @@
     "@errorPasswordsDiffer": {
         "description": "Field error."
     },
-    "verifyBandTitle": "Verify email",
-    "@verifyBandTitle": {
-        "description": "Top row title."
-    },
-    "verifyHeadline": "Check your email.",
-    "@verifyHeadline": {
-        "description": "Verify headline."
-    },
-    "verifySent": "We sent a 6 digit code to {email}",
-    "@verifySent": {
-        "description": "Verify subtitle.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
     "codeLabel": "Code",
     "@codeLabel": {
         "description": "Label above the code boxes."
     },
-    "resendIn": "Resend code in {time}",
-    "@resendIn": {
-        "description": "Countdown before resending.",
-        "placeholders": {
-            "time": {
-                "type": "String"
-            }
-        }
-    },
     "changeEmail": "Change email",
     "@changeEmail": {
         "description": "Link."
-    },
-    "verifyAndContinue": "Verify and continue",
-    "@verifyAndContinue": {
-        "description": "Button."
-    },
-    "forgotHeadline": "Reset your password.",
-    "@forgotHeadline": {
-        "description": "Forgot headline."
-    },
-    "setupHeadline": "Set up your account.",
-    "@setupHeadline": {
-        "description": "First-time set up headline."
-    },
-    "setPasswordTitle": "Set password",
-    "@setPasswordTitle": {
-        "description": "Top row title."
-    },
-    "createPasswordHeadline": "Create your password.",
-    "@createPasswordHeadline": {
-        "description": "Set password headline."
-    },
-    "newPasswordHeadline": "Choose a new password.",
-    "@newPasswordHeadline": {
-        "description": "Reset headline."
-    },
-    "logInWith": "You will log in with {email}",
-    "@logInWith": {
-        "description": "Set password subtitle.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
-    },
-    "codeFromEmail": "Enter the code we sent to {email}.",
-    "@codeFromEmail": {
-        "description": "Above the code boxes.",
-        "placeholders": {
-            "email": {
-                "type": "String"
-            }
-        }
     },
     "fieldConfirmPassword": "Confirm password",
     "@fieldConfirmPassword": {
@@ -848,46 +398,9 @@
     "@ruleNumber": {
         "description": "Password rule."
     },
-    "ruleMatch": "Both passwords match",
-    "@ruleMatch": {
-        "description": "Password rule."
-    },
-    "saveAndLogIn": "Save and log in",
-    "@saveAndLogIn": {
-        "description": "Button."
-    },
-    "brandEyebrow": "SolaCliq · by MarkCliq",
-    "@brandEyebrow": {
-        "description": "Eyebrow at the top of the homes."
-    },
-    "hello": "Hello, {name}",
-    "@hello": {
-        "description": "Greeting on the homes.",
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "personalAccount": "Personal account",
-    "@personalAccount": {
-        "description": "Under the greeting on the personal home."
-    },
     "workspaceLine": "{company} · {role}",
     "@workspaceLine": {
         "description": "Under the greeting on a company home.",
-        "placeholders": {
-            "company": {
-                "type": "String"
-            },
-            "role": {
-                "type": "String"
-            }
-        }
-    },
-    "switchWorkspaceHint": "{company}, {role}. Switch workspace",
-    "@switchWorkspaceHint": {
-        "description": "Spoken label of the workspace chip.",
         "placeholders": {
             "company": {
                 "type": "String"
@@ -904,41 +417,6 @@
     "profileAndWorkspaces": "Profile and workspaces",
     "@profileAndWorkspaces": {
         "description": "Avatar button."
-    },
-    "timeNow": "Now",
-    "@timeNow": {
-        "description": "Notice time."
-    },
-    "timeMinutes": "{n} min",
-    "@timeMinutes": {
-        "description": "Notice time.",
-        "placeholders": {
-            "n": {
-                "type": "String"
-            }
-        }
-    },
-    "timeHours": "{n} hr",
-    "@timeHours": {
-        "description": "Notice time.",
-        "placeholders": {
-            "n": {
-                "type": "String"
-            }
-        }
-    },
-    "timeDays": "{n} d",
-    "@timeDays": {
-        "description": "Notice time.",
-        "placeholders": {
-            "n": {
-                "type": "String"
-            }
-        }
-    },
-    "illustrativeLabel": "Illustrative",
-    "@illustrativeLabel": {
-        "description": "Marks sample data from the development mock."
     },
     "homeLoadFailed": "Couldn't load your home",
     "@homeLoadFailed": {
@@ -968,17 +446,9 @@
     "@tabAddCustomer": {
         "description": "Tab, main action for agents."
     },
-    "tabKyc": "KYC",
-    "@tabKyc": {
-        "description": "Tab."
-    },
     "tabTrack": "Track",
     "@tabTrack": {
         "description": "Tab."
-    },
-    "tabSupport": "Support",
-    "@tabSupport": {
-        "description": "Tab, main action for customers."
     },
     "tabPayments": "Payments",
     "@tabPayments": {
@@ -992,67 +462,9 @@
     "@tabLearn": {
         "description": "Tab."
     },
-    "invitedYou": "{company} invited you",
-    "@invitedYou": {
-        "description": "Invite banner.",
-        "placeholders": {
-            "company": {
-                "type": "String"
-            }
-        }
-    },
-    "toJoinAs": "to join as a {role}",
-    "@toJoinAs": {
-        "description": "Invite banner.",
-        "placeholders": {
-            "role": {
-                "type": "String"
-            }
-        }
-    },
     "review": "Review",
     "@review": {
         "description": "Button."
-    },
-    "quoteEyebrow": "Free solar quote",
-    "@quoteEyebrow": {
-        "description": "Eyebrow on the quote card."
-    },
-    "quoteCardTitle": "Thinking of going solar?",
-    "@quoteCardTitle": {
-        "description": "Quote card."
-    },
-    "quoteCardBody": "Verified solar companies near you can accept your request and contact you directly.",
-    "@quoteCardBody": {
-        "description": "Quote card."
-    },
-    "getSolarQuote": "Get a solar quote",
-    "@getSolarQuote": {
-        "description": "Button."
-    },
-    "statSubsidy": "Subsidy",
-    "@statSubsidy": {
-        "description": "Stat label."
-    },
-    "statSubsidyValue": "₹78,000",
-    "@statSubsidyValue": {
-        "description": "PM Surya Ghar maximum subsidy."
-    },
-    "statSubsidyNote": "max for 3 kW+ homes",
-    "@statSubsidyNote": {
-        "description": "Stat note."
-    },
-    "statTypicalHome": "Typical home",
-    "@statTypicalHome": {
-        "description": "Stat label."
-    },
-    "statTypicalValue": "3 to 5 kW",
-    "@statTypicalValue": {
-        "description": "Stat value."
-    },
-    "statTypicalNote": "for a ₹2,500 to ₹5,000 bill",
-    "@statTypicalNote": {
-        "description": "Stat note."
     },
     "haveInstallerTitle": "Already have an installer?",
     "@haveInstallerTitle": {
@@ -1083,15 +495,6 @@
     "@workspacesNote": {
         "description": "Note in the sheet."
     },
-    "devInviteWaiting": "Mock invite waiting: {state}",
-    "@devInviteWaiting": {
-        "description": "Development only.",
-        "placeholders": {
-            "state": {
-                "type": "String"
-            }
-        }
-    },
     "on": "on",
     "@on": {
         "description": "Development only."
@@ -1108,13 +511,9 @@
     "@quoteHeadline": {
         "description": "Quote headline."
     },
-    "quoteSubtitle": "Two minutes, free. Only verified solar companies see it.",
+    "quoteSubtitle": "Two minutes, free. MarkCliq calls you and finds a verified installer near you.",
     "@quoteSubtitle": {
         "description": "Quote subtitle."
-    },
-    "quoteFor": "Quote for",
-    "@quoteFor": {
-        "description": "Field."
     },
     "quoteForHome": "Home",
     "@quoteForHome": {
@@ -1136,29 +535,9 @@
     "@monthlyBill": {
         "description": "Field."
     },
-    "billUnder1500": "Under ₹1,500",
-    "@billUnder1500": {
-        "description": "Choice."
-    },
-    "bill1500To3000": "₹1,500 to 3,000",
-    "@bill1500To3000": {
-        "description": "Choice."
-    },
-    "bill3000To6000": "₹3,000 to 6,000",
-    "@bill3000To6000": {
-        "description": "Choice."
-    },
-    "billOver6000": "₹6,000+",
-    "@billOver6000": {
-        "description": "Choice."
-    },
     "roof": "Roof",
     "@roof": {
         "description": "Field."
-    },
-    "roofRcc": "RCC (concrete)",
-    "@roofRcc": {
-        "description": "Choice."
     },
     "roofTin": "Tin shed",
     "@roofTin": {
@@ -1184,7 +563,7 @@
     "@whenExploring": {
         "description": "Choice."
     },
-    "quoteConsent": "Share my request with verified solar companies near me. The one that accepts it can contact me on +91 {phone}.",
+    "quoteConsent": "MarkCliq can contact me about solar on +91 {phone}.",
     "@quoteConsent": {
         "description": "Consent line.",
         "placeholders": {
@@ -1192,10 +571,6 @@
                 "type": "String"
             }
         }
-    },
-    "quoteConsentNoPhone": "Share my request with verified solar companies near me. The one that accepts it can contact me on this number.",
-    "@quoteConsentNoPhone": {
-        "description": "Consent line when the number is typed here."
     },
     "getMyQuote": "Get my quote",
     "@getMyQuote": {
@@ -1213,194 +588,25 @@
     "@errorConsent": {
         "description": "Consent error."
     },
-    "quoteSentBody": "Solar companies near {city} can now see it. The one that accepts will contact you directly.",
-    "@quoteSentBody": {
-        "description": "Success text.",
-        "placeholders": {
-            "city": {
-                "type": "String"
-            }
-        }
-    },
     "indicativeEstimate": "Indicative estimate",
     "@indicativeEstimate": {
         "description": "Card label."
     },
-    "kwRange": "{min} to {max} kW",
-    "@kwRange": {
-        "description": "Estimate.",
-        "placeholders": {
-            "min": {
-                "type": "String"
-            },
-            "max": {
-                "type": "String"
-            }
-        }
-    },
-    "priceRange": "₹{min} to {max} lakh",
-    "@priceRange": {
-        "description": "Estimate.",
-        "placeholders": {
-            "min": {
-                "type": "String"
-            },
-            "max": {
-                "type": "String"
-            }
-        }
-    },
-    "subsidyUpTo": "Subsidy up to {amount}",
-    "@subsidyUpTo": {
-        "description": "Estimate.",
-        "placeholders": {
-            "amount": {
-                "type": "String"
-            }
-        }
-    },
-    "beforeSubsidy": "before subsidy",
-    "@beforeSubsidy": {
-        "description": "Estimate."
-    },
-    "quoteStep1Title": "A solar company accepts",
+    "quoteStep1Title": "MarkCliq calls you",
     "@quoteStep1Title": {
         "description": "Step."
-    },
-    "quoteStep1Sub": "Verified companies on SolaCliq near you",
-    "@quoteStep1Sub": {
-        "description": "Step."
-    },
-    "quoteStep2Title": "They contact you directly",
-    "@quoteStep2Title": {
-        "description": "Step."
-    },
-    "quoteStep2Sub": "Call or WhatsApp on +91 {phone}",
-    "@quoteStep2Sub": {
-        "description": "Step.",
-        "placeholders": {
-            "phone": {
-                "type": "String"
-            }
-        }
     },
     "quoteStep3Title": "You decide",
     "@quoteStep3Title": {
         "description": "Step."
     },
-    "quoteStep3Sub": "No obligation. Pick one and track the install here",
-    "@quoteStep3Sub": {
-        "description": "Step."
-    },
-    "estimateNote": "Estimate is based on your bill. Final price comes after the site visit.",
-    "@estimateNote": {
-        "description": "Fine print."
-    },
     "backToHome": "Back to home",
     "@backToHome": {
         "description": "Button."
     },
-    "inviteBandTitle": "Invite",
-    "@inviteBandTitle": {
-        "description": "Top row title."
-    },
-    "inviteHeadline": "Join {company}?",
-    "@inviteHeadline": {
-        "description": "Invite headline.",
-        "placeholders": {
-            "company": {
-                "type": "String"
-            }
-        }
-    },
-    "inviteSubtitle": "They want to add you to their team on SolaCliq.",
-    "@inviteSubtitle": {
-        "description": "Invite subtitle."
-    },
-    "invitedBy": "Invited by {name} · {when}",
-    "@invitedBy": {
-        "description": "Invite card.",
-        "placeholders": {
-            "name": {
-                "type": "String"
-            },
-            "when": {
-                "type": "String"
-            }
-        }
-    },
     "today": "today",
     "@today": {
         "description": "Relative day."
-    },
-    "youllBeAbleTo": "You'll be able to",
-    "@youllBeAbleTo": {
-        "description": "Label."
-    },
-    "workerCan1": "See tasks assigned to you",
-    "@workerCan1": {
-        "description": "Ability."
-    },
-    "workerCan2": "Upload proof photos from site",
-    "@workerCan2": {
-        "description": "Ability."
-    },
-    "workerCan3": "Log expenses for approval",
-    "@workerCan3": {
-        "description": "Ability."
-    },
-    "agentCan1": "Register customers on site",
-    "@agentCan1": {
-        "description": "Ability."
-    },
-    "agentCan2": "Upload their KYC documents",
-    "@agentCan2": {
-        "description": "Ability."
-    },
-    "agentCan3": "Track commission and expenses",
-    "@agentCan3": {
-        "description": "Ability."
-    },
-    "customerCan1": "Follow every stage of your install",
-    "@customerCan1": {
-        "description": "Ability."
-    },
-    "customerCan2": "See your costs and payments",
-    "@customerCan2": {
-        "description": "Ability."
-    },
-    "customerCan3": "Talk to your installer",
-    "@customerCan3": {
-        "description": "Ability."
-    },
-    "companyWillSee": "{company} will see",
-    "@companyWillSee": {
-        "description": "Label.",
-        "placeholders": {
-            "company": {
-                "type": "String"
-            }
-        }
-    },
-    "companySeesWork": "Your name, email and phone, plus the task updates, photos and expenses you send them.",
-    "@companySeesWork": {
-        "description": "What the company sees (worker, agent)."
-    },
-    "companySeesCustomer": "Your name, email and phone, and the documents for your install.",
-    "@companySeesCustomer": {
-        "description": "What the company sees (customer)."
-    },
-    "invitePrivacy": "Your personal quotes stay private. If you leave the company, you keep your account.",
-    "@invitePrivacy": {
-        "description": "Note."
-    },
-    "acceptAndJoin": "Accept and join",
-    "@acceptAndJoin": {
-        "description": "Button."
-    },
-    "decline": "Decline",
-    "@decline": {
-        "description": "Button."
     },
     "welcomeBody": "Track projects, KYC, proof photos and expenses with your installer and your team.",
     "@welcomeBody": {
@@ -1694,15 +900,6 @@
     "@subsidyDetail": {
         "description": "Under the subsidy figure."
     },
-    "inviteLine": "to join as a {role}",
-    "@inviteLine": {
-        "description": "Invite banner.",
-        "placeholders": {
-            "role": {
-                "type": "String"
-            }
-        }
-    },
     "freeQuote": "Free solar quote",
     "@freeQuote": {
         "description": "Eyebrow on the quote card."
@@ -1759,14 +956,6 @@
     "@done2": {
         "description": "Sheet close link."
     },
-    "roleWorker2": "Worker",
-    "@roleWorker2": {
-        "description": "Role."
-    },
-    "tabEnergy": "Energy",
-    "@tabEnergy": {
-        "description": "Tab."
-    },
     "quoteFor2": "Quote for",
     "@quoteFor2": {
         "description": "Spoken segment label."
@@ -1791,7 +980,7 @@
     "@roofRcc2": {
         "description": "Chip."
     },
-    "quoteConsent2": "Share my request with verified solar companies near me",
+    "quoteConsent2": "MarkCliq can contact me about solar",
     "@quoteConsent2": {
         "description": "Consent toggle."
     },
@@ -1823,15 +1012,15 @@
     "@estimateNote2": {
         "description": "Estimate note."
     },
-    "quoteStep1Sub2": "Verified installers near you",
+    "quoteStep1Sub2": "To understand your home and bill",
     "@quoteStep1Sub2": {
         "description": "Step."
     },
-    "quoteStep2Title2": "They contact you",
+    "quoteStep2Title2": "We find your installer",
     "@quoteStep2Title2": {
         "description": "Step."
     },
-    "quoteStep2Sub2": "Call or WhatsApp, directly",
+    "quoteStep2Sub2": "A verified solar company near you",
     "@quoteStep2Sub2": {
         "description": "Step."
     },
@@ -1839,7 +1028,7 @@
     "@quoteStep3Sub2": {
         "description": "Step."
     },
-    "quoteSentBody2": "Solar companies near {city} can now see it. The one that accepts will contact you directly.",
+    "quoteSentBody2": "MarkCliq has your request and will call you about solar in {city}.",
     "@quoteSentBody2": {
         "description": "Success text.",
         "placeholders": {
@@ -1848,71 +1037,9 @@
             }
         }
     },
-    "mobileForQuote": "Mobile for the installer to call",
+    "mobileForQuote": "Mobile for MarkCliq to call",
     "@mobileForQuote": {
         "description": "Field label when no phone is on file."
-    },
-    "invitedByAdmin": "Invited by {name}, Admin",
-    "@invitedByAdmin": {
-        "description": "Pill.",
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "workerCan1Sub": "Daily jobs and site details",
-    "@workerCan1Sub": {
-        "description": "Ability."
-    },
-    "workerCan2b": "Upload proof photos",
-    "@workerCan2b": {
-        "description": "Ability."
-    },
-    "workerCan2Sub": "From site, stage by stage",
-    "@workerCan2Sub": {
-        "description": "Ability."
-    },
-    "workerCan3b": "Log expenses",
-    "@workerCan3b": {
-        "description": "Ability."
-    },
-    "workerCan3Sub": "Sent to your admin to approve",
-    "@workerCan3Sub": {
-        "description": "Ability."
-    },
-    "agentCan1Sub": "Details, site and KYC in one go",
-    "@agentCan1Sub": {
-        "description": "Ability."
-    },
-    "agentCan2Sub": "Photo or file, all four corners",
-    "@agentCan2Sub": {
-        "description": "Ability."
-    },
-    "agentCan3Sub": "Approved by your admin",
-    "@agentCan3Sub": {
-        "description": "Ability."
-    },
-    "customerCan1Sub": "From survey to handover",
-    "@customerCan1Sub": {
-        "description": "Ability."
-    },
-    "customerCan2Sub": "Every payment and the subsidy",
-    "@customerCan2Sub": {
-        "description": "Ability."
-    },
-    "customerCan3Sub": "Questions answered in the app",
-    "@customerCan3Sub": {
-        "description": "Ability."
-    },
-    "invitePrivacy2": "{company} will see your name, email and phone. Your personal quotes stay private.",
-    "@invitePrivacy2": {
-        "description": "Note.",
-        "placeholders": {
-            "company": {
-                "type": "String"
-            }
-        }
     },
     "logExpense": "Log expense",
     "@logExpense": {
@@ -2030,14 +1157,6 @@
                 "type": "String"
             }
         }
-    },
-    "receiptAttached": "receipt attached",
-    "@receiptAttached": {
-        "description": "Row detail."
-    },
-    "noReceipt": "no receipt",
-    "@noReceipt": {
-        "description": "Row detail."
     },
     "takePhoto": "Take photo",
     "@takePhoto": {
@@ -2519,10 +1638,6 @@
                 "type": "String"
             }
         }
-    },
-    "connectionLabel": "Connection",
-    "@connectionLabel": {
-        "description": "Spoken segment label."
     },
     "docShortAadhaar": "Aadhaar",
     "@docShortAadhaar": {
@@ -3482,10 +2597,6 @@
             }
         }
     },
-    "loadFailed": "Couldn't load this",
-    "@loadFailed": {
-        "description": "Title when a screen fails to load."
-    },
     "searchCustomers": "Search by name or phone",
     "@searchCustomers": {
         "description": "Search field placeholder."
@@ -3527,17 +2638,9 @@
     "@installProgress": {
         "description": "Section."
     },
-    "notStarted": "Not started",
-    "@notStarted": {
-        "description": "Install not started."
-    },
     "startsAfterKyc": "Starts after KYC",
     "@startsAfterKyc": {
         "description": "Install waits for KYC approval."
-    },
-    "handover": "Handover",
-    "@handover": {
-        "description": "Last install stage."
     },
     "stageXofY": "Stage {n} of {total}",
     "@stageXofY": {
@@ -3887,15 +2990,6 @@
             }
         }
     },
-    "dueOnPill": "Due {date}",
-    "@dueOnPill": {
-        "description": "Pill.",
-        "placeholders": {
-            "date": {
-                "type": "String"
-            }
-        }
-    },
     "bookedOnceReceived": "Your install is booked once {org} receives this.",
     "@bookedOnceReceived": {
         "description": "Due payment explanation.",
@@ -4036,7 +3130,7 @@
     "@notificationsSubCustomer": {
         "description": "Row subtitle."
     },
-    "notificationsSubUser": "Quotes and invites",
+    "notificationsSubUser": "Quotes and guides",
     "@notificationsSubUser": {
         "description": "Row subtitle."
     },

@@ -1,7 +1,6 @@
 import 'package:api_client/api_client.dart' as api;
 import 'package:equatable/equatable.dart';
 import 'package:solacliq/app/data/api_call.dart';
-import 'package:uuid/uuid.dart';
 
 enum QuoteFor { home, business, farm }
 
@@ -36,9 +35,11 @@ class QuoteRepository {
   new(this._api);
 
   final api.QuotesApi _api;
-  static const _uuid = Uuid();
 
+  /// Pass the same [idempotencyKey] when retrying, so a retry never
+  /// sends the lead twice.
   Future<QuoteEstimate> request({
+    required String idempotencyKey,
     required QuoteFor quoteFor,
     required String pinCode,
     required String city,
@@ -49,7 +50,7 @@ class QuoteRepository {
   }) async {
     final response = await apiCall(
       () => _api.createQuoteRequest(
-        idempotencyKey: _uuid.v4(),
+        idempotencyKey: idempotencyKey,
         quoteRequestCreate: api.QuoteRequestCreate(
           quoteFor: switch (quoteFor) {
             QuoteFor.home => api.QuoteFor.home,

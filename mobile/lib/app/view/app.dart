@@ -17,7 +17,6 @@ import 'package:solacliq/expenses/data/expense_repository.dart';
 import 'package:solacliq/health/data/health_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/install/data/install_repository.dart';
-import 'package:solacliq/invites/data/invite_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
@@ -134,9 +133,6 @@ class _AppState extends State<App> {
           create: (_) => CompanyRegistrationRepository(_api.getOnboardingApi()),
         ),
         RepositoryProvider(create: (_) => HomeRepository(_api.getHomeApi())),
-        RepositoryProvider(
-          create: (_) => InviteRepository(_api.getOnboardingApi(), _auth),
-        ),
         RepositoryProvider(create: (_) => QuoteRepository(_api.getQuotesApi())),
         RepositoryProvider(
           create: (_) => UploadRepository(_api.getUploadsApi(), _transfer),

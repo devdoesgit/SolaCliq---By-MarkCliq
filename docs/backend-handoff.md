@@ -36,6 +36,7 @@ From `architecture.md`, restated where the app depends on them:
   | `validation.failed` | 422 | Any other field error |
   | `registration.bank_proof_required` | 422 | Subsidy on, no bank proof |
   | `registration.document_required` | 422 | A required document is missing |
+  | `idempotency.key_reused` | 422 | An Idempotency-Key reused for a different request |
   | `registration.commission_not_allowed` | 422 | Salaried agent sent a commission |
   | `task.incomplete` | 422 | Submit with photos or checklist missing |
   | `task.locked` | 409 | Change to a task not with the worker |
@@ -81,17 +82,14 @@ milestone, top to bottom.
 | 9 | `POST /auth/password/reset` | public | `ResetPasswordRequest` | 204 | Revokes all sessions; also verifies the email |
 | 10 | `GET /me` | auth | — | `Me` | **Drives the whole app.** `memberships[]` with `org {id, name, status, phone}`, `role`, and for agents `pay_type` (`commission`/`salary`) |
 
-### M2. Personal workspace and joining a company
+### M2. Personal workspace and registering a company
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
 | 11 | `POST /org-registrations` | public | `OrgRegistrationCreate` | 202 | **Built (phase 4).** Company registers: GSTIN checked (checksum; PAN and state from it), saved `pending` with the owner (no password) as `org_admin`. Emails MarkCliq (`REVIEW_EMAIL`) and the owner |
-| 12 | `POST /quote-requests` | auth, *idem* | `QuoteRequestCreate` | `QuoteRequest` | Lead for verified EPCs near the PIN code. Returns the indicative estimate |
-| 13 | `GET /me/invites` | auth | — | `InviteList` | Pending invites for the caller's email |
-| 14 | `POST /invites/{invite_id}/accept` | auth | — | `Me` | Creates the membership; returns the updated `Me` |
-| 15 | `POST /invites/{invite_id}/decline` | auth | — | 204 | |
-| 16 | `GET /me/notifications` | auth | cursor | `NotificationPage` | Personal only: `quote_shared`, `invite_received`, `guide` |
-| 17 | `GET /me/details` | auth | — | `PersonalDetails` | Phone, address, emergency contact, payout bank. Bank comes back as `account_last4` + `bank_name`, **never** the full number |
+| 12 | `POST /quote-requests` | auth, *idem* | `QuoteRequestCreate` | `QuoteRequest` | **Built (phase 6).** A lead for MarkCliq (`REVIEW_EMAIL`), with a general estimate from the bill band; a `quote_shared` notification |
+| 16 | `GET /me/notifications` | auth | cursor | `NotificationPage` | **Built (phase 6).** Personal only: `quote_shared`, `guide`. `POST /me/notifications/read` marks them read |
+| 17 | `GET /me/details` | auth | — | `PersonalDetails` | **Built (phase 6), with 18–20.** Phone, address, emergency contact, payout bank. Bank comes back as `account_last4` + `bank_name`, **never** the full number |
 | 18 | `PUT /me/details` | auth | `PersonalDetails` | `PersonalDetails` | Partial: only fields sent change. A bank needs `account_number` + `ifsc`; fill `bank_name` from the IFSC. Encrypt the account number at rest |
 | 19 | `GET /me/settings` | auth | — | `Settings` | Defaults: push on, WhatsApp off, sound on, `en` |
 | 20 | `PUT /me/settings` | auth | `Settings` | `Settings` | Whole object |
@@ -207,7 +205,7 @@ may change the amount: keep the agent's as `proposed_amount` and add an
 | KYC returned / submitted / approved, install started | `kyc_*`, `install_started` | agent | `customer_id` |
 | Commission changed / payable / paid | `commission_*` | commission agent | `customer_id` |
 | Visit booked, payment due, documents verified | `visit_booked`, `payment_due`, `documents_verified` | customer | — (opens Track, Payments, Documents) |
-| Quote shared, invite received, new guide | `quote_shared`, `invite_received`, `guide` | person (`/me/notifications`) | — |
+| Quote sent, new guide | `quote_shared`, `guide` | person (`/me/notifications`) | — |
 
 ## Not in the contract yet: the admin actions behind this data
 
@@ -226,6 +224,8 @@ backend command or SQL so the app has real data:
 
 ## Not needed
 
+- No invites (dropped 2026-11-15): adding a member is direct (team
+  endpoints).
 - No customer chat (dropped 2026-10-27). The only messages are a worker's
   replies on a task (`POST .../tasks/{task_id}/messages`).
 - No earnings endpoint: summed in the app from `my-customers`.

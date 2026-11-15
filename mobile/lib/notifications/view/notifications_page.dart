@@ -13,8 +13,8 @@ import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 
 /// What changed for the person in this company (tasks, expenses,
-/// customers, their install), or with no [orgId] their own quotes,
-/// invites and guides. One that belongs to a tab of the home closes the
+/// customers, their install), or with no [orgId] their own quotes and
+/// guides. One that belongs to a tab of the home closes the
 /// page with that tab's key ([NotificationTab]).
 class NotificationsPage extends StatefulWidget {
   const new({
@@ -63,11 +63,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final items = _items;
     if (items == null) return;
     setState(() => _items = [for (final n in items) n.markRead()]);
-    final orgId = widget.orgId;
-    // The person's own notifications are marked read as they are opened.
-    if (orgId == null) return;
     try {
-      await _repo.markAllRead(orgId);
+      await _repo.markAllRead(widget.orgId);
     } on AuthFailure {
       // Not important enough to stop the person; the dots return on reload.
     }
@@ -248,7 +245,6 @@ class _Icon extends StatelessWidget {
       NotificationKind.visitBooked => (SolaIcons.alarm, SolaTone.warning),
       NotificationKind.paymentDue => (SolaIcons.wallet, SolaTone.danger),
       NotificationKind.quoteShared => (SolaIcons.sun, SolaTone.success),
-      NotificationKind.inviteReceived => (SolaIcons.building, SolaTone.warning),
       NotificationKind.guide => (SolaIcons.file, SolaTone.quiet),
     };
     return SolaAvatar(

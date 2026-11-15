@@ -16,6 +16,7 @@ import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/quotes/data/quote_repository.dart';
 import 'package:solacliq/quotes/view/quote_sent_page.dart';
+import 'package:uuid/uuid.dart';
 
 /// Asks verified companies nearby for a solar quote: what for, where, the
 /// bill, the roof and when. Becomes a lead; the company that accepts calls.
@@ -52,6 +53,10 @@ class _QuoteRequestViewState extends State<QuoteRequestView> {
   QuoteTimeline? _when;
   bool _consent = false;
   final _errors = <String, String?>{};
+
+  /// One per form: a retry after a lost response sends the same key, so
+  /// the lead is saved once.
+  final String _idempotencyKey = const Uuid().v4();
 
   bool get _needsPhone => widget.account.phone == null;
 
@@ -96,6 +101,7 @@ class _QuoteRequestViewState extends State<QuoteRequestView> {
         : widget.account.phone!;
     await context.read<SubmitCubit>().submit(() async {
       final estimate = await quotes.request(
+        idempotencyKey: _idempotencyKey,
         quoteFor: _for,
         pinCode: _pin.text.trim(),
         city: city,

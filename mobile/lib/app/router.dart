@@ -26,8 +26,6 @@ import 'package:solacliq/expenses/view/expense_page.dart';
 import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/gallery/view/gallery_page.dart';
 import 'package:solacliq/home/view/home_page.dart';
-import 'package:solacliq/invites/data/invite_repository.dart';
-import 'package:solacliq/invites/view/invite_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
@@ -168,15 +166,6 @@ class AppRouter {
               state.extra is QuoteSentArgs ? null : AppRoutes.home,
           builder: (context, state) =>
               QuoteSentPage(args: state.extra! as QuoteSentArgs),
-        ),
-        GoRoute(
-          path: '${AppRoutes.invite}/:id',
-          // The invite comes from the home's banner; without it (a fresh
-          // start) the banner is the way back in.
-          redirect: (context, state) =>
-              state.extra is Invite ? null : AppRoutes.home,
-          builder: (context, state) =>
-              InvitePage(invite: state.extra! as Invite),
         ),
         GoRoute(
           path: AppRoutes.expense,

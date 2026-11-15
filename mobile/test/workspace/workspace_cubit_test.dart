@@ -135,14 +135,6 @@ void main() {
       expect((cubit.state as WorkspaceReady).current, MemberWorkspace(worker));
     });
 
-    test('chooseOrg waits for the account that has the company', () async {
-      final cubit = await build(signedIn(const []));
-      final choosing = cubit.chooseOrg(worker.orgId);
-      await emitAuth(signedIn([worker]));
-      await choosing;
-      expect((cubit.state as WorkspaceReady).current, MemberWorkspace(worker));
-    });
-
     test('log out forgets the choice', () async {
       final cubit = await build(signedIn([worker, agent]));
       await cubit.choose(MemberWorkspace(agent));

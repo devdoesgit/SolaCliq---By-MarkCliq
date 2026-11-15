@@ -19,8 +19,8 @@ class QuotesApi {
 
   const QuotesApi(this._dio);
 
-  /// Ask verified solar companies nearby for a quote
-  /// Creates a lead that companies near the PIN code can accept; the one that accepts contacts the person on their phone (the account&#39;s, or &#x60;phone&#x60; here if the account has none; 422 &#x60;quote.phone_required&#x60; if neither). Returns an indicative estimate from the bill band.
+  /// Ask for a solar quote
+  /// Saves a lead and emails it to MarkCliq (&#x60;REVIEW_EMAIL&#x60;), who calls the person on their phone (the account&#39;s, or &#x60;phone&#x60; here if the account has none; 422 &#x60;quote.phone_required&#x60; if neither). The person gets a &#x60;quote_shared&#x60; notification. Returns a general, indicative estimate from the bill band. Companies accepting leads comes with the admin website.
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.

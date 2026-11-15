@@ -92,10 +92,8 @@ Class | Method | HTTP request | Description
 [*InstallApi*](doc/InstallApi.md) | [**getMyInstall**](doc/InstallApi.md#getmyinstall) | **GET** /orgs/{org_id}/my-install | The caller&#39;s own install with this company
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listMyNotifications**](doc/NotificationsApi.md#listmynotifications) | **GET** /me/notifications | The caller&#39;s own notifications, outside any company
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listNotifications**](doc/NotificationsApi.md#listnotifications) | **GET** /orgs/{org_id}/notifications | The caller&#39;s notifications in this company, newest first
+[*NotificationsApi*](doc/NotificationsApi.md) | [**markMyNotificationsRead**](doc/NotificationsApi.md#markmynotificationsread) | **POST** /me/notifications/read | Mark all of the caller&#39;s own notifications as read
 [*NotificationsApi*](doc/NotificationsApi.md) | [**markNotificationsRead**](doc/NotificationsApi.md#marknotificationsread) | **POST** /orgs/{org_id}/notifications/read | Mark all of the caller&#39;s notifications here as read
-[*OnboardingApi*](doc/OnboardingApi.md) | [**acceptInvite**](doc/OnboardingApi.md#acceptinvite) | **POST** /invites/{invite_id}/accept | Join the company that sent the invite
-[*OnboardingApi*](doc/OnboardingApi.md) | [**declineInvite**](doc/OnboardingApi.md#declineinvite) | **POST** /invites/{invite_id}/decline | Turn down an invite
-[*OnboardingApi*](doc/OnboardingApi.md) | [**listMyInvites**](doc/OnboardingApi.md#listmyinvites) | **GET** /me/invites | Invites waiting for the signed-in person
 [*OnboardingApi*](doc/OnboardingApi.md) | [**registerOrg**](doc/OnboardingApi.md#registerorg) | **POST** /org-registrations | A solar company registers with SolaCliq
 [*PlatformApi*](doc/PlatformApi.md) | [**getPlatformOrg**](doc/PlatformApi.md#getplatformorg) | **GET** /platform/orgs/{org_id} | One company&#39;s registration details
 [*PlatformApi*](doc/PlatformApi.md) | [**listPlatformOrgs**](doc/PlatformApi.md#listplatformorgs) | **GET** /platform/orgs | Every company, newest first
@@ -105,7 +103,7 @@ Class | Method | HTTP request | Description
 [*ProfileApi*](doc/ProfileApi.md) | [**listMyDocuments**](doc/ProfileApi.md#listmydocuments) | **GET** /orgs/{org_id}/me/documents | The caller&#39;s documents this company holds
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMyDetails**](doc/ProfileApi.md#updatemydetails) | **PUT** /me/details | Change the caller&#39;s personal details or payout bank
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMySettings**](doc/ProfileApi.md#updatemysettings) | **PUT** /me/settings | Change the caller&#39;s settings
-[*QuotesApi*](doc/QuotesApi.md) | [**createQuoteRequest**](doc/QuotesApi.md#createquoterequest) | **POST** /quote-requests | Ask verified solar companies nearby for a quote
+[*QuotesApi*](doc/QuotesApi.md) | [**createQuoteRequest**](doc/QuotesApi.md#createquoterequest) | **POST** /quote-requests | Ask for a solar quote
 [*SystemApi*](doc/SystemApi.md) | [**getHealth**](doc/SystemApi.md#gethealth) | **GET** /health | Service health
 [*TasksApi*](doc/TasksApi.md) | [**addTaskPhoto**](doc/TasksApi.md#addtaskphoto) | **POST** /orgs/{org_id}/tasks/{task_id}/photos | Attach a proof photo to one of the task&#39;s photo slots
 [*TasksApi*](doc/TasksApi.md) | [**getMyStats**](doc/TasksApi.md#getmystats) | **GET** /orgs/{org_id}/me/stats | The caller&#39;s work this month, for their profile
@@ -167,9 +165,6 @@ Class | Method | HTTP request | Description
  - [InstallNextVisitPerson](doc/InstallNextVisitPerson.md)
  - [InstallPayment](doc/InstallPayment.md)
  - [InstallStage](doc/InstallStage.md)
- - [Invite](doc/Invite.md)
- - [InviteList](doc/InviteList.md)
- - [InviteOrg](doc/InviteOrg.md)
  - [KycKind](doc/KycKind.md)
  - [KycStatus](doc/KycStatus.md)
  - [LoginRequest](doc/LoginRequest.md)

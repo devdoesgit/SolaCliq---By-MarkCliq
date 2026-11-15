@@ -71,27 +71,6 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     await _store.write(workspace.id);
   }
 
-  /// Switches to the workspace for [orgId], once the account has it (just
-  /// after accepting an invite).
-  Future<void> chooseOrg(String orgId) async {
-    bool hasOrg(WorkspaceState state) =>
-        state is WorkspaceReady &&
-        state.options.any((o) => o is MemberWorkspace && o.orgId == orgId);
-    // The new account reaches this cubit through the auth stream, a moment
-    // after the caller applied it.
-    final ready = hasOrg(state)
-        ? state
-        : await stream
-              .firstWhere(hasOrg)
-              .timeout(const Duration(seconds: 5), onTimeout: () => state);
-    if (ready is! WorkspaceReady) return;
-    for (final option in ready.options) {
-      if (option is MemberWorkspace && option.orgId == orgId) {
-        return await choose(option);
-      }
-    }
-  }
-
   static WorkspaceState _resolve(Account account, String? preferredId) {
     final companies = companyWorkspaces(account);
     final isAdmin = account.memberships.any((m) => m.role == OrgRole.orgAdmin);

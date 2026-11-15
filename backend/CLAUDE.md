@@ -35,6 +35,8 @@ cargo run -- make-platform-admin <email>
   new one, and give a new enum value its own migration before anything
   uses it.
 - Emails go through `state.mailer` after the transaction commits.
+- App writes marked *idem* take `IdempotencyKey` and follow the pattern
+  in `idempotency.rs`.
 - Lists page with `page.rs` (`?cursor=&limit=`, newest first).
 - Env: `.env.example` lists every variable; `APP_ENV` unset = production.
 
@@ -44,11 +46,13 @@ cargo run -- make-platform-admin <email>
   `make-platform-admin`), migrations at start, graceful shutdown.
 - `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
-  `registration` and `platform` (F2); merged in `routes/mod.rs`.
+  `registration` and `platform` (F2), `quotes` and `profile` (phase 6);
+  merged in `routes/mod.rs`.
 - `src/org.rs`: role, pay type, status and business type enums
   (`sqlx::Type`), `OrgMember`, `PlatformAdmin`.
 - `src/session.rs`, `src/codes.rs`, `src/password.rs`: tokens, email
   codes, Argon2. `src/mail.rs`: the `Mailer` trait.
 - `src/gstin.rs`, `src/validate.rs`, `src/page.rs`: shared checks and
-  paging. `src/seed.rs`: the seed and platform-admin commands.
+  paging. `src/idempotency.rs`, `src/notify.rs` (notifications),
+  `src/bank.rs` (encryption, bank names). `src/seed.rs`: the seed and platform-admin commands.
 - `tests/`: one file per area; helpers in `tests/common/mod.rs`.

@@ -212,7 +212,7 @@ fn validate_registration(req: OrgRegistrationCreate) -> ApiResult<ValidRegistrat
     if !within(&city, 80) {
         errors.push(("city", "Enter the city."));
     }
-    if !is_pin_code(&pin_code) {
+    if !validate::is_pin_code(&pin_code) {
         errors.push(("pin_code", "Enter the 6-digit PIN code."));
     }
     if !within(&owner_name, 100) {
@@ -272,11 +272,6 @@ fn optional(value: Option<String>) -> Option<String> {
 // Not blank, and at most `max` characters.
 fn within(value: &str, max: usize) -> bool {
     !value.is_empty() && value.chars().count() <= max
-}
-
-// `^[1-9][0-9]{5}$`: Indian PIN codes don't start with 0.
-fn is_pin_code(pin: &str) -> bool {
-    pin.len() == 6 && !pin.starts_with('0') && pin.chars().all(|c| c.is_ascii_digit())
 }
 
 fn gstin_taken() -> ApiError {

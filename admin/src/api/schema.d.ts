@@ -405,70 +405,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/me/invites": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Invites waiting for the signed-in person
-         * @description Shown as a banner on the personal home until answered.
-         */
-        get: operations["listMyInvites"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/invites/{invite_id}/accept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invite_id: components["parameters"]["InviteId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Join the company that sent the invite
-         * @description Adds the membership and returns the updated person.
-         */
-        post: operations["acceptInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/invites/{invite_id}/decline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invite_id: components["parameters"]["InviteId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Turn down an invite
-         * @description The person keeps their account; nothing is shared.
-         */
-        post: operations["declineInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/quote-requests": {
         parameters: {
             query?: never;
@@ -479,11 +415,13 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Ask verified solar companies nearby for a quote
-         * @description Creates a lead that companies near the PIN code can accept; the one
-         *     that accepts contacts the person on their phone (the account's, or
-         *     `phone` here if the account has none; 422 `quote.phone_required` if
-         *     neither). Returns an indicative estimate from the bill band.
+         * Ask for a solar quote
+         * @description Saves a lead and emails it to MarkCliq (`REVIEW_EMAIL`), who calls
+         *     the person on their phone (the account's, or `phone` here if the
+         *     account has none; 422 `quote.phone_required` if neither). The
+         *     person gets a `quote_shared` notification. Returns a general,
+         *     indicative estimate from the bill band. Companies accepting leads
+         *     comes with the admin website.
          */
         post: operations["createQuoteRequest"];
         delete?: never;
@@ -1104,11 +1042,31 @@ export interface paths {
         };
         /**
          * The caller's own notifications, outside any company
-         * @description Quote requests, invites and guides, for the Personal workspace.
+         * @description Quote requests and guides, for the Personal workspace.
          */
         get: operations["listMyNotifications"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark all of the caller's own notifications as read
+         * @description The "Read all" link in the Personal workspace.
+         */
+        post: operations["markMyNotificationsRead"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1572,24 +1530,6 @@ export interface components {
             status: "active" | "rejected" | "suspended";
             /** @description Required to reject; emailed to the owner. */
             note?: string;
-        };
-        Invite: {
-            id: components["schemas"]["Id"];
-            org: {
-                id: components["schemas"]["Id"];
-                /** @example Example Solar (illustrative) */
-                name: string;
-            };
-            role: components["schemas"]["Role"];
-            /**
-             * @description Name of the admin who sent it.
-             * @example Dev Example (illustrative)
-             */
-            invited_by: string;
-            invited_at: components["schemas"]["Timestamp"];
-        };
-        InviteList: {
-            items: components["schemas"]["Invite"][];
         };
         /** @enum {string} */
         QuoteFor: "home" | "business" | "farm";
@@ -2185,7 +2125,7 @@ export interface components {
         Notification: {
             id: components["schemas"]["Id"];
             /** @enum {string} */
-            kind: "task_assigned" | "task_approved" | "task_returned" | "task_cancelled" | "task_rescheduled" | "expense_approved" | "expense_returned" | "expense_paid" | "kyc_returned" | "kyc_submitted" | "kyc_approved" | "install_started" | "commission_changed" | "commission_payable" | "commission_paid" | "visit_booked" | "payment_due" | "documents_verified" | "quote_shared" | "invite_received" | "guide";
+            kind: "task_assigned" | "task_approved" | "task_returned" | "task_cancelled" | "task_rescheduled" | "expense_approved" | "expense_returned" | "expense_paid" | "kyc_returned" | "kyc_submitted" | "kyc_approved" | "install_started" | "commission_changed" | "commission_payable" | "commission_paid" | "visit_booked" | "payment_due" | "documents_verified" | "quote_shared" | "guide";
             title: string;
             body: string;
             at: components["schemas"]["Timestamp"];
@@ -2444,7 +2384,6 @@ export interface components {
         CustomerId: components["schemas"]["Id"];
         TaskId: components["schemas"]["Id"];
         ExpenseId: components["schemas"]["Id"];
-        InviteId: components["schemas"]["Id"];
         /**
          * @description The org the request is for; the caller needs a membership in it.
          *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
@@ -2952,74 +2891,6 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
-        };
-    };
-    listMyInvites: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Pending invites, newest first. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InviteList"];
-                };
-            };
-            401: components["responses"]["Problem"];
-        };
-    };
-    acceptInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invite_id: components["parameters"]["InviteId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Joined. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Me"];
-                };
-            };
-            401: components["responses"]["Problem"];
-            404: components["responses"]["Problem"];
-            409: components["responses"]["Problem"];
-        };
-    };
-    declineInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invite_id: components["parameters"]["InviteId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Declined; the company is told. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Problem"];
-            404: components["responses"]["Problem"];
         };
     };
     createQuoteRequest: {
@@ -3842,6 +3713,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listMyNotifications: {
@@ -3866,6 +3738,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotificationPage"];
                 };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    markMyNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["Problem"];
         };

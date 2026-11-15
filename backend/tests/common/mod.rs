@@ -26,6 +26,10 @@ pub fn state(db: &PgPool) -> AppState {
         mailer: Arc::new(Outbox),
         code_secret: CodeSecret::new(b"test-secret-at-least-32-bytes-long".to_vec()),
         review_email: "review@example.com".into(),
+        bank_key: backend::bank::BankKey::from_hex(
+            "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        )
+        .unwrap(),
     }
 }
 
@@ -233,11 +237,26 @@ pub async fn token(db: &PgPool, email: &str) -> String {
 
 // Any method, with a bearer token and an optional JSON body.
 pub async fn call(db: &PgPool, method: &str, path: &str, token: &str, body: Option<Value>) -> Res {
-    let req = Request::builder()
+    call_with(db, method, path, token, body, &[]).await
+}
+
+// `call`, plus extra headers (an Idempotency-Key, say).
+pub async fn call_with(
+    db: &PgPool,
+    method: &str,
+    path: &str,
+    token: &str,
+    body: Option<Value>,
+    headers: &[(&str, &str)],
+) -> Res {
+    let mut req = Request::builder()
         .method(method)
         .uri(path)
         .header("authorization", format!("Bearer {token}"))
         .header("content-type", "application/json");
+    for (name, value) in headers {
+        req = req.header(*name, *value);
+    }
     let body = body.map_or_else(Body::empty, |b| Body::from(b.to_string()));
     send(db, req.body(body).unwrap()).await
 }
