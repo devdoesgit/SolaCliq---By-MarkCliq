@@ -25,7 +25,7 @@ use crate::{
     codes::{self, Purpose},
     error::{ApiError, ApiResult, FieldError},
     extract::{ApiJson, AuthUser, REFRESH_COOKIE, SESSION_COOKIE, cookie},
-    mail::Email,
+    mail::{Email, template::Message},
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
@@ -604,16 +604,24 @@ async fn send_code(
 }
 
 fn already_registered_email(to: &str) -> Email {
-    Email {
-        to: to.to_owned(),
-        subject: format!("You already have a {PRODUCT_NAME} account"),
-        body: format!(
-            "Someone tried to sign up to {PRODUCT_NAME} with this email, \
-             which already has an account.\n\n\
-             If it was you, log in, or use \"Forgot password\" if you don't \
-             remember your password. If it wasn't you, ignore this email."
+    Message {
+        heading: "You already have an account".into(),
+        before: vec![format!(
+            "Someone tried to sign up to {PRODUCT_NAME} with this email address, \
+             which already has an account."
+        )],
+        details: Vec::new(),
+        after: vec![
+            "If it was you, log in. If you don't remember your password, tap \
+             \"Forgot password?\" on the log in screen and we'll email you a code."
+                .into(),
+        ],
+        sign_off: true,
+        reason: Some(
+            "If this wasn't you, ignore this email: nothing has changed on your account.".into(),
         ),
     }
+    .email(to, format!("You already have a {PRODUCT_NAME} account"))
 }
 
 // 422 `auth.password_too_weak`, shown under `field`.

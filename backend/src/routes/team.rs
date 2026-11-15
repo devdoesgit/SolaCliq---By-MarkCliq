@@ -20,7 +20,7 @@ use crate::{
     AppState, PRODUCT_NAME,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
-    mail::Email,
+    mail::{Email, template::Message},
     org::{Admins, OrgMember, PayType, Role},
     page::{Cursor, Page, PageInfo},
     validate,
@@ -449,12 +449,11 @@ async fn remove_member(
     - an existing account: that they were added
 */
 fn added_email(to: &str, org_name: &str, new_account: bool) -> Email {
-    let (subject, body) = if new_account {
+    let (subject, after) = if new_account {
         (
             format!("{org_name} added you on {PRODUCT_NAME}"),
             format!(
-                "{org_name} added you to their team on {PRODUCT_NAME}.\n\n\
-                 To set up your account, open the {PRODUCT_NAME} app, tap \
+                "To set up your account, open the {PRODUCT_NAME} app, tap \
                  \"Log in\", then \"Forgot password?\", and enter this email \
                  address. We'll email you a code to set your password."
             ),
@@ -462,15 +461,21 @@ fn added_email(to: &str, org_name: &str, new_account: bool) -> Email {
     } else {
         (
             format!("You've been added to {org_name}"),
-            format!(
-                "{org_name} added you to their team on {PRODUCT_NAME}.\n\n\
-                 Log in as usual: {org_name} now appears in your workspaces."
-            ),
+            format!("Log in as usual: {org_name} now appears in your workspaces."),
         )
     };
-    Email {
-        to: to.to_owned(),
-        subject,
-        body,
+    Message {
+        heading: format!("You're on {org_name}'s team"),
+        before: vec![format!(
+            "{org_name} added you to their team on {PRODUCT_NAME}."
+        )],
+        details: Vec::new(),
+        after: vec![after],
+        sign_off: true,
+        reason: Some(format!(
+            "You're receiving this email because {org_name} added this address to \
+             their team. If you don't know them, ignore this email."
+        )),
     }
+    .email(to, subject)
 }

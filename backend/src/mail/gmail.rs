@@ -26,7 +26,7 @@ use base64::{
     Engine,
     engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD},
 };
-use lettre::message::{Mailbox, Message, header::ContentType};
+use lettre::message::{Mailbox, Message, MultiPart, header::ContentType};
 use reqwest::StatusCode;
 use ring::{
     rand::SystemRandom,
@@ -312,15 +312,24 @@ fn failure(status: StatusCode, body: String) -> Failure {
 /*
     The email as the Gmail API wants it: a MIME message, base64url
     encoded. lettre writes the headers, so a subject outside ASCII is
-    encoded properly and a line break in one can't add a header
+    encoded properly and a line break in one can't add a header. With
+    HTML it is multipart/alternative: the plain text first, the HTML
+    last (the one email apps prefer)
 */
 fn mime(from: &Mailbox, email: &Email) -> Result<String, Box<dyn std::error::Error>> {
-    let message = Message::builder()
+    let builder = Message::builder()
         .from(from.clone())
         .to(email.to.parse()?)
-        .subject(&email.subject)
-        .header(ContentType::TEXT_PLAIN)
-        .body(email.body.clone())?;
+        .subject(&email.subject);
+    let message = match &email.html {
+        Some(html) => builder.multipart(MultiPart::alternative_plain_html(
+            email.body.clone(),
+            html.clone(),
+        ))?,
+        None => builder
+            .header(ContentType::TEXT_PLAIN)
+            .body(email.body.clone())?,
+    };
     Ok(URL_SAFE_NO_PAD.encode(message.formatted()))
 }
 
@@ -330,6 +339,7 @@ mod tests {
 
     fn email(subject: &str) -> Email {
         Email {
+            html: None,
             to: "asha@example.com".into(),
             subject: subject.into(),
             body: "Your code is 123456.".into(),
@@ -349,6 +359,18 @@ mod tests {
         assert!(text.contains("Subject: Verify your email"));
         assert!(text.contains("Content-Type: text/plain; charset=utf-8"));
         assert!(text.contains("Your code is 123456."));
+    }
+
+    #[test]
+    fn with_html_both_parts_go_out() {
+        let from: Mailbox = "support@solacliq.markcliq.com".parse().unwrap();
+        let mut e = email("Verify your email");
+        e.html = Some("<p>Your code is <b>123456</b></p>".into());
+        let text = decoded(&mime(&from, &e).unwrap());
+        assert!(text.contains("Content-Type: multipart/alternative"));
+        let plain = text.find("Content-Type: text/plain").expect("a plain part");
+        let html = text.find("Content-Type: text/html").expect("an html part");
+        assert!(plain < html, "plain text first, HTML last");
     }
 
     #[test]

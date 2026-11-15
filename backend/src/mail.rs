@@ -12,13 +12,18 @@
 */
 
 pub mod gmail;
+pub mod template;
 
-// One plain-text email.
+/*
+    One email. `body` is the plain text every email has; `html`, when set,
+    goes with it as the version email apps show (multipart/alternative)
+*/
 #[derive(Debug, Clone)]
 pub struct Email {
     pub to: String,
     pub subject: String,
     pub body: String,
+    pub html: Option<String>,
 }
 
 /*

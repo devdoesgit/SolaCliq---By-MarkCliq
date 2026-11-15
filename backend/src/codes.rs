@@ -20,7 +20,11 @@ use sha2::Sha256;
 use sqlx::{PgConnection, PgPool};
 use uuid::Uuid;
 
-use crate::{PRODUCT_NAME, error::ApiError, mail::Email};
+use crate::{
+    PRODUCT_NAME,
+    error::ApiError,
+    mail::{Email, template::CodeEmail},
+};
 
 // How long a code works.
 pub const TTL_MINUTES: i32 = 5;
@@ -251,26 +255,41 @@ pub async fn consume(conn: &mut PgConnection, checked: Checked) -> Result<(), Ap
     Ok(())
 }
 
-// The email that carries a code.
+// The email that carries a code: plain text and HTML (`mail::template`).
 pub fn email(to: &str, purpose: Purpose, code: &str) -> Email {
-    let (subject, what) = match purpose {
+    let (subject, heading, intro, reason) = match purpose {
         Purpose::VerifyEmail => (
             format!("Your {PRODUCT_NAME} verification code"),
-            "verify your email",
+            "Verify your email",
+            format!("Here is your {PRODUCT_NAME} verification code:"),
+            format!(
+                "You're receiving this email because this address was used to \
+                 sign up for {PRODUCT_NAME}. If this wasn't you, ignore this email."
+            ),
         ),
         Purpose::ResetPassword => (
             format!("Your {PRODUCT_NAME} password code"),
-            "set your password",
+            "Set your password",
+            format!("Here is your code to set your {PRODUCT_NAME} password:"),
+            format!(
+                "You're receiving this email because a password code was \
+                 requested for your {PRODUCT_NAME} account. If this wasn't you, \
+                 ignore this email: your password stays as it is."
+            ),
         ),
+    };
+    let content = CodeEmail {
+        heading,
+        intro: &intro,
+        code,
+        valid_minutes: TTL_MINUTES,
+        reason: &reason,
     };
     Email {
         to: to.to_owned(),
         subject,
-        body: format!(
-            "Your code to {what} is {code}.\n\n\
-             It works for {TTL_MINUTES} minutes. If you didn't ask for it, \
-             ignore this email."
-        ),
+        body: content.text(),
+        html: Some(content.html()),
     }
 }
 

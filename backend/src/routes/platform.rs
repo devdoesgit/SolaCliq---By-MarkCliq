@@ -21,7 +21,7 @@ use crate::{
     AppState, PRODUCT_NAME,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
-    mail::Email,
+    mail::{Email, template::Message},
     org::{BusinessType, OrgStatus, PlatformAdmin},
     page::{Cursor, Page, PageInfo},
 };
@@ -384,31 +384,37 @@ async fn set_status(
 
 // To the owner, when their registration is approved or rejected.
 fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option<&str>) -> Email {
-    let (subject, body) = if status == NewStatus::Active {
+    let (subject, heading, before, details, after) = if status == NewStatus::Active {
         (
             format!("{org_name} is approved on {PRODUCT_NAME}"),
-            format!(
-                "Good news: {org_name} is approved and live on {PRODUCT_NAME}.\n\n\
-                 Log in with this email address. If you haven't set a password \
-                 yet, tap \"Log in\", then \"Forgot password?\", and we'll email \
-                 you a code to set one."
-            ),
+            "You're approved".to_owned(),
+            format!("Good news: {org_name} is approved and live on {PRODUCT_NAME}."),
+            Vec::new(),
+            "Log in with this email address. If you haven't set a password yet, \
+             tap \"Log in\", then \"Forgot password?\", and we'll email you a \
+             code to set one."
+                .to_owned(),
         )
     } else {
         (
             format!("About {org_name}'s registration on {PRODUCT_NAME}"),
-            format!(
-                "We couldn't approve {org_name}'s registration on {PRODUCT_NAME}.\n\n\
-                 Reason: {}\n\n\
-                 You can register again with the details corrected, or reply to \
-                 this email if you have questions.",
-                note.unwrap_or("not given")
-            ),
+            "Registration not approved".to_owned(),
+            format!("We couldn't approve {org_name}'s registration on {PRODUCT_NAME}."),
+            vec![("Reason", note.unwrap_or("not given").to_owned())],
+            "You can register again with the details corrected, or reply to \
+             this email if you have questions."
+                .to_owned(),
         )
     };
-    Email {
-        to: owner.email.clone(),
-        subject,
-        body,
+    Message {
+        heading,
+        before: vec![before],
+        details,
+        after: vec![after],
+        sign_off: true,
+        reason: Some(format!(
+            "You're receiving this email because you registered {org_name} on {PRODUCT_NAME}."
+        )),
     }
+    .email(&owner.email, subject)
 }

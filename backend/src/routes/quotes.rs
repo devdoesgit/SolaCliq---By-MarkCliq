@@ -24,7 +24,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, AuthUser},
     idempotency::{self, IdempotencyKey},
-    mail::Email,
+    mail::{Email, template::Message},
     notify, validate,
 };
 
@@ -357,30 +357,37 @@ fn lead_email(
     city: &str,
     e: &QuoteEstimate,
 ) -> Email {
-    Email {
-        to: to.to_owned(),
-        subject: format!("New solar quote request: {city}"),
-        body: format!(
-            "{name} asked for a solar quote.\n\n\
-             Phone: +91 {phone}\n\
-             Email: {email}\n\
-             For: {}\n\
-             Where: {city} {pin_code}\n\
-             Monthly bill: {}\n\
-             Roof: {}\n\
-             When: {}\n\n\
-             Estimate shown to them: {} to {} kW, {} to {}, subsidy up to {}.",
-            req.quote_for.label(),
-            req.bill_band.label(),
-            req.roof.label(),
-            req.timeline.label(),
-            e.kw_min,
-            e.kw_max,
-            rupees(e.price_min),
-            rupees(e.price_max),
-            rupees(e.subsidy_max),
-        ),
+    Message {
+        heading: "New quote request".into(),
+        before: vec![format!(
+            "{name} asked for a solar quote. Call them on the number below."
+        )],
+        details: vec![
+            ("Name", name.to_owned()),
+            ("Phone", format!("+91 {phone}")),
+            ("Email", email.to_owned()),
+            ("For", req.quote_for.label().into()),
+            ("Where", format!("{city} {pin_code}")),
+            ("Monthly bill", req.bill_band.label().into()),
+            ("Roof", req.roof.label().into()),
+            ("When", req.timeline.label().into()),
+            (
+                "Estimate shown",
+                format!(
+                    "{} to {} kW, {} to {}, subsidy up to {}",
+                    e.kw_min,
+                    e.kw_max,
+                    rupees(e.price_min),
+                    rupees(e.price_max),
+                    rupees(e.subsidy_max)
+                ),
+            ),
+        ],
+        after: Vec::new(),
+        sign_off: false,
+        reason: None,
     }
+    .email(to, format!("New solar quote request: {city}"))
 }
 
 /*
@@ -448,7 +455,9 @@ mod tests {
         assert!(body.contains("Monthly bill: ₹1,500 to ₹3,000\n"));
         assert!(body.contains("Roof: RCC (concrete)\n"));
         assert!(body.contains("When: 1 to 3 months\n"));
-        assert!(body.contains("2 to 3 kW, ₹1,10,000 to ₹1,95,000, subsidy up to ₹78,000."));
+        assert!(body.contains(
+            "Estimate shown: 2 to 3 kW, ₹1,10,000 to ₹1,95,000, subsidy up to ₹78,000\n"
+        ));
     }
 
     #[test]

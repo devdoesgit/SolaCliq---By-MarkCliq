@@ -474,4 +474,8 @@ Change a decision by adding a new line, not by editing an old one.
 - **Firebase and the Gmail service account live under the markcliq.co
   Workspace account**, not a personal Google account, so the
   organisation owns the project and its keys.
-
+- **Emails look like the big services' account emails** (the owner's
+  GitHub example): a centred heading, the code large in a bordered card,
+  how long it lasts, a don't-share line, and a grey note on why it was
+  sent. All emails share the layout, in the app's colours; plain text
+  goes with every one.

@@ -53,6 +53,11 @@ Claude builds every part; the owner reviews.
   up to 30 seconds.
 - Development without those settings prints emails to the log;
   production refuses to start without them.
+- Every email goes out as plain text and HTML (multipart/alternative),
+  in one layout (`src/mail/template.rs`): the wordmark, a heading, a
+  white card (a code large and spaced, or paragraphs and a table of
+  details), a note on why it was sent, and a footer. Inline styles and
+  tables only, the app's colours, no images.
 - Check the setup with `cargo run -- send-test-email <to>`.
 
 ## API contract

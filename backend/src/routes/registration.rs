@@ -23,7 +23,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::ApiJson,
     gstin::{self, Gstin},
-    mail::Email,
+    mail::{Email, template::Message},
     org::BusinessType,
     validate,
 };
@@ -298,47 +298,67 @@ fn review_email(to: &str, org_id: Uuid, r: &ValidRegistration) -> Email {
         Some(line2) => format!("{}, {line2}", r.address_line_1),
         None => r.address_line_1.clone(),
     };
-    Email {
-        to: to.to_owned(),
-        subject: format!("New company to review: {}", r.name),
-        body: format!(
-            "A company registered on {PRODUCT_NAME} and is waiting for review.\n\n\
-             Company: {} ({})\n\
-             Legal name: {}\n\
-             Business type: {:?}\n\
-             GSTIN: {} (PAN {}, {})\n\
-             Address: {address}, {} {}\n\n\
-             Owner: {}\n\
-             Email: {}\n\
-             Phone: +91 {}\n\n\
-             Company id: {org_id}\n\
-             Approve or reject: POST /api/v1/platform/orgs/{org_id}/status",
-            r.name,
-            r.gstin.state,
-            r.legal_name,
-            r.business_type,
-            r.gstin.number,
-            r.gstin.pan,
-            r.gstin.state,
-            r.city,
-            r.pin_code,
-            r.owner_name,
-            r.email,
-            r.phone,
-        ),
+    Message {
+        heading: "New company to review".into(),
+        before: vec![format!(
+            "{} registered on {PRODUCT_NAME} and is waiting for review.",
+            r.name
+        )],
+        details: vec![
+            ("Company", r.name.clone()),
+            ("Legal name", r.legal_name.clone()),
+            ("Business type", business_type_label(r.business_type).into()),
+            ("GSTIN", r.gstin.number.clone()),
+            ("PAN", r.gstin.pan.clone()),
+            ("State", r.gstin.state.to_string()),
+            ("Address", format!("{address}, {} {}", r.city, r.pin_code)),
+            ("Owner", r.owner_name.clone()),
+            ("Email", r.email.clone()),
+            ("Phone", format!("+91 {}", r.phone)),
+            ("Company id", org_id.to_string()),
+        ],
+        after: vec![format!(
+            "Approve or reject it with POST /api/v1/platform/orgs/{org_id}/status \
+             until the admin website is ready."
+        )],
+        sign_off: false,
+        reason: None,
+    }
+    .email(to, format!("New company to review: {}", r.name))
+}
+
+// How the review email names a business type.
+fn business_type_label(t: BusinessType) -> &'static str {
+    match t {
+        BusinessType::Proprietorship => "Proprietorship",
+        BusinessType::Partnership => "Partnership",
+        BusinessType::Llp => "LLP",
+        BusinessType::PrivateLimited => "Private limited",
+        BusinessType::PublicLimited => "Public limited",
+        BusinessType::Other => "Other",
     }
 }
 
 // To the owner: it arrived, and what happens next.
 fn received_email(r: &ValidRegistration) -> Email {
-    Email {
-        to: r.email.clone(),
-        subject: format!("We received {}'s registration", r.name),
-        body: format!(
-            "Thanks for registering {} on {PRODUCT_NAME}.\n\n\
-             The MarkCliq team checks every company before it goes live. \
-             We'll call you on +91 {} and email you here once it's approved.",
-            r.name, r.phone
-        ),
+    Message {
+        heading: "Registration received".into(),
+        before: vec![format!(
+            "Thanks for registering {} on {PRODUCT_NAME}.",
+            r.name
+        )],
+        details: Vec::new(),
+        after: vec![format!(
+            "The MarkCliq team checks every company before it goes live. We'll \
+             call you on +91 {} and email you here once it's approved.",
+            r.phone
+        )],
+        sign_off: true,
+        reason: Some(format!(
+            "You're receiving this email because this address was given as the \
+             owner's when {} registered on {PRODUCT_NAME}.",
+            r.name
+        )),
     }
+    .email(&r.email, format!("We received {}'s registration", r.name))
 }
