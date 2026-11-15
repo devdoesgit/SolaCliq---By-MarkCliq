@@ -485,3 +485,9 @@ Change a decision by adding a new line, not by editing an old one.
   the estimate, a team invite the company card and set-up steps. Only
   the code emails show the sun dot in the inbox preview; the others set
   their own preview line.
+- **The approval email sends the owner to the dashboard, not the app.**
+  Org admins run their company from the admin website; the email links
+  to its log in (`WEBSITE` in `lib.rs`) and to "forgot password" with
+  their email filled in, then says to add workers and agents there. The
+  note says the address "was given as the owner's", since someone else
+  may fill in the form.

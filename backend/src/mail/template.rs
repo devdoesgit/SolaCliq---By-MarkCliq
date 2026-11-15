@@ -234,6 +234,32 @@ pub fn steps(items: &[(Step, &str, &str)]) -> String {
     )
 }
 
+// A link inside a paragraph, in the ink colour, underlined.
+pub fn link(href: &str, label: &str) -> String {
+    format!(
+        r#"<a href="{}" style="color:{INK};text-decoration:underline;">{}</a>"#,
+        esc(href),
+        esc(label)
+    )
+}
+
+/*
+    A value for a URL's query string: letters, digits and -._~ as they
+    are, everything else as %XX (an email's "+" must not turn into a
+    space)
+*/
+pub fn query_value(value: &str) -> String {
+    value
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                (b as char).to_string()
+            }
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
 // Label and value rows between two rules.
 pub fn details(rows: &[(&str, String)]) -> String {
     let rows: String = rows
@@ -273,7 +299,7 @@ pub fn company(name: &str, line: &str, pill: &str, tone: Tone) -> String {
     )
 }
 
-// A big pill button: a tel: or mailto: link.
+// A big pill button: a link (https:, tel:, mailto:).
 pub fn button(href: &str, label: &str) -> String {
     format!(
         r#"<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:4px auto 16px;"><tr><td align="center" style="border-radius:24px;background:{SUN};"><a href="{href}" style="display:inline-block;padding:12px 28px;font-size:16px;line-height:22px;font-weight:600;color:{INK};text-decoration:none;border-radius:24px;">{label}</a></td></tr></table>"#,
@@ -364,6 +390,15 @@ mod tests {
         assert!(html.contains("Because &lt;you&gt; registered."));
         assert!(company("A<b> Co", "x", "Live", Tone::Success).contains("A&lt;b&gt; Co"));
         assert_eq!(esc(r#"a&b"c'"#), "a&amp;b&quot;c&#39;");
+    }
+
+    #[test]
+    fn query_values_keep_a_plus_sign() {
+        assert_eq!(
+            query_value("parth+owner@markcliq.co"),
+            "parth%2Bowner%40markcliq.co"
+        );
+        assert_eq!(query_value("a b&c"), "a%20b%26c");
     }
 
     #[test]

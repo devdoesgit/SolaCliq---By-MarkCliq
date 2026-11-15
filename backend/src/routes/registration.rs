@@ -378,7 +378,7 @@ fn received_email(r: &ValidRegistration) -> Email {
     );
     let registered = format!("{} \u{b7} GSTIN {}", r.name, r.gstin.number);
     let call = format!("We call you on +91 {} to confirm your details.", r.phone);
-    let live = "We email you here once you're approved; then you add your team.";
+    let live = "We email you here once you're approved, with a link to your dashboard on the web.";
     let note = format!(
         "You're receiving this email because this address was given as the \
          owner's when {} registered on {PRODUCT_NAME}.",

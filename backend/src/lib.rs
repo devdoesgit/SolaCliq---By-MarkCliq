@@ -56,6 +56,13 @@ pub struct AppState {
 */
 pub const PRODUCT_NAME: &str = "SolaCliq";
 
+/*
+    The admin website (org admins' dashboard), for links in emails. The
+    production address in every environment: emails only make sense
+    pointing at the real site
+*/
+pub const WEBSITE: &str = "https://solacliq.markcliq.com";
+
 /// Every endpoint is under this prefix (`solacliq.markcliq.com/api/v1`).
 pub const API_PREFIX: &str = "/api/v1";
 

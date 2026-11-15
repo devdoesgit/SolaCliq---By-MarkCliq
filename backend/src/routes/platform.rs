@@ -18,7 +18,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    AppState, PRODUCT_NAME,
+    AppState, PRODUCT_NAME, WEBSITE,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
     mail::{
@@ -387,27 +387,36 @@ async fn set_status(
 
 // To the owner, when their registration is approved or rejected.
 fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option<&str>) -> Email {
-    let why =
-        format!("You're receiving this email because you registered {org_name} on {PRODUCT_NAME}.");
+    let why = format!(
+        "You're receiving this email because this address was given as the \
+         owner's when {org_name} registered on {PRODUCT_NAME}."
+    );
     if status == NewStatus::Active {
         let intro = format!("Good news: {org_name} is approved and live on {PRODUCT_NAME}.");
-        let log_in = format!("Open the {PRODUCT_NAME} app and log in with this email address.");
-        let password =
-            "No password yet? Tap \"Forgot password?\" and we'll email you a code to set one.";
-        let team = "Add your workers and agents so they can use the app.";
+        let dashboard = format!("{WEBSITE}/login");
+        let set_password = format!("{WEBSITE}/forgot?email={}", t::query_value(&owner.email));
+        let password = "No password yet? Use the link below and we'll email you a code to set one.";
+        let log_in = format!(
+            "Log in at {} with this email address.",
+            WEBSITE.trim_start_matches("https://")
+        );
+        let team = "Create accounts for your workers and agents. We email each of \
+                    them how to set up the app.";
         return Email {
             to: owner.email.clone(),
             subject: format!("{org_name} is approved on {PRODUCT_NAME}"),
             body: format!(
-                "{intro}\n\nWhat's next:\n\
-                 1. Log in: {log_in}\n\
-                 2. Set your password: {password}\n\
+                "{intro}\n\n\
+                 Your company runs from the {PRODUCT_NAME} dashboard, on the web: {dashboard}\n\n\
+                 What's next:\n\
+                 1. Set your password: {password} {set_password}\n\
+                 2. Open your dashboard: {log_in}\n\
                  3. Add your team: {team}\n\n{}\n\n{why}\n",
                 t::sign_off_text()
             ),
             html: Some(t::page(EmailPage {
                 preheader: Some(&format!(
-                    "{org_name} is live on {PRODUCT_NAME}. Log in to add your team."
+                    "{org_name} is live. Open your dashboard to add your team."
                 )),
                 sun_dot: false,
                 badge: Some(Badge {
@@ -418,12 +427,21 @@ fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option
                 card: [
                     t::para(&intro),
                     t::company(org_name, "Approved by MarkCliq", "Live", Tone::Success),
+                    t::para(&format!(
+                        "Your company runs from the {PRODUCT_NAME} dashboard, on the web. \
+                         Your workers and agents use the app."
+                    )),
+                    t::button(&dashboard, "Open your dashboard"),
                     t::eyebrow("What's next"),
                     t::steps(&[
-                        (Step::Now, "Log in", &log_in),
-                        (Step::Later, "Set your password", password),
+                        (Step::Now, "Set your password", password),
+                        (Step::Later, "Open your dashboard", &log_in),
                         (Step::Later, "Add your team", team),
                     ]),
+                    t::para_html(&format!(
+                        "Set your password: {}",
+                        t::link(&set_password, "solacliq.markcliq.com/forgot")
+                    )),
                     t::sign_off(),
                 ]
                 .concat(),
