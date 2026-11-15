@@ -1,8 +1,18 @@
 use std::process::ExitCode;
 
-use backend::{AppState, config::Config, openapi, seed};
+use std::{sync::Arc, time::Duration};
+
+use backend::{
+    AppState, PRODUCT_NAME,
+    config::Config,
+    mail::{
+        Email, LogMailer, Mailer,
+        gmail::{GmailMailer, ServiceAccount},
+    },
+    openapi, seed,
+};
 use sqlx::postgres::PgPoolOptions;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, task::JoinHandle};
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 #[tokio::main]
@@ -14,8 +24,23 @@ async fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    // A local .env is optional; production sets real environment variables.
-    let _ = dotenvy::dotenv();
+    /*
+        TLS for outgoing HTTPS (the Gmail API) uses ring, which sqlx
+        already brings in. Set once, before any HTTP client is built
+    */
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
+    /*
+        A local .env is optional (production sets real environment
+        variables), but one that can't be read stops here: otherwise the
+        lines after a mistake would be skipped without a word
+    */
+    if let Err(e) = dotenvy::dotenv()
+        && !e.not_found()
+    {
+        eprintln!(".env: {e}");
+        return ExitCode::FAILURE;
+    }
 
     let config = match Config::from_env() {
         Ok(config) => config,
@@ -31,6 +56,7 @@ async fn main() -> ExitCode {
         [] => serve(config).await,
         ["seed"] => run_seed(config).await,
         ["make-platform-admin", email] => run_make_platform_admin(config, email).await,
+        ["send-test-email", to] => run_send_test_email(config, to).await,
         _ => Err(USAGE.into()),
     };
     match result {
@@ -42,9 +68,12 @@ async fn main() -> ExitCode {
     }
 }
 
-const USAGE: &str = "usage: backend [openapi | seed | make-platform-admin <email>]";
+const USAGE: &str =
+    "usage: backend [openapi | seed | make-platform-admin <email> | send-test-email <to>]";
 
 type Fallible = Result<(), Box<dyn std::error::Error>>;
+// A mailer, and Gmail's background task when there is one (see `mailer`).
+type MailerAndTask = (Arc<dyn Mailer>, Option<JoinHandle<()>>);
 
 // The database pool, with migrations applied. Every command starts here.
 async fn connect(config: &Config) -> Result<sqlx::PgPool, Box<dyn std::error::Error>> {
@@ -89,15 +118,61 @@ async fn run_make_platform_admin(config: Config, email: &str) -> Fallible {
     Ok(())
 }
 
+/*
+    The configured mailer
+    --------------------------------------------------------------------
+    - Gmail when MAIL_FROM is set; otherwise the log (Config allows that
+      in development only)
+    - the JoinHandle is Gmail's background task: await it after the last
+      mailer is dropped, so queued emails go out before the process ends
+*/
+fn mailer(config: &Config) -> Result<MailerAndTask, Box<dyn std::error::Error>> {
+    let Some(gmail) = &config.gmail else {
+        return Ok((Arc::new(LogMailer), None));
+    };
+    let account = ServiceAccount::from_file(&gmail.key_file)?;
+    let (mailer, task) = GmailMailer::start(account, gmail.from.clone());
+    tracing::info!(from = %gmail.from, "sending email through the Gmail API");
+    Ok((Arc::new(mailer), Some(task)))
+}
+
+// Lets queued emails go out, for up to 30 seconds.
+async fn drain(task: Option<JoinHandle<()>>) {
+    if let Some(task) = task
+        && tokio::time::timeout(Duration::from_secs(30), task)
+            .await
+            .is_err()
+    {
+        tracing::warn!("stopped with emails still queued");
+    }
+}
+
+/*
+    `cargo run -- send-test-email <to>`: sends one email through the
+    configured mailer and waits for it, to check the Gmail setup
+*/
+async fn run_send_test_email(config: Config, to: &str) -> Fallible {
+    let (mailer, task) = mailer(&config)?;
+    mailer.send(Email {
+        to: to.to_owned(),
+        subject: format!("{PRODUCT_NAME} test email"),
+        body: "This is a test email. If it reached you, email works.".into(),
+    });
+    drop(mailer);
+    drain(task).await;
+    println!("Done; the log above says whether it was sent.");
+    Ok(())
+}
+
 async fn serve(config: Config) -> Fallible {
     let db = connect(&config).await?;
+    let (mailer, mail_task) = mailer(&config)?;
 
     let app = backend::app(AppState {
         db,
         cookie_secure: config.cookie_secure,
         lifetimes: config.session_lifetimes,
-        // The SMTP mailer replaces this before production (phase 3b).
-        mailer: std::sync::Arc::new(backend::mail::LogMailer),
+        mailer,
         code_secret: config.code_secret,
         review_email: config.review_email,
         bank_key: config.bank_key,
@@ -107,6 +182,8 @@ async fn serve(config: Config) -> Fallible {
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
+    // The router, and with it every mailer, is gone: send what's queued.
+    drain(mail_task).await;
     Ok(())
 }
 

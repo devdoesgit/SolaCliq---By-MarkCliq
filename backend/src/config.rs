@@ -1,6 +1,6 @@
 //! Settings from environment variables. `.env.example` lists them all.
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, path::PathBuf};
 
 use chrono::Duration;
 
@@ -29,6 +29,27 @@ pub struct Config {
     pub review_email: String,
     // Key for bank account numbers (BANK_KEY): 64 hex characters.
     pub bank_key: BankKey,
+    /*
+        Sending email through the Gmail API. None: emails only go to the
+        log, which `from_env` allows in development only
+    */
+    pub gmail: Option<GmailConfig>,
+}
+
+/*
+    Gmail API settings
+    --------------------------------------------------------------------
+    - MAIL_FROM: who emails come from, e.g.
+      `SolaCliq <support@solacliq.markcliq.com>`. Must be a Workspace user:
+      the server sends as that user
+    - GOOGLE_SERVICE_ACCOUNT_KEY_FILE: path to the service account's JSON
+      key. The account needs domain-wide delegation for the gmail.send
+      scope (see docs/architecture.md, "Email")
+*/
+#[derive(Debug, Clone)]
+pub struct GmailConfig {
+    pub from: lettre::message::Mailbox,
+    pub key_file: PathBuf,
 }
 
 /*
@@ -82,7 +103,41 @@ impl Config {
                     "use 64 hex characters (openssl rand -hex 32)".into(),
                 )
             })?,
+            gmail: gmail_from_env()?,
         })
+        .and_then(Self::check_mail)
+    }
+
+    /*
+        A production server must really send email: with only the log,
+        sign-up codes would reach nobody
+    */
+    fn check_mail(self) -> Result<Self, ConfigError> {
+        if self.environment == Environment::Production && self.gmail.is_none() {
+            return Err(ConfigError::Missing(
+                "MAIL_FROM (production sends email through the Gmail API)",
+            ));
+        }
+        Ok(self)
+    }
+}
+
+// Both settings, or neither (emails go to the log).
+fn gmail_from_env() -> Result<Option<GmailConfig>, ConfigError> {
+    let from = std::env::var("MAIL_FROM").ok().filter(|v| !v.is_empty());
+    let key_file = std::env::var("GOOGLE_SERVICE_ACCOUNT_KEY_FILE")
+        .ok()
+        .filter(|v| !v.is_empty());
+    match (from, key_file) {
+        (None, None) => Ok(None),
+        (Some(_), None) => Err(ConfigError::Missing("GOOGLE_SERVICE_ACCOUNT_KEY_FILE")),
+        (None, Some(_)) => Err(ConfigError::Missing("MAIL_FROM")),
+        (Some(from), Some(key_file)) => Ok(Some(GmailConfig {
+            from: from.parse().map_err(|e: lettre::address::AddressError| {
+                ConfigError::Invalid("MAIL_FROM", e.to_string())
+            })?,
+            key_file: key_file.into(),
+        })),
     }
 }
 

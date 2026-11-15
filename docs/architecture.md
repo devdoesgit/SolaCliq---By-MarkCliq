@@ -37,6 +37,24 @@ Claude builds every part; the owner reviews.
   record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
   `.invalid` URLs, which the app treats as already uploaded.
 
+## Email
+
+- Sent through the **Gmail API** as a Workspace user (`MAIL_FROM`, e.g.
+  `SolaCliq <support@solacliq.markcliq.com>`), not SMTP: no mailbox password
+  on the server, and Workspace signs it (DKIM) for markcliq.com.
+- The server signs in as a Google Cloud **service account** with
+  domain-wide delegation, allowed only
+  `https://www.googleapis.com/auth/gmail.send`, acting as the `MAIL_FROM`
+  user. Its JSON key sits on the server only
+  (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE`).
+- Handlers queue emails (`state.mailer.send`); one background task sends
+  them, trying a network error, 429 or 5xx three times. Bodies never go
+  to the log (they hold codes). On shutdown the queue is sent first, for
+  up to 30 seconds.
+- Development without those settings prints emails to the log;
+  production refuses to start without them.
+- Check the setup with `cargo run -- send-test-email <to>`.
+
 ## API contract
 
 One OpenAPI spec is the contract between backend and frontends.

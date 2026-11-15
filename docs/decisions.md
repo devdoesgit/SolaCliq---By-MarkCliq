@@ -103,7 +103,7 @@ Change a decision by adding a new line, not by editing an old one.
 - **Email codes expire after 5 minutes** (was 15), 5 tries, stored hashed in
   PostgreSQL, rate limited. Redis not needed for the MVP (Claude's
   recommendation; the owner's call as backend owner).
-- **Email via the Gmail API from `no-reply@app.markcliq.com`.** Needs the
+- **Email via the Gmail API from `no-reply@app.markcliq.com`** (sender changed 2026-11-15 to `support@solacliq.markcliq.com`). Needs the
   subdomain in Workspace with SPF, DKIM and DMARC. Emails: verification
   code, reset code, set-up code, activation/welcome.
 - **Play Store in about 3 months, not for the pilot.** The pilot uses the
@@ -455,4 +455,23 @@ Change a decision by adding a new line, not by editing an old one.
   `devices` table, filled at log in, cleared at log out) and asks
   Firebase to send each message to each token. Then uploads and the rest
   of phase 7. Plan in `backend-phases.md`.
+- **Email: the Gmail API with a service account, built now** (ahead of
+  the deploy). The sender is a Workspace user; the server acts as it
+  through domain-wide delegation limited to `gmail.send`, so no mailbox
+  password or refresh token is stored and nothing expires. Chosen over
+  SMTP with an app password, and over a plain @gmail.com account (a
+  7-day refresh token while the Google app is unverified, and mail from
+  @gmail.com lands in spam more). Details in `architecture.md`, "Email".
+- **Google Workspace is on `markcliq.co`; `markcliq.com` mail stays on
+  Zoho** (`info@markcliq.com`). The sender is
+  `support@solacliq.markcliq.com`, a user on `solacliq.markcliq.com`
+  (the app's own address), added to the markcliq.co Workspace as a
+  secondary domain; its MX, SPF, DKIM and DMARC records sit on the
+  subdomain only, so Zoho is untouched. `support@`, not `no-reply@`:
+  people reply to code emails, and replies help inbox placement. Not
+  `markcliq.co`: codes from `.co` for an app on `.com` look like
+  phishing.
+- **Firebase and the Gmail service account live under the markcliq.co
+  Workspace account**, not a personal Google account, so the
+  organisation owns the project and its keys.
 

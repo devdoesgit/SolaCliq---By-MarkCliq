@@ -76,7 +76,7 @@ feature knows who is using it and in which orgs.
 - Rate limits: login 5 tries per 15 minutes per email and per IP; code
   emails 3 per hour per email.
 - Emails go through the Gmail API (Google Workspace) from
-  `no-reply@app.markcliq.com`, server only: verification code, reset code,
+  `support@solacliq.markcliq.com`, server only: verification code, reset code,
   set-up code, "you already have an account", and an activation/welcome
   email for accounts created by an agent or org admin (sent in F3/F4). In development the backend prints
   codes to its log; the Prism mock returns example responses.

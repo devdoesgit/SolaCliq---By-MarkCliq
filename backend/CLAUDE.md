@@ -18,6 +18,7 @@ make api-test    # fmt check, clippy -D warnings, tests
 cargo run -- openapi                     # (in backend/) the generated spec
 cargo run -- seed                        # illustrative data, APP_ENV=development only
 cargo run -- make-platform-admin <email>
+cargo run -- send-test-email <to>        # checks the Gmail API setup
 ```
 
 ## Rules
@@ -43,7 +44,8 @@ cargo run -- make-platform-admin <email>
 ## Layout
 
 - `src/main.rs`: commands (serve, `openapi`, `seed`,
-  `make-platform-admin`), migrations at start, graceful shutdown.
+  `make-platform-admin`, `send-test-email`), migrations at start,
+  graceful shutdown (queued emails sent first).
 - `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
   `registration` and `platform` (F2), `quotes` and `profile` (phase 6);
@@ -51,7 +53,8 @@ cargo run -- make-platform-admin <email>
 - `src/org.rs`: role, pay type, status and business type enums
   (`sqlx::Type`), `OrgMember`, `PlatformAdmin`.
 - `src/session.rs`, `src/codes.rs`, `src/password.rs`: tokens, email
-  codes, Argon2. `src/mail.rs`: the `Mailer` trait.
+  codes, Argon2. `src/mail.rs`: the `Mailer` trait;
+  `src/mail/gmail.rs`: the Gmail API mailer.
 - `src/gstin.rs`, `src/validate.rs`, `src/page.rs`: shared checks and
   paging. `src/idempotency.rs`, `src/notify.rs` (notifications),
   `src/bank.rs` (encryption, bank names). `src/seed.rs`: the seed and platform-admin commands.

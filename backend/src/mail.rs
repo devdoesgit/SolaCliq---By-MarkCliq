@@ -4,12 +4,14 @@
     - handlers call `state.mailer.send(email)`
     - which mailer that is gets decided once, in main.rs
         - development: LogMailer, prints the email to the server log
-        - production: SMTP mailer (phase 3b, last step)
+        - production: GmailMailer (mail/gmail.rs), the Gmail API
     - `send` returns at once and never fails for the caller
         - the request doesn't wait for the mail server
         - so a response takes the same time whether an email went out
           or not, and timing can't reveal which emails have accounts
 */
+
+pub mod gmail;
 
 // One plain-text email.
 #[derive(Debug, Clone)]
@@ -24,7 +26,7 @@ pub struct Email {
     --------------------------------------------------------------------
     - a trait is a list of methods a type promises to have
     - handlers only see `dyn Mailer` ("some type that has `send`"), so
-      swapping the log for SMTP, or for the test mailer that keeps emails
+      swapping the log for Gmail, or for the test mailer that keeps emails
       in memory, changes no handler code
     - `Send + Sync`: requests on many threads share one mailer, so it
       must be safe to use from any thread

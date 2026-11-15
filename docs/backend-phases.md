@@ -73,12 +73,17 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 
 Put it on the VPS early so the pilot can test on real phones.
 
-- **Build:** the SMTP mailer (Google Workspace), and the API refuses to
-  start with `APP_ENV=production` without its settings, so codes never go
-  only to the log. Release build, a `systemd` service, nginx proxying
+- **Built ahead (2026-11-15):** the Gmail API mailer; the API refuses
+  to start with `APP_ENV=production` without `MAIL_FROM` and the key
+  file, so codes never go only to the log. Verified the same day: all
+  10 kinds of email delivered from `support@solacliq.markcliq.com`
+  (DNS, service account and delegation set up in the markcliq.co
+  Workspace). On the server: the key at
+  `/etc/solacliq/gmail-sender.json`, mode 600.
+- **Build:** release build, a `systemd` service, nginx proxying
   `solacliq.markcliq.com/api`, production `.env` on the server only
   (`CODE_SECRET`, `BANK_KEY`, `REVIEW_EMAIL=info@markcliq.com`,
-  `COOKIE_SECURE=true`),
+  `COOKIE_SECURE=true`, `MAIL_FROM`, `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`),
   daily Postgres backup. CI: `make api-test` and the spec check
   (`cargo run -- openapi` against `api/openapi.yaml`). Make the first
   platform admin with `make-platform-admin`.
