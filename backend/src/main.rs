@@ -6,9 +6,9 @@ use backend::{
     AppState, PRODUCT_NAME,
     config::Config,
     mail::{
-        LogMailer, Mailer,
+        Email, LogMailer, Mailer,
         gmail::{GmailMailer, ServiceAccount},
-        template::Message,
+        template::{self as t, Badge, EmailPage, Tone},
     },
     openapi, seed,
 };
@@ -154,17 +154,23 @@ async fn drain(task: Option<JoinHandle<()>>) {
 */
 async fn run_send_test_email(config: Config, to: &str) -> Fallible {
     let (mailer, task) = mailer(&config)?;
-    mailer.send(
-        Message {
-            heading: "Test email".into(),
-            before: vec!["This is a test email. If it reached you, email works.".into()],
-            details: Vec::new(),
-            after: Vec::new(),
-            sign_off: true,
-            reason: Some("Sent by `send-test-email` to check the email setup.".into()),
-        }
-        .email(to, format!("{PRODUCT_NAME} test email")),
-    );
+    let line = format!("If you can read this, {PRODUCT_NAME} can send email.");
+    mailer.send(Email {
+        to: to.to_owned(),
+        subject: format!("{PRODUCT_NAME} test email"),
+        body: format!("{line}\n"),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&line),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#10003;",
+                tone: Tone::Success,
+            }),
+            heading: "Email works",
+            card: t::para(&line),
+            note: Some("Sent by `send-test-email` to check the email setup."),
+        })),
+    });
     drop(mailer);
     drain(task).await;
     println!("Done; the log above says whether it was sent.");

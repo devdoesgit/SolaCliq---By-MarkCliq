@@ -24,7 +24,10 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, AuthUser},
     idempotency::{self, IdempotencyKey},
-    mail::{Email, template::Message},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Tone},
+    },
     notify, validate,
 };
 
@@ -357,37 +360,64 @@ fn lead_email(
     city: &str,
     e: &QuoteEstimate,
 ) -> Email {
-    Message {
-        heading: "New quote request".into(),
-        before: vec![format!(
-            "{name} asked for a solar quote. Call them on the number below."
-        )],
-        details: vec![
-            ("Name", name.to_owned()),
-            ("Phone", format!("+91 {phone}")),
-            ("Email", email.to_owned()),
-            ("For", req.quote_for.label().into()),
-            ("Where", format!("{city} {pin_code}")),
-            ("Monthly bill", req.bill_band.label().into()),
-            ("Roof", req.roof.label().into()),
-            ("When", req.timeline.label().into()),
-            (
-                "Estimate shown",
-                format!(
-                    "{} to {} kW, {} to {}, subsidy up to {}",
-                    e.kw_min,
-                    e.kw_max,
-                    rupees(e.price_min),
-                    rupees(e.price_max),
-                    rupees(e.subsidy_max)
+    let estimate = format!(
+        "{} to {} kW, {} to {}, subsidy up to {}",
+        e.kw_min,
+        e.kw_max,
+        rupees(e.price_min),
+        rupees(e.price_max),
+        rupees(e.subsidy_max)
+    );
+    let rows = [
+        ("Name", name.to_owned()),
+        ("Phone", format!("+91 {phone}")),
+        ("Email", email.to_owned()),
+        ("For", req.quote_for.label().to_owned()),
+        ("Where", format!("{city} {pin_code}")),
+        ("Monthly bill", req.bill_band.label().to_owned()),
+        ("Roof", req.roof.label().to_owned()),
+        ("When", req.timeline.label().to_owned()),
+        ("Estimate shown", estimate),
+    ];
+    let text_rows: String = rows
+        .iter()
+        .map(|(label, value)| format!("{label}: {value}\n"))
+        .collect();
+    let intro = format!("{name} asked for a solar quote. Call them soon: leads cool fast.");
+    Email {
+        to: to.to_owned(),
+        subject: format!("New solar quote request: {city}"),
+        body: format!("{intro}\n\n{text_rows}"),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "{name} \u{b7} +91 {phone} \u{b7} {city} \u{b7} bill {}",
+                req.bill_band.label()
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#9728;",
+                tone: Tone::Sun,
+            }),
+            heading: "New quote request",
+            card: [
+                t::para(&intro),
+                t::button(&format!("tel:+91{phone}"), &format!("Call +91 {phone}")),
+                t::figure(
+                    "Estimate shown to them",
+                    &format!("{} to {} kW", e.kw_min, e.kw_max),
+                    &format!(
+                        "{} to {} \u{b7} subsidy up to {}",
+                        rupees(e.price_min),
+                        rupees(e.price_max),
+                        rupees(e.subsidy_max)
+                    ),
                 ),
-            ),
-        ],
-        after: Vec::new(),
-        sign_off: false,
-        reason: None,
+                t::details(&rows[2..8]),
+            ]
+            .concat(),
+            note: None,
+        })),
     }
-    .email(to, format!("New solar quote request: {city}"))
 }
 
 /*

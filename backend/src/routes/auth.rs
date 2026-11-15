@@ -25,7 +25,10 @@ use crate::{
     codes::{self, Purpose},
     error::{ApiError, ApiResult, FieldError},
     extract::{ApiJson, AuthUser, REFRESH_COOKIE, SESSION_COOKIE, cookie},
-    mail::{Email, template::Message},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Tone},
+    },
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
@@ -604,24 +607,41 @@ async fn send_code(
 }
 
 fn already_registered_email(to: &str) -> Email {
-    Message {
-        heading: "You already have an account".into(),
-        before: vec![format!(
-            "Someone tried to sign up to {PRODUCT_NAME} with this email address, \
-             which already has an account."
-        )],
-        details: Vec::new(),
-        after: vec![
-            "If it was you, log in. If you don't remember your password, tap \
-             \"Forgot password?\" on the log in screen and we'll email you a code."
-                .into(),
-        ],
-        sign_off: true,
-        reason: Some(
-            "If this wasn't you, ignore this email: nothing has changed on your account.".into(),
+    let intro = format!(
+        "Someone just tried to sign up to {PRODUCT_NAME} with {to}, which \
+         already has an account."
+    );
+    let was_me = "Log in with this email. Forgot your password? Tap \
+                  \"Forgot password?\" on the log in screen and we'll email you a code.";
+    let not_me = "Ignore this email. Nothing has changed, and no one can get \
+                  in without your password.";
+    let note = "You're receiving this email because someone tried to sign up \
+                with this address.";
+    Email {
+        to: to.to_owned(),
+        subject: format!("You already have a {PRODUCT_NAME} account"),
+        body: format!(
+            "{intro}\n\nIt was me: {was_me}\n\nIt wasn't me: {not_me}\n\n{}\n\n{note}\n",
+            t::sign_off_text()
         ),
+        html: Some(t::page(EmailPage {
+            preheader: Some("Someone tried to sign up with your email. Your account is safe."),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "@",
+                tone: Tone::Sun,
+            }),
+            heading: "You already have an account",
+            card: [
+                t::para(&intro),
+                t::callout(Tone::Success, "It was me", was_me),
+                t::callout(Tone::Ink, "It wasn't me", not_me),
+                t::sign_off(),
+            ]
+            .concat(),
+            note: Some(note),
+        })),
     }
-    .email(to, format!("You already have a {PRODUCT_NAME} account"))
 }
 
 // 422 `auth.password_too_weak`, shown under `field`.

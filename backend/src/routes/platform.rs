@@ -21,7 +21,10 @@ use crate::{
     AppState, PRODUCT_NAME,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
-    mail::{Email, template::Message},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Step, Tone},
+    },
     org::{BusinessType, OrgStatus, PlatformAdmin},
     page::{Cursor, Page, PageInfo},
 };
@@ -384,37 +387,84 @@ async fn set_status(
 
 // To the owner, when their registration is approved or rejected.
 fn decision_email(owner: &Owner, org_name: &str, status: NewStatus, note: Option<&str>) -> Email {
-    let (subject, heading, before, details, after) = if status == NewStatus::Active {
-        (
-            format!("{org_name} is approved on {PRODUCT_NAME}"),
-            "You're approved".to_owned(),
-            format!("Good news: {org_name} is approved and live on {PRODUCT_NAME}."),
-            Vec::new(),
-            "Log in with this email address. If you haven't set a password yet, \
-             tap \"Log in\", then \"Forgot password?\", and we'll email you a \
-             code to set one."
-                .to_owned(),
-        )
-    } else {
-        (
-            format!("About {org_name}'s registration on {PRODUCT_NAME}"),
-            "Registration not approved".to_owned(),
-            format!("We couldn't approve {org_name}'s registration on {PRODUCT_NAME}."),
-            vec![("Reason", note.unwrap_or("not given").to_owned())],
-            "You can register again with the details corrected, or reply to \
-             this email if you have questions."
-                .to_owned(),
-        )
-    };
-    Message {
-        heading,
-        before: vec![before],
-        details,
-        after: vec![after],
-        sign_off: true,
-        reason: Some(format!(
-            "You're receiving this email because you registered {org_name} on {PRODUCT_NAME}."
-        )),
+    let why =
+        format!("You're receiving this email because you registered {org_name} on {PRODUCT_NAME}.");
+    if status == NewStatus::Active {
+        let intro = format!("Good news: {org_name} is approved and live on {PRODUCT_NAME}.");
+        let log_in = format!("Open the {PRODUCT_NAME} app and log in with this email address.");
+        let password =
+            "No password yet? Tap \"Forgot password?\" and we'll email you a code to set one.";
+        let team = "Add your workers and agents so they can use the app.";
+        return Email {
+            to: owner.email.clone(),
+            subject: format!("{org_name} is approved on {PRODUCT_NAME}"),
+            body: format!(
+                "{intro}\n\nWhat's next:\n\
+                 1. Log in: {log_in}\n\
+                 2. Set your password: {password}\n\
+                 3. Add your team: {team}\n\n{}\n\n{why}\n",
+                t::sign_off_text()
+            ),
+            html: Some(t::page(EmailPage {
+                preheader: Some(&format!(
+                    "{org_name} is live on {PRODUCT_NAME}. Log in to add your team."
+                )),
+                sun_dot: false,
+                badge: Some(Badge {
+                    glyph: "&#10003;",
+                    tone: Tone::Success,
+                }),
+                heading: "You're approved",
+                card: [
+                    t::para(&intro),
+                    t::company(org_name, "Approved by MarkCliq", "Live", Tone::Success),
+                    t::eyebrow("What's next"),
+                    t::steps(&[
+                        (Step::Now, "Log in", &log_in),
+                        (Step::Later, "Set your password", password),
+                        (Step::Later, "Add your team", team),
+                    ]),
+                    t::sign_off(),
+                ]
+                .concat(),
+                note: Some(&why),
+            })),
+        };
     }
-    .email(&owner.email, subject)
+    let intro = format!("We couldn't approve {org_name}'s registration on {PRODUCT_NAME}.");
+    let reason = note.unwrap_or("not given");
+    let fix = "Register again with the details corrected.";
+    let ask = "Reply to this email if you have questions.";
+    Email {
+        to: owner.email.clone(),
+        subject: format!("About {org_name}'s registration on {PRODUCT_NAME}"),
+        body: format!(
+            "{intro}\n\nReason: {reason}\n\nWhat you can do:\n\
+             - {fix}\n- {ask}\n\n{}\n\n{why}\n",
+            t::sign_off_text()
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "We couldn't approve {org_name}. Here's why, and what you can do."
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "!",
+                tone: Tone::Danger,
+            }),
+            heading: "Registration not approved",
+            card: [
+                t::para(&intro),
+                t::callout(Tone::Danger, "Reason", reason),
+                t::eyebrow("What you can do"),
+                t::steps(&[
+                    (Step::Now, "Fix the details", fix),
+                    (Step::Later, "Or talk to us", ask),
+                ]),
+                t::sign_off(),
+            ]
+            .concat(),
+            note: Some(&why),
+        })),
+    }
 }

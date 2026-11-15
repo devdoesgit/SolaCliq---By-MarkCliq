@@ -20,7 +20,10 @@ use crate::{
     AppState, PRODUCT_NAME,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
-    mail::{Email, template::Message},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Step, Tone},
+    },
     org::{Admins, OrgMember, PayType, Role},
     page::{Cursor, Page, PageInfo},
     validate,
@@ -287,9 +290,12 @@ async fn add_member(
     tx.commit().await?;
 
     tracing::info!(org_id = %admin.org_id, %user_id, role = ?row.role, new_account, "member added");
-    state
-        .mailer
-        .send(added_email(&input.email, &org_name, new_account));
+    state.mailer.send(added_email(
+        &input.email,
+        &org_name,
+        input.role,
+        new_account,
+    ));
     Ok((StatusCode::CREATED, Json(row.into())))
 }
 
@@ -448,34 +454,93 @@ async fn remove_member(
       they ask for it, so it can't expire in the inbox)
     - an existing account: that they were added
 */
-fn added_email(to: &str, org_name: &str, new_account: bool) -> Email {
-    let (subject, after) = if new_account {
+fn added_email(to: &str, org_name: &str, role: Role, new_account: bool) -> Email {
+    let role_label = match role {
+        Role::OrgAdmin => "Admin",
+        Role::Worker => "Worker",
+        Role::Agent => "Agent",
+        Role::Customer => "Customer",
+    };
+    let a_role = match role {
+        Role::OrgAdmin | Role::Agent => format!("an {}", role_label.to_lowercase()),
+        Role::Worker | Role::Customer => format!("a {}", role_label.to_lowercase()),
+    };
+    let intro = format!("{org_name} added you to their team on {PRODUCT_NAME} as {a_role}.");
+    let note = format!(
+        "You're receiving this email because {org_name} added this address to \
+         their team. If you don't know them, ignore this email."
+    );
+    let open = "Get it from your company if it isn't on your phone yet.";
+    let forgot = format!("Enter this email address: {to}");
+    let set = "Enter the 6-digit code we email you, and choose a password.";
+    let (subject, heading, badge, preheader, body_text, card_end) = if new_account {
         (
             format!("{org_name} added you on {PRODUCT_NAME}"),
+            format!("Welcome to {org_name}"),
+            Badge {
+                glyph: "&#128075;",
+                tone: Tone::Sun,
+            },
+            format!("{org_name} added you as {a_role}. Set up your account in 3 steps."),
             format!(
-                "To set up your account, open the {PRODUCT_NAME} app, tap \
-                 \"Log in\", then \"Forgot password?\", and enter this email \
-                 address. We'll email you a code to set your password."
+                "Set up your account:\n\
+                 1. Open the {PRODUCT_NAME} app. {open}\n\
+                 2. Tap \"Log in\", then \"Forgot password?\". {forgot}\n\
+                 3. Set your password. {set}"
             ),
+            [
+                t::eyebrow("Set up in 3 steps"),
+                t::steps(&[
+                    (Step::Now, &format!("Open the {PRODUCT_NAME} app"), open),
+                    (
+                        Step::Later,
+                        "Tap \"Log in\", then \"Forgot password?\"",
+                        &forgot,
+                    ),
+                    (Step::Later, "Set your password", set),
+                ]),
+            ]
+            .concat(),
         )
     } else {
+        let line = format!("Log in as usual: {org_name} is in your workspaces now.");
         (
             format!("You've been added to {org_name}"),
-            format!("Log in as usual: {org_name} now appears in your workspaces."),
+            format!("You're on {org_name}'s team"),
+            Badge {
+                glyph: "&#43;",
+                tone: Tone::Success,
+            },
+            format!("{org_name} added you as {a_role}. It's in your workspaces now."),
+            line.clone(),
+            t::para(&line),
         )
     };
-    Message {
-        heading: format!("You're on {org_name}'s team"),
-        before: vec![format!(
-            "{org_name} added you to their team on {PRODUCT_NAME}."
-        )],
-        details: Vec::new(),
-        after: vec![after],
-        sign_off: true,
-        reason: Some(format!(
-            "You're receiving this email because {org_name} added this address to \
-             their team. If you don't know them, ignore this email."
-        )),
+    Email {
+        to: to.to_owned(),
+        subject,
+        body: format!(
+            "{intro}\n\n{body_text}\n\n{}\n\n{note}\n",
+            t::sign_off_text()
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&preheader),
+            sun_dot: false,
+            badge: Some(badge),
+            heading: &heading,
+            card: [
+                t::para(&intro),
+                t::company(
+                    org_name,
+                    &format!("on {PRODUCT_NAME}"),
+                    role_label,
+                    Tone::Ink,
+                ),
+                card_end,
+                t::sign_off(),
+            ]
+            .concat(),
+            note: Some(&note),
+        })),
     }
-    .email(to, subject)
 }

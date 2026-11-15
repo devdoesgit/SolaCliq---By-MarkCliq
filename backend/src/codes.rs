@@ -23,7 +23,10 @@ use uuid::Uuid;
 use crate::{
     PRODUCT_NAME,
     error::ApiError,
-    mail::{Email, template::CodeEmail},
+    mail::{
+        Email,
+        template::{self as t, EmailPage},
+    },
 };
 
 // How long a code works.
@@ -255,7 +258,11 @@ pub async fn consume(conn: &mut PgConnection, checked: Checked) -> Result<(), Ap
     Ok(())
 }
 
-// The email that carries a code: plain text and HTML (`mail::template`).
+/*
+    The email that carries a code: plain text and HTML. The look of the
+    big services' code emails: the code large in a card, how long it
+    lasts, a don't-share line. The only emails with the sun dot
+*/
 pub fn email(to: &str, purpose: Purpose, code: &str) -> Email {
     let (subject, heading, intro, reason) = match purpose {
         Purpose::VerifyEmail => (
@@ -278,18 +285,39 @@ pub fn email(to: &str, purpose: Purpose, code: &str) -> Email {
             ),
         ),
     };
-    let content = CodeEmail {
-        heading,
-        intro: &intro,
-        code,
-        valid_minutes: TTL_MINUTES,
-        reason: &reason,
-    };
+    let valid = format!("{TTL_MINUTES} minutes");
+    let card = [
+        t::para(&intro),
+        t::code(code),
+        t::para_html(&format!(
+            "This code is valid for {} and can only be used once.",
+            t::bold(&valid)
+        )),
+        t::para_html(&format!(
+            "{} MarkCliq will never ask for it on the phone or on WhatsApp.",
+            t::bold("Please don't share this code with anyone:")
+        )),
+        t::sign_off(),
+    ]
+    .concat();
     Email {
         to: to.to_owned(),
         subject,
-        body: content.text(),
-        html: Some(content.html()),
+        body: format!(
+            "{intro} {code}\n\
+             This code is valid for {valid} and can only be used once.\n\n\
+             Please don't share this code with anyone: MarkCliq will never ask \
+             for it on the phone or on WhatsApp.\n\n{}\n\n{reason}\n",
+            t::sign_off_text()
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: None,
+            sun_dot: true,
+            badge: None,
+            heading,
+            card,
+            note: Some(&reason),
+        })),
     }
 }
 

@@ -479,3 +479,9 @@ Change a decision by adding a new line, not by editing an old one.
   how long it lasts, a don't-share line, and a grey note on why it was
   sent. All emails share the layout, in the app's colours; plain text
   goes with every one.
+- **Each email looks like what it says** (owner, same day): approved has a
+  green tick and a "what's next" list, not approved a red callout with
+  the reason, a registration a progress tracker, a lead a call button and
+  the estimate, a team invite the company card and set-up steps. Only
+  the code emails show the sun dot in the inbox preview; the others set
+  their own preview line.

@@ -23,7 +23,10 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::ApiJson,
     gstin::{self, Gstin},
-    mail::{Email, template::Message},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Step, Tone},
+    },
     org::BusinessType,
     validate,
 };
@@ -298,33 +301,61 @@ fn review_email(to: &str, org_id: Uuid, r: &ValidRegistration) -> Email {
         Some(line2) => format!("{}, {line2}", r.address_line_1),
         None => r.address_line_1.clone(),
     };
-    Message {
-        heading: "New company to review".into(),
-        before: vec![format!(
-            "{} registered on {PRODUCT_NAME} and is waiting for review.",
+    let rows = [
+        ("Legal name", r.legal_name.clone()),
+        (
+            "Business type",
+            business_type_label(r.business_type).to_owned(),
+        ),
+        ("GSTIN", r.gstin.number.clone()),
+        ("PAN", r.gstin.pan.clone()),
+        ("Address", format!("{address}, {} {}", r.city, r.pin_code)),
+        ("Owner", r.owner_name.clone()),
+        ("Email", r.email.clone()),
+        ("Phone", format!("+91 {}", r.phone)),
+        ("Company id", org_id.to_string()),
+    ];
+    let decide = format!("POST /api/v1/platform/orgs/{org_id}/status");
+    let place = format!("{}, {}", r.city, r.gstin.state);
+    let text_rows: String = rows
+        .iter()
+        .map(|(label, value)| format!("{label}: {value}\n"))
+        .collect();
+    Email {
+        to: to.to_owned(),
+        subject: format!("New company to review: {}", r.name),
+        body: format!(
+            "{} ({place}) registered on {PRODUCT_NAME} and is waiting for review.\n\n\
+             {text_rows}\n\
+             Approve or reject it, until the admin website is ready: {decide}\n",
             r.name
-        )],
-        details: vec![
-            ("Company", r.name.clone()),
-            ("Legal name", r.legal_name.clone()),
-            ("Business type", business_type_label(r.business_type).into()),
-            ("GSTIN", r.gstin.number.clone()),
-            ("PAN", r.gstin.pan.clone()),
-            ("State", r.gstin.state.to_string()),
-            ("Address", format!("{address}, {} {}", r.city, r.pin_code)),
-            ("Owner", r.owner_name.clone()),
-            ("Email", r.email.clone()),
-            ("Phone", format!("+91 {}", r.phone)),
-            ("Company id", org_id.to_string()),
-        ],
-        after: vec![format!(
-            "Approve or reject it with POST /api/v1/platform/orgs/{org_id}/status \
-             until the admin website is ready."
-        )],
-        sign_off: false,
-        reason: None,
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "{} \u{b7} {} \u{b7} GSTIN {} is waiting for your review",
+                r.name, r.city, r.gstin.number
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#9733;",
+                tone: Tone::Warning,
+            }),
+            heading: "New company to review",
+            card: [
+                t::company(&r.name, &place, "Waiting", Tone::Warning),
+                t::details(&rows),
+                t::eyebrow("To decide"),
+                t::para_html(&format!(
+                    "Until the admin website is ready, approve or reject it with \
+                     <code style=\"font-family:Menlo,Consolas,monospace;font-size:13px;\
+                     background:#f3ece4;padding:2px 6px;border-radius:4px;\">{}</code>",
+                    t::esc(&decide)
+                )),
+            ]
+            .concat(),
+            note: None,
+        })),
     }
-    .email(to, format!("New company to review: {}", r.name))
 }
 
 // How the review email names a business type.
@@ -341,24 +372,50 @@ fn business_type_label(t: BusinessType) -> &'static str {
 
 // To the owner: it arrived, and what happens next.
 fn received_email(r: &ValidRegistration) -> Email {
-    Message {
-        heading: "Registration received".into(),
-        before: vec![format!(
-            "Thanks for registering {} on {PRODUCT_NAME}.",
-            r.name
-        )],
-        details: Vec::new(),
-        after: vec![format!(
-            "The MarkCliq team checks every company before it goes live. We'll \
-             call you on +91 {} and email you here once it's approved.",
-            r.phone
-        )],
-        sign_off: true,
-        reason: Some(format!(
-            "You're receiving this email because this address was given as the \
-             owner's when {} registered on {PRODUCT_NAME}.",
-            r.name
-        )),
+    let intro = format!(
+        "Thanks for registering {} on {PRODUCT_NAME}. Here's where it stands:",
+        r.name
+    );
+    let registered = format!("{} \u{b7} GSTIN {}", r.name, r.gstin.number);
+    let call = format!("We call you on +91 {} to confirm your details.", r.phone);
+    let live = "We email you here once you're approved; then you add your team.";
+    let note = format!(
+        "You're receiving this email because this address was given as the \
+         owner's when {} registered on {PRODUCT_NAME}.",
+        r.name
+    );
+    Email {
+        to: r.email.clone(),
+        subject: format!("We received {}'s registration", r.name),
+        body: format!(
+            "{intro}\n\n\
+             1. Registered: {registered}. Done.\n\
+             2. MarkCliq checks your details: {call} (now)\n\
+             3. You're live: {live}\n\n{}\n\n{note}\n",
+            t::sign_off_text()
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "We're checking {}. Next: a call from MarkCliq on +91 {}.",
+                r.name, r.phone
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#8987;",
+                tone: Tone::Warning,
+            }),
+            heading: "Registration received",
+            card: [
+                t::para(&intro),
+                t::steps(&[
+                    (Step::Done, "Registered", &registered),
+                    (Step::Now, "MarkCliq checks your details", &call),
+                    (Step::Later, "You're live", live),
+                ]),
+                t::sign_off(),
+            ]
+            .concat(),
+            note: Some(&note),
+        })),
     }
-    .email(&r.email, format!("We received {}'s registration", r.name))
 }
