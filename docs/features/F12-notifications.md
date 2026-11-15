@@ -108,7 +108,10 @@ the in-app list.
 
 - iPhone (needs an Apple developer account and an APNs key; the pilot is
   the Android APK).
-- Pushes to the admin website.
+- Pushes to the admin website. Notifications for org admins (a problem
+  reported, a task or KYC submitted, a payment claimed) are rows like any
+  other, shown on the website's notifications (built with the website);
+  admins check the site, so no push or email for them (owner, 2026-11-15).
 - Grouping, images, actions on the notification, quiet hours.
 - Retrying a failed push: the notification is still in the in-app list.
 

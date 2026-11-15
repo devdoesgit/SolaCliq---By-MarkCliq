@@ -502,3 +502,5 @@ Change a decision by adding a new line, not by editing an old one.
   first open it. Replaces the 2026-10-18 step where the customer read the
   code out to the agent, and moves the email from approval to
   submission (`product.md`, the contract and the handoff updated).
+- **Admins get notifications on the website only**, no push or email:
+  they check the site.
