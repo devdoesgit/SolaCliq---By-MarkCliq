@@ -508,3 +508,6 @@ Change a decision by adding a new line, not by editing an old one.
   (`agent`)**, in the app, website and emails. The code keeps `worker`
   and `agent`. "Installer" alone still means the solar company in
   customer copy ("your installer").
+- **One support address: `info@markcliq.com`.** Every email's Reply-To
+  is it (`SUPPORT_EMAIL` in `lib.rs`); emails are still sent from
+  `support@solacliq.markcliq.com`.

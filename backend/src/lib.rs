@@ -66,6 +66,12 @@ pub const PRODUCT_NAME: &str = "SolaCliq";
 */
 pub const WEBSITE: &str = "https://solacliq.markcliq.com";
 
+/*
+    Where people reach MarkCliq: replies to any email go here (Reply-To),
+    and the app's Help sheet shows it. Emails are sent from MAIL_FROM
+*/
+pub const SUPPORT_EMAIL: &str = "info@markcliq.com";
+
 /// Every endpoint is under this prefix (`solacliq.markcliq.com/api/v1`).
 pub const API_PREFIX: &str = "/api/v1";
 

@@ -320,6 +320,8 @@ fn mime(from: &Mailbox, email: &Email) -> Result<String, Box<dyn std::error::Err
     let builder = Message::builder()
         .from(from.clone())
         .to(email.to.parse()?)
+        // Replies reach MarkCliq's inbox, not the sending mailbox.
+        .reply_to(crate::SUPPORT_EMAIL.parse()?)
         .subject(&email.subject);
     let message = match &email.html {
         Some(html) => builder.multipart(MultiPart::alternative_plain_html(
@@ -356,6 +358,7 @@ mod tests {
         let text = decoded(&mime(&from, &email("Verify your email")).unwrap());
         assert!(text.contains("From: SolaCliq <support@solacliq.markcliq.com>"));
         assert!(text.contains("To: asha@example.com"));
+        assert!(text.contains("Reply-To: info@markcliq.com"));
         assert!(text.contains("Subject: Verify your email"));
         assert!(text.contains("Content-Type: text/plain; charset=utf-8"));
         assert!(text.contains("Your code is 123456."));

@@ -60,6 +60,9 @@ Claude builds every part; the owner reviews.
   steps, callout, company card, details table, call button, figure).
   Each sets its inbox preview line; only code emails keep the sun dot
   there. Inline styles and tables only, the app's colours, no images.
+- Replies to any email go to `SUPPORT_EMAIL` (`info@markcliq.com`, in
+  `lib.rs`) through a Reply-To header; the app's Help sheet shows the
+  same address.
 - Check the setup with `cargo run -- send-test-email <to>`.
 
 ## Rate limits
