@@ -491,3 +491,7 @@ Change a decision by adding a new line, not by editing an old one.
   their email filled in, then says to add workers and agents there. The
   note says the address "was given as the owner's", since someone else
   may fill in the form.
+- **Rate limits on the public endpoints** (review, owner agreed): per IP,
+  and per account for log in; 429 `auth.too_many_attempts` with
+  `Retry-After`. Protects the shared daily email cap and stops password
+  guessing. Details in `architecture.md`, "Rate limits".

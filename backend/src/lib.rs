@@ -14,6 +14,7 @@ pub mod openapi;
 pub mod org;
 pub mod page;
 pub mod password;
+pub mod rate_limit;
 pub mod routes;
 pub mod seed;
 pub mod session;
@@ -42,6 +43,8 @@ pub struct AppState {
         each clone points at the same mailer instead of copying it
     */
     pub mailer: Arc<dyn mail::Mailer>,
+    // Rate limits on the public endpoints. See `rate_limit`.
+    pub limits: Arc<rate_limit::Limiter>,
     // Key for the email codes' HMAC. See `codes::CodeSecret`.
     pub code_secret: codes::CodeSecret,
     // MarkCliq's inbox for new company registrations and leads (REVIEW_EMAIL).

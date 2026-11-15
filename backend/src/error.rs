@@ -41,6 +41,8 @@ pub struct ApiError {
     title: &'static str,
     detail: Option<String>,
     errors: Vec<FieldError>,
+    // Seconds before trying again (the `Retry-After` header), for 429s.
+    retry_after: Option<u64>,
 }
 
 pub type ApiResult<T> = Result<T, ApiError>;
@@ -53,7 +55,14 @@ impl ApiError {
             title,
             detail: None,
             errors: Vec::new(),
+            retry_after: None,
         }
+    }
+
+    // Tells the client how many seconds to wait (`Retry-After`).
+    pub fn retry_after(mut self, seconds: u64) -> Self {
+        self.retry_after = Some(seconds);
+        self
     }
 
     pub fn detail(mut self, detail: impl Into<String>) -> Self {
@@ -113,12 +122,18 @@ impl IntoResponse for ApiError {
             code: self.code.to_owned(),
             errors: self.errors,
         };
-        (
+        let mut response = (
             self.status,
             [(header::CONTENT_TYPE, "application/problem+json")],
             Json(body),
         )
-            .into_response()
+            .into_response();
+        if let Some(seconds) = self.retry_after {
+            response
+                .headers_mut()
+                .insert(header::RETRY_AFTER, seconds.into());
+        }
+        response
     }
 }
 

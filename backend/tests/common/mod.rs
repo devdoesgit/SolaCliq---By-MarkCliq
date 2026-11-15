@@ -24,6 +24,7 @@ pub fn state(db: &PgPool) -> AppState {
         cookie_secure: false,
         lifetimes: Default::default(),
         mailer: Arc::new(Outbox),
+        limits: Arc::new(backend::rate_limit::Limiter::disabled()),
         code_secret: CodeSecret::new(b"test-secret-at-least-32-bytes-long".to_vec()),
         review_email: "review@example.com".into(),
         bank_key: backend::bank::BankKey::from_hex(

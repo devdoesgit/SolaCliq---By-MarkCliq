@@ -19,7 +19,6 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
-use crate::validate::{is_indian_mobile, looks_like_email, normalize_email};
 use crate::{
     API_PREFIX, AppState, PRODUCT_NAME,
     codes::{self, Purpose},
@@ -32,6 +31,10 @@ use crate::{
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
+};
+use crate::{
+    rate_limit::{ClientIp, Rule},
+    validate::{is_indian_mobile, looks_like_email, normalize_email},
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -77,12 +80,16 @@ pub struct SignupRequest {
         (status = 202, description = "Accepted; a code is on its way if the email is new."),
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn signup(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<SignupRequest>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::SignupByIp, &ip.0)?;
     /*
         Validate all the input fields
             - phone, email, name
@@ -128,7 +135,15 @@ async fn signup(
             Some(user) if !user.verified => {
                 send_code(&state, user.id, &input.email, Purpose::VerifyEmail).await?;
             }
-            Some(_) => state.mailer.send(already_registered_email(&input.email)),
+            // At most one an hour per address: sign-up can't flood an inbox.
+            Some(_)
+                if state
+                    .limits
+                    .allow(Rule::AlreadyRegisteredByEmail, &input.email) =>
+            {
+                state.mailer.send(already_registered_email(&input.email));
+            }
+            Some(_) => {}
             None => {} // deleted in the meantime; nothing to send
         }
     }
@@ -171,8 +186,10 @@ pub struct VerifyEmailRequest {
 )]
 async fn verify_email(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<VerifyEmailRequest>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
     let email = normalize_email(&req.email);
     let user_id = find_user(&state.db, &email).await?.map(|u| u.id);
     let checked = codes::check(
@@ -226,8 +243,10 @@ async fn verify_email(
 )]
 async fn resend_verification(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<EmailRequest>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::CodeEmailByIp, &ip.0)?;
     let email = normalize_email(&req.email);
     if let Some(user) = find_user(&state.db, &email).await?
         && !user.verified
@@ -286,12 +305,19 @@ pub struct TokenPair {
             content_type = "application/problem+json"),
         (status = 403, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn login(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<LoginRequest>,
 ) -> ApiResult<Response> {
+    state.limits.check(Rule::LoginByIp, &ip.0)?;
+    state
+        .limits
+        .check(Rule::LoginByEmail, &normalize_email(&req.email))?;
     let email = normalize_email(&req.email);
     if req.password.is_empty() || req.password.chars().count() > 128 {
         return Err(invalid_credentials());
@@ -491,8 +517,10 @@ async fn logout(State(state): State<AppState>, user: AuthUser) -> ApiResult<Resp
 )]
 async fn forgot_password(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<EmailRequest>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::CodeEmailByIp, &ip.0)?;
     let email = normalize_email(&req.email);
     if let Some(user) = find_user(&state.db, &email).await? {
         send_code(&state, user.id, &email, Purpose::ResetPassword).await?;
@@ -535,8 +563,10 @@ pub struct ResetPasswordRequest {
 )]
 async fn reset_password(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<ResetPasswordRequest>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
     if !password::is_strong_enough(&req.new_password) {
         return Err(password_too_weak("new_password"));
     }

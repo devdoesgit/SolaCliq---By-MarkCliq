@@ -28,6 +28,7 @@ use crate::{
         template::{self as t, Badge, EmailPage, Step, Tone},
     },
     org::BusinessType,
+    rate_limit::{ClientIp, Rule},
     validate,
 };
 
@@ -65,12 +66,16 @@ pub struct OrgRegistrationCreate {
             content_type = "application/problem+json"),
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn register_org(
     State(state): State<AppState>,
+    ip: ClientIp,
     ApiJson(req): ApiJson<OrgRegistrationCreate>,
 ) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::RegistrationByIp, &ip.0)?;
     let r = validate_registration(req)?;
     let mut tx = state.db.begin().await?;
 

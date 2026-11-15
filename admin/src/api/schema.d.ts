@@ -2851,6 +2851,7 @@ export interface operations {
             };
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     listPlatformOrgs: {

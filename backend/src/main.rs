@@ -186,15 +186,20 @@ async fn serve(config: Config) -> Fallible {
         cookie_secure: config.cookie_secure,
         lifetimes: config.session_lifetimes,
         mailer,
+        limits: Arc::new(backend::rate_limit::Limiter::new()),
         code_secret: config.code_secret,
         review_email: config.review_email,
         bank_key: config.bank_key,
     });
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "listening");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // With the connection's address, for rate limits when there's no proxy.
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
     // The router, and with it every mailer, is gone: send what's queued.
     drain(mail_task).await;
     Ok(())

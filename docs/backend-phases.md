@@ -81,7 +81,8 @@ Put it on the VPS early so the pilot can test on real phones.
   Workspace). On the server: the key at
   `/etc/solacliq/gmail-sender.json`, mode 600.
 - **Build:** release build, a `systemd` service, nginx proxying
-  `solacliq.markcliq.com/api`, production `.env` on the server only
+  `solacliq.markcliq.com/api` (with `proxy_set_header X-Real-IP
+  $remote_addr;` for the rate limits), production `.env` on the server only
   (`CODE_SECRET`, `BANK_KEY`, `REVIEW_EMAIL=info@markcliq.com`,
   `COOKIE_SECURE=true`, `MAIL_FROM`, `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`),
   daily Postgres backup. CI: `make api-test` and the spec check
