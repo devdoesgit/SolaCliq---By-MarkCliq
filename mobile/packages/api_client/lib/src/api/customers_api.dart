@@ -331,7 +331,7 @@ class CustomersApi {
   }
 
   /// An agent registers a customer with their KYC
-  /// Agents only. Submits details, site, connection and KYC documents for the org admin to approve. On approval the customer&#39;s account is created (or an existing one linked) and they get a welcome email with a link to set their password. Required documents: Aadhaar, PAN, electricity bill, land document and signature (&#x60;registration.document_required&#x60;, 422, naming the kind); bank proof too when the subsidy is on (&#x60;registration.bank_proof_required&#x60;, 422). Roof photo and name change are optional.
+  /// Agents only. Submits details, site, connection and KYC documents for the org admin to approve. On submission the customer&#39;s account is created, with no password (or an existing one linked), and they are emailed at once: who registered them, what was registered, and how to set up the app to follow their install. The admin then verifies or rejects it; the customer sees the status in the app. Required documents: Aadhaar, PAN, electricity bill, land document and signature (&#x60;registration.document_required&#x60;, 422, naming the kind); bank proof too when the subsidy is on (&#x60;registration.bank_proof_required&#x60;, 422). Roof photo and name change are optional.
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.

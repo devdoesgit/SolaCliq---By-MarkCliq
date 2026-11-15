@@ -545,9 +545,11 @@ export interface paths {
         /**
          * An agent registers a customer with their KYC
          * @description Agents only. Submits details, site, connection and KYC documents for
-         *     the org admin to approve. On approval the customer's account is
-         *     created (or an existing one linked) and they get a welcome email
-         *     with a link to set their password. Required documents: Aadhaar,
+         *     the org admin to approve. On submission the customer's account is
+         *     created, with no password (or an existing one linked), and they
+         *     are emailed at once: who registered them, what was registered,
+         *     and how to set up the app to follow their install. The admin then
+         *     verifies or rejects it; the customer sees the status in the app. Required documents: Aadhaar,
          *     PAN, electricity bill, land document and signature
          *     (`registration.document_required`, 422, naming the kind); bank
          *     proof too when the subsidy is on (`registration.bank_proof_required`,

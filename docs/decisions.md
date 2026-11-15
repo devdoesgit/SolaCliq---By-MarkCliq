@@ -495,3 +495,10 @@ Change a decision by adding a new line, not by editing an old one.
   and per account for log in; 429 `auth.too_many_attempts` with
   `Retry-After`. Protects the shared daily email cap and stops password
   guessing. Details in `architecture.md`, "Rate limits".
+- **No code read-out when an agent registers a customer.** On submission
+  the customer's account is created with no password and they're emailed
+  at once with what was registered and how to set up the app to follow
+  their install; they set a password with an emailed code when they
+  first open it. Replaces the 2026-10-18 step where the customer read the
+  code out to the agent, and moves the email from approval to
+  submission (`product.md`, the contract and the handoff updated).

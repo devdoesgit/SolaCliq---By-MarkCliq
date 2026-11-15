@@ -58,20 +58,22 @@ A new account starts empty. If they later work with any MarkCliq vendor,
 the vendor's customer record links to their account automatically (see
 Customer linking).
 
-**B. Registered by an agent** (decided 2026-10-18):
-1. The agent enters the customer in the app. The customer's account is
-   created automatically.
-2. A 6-digit code is emailed to the customer; the customer reads it out
-   and the agent enters it. This proves the email is real and that the
-   customer agreed.
-3. The agent completes the registration (details, documents) and submits
-   it. Registration status: **draft → submitted → verified / rejected**.
-   The **org admin** verifies or rejects it on the website. A verified
-   registration enters the install stages at "lead" (assumed; to confirm).
-4. The customer later logs in with their email. The first time, they set a
-   password using a fresh emailed code ("Set up your account").
+**B. Registered by an agent** (decided 2026-10-18; changed 2026-11-15):
+1. The agent enters the customer in the app (details, site, documents)
+   and submits it. No code and no verification step with the customer.
+2. On submission the customer's account is created automatically, with
+   no password yet, and the customer is emailed at once: who registered
+   them (the company and the agent), what was registered, and how to set
+   up their account in the app, where they follow every stage of their
+   install.
+3. Registration status: **draft → submitted → verified / rejected**. The
+   **org admin** verifies or rejects it on the website; the customer sees
+   the status in the app. A verified registration enters the install
+   stages at "lead" (assumed; to confirm).
+4. To set up, the customer opens the app and sets a password with an
+   emailed code ("Set up your account"); that also verifies their email.
 5. If the email already has an account, no new account is made; the
-   existing one is linked and the person is notified.
+   existing one is linked and the person is told.
 
 Customer details (the org's record), the login account, and document
 records are kept separate.
