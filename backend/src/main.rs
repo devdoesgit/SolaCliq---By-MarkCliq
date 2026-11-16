@@ -76,14 +76,30 @@ type Fallible = Result<(), Box<dyn std::error::Error>>;
 // A mailer, and Gmail's background task when there is one (see `mailer`).
 type MailerAndTask = (Arc<dyn Mailer>, Option<JoinHandle<()>>);
 
-// The database pool, with migrations applied. Every command starts here.
+// The owner's pool, with migrations applied. The commands start here.
 async fn connect(config: &Config) -> Result<sqlx::PgPool, Box<dyn std::error::Error>> {
-    let db = PgPoolOptions::new()
+    let db = pool(config, &config.database_url).await?;
+    sqlx::migrate!().run(&db).await?;
+    Ok(db)
+}
+
+async fn pool(config: &Config, url: &str) -> Result<sqlx::PgPool, sqlx::Error> {
+    PgPoolOptions::new()
         .max_connections(config.db_max_connections)
         .acquire_timeout(std::time::Duration::from_secs(3))
-        .connect(&config.database_url)
-        .await?;
-    sqlx::migrate!().run(&db).await?;
+        .connect(url)
+        .await
+}
+
+/*
+    The server's pool: migrations first (as the owner, whose pool then
+    closes), then the restricted login (APP_DATABASE_URL), checked
+*/
+async fn connect_app(config: &Config) -> Result<sqlx::PgPool, Box<dyn std::error::Error>> {
+    connect(config).await?.close().await;
+    let db = pool(config, &config.app_database_url).await?;
+    let login = backend::scope::check_restricted(&db).await?;
+    tracing::info!(%login, "database login restricted by row-level security");
     Ok(db)
 }
 
@@ -178,7 +194,7 @@ async fn run_send_test_email(config: Config, to: &str) -> Fallible {
 }
 
 async fn serve(config: Config) -> Fallible {
-    let db = connect(&config).await?;
+    let db = connect_app(&config).await?;
     let (mailer, mail_task) = mailer(&config)?;
 
     let app = backend::app(AppState {

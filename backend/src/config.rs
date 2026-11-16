@@ -10,7 +10,17 @@ use crate::{bank::BankKey, codes::CodeSecret, session::Lifetimes};
 pub struct Config {
     // Which kind of server this is (APP_ENV). See `Environment`.
     pub environment: Environment,
+    /*
+        The owner's login (DATABASE_URL): migrations, the seed and admin
+        commands. The same variable sqlx's tests and tools read
+    */
     pub database_url: String,
+    /*
+        The login the server answers requests with (APP_DATABASE_URL):
+        `solacliq_api`, restricted by row-level security. `serve` refuses
+        to start if it could bypass that (main.rs)
+    */
+    pub app_database_url: String,
     pub bind_addr: SocketAddr,
     pub db_max_connections: u32,
     /// JSON log lines (production) instead of human-readable ones.
@@ -90,6 +100,7 @@ impl Config {
         Ok(Self {
             environment: parsed("APP_ENV", "production")?,
             database_url: required("DATABASE_URL")?,
+            app_database_url: required("APP_DATABASE_URL")?,
             bind_addr: parsed("BIND_ADDR", "127.0.0.1:8080")?,
             db_max_connections: parsed("DB_MAX_CONNECTIONS", "10")?,
             log_json: parsed("LOG_JSON", "false")?,
