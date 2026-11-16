@@ -12,8 +12,8 @@
     - counts live in memory: one API process (one VPS), and losing them
       on a restart only resets the windows. Old windows are dropped as
       the map grows, so memory stays bounded
-    - the client's IP is `X-Real-IP`, which nginx sets to the real
-      address (see `ClientIp`); without it, the connection's address
+    - the client's IP is `X-Real-IP` when the request came through nginx
+      on this machine, else the connection's address (see `ClientIp`)
 */
 
 use std::{
@@ -45,6 +45,11 @@ pub enum Rule {
     // POST /org-registrations, per IP.
     RegistrationByIp,
     /*
+        POST /quote-requests, per account. Each emails MarkCliq, and a
+        free account is enough to send one
+    */
+    QuoteByUser,
+    /*
         "You already have an account", per email. Over the limit it is
         skipped without a word: the answer to sign-up stays the same
     */
@@ -63,6 +68,7 @@ impl Rule {
             Rule::CodeEmailByIp => (10, HOUR),
             Rule::CodeCheckByIp => (30, 15 * MINUTE),
             Rule::RegistrationByIp => (5, HOUR),
+            Rule::QuoteByUser => (5, 24 * HOUR),
             Rule::AlreadyRegisteredByEmail => (1, HOUR),
         };
         (count, Duration::from_secs(seconds))
@@ -153,11 +159,14 @@ impl Default for Limiter {
 /*
     The caller's IP address, as text
     --------------------------------------------------------------------
-    - `X-Real-IP` first: in production nginx sets it to the real client
-      address (`proxy_set_header X-Real-IP $remote_addr;`), replacing
-      anything the client sent, and the API listens on 127.0.0.1 only
-    - otherwise the connection's address (local development)
-    - neither (tests calling the router directly): "unknown"
+    - `X-Real-IP` only when the connection comes from this machine: in
+      production that's nginx, which sets it to the real client address
+      (`proxy_set_header X-Real-IP $remote_addr;`). From anywhere else
+      the header is ignored, so a client can't pick its own IP to dodge
+      the limits
+    - otherwise the connection's address
+    - no connection info at all (tests calling the router directly): the
+      header, or "unknown"
 */
 pub struct ClientIp(pub String);
 
@@ -172,13 +181,16 @@ impl<S: Send + Sync> FromRequestParts<S> for ClientIp {
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .map(str::to_owned);
-        let connection = parts
+        let peer = parts
             .extensions
             .get::<ConnectInfo<SocketAddr>>()
-            .map(|ConnectInfo(addr)| addr.ip().to_string());
-        Ok(ClientIp(
-            header.or(connection).unwrap_or_else(|| "unknown".into()),
-        ))
+            .map(|ConnectInfo(addr)| addr.ip());
+        let ip = match peer {
+            Some(peer) if peer.is_loopback() => header.unwrap_or_else(|| peer.to_string()),
+            Some(peer) => peer.to_string(),
+            None => header.unwrap_or_else(|| "unknown".into()),
+        };
+        Ok(ClientIp(ip))
     }
 }
 
@@ -219,6 +231,39 @@ mod tests {
             .parse()
             .unwrap();
         assert!((1..=3600).contains(&wait));
+    }
+
+    async fn ip(peer: Option<&str>, header: Option<&str>) -> String {
+        let mut req = axum::http::Request::builder();
+        if let Some(h) = header {
+            req = req.header("x-real-ip", h);
+        }
+        let (mut parts, ()) = req.body(()).unwrap().into_parts();
+        if let Some(p) = peer {
+            parts
+                .extensions
+                .insert(ConnectInfo::<SocketAddr>(p.parse().unwrap()));
+        }
+        ClientIp::from_request_parts(&mut parts, &())
+            .await
+            .unwrap()
+            .0
+    }
+
+    #[tokio::test]
+    async fn x_real_ip_is_trusted_only_from_this_machine() {
+        // Through nginx on this machine: the header is the client.
+        assert_eq!(
+            ip(Some("127.0.0.1:5000"), Some("203.0.113.9")).await,
+            "203.0.113.9"
+        );
+        // Straight from the internet: a made-up header is ignored.
+        assert_eq!(
+            ip(Some("198.51.100.7:5000"), Some("1.2.3.4")).await,
+            "198.51.100.7"
+        );
+        // Local, without nginx: the connection itself.
+        assert_eq!(ip(Some("127.0.0.1:5000"), None).await, "127.0.0.1");
     }
 
     #[test]

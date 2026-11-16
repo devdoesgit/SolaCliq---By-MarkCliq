@@ -420,7 +420,8 @@ export interface paths {
          *     the person on their phone (the account's, or `phone` here if the
          *     account has none; 422 `quote.phone_required` if neither). The
          *     person gets a `quote_shared` notification. Returns a general,
-         *     indicative estimate from the bill band. Companies accepting leads
+         *     indicative estimate from the bill band. At most 5 a day per account
+         *     (429 `auth.too_many_attempts`); a retry with the same key isn't counted. Companies accepting leads
          *     comes with the admin website.
          */
         post: operations["createQuoteRequest"];
@@ -2971,6 +2972,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     getOrgHome: {

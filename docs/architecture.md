@@ -70,13 +70,16 @@ Claude builds every part; the owner reviews.
 - The public endpoints are limited per IP, and log in also per email
   (`src/rate_limit.rs`): sign-up 10/hour, log in 30 per 15 minutes per
   IP and 10 per account, code emails 10/hour, code checks 30 per 15
-  minutes, company registration 5/hour. Over the limit: 429
+  minutes, company registration 5/hour, quote requests 5 a day per account
+  (each emails MarkCliq; retries with the same key don't count). Over the limit: 429
   `auth.too_many_attempts` with `Retry-After`. "You already have an
   account" goes out at most once an hour per address.
 - Why: every email shares the Workspace sender's cap (about 2,000 a
   day), so floods would stop real people's codes.
-- Counts are in memory (one API process). The IP is `X-Real-IP`, which
-  nginx must set: `proxy_set_header X-Real-IP $remote_addr;`.
+- Counts are in memory (one API process). The IP is `X-Real-IP` only
+  on connections from this machine (nginx, which must set
+  `proxy_set_header X-Real-IP $remote_addr;`); from anywhere else the
+  header is ignored and the connection's address is used.
 
 ## API contract
 

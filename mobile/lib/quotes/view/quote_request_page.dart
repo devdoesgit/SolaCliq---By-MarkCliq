@@ -145,7 +145,14 @@ class _QuoteRequestViewState extends State<QuoteRequestView> {
             spacing: SolaSpace.space16,
             children: [
               if (state.status == SubmitStatus.failure)
-                FailureNotice(state: state),
+                FailureNotice(
+                  state: state,
+                  // 429 here is the daily limit, not a few minutes' wait.
+                  messageFor: (failure) =>
+                      failure == AuthFailureCode.tooManyAttempts
+                      ? l10n.quoteLimitReached
+                      : null,
+                ),
               SolaSegmented<QuoteFor>(
                 key: const ValueKey('quote_for'),
                 label: l10n.quoteFor2,

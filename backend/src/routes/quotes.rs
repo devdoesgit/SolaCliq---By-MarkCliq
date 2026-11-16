@@ -28,7 +28,9 @@ use crate::{
         Email,
         template::{self as t, Badge, EmailPage, Tone},
     },
-    notify, validate,
+    notify,
+    rate_limit::Rule,
+    validate,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -213,6 +215,8 @@ pub fn estimate(quote_for: QuoteFor, bill: BillBand) -> QuoteEstimate {
             content_type = "application/problem+json"),
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn create_quote_request(
@@ -224,6 +228,10 @@ async fn create_quote_request(
     if let Some(done) = idempotency::replay(&state.db, user.user_id, key, REQUEST).await? {
         return Ok(done);
     }
+    // After the replay: retrying a quote that went through never counts.
+    state
+        .limits
+        .check(Rule::QuoteByUser, &user.user_id.to_string())?;
 
     if !req.share_consent {
         return Err(ApiError::new(

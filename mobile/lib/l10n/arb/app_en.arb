@@ -163,6 +163,10 @@
         "description": "Expired code."
     },
     "failTooManyAttempts": "Too many tries. Wait a few minutes and try again.",
+    "quoteLimitReached": "You've sent 5 quote requests today. MarkCliq will call you about them; you can send more tomorrow.",
+    "@quoteLimitReached": {
+        "description": "The quote form, after the day's limit of 5 requests (429)."
+    },
     "@failTooManyAttempts": {
         "description": "Rate limited."
     },

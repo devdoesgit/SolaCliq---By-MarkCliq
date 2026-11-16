@@ -9,7 +9,7 @@ use axum::{
     http::{Request, StatusCode},
 };
 use backend::{app, rate_limit::Limiter};
-use serde_json::json;
+use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
@@ -67,4 +67,61 @@ async fn one_ip_is_stopped_without_blocking_others(db: PgPool) {
     assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
     let (status, _) = login(&router, "10.2.2.2", "another@example.com").await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
+}
+
+// A quote request with `key`, on an app whose limits are on.
+async fn quote(router: &axum::Router, token: &str, key: &str) -> (StatusCode, Value) {
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/v1/quote-requests")
+        .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {token}"))
+        .header("idempotency-key", key)
+        .body(Body::from(
+            json!({
+                "quote_for": "home", "pin_code": "160062", "city": "Mohali",
+                "bill_band": "from_1500_to_3000", "roof": "rcc",
+                "timeline": "this_month", "phone": "98140 22671", "share_consent": true,
+            })
+            .to_string(),
+        ))
+        .unwrap();
+    let res = router.clone().oneshot(req).await.unwrap();
+    let status = res.status();
+    let bytes = http_body_util::BodyExt::collect(res.into_body())
+        .await
+        .unwrap()
+        .to_bytes();
+    (
+        status,
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+    )
+}
+
+#[sqlx::test]
+async fn quotes_are_limited_per_account_but_retries_still_work(db: PgPool) {
+    common::verified_user(&db, "asha@example.com", "sunlight1").await;
+    let token = common::token(&db, "asha@example.com").await;
+    let mut state = common::state(&db);
+    state.limits = Arc::new(Limiter::new());
+    let router = app(state);
+
+    // 5 a day; each emails MarkCliq.
+    let keys: Vec<String> = (0..6).map(|_| uuid::Uuid::now_v7().to_string()).collect();
+    let mut first = Value::Null;
+    for (i, key) in keys[..5].iter().enumerate() {
+        let (status, body) = quote(&router, &token, key).await;
+        assert_eq!(status, StatusCode::CREATED);
+        if i == 0 {
+            first = body;
+        }
+    }
+    let (status, body) = quote(&router, &token, &keys[5]).await;
+    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+    assert_eq!(body["code"], "auth.too_many_attempts");
+
+    // A retry of one that went through still gets its answer.
+    let (status, body) = quote(&router, &token, &keys[0]).await;
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(body["id"], first["id"]);
 }

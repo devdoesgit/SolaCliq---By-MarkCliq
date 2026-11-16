@@ -513,3 +513,11 @@ Change a decision by adding a new line, not by editing an old one.
   `support@solacliq.markcliq.com`.
 - **The staging app points at the production API on purpose**, for
   testing while there's no real data; revisit before real vendors.
+- **Security review fixes, first batch (2026-11-16):** quote requests are
+  limited to 5 a day per account (each emails MarkCliq, and one free
+  account could otherwise use up the daily email cap), and `X-Real-IP`
+  is trusted only from this machine (nginx), so clients can't fake their
+  IP past the limits. The rest of the review is in the conversation
+  record; next in line: member consent before admins see details,
+  refresh races across tabs, a per-account code cap, a cap on parallel
+  password hashing.
