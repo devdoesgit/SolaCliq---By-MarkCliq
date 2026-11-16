@@ -54,6 +54,11 @@ pub enum Rule {
         skipped without a word: the answer to sign-up stays the same
     */
     AlreadyRegisteredByEmail,
+    /*
+        POST /uploads, per account. Generous for a day of site photos;
+        stops a script from filling the bucket
+    */
+    UploadByUser,
 }
 
 impl Rule {
@@ -70,6 +75,7 @@ impl Rule {
             Rule::RegistrationByIp => (5, HOUR),
             Rule::QuoteByUser => (5, 24 * HOUR),
             Rule::AlreadyRegisteredByEmail => (1, HOUR),
+            Rule::UploadByUser => (200, HOUR),
         };
         (count, Duration::from_secs(seconds))
     }

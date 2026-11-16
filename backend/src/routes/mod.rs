@@ -12,6 +12,7 @@ pub mod profile;
 pub mod quotes;
 pub mod registration;
 pub mod team;
+pub mod uploads;
 
 use utoipa_axum::router::OpenApiRouter;
 
@@ -30,6 +31,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(platform::router())
         .merge(profile::router())
         .merge(quotes::router())
+        .merge(uploads::router())
 }
 
 /// Any path no route matches.
