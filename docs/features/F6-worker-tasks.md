@@ -1,6 +1,7 @@
 # F6 Worker tasks and proof photos
 
-Status: `building`. Spec drafted 2026-10-26 from the owner's iOS v2 worker
+Status: `building`. Backend for tasks (#25–33) built 2026-11-16; see
+"Notes (backend)" below. Spec drafted 2026-10-26 from the owner's iOS v2 worker
 designs (SolaCliq Login canvas: Tasks, Task, Proof camera, Submit,
 Submitted, Approved, Returned, Report a problem, Reported, Cancelled,
 History). **Waiting for the owner's review** of this spec and of the
@@ -38,7 +39,7 @@ reassigns or cancels it.
 - `PUT .../checklist/{item_id}`, `POST .../submit` (needs all photos and
   checklist; locks photos), `POST .../problems`, `POST .../messages`
 - `GET /orgs/{org_id}/me/stats` for the profile.
-- `POST /uploads` gains purpose `proof`.
+- `POST /orgs/{org_id}/uploads` gains purpose `proof`.
 
 **Mobile (Claude):**
 
@@ -85,3 +86,14 @@ no gallery or flip button on the proof camera; "On hold" for a task with a
 reported problem; task screens open over the tab bar; no task search. The
 app keeps the worker's photo and checklist progress locally while the
 mock, which keeps no state, returns the task unchanged.
+
+## Notes (backend, 2026-11-16)
+
+Built against the real API: lists, task, photos, checklist, submit,
+problems, replies, history, stats, and the worker's home from real
+tasks (`backend/src/routes/tasks.rs`). Photo slots and checklist are set
+per task (the open question above, decided 2026-11-16). A photo is
+attached only once R2 confirms the file arrived whole. The admin side
+(create, approve, return, cancel) comes with the admin website; `cargo
+run -- seed` writes Ravi's tasks meanwhile. Rules: `decisions.md`,
+"Worker task rules".

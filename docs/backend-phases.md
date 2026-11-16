@@ -31,7 +31,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
 | 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security (restricted login; orgs, memberships, notifications) and uploads (#22, a real photo through R2) done 2026-11-16; push waits for Firebase |
-| 8 | Worker | #25–38 | |
+| 8 | Worker | #25–38 | Building: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats (#25–33) and the worker's home done 2026-11-16; expenses and documents (#34–38) next |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |
 
@@ -115,7 +115,7 @@ the owner: a Firebase project (`google-services.json` for the `.dev`,
 **Then:**
 
 `GET /orgs/{org_id}/home` composed per role (see "Home" in the handoff),
-`POST /uploads` with presigned R2 URLs, company notifications and mark
+`POST /orgs/{org_id}/uploads` with presigned R2 URLs, company notifications and mark
 read. Row-level security starts here, with the first company-owned
 tables: the API connects as a role that doesn't own the tables, policies
 filter on `current_setting('app.org_id')`, and each company request runs

@@ -55,7 +55,7 @@ From `architecture.md`, restated where the app depends on them:
   the stored response on a repeat; the app retries after lost responses.
 - **Lists:** `?cursor=&limit=` with `page.next_cursor` (null on the last
   page), where the schema has `page`.
-- **Images and files:** never in JSON. `POST /uploads` hands out a
+- **Images and files:** never in JSON. `POST /orgs/{org_id}/uploads` hands out a
   presigned PUT URL to the private R2 bucket; the record then carries the
   `upload_id`. Reads return short-lived presigned GET URLs.
 - **Phones:** 10 digits, no `+91`.
@@ -99,7 +99,7 @@ milestone, top to bottom.
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
 | 21 | `GET /orgs/{org_id}/home` | any member | — | `HomeSummary` | **Built (phase 7).** Server-composed per role (see "Home" below); honest zeros and an explaining row until tasks, customers and installs exist (phases 8–10). Dates in Indian time |
-| 22 | `POST /uploads` | auth | `UploadCreate` | `Upload` | `content_type` jpeg/png/pdf, `size_bytes` ≤ 10 MB (422 over), `purpose` `receipt`/`kyc`/`proof`. Presigned PUT valid 15 min. An upload id can be used once, by its owner |
+| 22 | `POST /orgs/{org_id}/uploads` | any member | `UploadCreate` | `Upload` | `content_type` jpeg/png/pdf, `size_bytes` ≤ 10 MB (422 over), `purpose` `receipt`/`kyc`/`proof`. Presigned PUT valid 15 min. **Built (phase 7; per company 2026-11-16).** The file belongs to that company (`orgs/<org_id>/...` in the bucket) and can only be attached to its records. An upload id can be used once, by its owner |
 | 23 | `GET /orgs/{org_id}/notifications` | any member | cursor | `NotificationPage` | **Built (phase 7).** Newest first, `unread_count`. Each carries the id it opens: `task_id`, `expense_id` or `customer_id` |
 | 24 | `POST /orgs/{org_id}/notifications/read` | any member | — | 204 | **Built (phase 7).** Marks all read, in that company only |
 
@@ -107,15 +107,15 @@ milestone, top to bottom.
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
-| 25 | `GET /orgs/{org_id}/tasks?view=today\|upcoming\|done` | worker | view | `TaskPage` | Only the caller's tasks. `done` = approved + cancelled |
-| 26 | `GET /orgs/{org_id}/tasks/{task_id}` | worker | — | `Task` | Photos as presigned URLs |
-| 27 | `POST .../tasks/{task_id}/photos` | worker | `ProofPhotoCreate` | `Task` | `slot_id`, `upload_id`, `taken_at`, `lat`, `lng`, `accuracy_m`, `mocked_location`. Flag (don't reject) a photo far from the site or with a mocked location; the admin sees the flag. 409 `task.locked` unless `assigned`/`returned` |
-| 28 | `PUT .../tasks/{task_id}/checklist/{item_id}` | worker | `{done}` | `Task` | 409 when locked |
-| 29 | `POST .../tasks/{task_id}/submit` | worker, *idem* | `{note?}` | `Task` | 422 `task.incomplete` unless every slot has a photo (retakes retaken) and every item is ticked. → `submitted` |
-| 30 | `POST .../tasks/{task_id}/problems` | worker, *idem* | `TaskProblemCreate` | `Task` | `reason` + `note`; notifies the admin. Task stays `assigned`, shown "On hold" |
-| 31 | `POST .../tasks/{task_id}/messages` | worker | `{text}` | 204 | Reply to the admin on a returned task; goes into history |
-| 32 | `GET .../tasks/{task_id}/history` | worker | — | `TaskHistory` | Append-only events |
-| 33 | `GET /orgs/{org_id}/me/stats` | worker | — | `WorkerStats` | This month: tasks, returned, average minutes on site |
+| 25 | `GET /orgs/{org_id}/tasks?view=today\|upcoming\|done` | worker | view | `TaskPage` | **Built (phase 8).** Only the caller's tasks. `done` = approved + cancelled |
+| 26 | `GET /orgs/{org_id}/tasks/{task_id}` | worker | — | `Task` | **Built (phase 8).** Photos as presigned URLs |
+| 27 | `POST .../tasks/{task_id}/photos` | worker | `ProofPhotoCreate` | `Task` | **Built**, with the upload checked in R2 (422 if it didn't finish). `slot_id`, `upload_id`, `taken_at`, `lat`, `lng`, `accuracy_m`, `mocked_location`. Flag (don't reject) a photo far from the site or with a mocked location; the admin sees the flag. 409 `task.locked` unless `assigned`/`returned` |
+| 28 | `PUT .../tasks/{task_id}/checklist/{item_id}` | worker | `{done}` | `Task` | **Built (phase 8).** 409 when locked |
+| 29 | `POST .../tasks/{task_id}/submit` | worker, *idem* | `{note?}` | `Task` | **Built (phase 8).** 422 `task.incomplete` unless every slot has a photo (retakes retaken) and every item is ticked. → `submitted` |
+| 30 | `POST .../tasks/{task_id}/problems` | worker, *idem* | `TaskProblemCreate` | `Task` | **Built (phase 8).** `reason` + `note`; the admin sees it in the task's history (an admin feed comes with the website). Task stays `assigned`, shown "On hold" |
+| 31 | `POST .../tasks/{task_id}/messages` | worker | `{text}` | 204 | **Built (phase 8).** Reply to the admin on a returned task; goes into history |
+| 32 | `GET .../tasks/{task_id}/history` | worker | — | `TaskHistory` | **Built (phase 8).** Append-only events |
+| 33 | `GET /orgs/{org_id}/me/stats` | worker | — | `WorkerStats` | **Built (phase 8).** This month: tasks, returned, average minutes on site |
 | 34 | `GET /orgs/{org_id}/expenses` | worker, agent | — | `ExpensePage` | The caller's own, newest first |
 | 35 | `POST /orgs/{org_id}/expenses` | worker, agent, *idem* | `ExpenseCreate` | `Expense` | `amount` (paise), `category`, `note`, `spent_on`, optional `receipt_upload_id`, `task_id` (must be the caller's). Server assigns `reference` `EXP-nnnn` per org |
 | 36 | `GET /orgs/{org_id}/expenses/{expense_id}` | owner | — | `Expense` | |

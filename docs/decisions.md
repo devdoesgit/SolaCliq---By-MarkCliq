@@ -552,3 +552,27 @@ Change a decision by adding a new line, not by editing an old one.
   (what a task shows: name, phone, address, map pin, kW, stages);
   Phase 9 adds the agent, KYC and documents to it. A task's photo slots
   and checklist are set per task (seed now, admin website later).
+- **Uploads are checked when attached, not by webhook (owner,
+  2026-11-16).** The app learns from R2's own answer to its PUT; the
+  server learns when a record attaches the upload: a signed HEAD to R2
+  (exists, right size), else 422. R2 has no direct webhook (event
+  notifications need a Queue and a Worker), and nothing needs to know
+  sooner. Uploads unused for 24 hours are swept hourly, file and row.
+- **Worker task rules (2026-11-16, phase 8).** "Today" holds open work
+  due today or overdue, plus returned tasks and tasks on hold whatever
+  their date, and submitted ones still with the admin, in Indian time.
+  Photos are flagged, never refused, over 500 m from the customer's pin
+  or with a fix rougher than 50 m. Submitting closes an open problem
+  (the work got done). Replies are allowed on any open task, not only
+  returned ones. A problem or reply reaches the admin through the
+  task's history; an admin feed for them comes with the admin website.
+  History gets one "photos uploaded" line per round of photos.
+- **Files belong to a company (owner, 2026-11-16).** Uploads moved to
+  `POST /orgs/{org_id}/uploads`: the same membership check as every
+  company endpoint. Files are named `orgs/<org_id>/<purpose>/<id>` in
+  R2, the `uploads` row has `org_id` with a company row-level security
+  policy, and records point at it with `(org_id, upload_id)`. The server
+  signs only files under the request's company. Every place that takes
+  an upload is already inside a company, so nothing needed a personal
+  upload. One bucket per company was rejected: real separation, but
+  buckets, tokens and CORS per customer for no gain at this size.

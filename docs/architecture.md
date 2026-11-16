@@ -31,7 +31,7 @@ Claude builds every part; the owner reviews.
   short-lived presigned URLs; nothing public.
 - **Public R2 bucket:** APK files and the `latest.json` update manifest only.
 - Uploads go straight from the client to R2 with presigned URLs, never
-  through the VPS: `POST /uploads` returns a short-lived URL, method and
+  through the VPS: `POST /orgs/{org_id}/uploads` returns a short-lived URL, method and
   headers; the app sends the bytes there (with a separate HTTP client that
   never carries the API token) and attaches the returned `upload_id` to the
   record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
@@ -44,10 +44,29 @@ Claude builds every part; the owner reviews.
 - The server signs URLs itself (AWS Signature V4, region `auto`); no
   network call. A PUT URL signs the declared type and size, so R2
   refuses any other file; read URLs (for showing photos) last 15
-  minutes too. Objects are `<purpose>/<upload_id>`.
+  minutes too.
+- Every file belongs to one company, like every company row. Files are
+  named `orgs/<org_id>/<purpose>/<upload_id>`, so one company's files
+  sit under one prefix (export or delete a company in one go). The
+  `uploads` row carries `org_id` with a company row-level security
+  policy, and records point at it with `(org_id, upload_id)`, so they
+  can only take an upload of their own company. The server signs a URL
+  only for a file under the request's company (`storage.rs`): a bug
+  that picked another company's file fails there, before R2 is asked.
+  R2 tokens can't be limited by prefix, so that check is the code-level
+  guard, the way row-level security is for rows.
 - Each upload is a row in `uploads` (owner, purpose, type, size, key,
   `used_at`): the record that uses it sets `used_at`, so one file is
   attached once. 200 uploads an hour per account.
+- Attaching (`uploads::attach`, phase 8): before a record points at an
+  upload, the server asks R2 for the file (a signed HEAD) and checks
+  its size matches. An upload that never finished is 422 on
+  `upload_id`, so no record points at a missing file. No webhook: the
+  check runs at the one moment it matters.
+- Sweep: every hour the server deletes uploads nothing attached within
+  24 hours, the R2 file first, then the row.
+- Tests run a stand-in for R2 (`tests/common`) that answers HEAD and
+  DELETE, so the attach check runs for real.
 - Config: `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`,
   `R2_SECRET_ACCESS_KEY`, all or none. Production won't start without
   them; development without them answers 503 `upload.unavailable`.
@@ -167,7 +186,7 @@ One OpenAPI spec is the contract between backend and frontends.
   MarkCliq's endpoints live under `/platform/...` (`PlatformAdmin`).
 - Auth: `Authorization: Bearer` for mobile, cookies for the admin website,
   same endpoints.
-- Uploads: `POST /uploads` returns a presigned R2 URL.
+- Uploads: `POST /orgs/{org_id}/uploads` returns a presigned R2 URL.
 - Writes from the mobile app carry an `Idempotency-Key`, so offline retries
   never create duplicates.
 
