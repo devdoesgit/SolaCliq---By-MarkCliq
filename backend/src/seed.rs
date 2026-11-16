@@ -2,8 +2,8 @@
     Command-line tools (phase 4)
     --------------------------------------------------------------------
     - `cargo run -- seed`: an illustrative company with one person per
-      role, and Ravi's tasks (phase 8), for trying the app and the
-      website locally. Development only
+      role, and Ravi's tasks and expenses (phase 8), for trying the app
+      and the website locally. Development only
     - `cargo run -- make-platform-admin <email>`: gives an account the
       MarkCliq platform admin role. Works in production; that's its job
 */
@@ -196,6 +196,7 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
     }
 
     tasks(&mut tx).await?;
+    expenses(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -399,6 +400,11 @@ const TASKS: &[SeedTask] = &[
 
 async fn tasks(tx: &mut PgConnection) -> Result<(), SeedError> {
     let ids: Vec<Uuid> = TASKS.iter().map(|t| t.id).collect();
+    // Expenses logged against these tasks go with them (seeded or not).
+    sqlx::query("DELETE FROM expenses WHERE task_id = ANY($1)")
+        .bind(&ids)
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM tasks WHERE id = ANY($1)")
         .bind(&ids)
         .execute(&mut *tx)
@@ -536,6 +542,119 @@ async fn tasks(tx: &mut PgConnection) -> Result<(), SeedError> {
             .await?;
         }
     }
+    Ok(())
+}
+
+/*
+    Ravi's expenses
+    --------------------------------------------------------------------
+    - one of each state the admin website will set: with the admin, sent
+      back with a note, approved, paid. Reset on every run, like the tasks
+    - no receipt files: the app's "upload new receipt" adds a real one
+    - the EXP counter moves past them, so the app's next is EXP-0005
+*/
+struct SeedExpense {
+    id: Uuid,
+    reference: &'static str,
+    amount: i64,
+    category: &'static str,
+    note: &'static str,
+    days_ago: i64,
+    status: &'static str,
+    admin_note: Option<&'static str>,
+    // The seeded task it was for (TASKS index).
+    task: Option<usize>,
+}
+
+const EXPENSES: &[SeedExpense] = &[
+    SeedExpense {
+        id: Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000000f1),
+        reference: "EXP-0001",
+        amount: 124_000,
+        category: "fuel",
+        note: "Diesel for site van",
+        days_ago: 0,
+        status: "in_review",
+        admin_note: None,
+        task: Some(0),
+    },
+    SeedExpense {
+        id: Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000000f3),
+        reference: "EXP-0002",
+        amount: 20_000,
+        category: "other",
+        note: "Food",
+        days_ago: 3,
+        status: "needs_fix",
+        admin_note: Some("Receipt photo is unreadable. Upload a clearer one or add a note."),
+        task: Some(1),
+    },
+    SeedExpense {
+        id: Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000000f2),
+        reference: "EXP-0003",
+        amount: 86_000,
+        category: "material",
+        note: "MC4 connectors",
+        days_ago: 3,
+        status: "approved",
+        admin_note: None,
+        task: None,
+    },
+    SeedExpense {
+        id: Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000000f4),
+        reference: "EXP-0004",
+        amount: 110_000,
+        category: "fuel",
+        note: "Kharar site",
+        days_ago: 5,
+        status: "paid",
+        admin_note: None,
+        task: None,
+    },
+];
+
+async fn expenses(tx: &mut PgConnection) -> Result<(), SeedError> {
+    let ids: Vec<Uuid> = EXPENSES.iter().map(|e| e.id).collect();
+    sqlx::query("DELETE FROM expenses WHERE id = ANY($1)")
+        .bind(&ids)
+        .execute(&mut *tx)
+        .await?;
+    let india = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
+    let today = Utc::now().with_timezone(&india).date_naive();
+
+    for e in EXPENSES {
+        sqlx::query(
+            "INSERT INTO expenses (id, org_id, reference, owner_id, amount, category, note,
+                                   spent_on, status, admin_note, decided_by, task_id, created_at)
+             SELECT $1, $2, $3, r.id, $4, $5::expense_category, $6, $7, $8::expense_status, $9,
+                    CASE WHEN $8 = 'in_review' THEN NULL ELSE d.id END, $10,
+                    now() - make_interval(days => $11)
+             FROM users r, users d
+             WHERE r.email = 'ravi@example.com' AND d.email = 'dev@example.com'",
+        )
+        .bind(e.id)
+        .bind(EXAMPLE_SOLAR)
+        .bind(e.reference)
+        .bind(e.amount)
+        .bind(e.category)
+        .bind(e.note)
+        .bind(today - Duration::days(e.days_ago))
+        .bind(e.status)
+        .bind(e.admin_note)
+        .bind(e.task.map(|i| TASKS[i].id))
+        .bind(e.days_ago as i32)
+        .execute(&mut *tx)
+        .await?;
+    }
+    sqlx::query(
+        "INSERT INTO org_counters (org_id, series, value) VALUES ($1, 'EXP', $2)
+         ON CONFLICT (org_id, series)
+            DO UPDATE SET value = GREATEST(org_counters.value, EXCLUDED.value)",
+    )
+    .bind(EXAMPLE_SOLAR)
+    .bind(EXPENSES.len() as i32)
+    .execute(&mut *tx)
+    .await?;
     Ok(())
 }
 
