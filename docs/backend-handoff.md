@@ -91,7 +91,7 @@ milestone, top to bottom.
 | 16 | `GET /me/notifications` | auth | cursor | `NotificationPage` | **Built (phase 6).** Personal only: `quote_shared`, `guide`. `POST /me/notifications/read` marks them read |
 | 17 | `GET /me/details` | auth | — | `PersonalDetails` | **Built (phase 6), with 18–20.** Phone, address, emergency contact, payout bank. Bank comes back as `account_last4` + `bank_name`, **never** the full number |
 | 18 | `PUT /me/details` | auth | `PersonalDetails` | `PersonalDetails` | Partial: only fields sent change. A bank needs `account_number` + `ifsc`; fill `bank_name` from the IFSC. Encrypt the account number at rest |
-| 19 | `GET /me/settings` | auth | — | `Settings` | Defaults: push on, WhatsApp off, sound on, `en` |
+| 19 | `GET /me/settings` | auth | — | `Settings` | Defaults: push on, WhatsApp off, sound on. English only, no language |
 | 20 | `PUT /me/settings` | auth | `Settings` | `Settings` | Whole object |
 
 ### M3. Shared company plumbing

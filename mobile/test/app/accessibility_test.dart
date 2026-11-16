@@ -145,12 +145,7 @@ void main() {
       ),
     );
     when(() => profiles.settings()).thenAnswer(
-      (_) async => const AppSettings(
-        push: true,
-        whatsapp: false,
-        sound: true,
-        language: AppLanguage.en,
-      ),
+      (_) async => const AppSettings(push: true, whatsapp: false, sound: true),
     );
     when(() => profiles.documents(any())).thenAnswer(
       (_) async => const MyDocuments(

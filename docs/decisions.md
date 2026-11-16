@@ -521,3 +521,8 @@ Change a decision by adding a new line, not by editing an old one.
   record; next in line: member consent before admins see details,
   refresh races across tabs, a per-account code cap, a cap on parallel
   password hashing.
+- **English only; the language setting is removed** (owner, 2026-11-16).
+  No language choice in the app, no `language` in `Settings` (contract,
+  backend) and no `language` column (removed from the phase 6
+  migration; the local database was reset, as before the first deploy). Replaces
+  "Language is saved but English only for now".

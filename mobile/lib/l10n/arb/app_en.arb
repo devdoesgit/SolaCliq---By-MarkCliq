@@ -3188,26 +3188,6 @@
     "@soundSettingSub": {
         "description": "Setting."
     },
-    "languageLabel": "Language",
-    "@languageLabel": {
-        "description": "Setting."
-    },
-    "languageEnglish": "English",
-    "@languageEnglish": {
-        "description": "Language."
-    },
-    "languageHindi": "हिंदी",
-    "@languageHindi": {
-        "description": "Language: Hindi, in Hindi."
-    },
-    "languagePunjabi": "ਪੰਜਾਬੀ",
-    "@languagePunjabi": {
-        "description": "Language: Punjabi, in Punjabi."
-    },
-    "languageSoon": "Hindi and Punjabi arrive in an update. Your choice is saved for then.",
-    "@languageSoon": {
-        "description": "Note under the language choice."
-    },
     "appVersion": "SolaCliq by MarkCliq · version {version}",
     "@appVersion": {
         "description": "Footer.",

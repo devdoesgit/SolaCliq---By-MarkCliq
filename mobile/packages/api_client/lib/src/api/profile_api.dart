@@ -101,7 +101,7 @@ class ProfileApi {
     );
   }
 
-  /// The caller&#39;s notification and language settings
+  /// The caller&#39;s notification settings
   /// The same on every phone the person signs in on.
   ///
   /// Parameters:

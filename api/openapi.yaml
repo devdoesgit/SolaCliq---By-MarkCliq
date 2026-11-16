@@ -1368,7 +1368,7 @@ paths:
   /me/settings:
     get:
       operationId: getMySettings
-      summary: The caller's notification and language settings
+      summary: The caller's notification settings
       description: The same on every phone the person signs in on.
       tags: [profile]
       responses:
@@ -3148,7 +3148,7 @@ components:
 
     Settings:
       type: object
-      required: [push, whatsapp, sound, language]
+      required: [push, whatsapp, sound]
       properties:
         push:
           type: boolean
@@ -3158,11 +3158,8 @@ components:
           description: A daily WhatsApp summary at 8 pm.
         sound:
           type: boolean
-        language:
-          type: string
-          enum: [en, hi, pa]
       examples:
-        - {push: true, whatsapp: true, sound: false, language: en}
+        - {push: true, whatsapp: true, sound: false}
 
     DocumentStatus:
       type: string

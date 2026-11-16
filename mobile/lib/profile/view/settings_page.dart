@@ -13,7 +13,8 @@ import 'package:solacliq/profile/data/profile_repository.dart';
 /// The app's version, set at build time (`--dart-define=APP_VERSION=`).
 const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0');
 
-/// Notifications and language, the same on every phone the person uses.
+/// Notification settings, the same on every phone the person uses. The
+/// app is English only, so there's no language choice.
 /// Each change saves straight away.
 class SettingsPage extends StatefulWidget {
   const new({super.key});
@@ -83,24 +84,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              SolaSectionLabel(l10n.languageLabel),
-              SolaSegmented<AppLanguage>(
-                key: const ValueKey('settings_language'),
-                label: l10n.languageLabel,
-                selected: s.language,
-                onChanged: (v) => unawaited(_save(s.copyWith(language: v))),
-                choices: [
-                  SolaChoice(AppLanguage.en, l10n.languageEnglish),
-                  SolaChoice(AppLanguage.hi, l10n.languageHindi),
-                  SolaChoice(AppLanguage.pa, l10n.languagePunjabi),
-                ],
-              ),
-              if (s.language != AppLanguage.en)
-                SolaText(
-                  l10n.languageSoon,
-                  style: SolaTextStyle.small,
-                  color: SolaColors.muted,
-                ),
               const SizedBox(height: SolaSpace.space10),
               SolaText(
                 l10n.appVersion(appVersion),

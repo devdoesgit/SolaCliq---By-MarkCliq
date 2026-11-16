@@ -100,7 +100,7 @@ Class | Method | HTTP request | Description
 [*PlatformApi*](doc/PlatformApi.md) | [**listPlatformOrgs**](doc/PlatformApi.md#listplatformorgs) | **GET** /platform/orgs | Every company, newest first
 [*PlatformApi*](doc/PlatformApi.md) | [**setPlatformOrgStatus**](doc/PlatformApi.md#setplatformorgstatus) | **POST** /platform/orgs/{org_id}/status | Approve, reject, suspend or reactivate a company
 [*ProfileApi*](doc/ProfileApi.md) | [**getMyDetails**](doc/ProfileApi.md#getmydetails) | **GET** /me/details | The caller&#39;s personal details and payout bank
-[*ProfileApi*](doc/ProfileApi.md) | [**getMySettings**](doc/ProfileApi.md#getmysettings) | **GET** /me/settings | The caller&#39;s notification and language settings
+[*ProfileApi*](doc/ProfileApi.md) | [**getMySettings**](doc/ProfileApi.md#getmysettings) | **GET** /me/settings | The caller&#39;s notification settings
 [*ProfileApi*](doc/ProfileApi.md) | [**listMyDocuments**](doc/ProfileApi.md#listmydocuments) | **GET** /orgs/{org_id}/me/documents | The caller&#39;s documents this company holds
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMyDetails**](doc/ProfileApi.md#updatemydetails) | **PUT** /me/details | Change the caller&#39;s personal details or payout bank
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMySettings**](doc/ProfileApi.md#updatemysettings) | **PUT** /me/settings | Change the caller&#39;s settings

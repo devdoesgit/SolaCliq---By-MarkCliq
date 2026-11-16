@@ -30,35 +30,22 @@ class PersonalDetails extends Equatable {
   List<Object?> get props => [phone, address, emergencyContact, bank];
 }
 
-enum AppLanguage { en, hi, pa }
-
 class AppSettings extends Equatable {
-  const new({
-    required this.push,
-    required this.whatsapp,
-    required this.sound,
-    required this.language,
-  });
+  const new({required this.push, required this.whatsapp, required this.sound});
 
   final bool push;
   final bool whatsapp;
   final bool sound;
-  final AppLanguage language;
 
-  AppSettings copyWith({
-    bool? push,
-    bool? whatsapp,
-    bool? sound,
-    AppLanguage? language,
-  }) => AppSettings(
-    push: push ?? this.push,
-    whatsapp: whatsapp ?? this.whatsapp,
-    sound: sound ?? this.sound,
-    language: language ?? this.language,
-  );
+  AppSettings copyWith({bool? push, bool? whatsapp, bool? sound}) =>
+      AppSettings(
+        push: push ?? this.push,
+        whatsapp: whatsapp ?? this.whatsapp,
+        sound: sound ?? this.sound,
+      );
 
   @override
-  List<Object> get props => [push, whatsapp, sound, language];
+  List<Object> get props => [push, whatsapp, sound];
 }
 
 enum DocumentStatus { verified, inReview, needsFix }
@@ -148,7 +135,6 @@ class ProfileRepository {
           push: s.push,
           whatsapp: s.whatsapp,
           sound: s.sound,
-          language: api.SettingsLanguageEnum.values.byName(s.language.name),
         ),
       ),
     );
@@ -190,10 +176,6 @@ class ProfileRepository {
     },
   );
 
-  static AppSettings _settings(api.Settings s) => AppSettings(
-    push: s.push,
-    whatsapp: s.whatsapp,
-    sound: s.sound,
-    language: AppLanguage.values.byName(s.language.name),
-  );
+  static AppSettings _settings(api.Settings s) =>
+      AppSettings(push: s.push, whatsapp: s.whatsapp, sound: s.sound);
 }

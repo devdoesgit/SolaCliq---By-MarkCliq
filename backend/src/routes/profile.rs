@@ -3,8 +3,8 @@
     --------------------------------------------------------------------
     - GET/PUT /me/details: phone, address, emergency contact, payout bank.
       Shared by every company the person works with
-    - GET/PUT /me/settings: notifications and language, the same on
-      every phone they sign in on
+    - GET/PUT /me/settings: notifications, the same on every phone
+      they sign in on. English only: no language setting
     - GET /me/notifications: their own feed (Personal workspace)
 */
 
@@ -301,16 +301,6 @@ pub struct Settings {
     // A daily WhatsApp summary at 8 pm.
     pub whatsapp: bool,
     pub sound: bool,
-    pub language: Language,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema, sqlx::Type)]
-#[serde(rename_all = "snake_case")]
-#[sqlx(type_name = "text", rename_all = "snake_case")]
-pub enum Language {
-    En,
-    Hi,
-    Pa,
 }
 
 // Until the person saves their own.
@@ -318,7 +308,6 @@ const DEFAULT_SETTINGS: Settings = Settings {
     push: true,
     whatsapp: false,
     sound: true,
-    language: Language::En,
 };
 
 #[utoipa::path(
@@ -333,12 +322,11 @@ const DEFAULT_SETTINGS: Settings = Settings {
     ),
 )]
 async fn get_settings(State(state): State<AppState>, user: AuthUser) -> ApiResult<Json<Settings>> {
-    let saved: Option<Settings> = sqlx::query_as(
-        "SELECT push, whatsapp, sound, language FROM user_settings WHERE user_id = $1",
-    )
-    .bind(user.user_id)
-    .fetch_optional(&state.db)
-    .await?;
+    let saved: Option<Settings> =
+        sqlx::query_as("SELECT push, whatsapp, sound FROM user_settings WHERE user_id = $1")
+            .bind(user.user_id)
+            .fetch_optional(&state.db)
+            .await?;
     Ok(Json(saved.unwrap_or(DEFAULT_SETTINGS)))
 }
 
@@ -363,15 +351,14 @@ async fn update_settings(
     ApiJson(s): ApiJson<Settings>,
 ) -> ApiResult<Json<Settings>> {
     sqlx::query(
-        "INSERT INTO user_settings (user_id, push, whatsapp, sound, language)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (user_id) DO UPDATE SET push = $2, whatsapp = $3, sound = $4, language = $5",
+        "INSERT INTO user_settings (user_id, push, whatsapp, sound)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id) DO UPDATE SET push = $2, whatsapp = $3, sound = $4",
     )
     .bind(user.user_id)
     .bind(s.push)
     .bind(s.whatsapp)
     .bind(s.sound)
-    .bind(s.language)
     .execute(&state.db)
     .await?;
     Ok(Json(s))

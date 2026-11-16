@@ -54,8 +54,7 @@ CREATE TABLE user_settings (
     user_id   uuid    PRIMARY KEY REFERENCES users (id),
     push      boolean NOT NULL,
     whatsapp  boolean NOT NULL,
-    sound     boolean NOT NULL,
-    language  text    NOT NULL CHECK (language IN ('en', 'hi', 'pa'))
+    sound     boolean NOT NULL
 );
 
 CREATE TABLE notifications (

@@ -201,14 +201,15 @@ async fn settings_start_from_defaults_and_save(db: PgPool) {
     let res = get(&db, "/api/v1/me/settings", Some(&t)).await;
     assert_eq!(
         res.body,
-        json!({"push": true, "whatsapp": false, "sound": true, "language": "en"})
+        json!({"push": true, "whatsapp": false, "sound": true})
     );
-    let mine = json!({"push": false, "whatsapp": true, "sound": false, "language": "pa"});
+    let mine = json!({"push": false, "whatsapp": true, "sound": false});
     let res = call(&db, "PUT", "/api/v1/me/settings", &t, Some(mine.clone())).await;
     assert_eq!(res.body, mine);
     assert_eq!(get(&db, "/api/v1/me/settings", Some(&t)).await.body, mine);
 
-    let bad = json!({"push": true, "whatsapp": true, "sound": true, "language": "fr"});
+    // The whole object every time: a setting left out is refused.
+    let bad = json!({"push": true, "whatsapp": true});
     let res = call(&db, "PUT", "/api/v1/me/settings", &t, Some(bad)).await;
     assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
 }

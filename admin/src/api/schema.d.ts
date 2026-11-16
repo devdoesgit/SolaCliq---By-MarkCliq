@@ -1020,7 +1020,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * The caller's notification and language settings
+         * The caller's notification settings
          * @description The same on every phone the person signs in on.
          */
         get: operations["getMySettings"];
@@ -2282,8 +2282,7 @@ export interface components {
          * @example {
          *       "push": true,
          *       "whatsapp": true,
-         *       "sound": false,
-         *       "language": "en"
+         *       "sound": false
          *     }
          */
         Settings: {
@@ -2292,8 +2291,6 @@ export interface components {
             /** @description A daily WhatsApp summary at 8 pm. */
             whatsapp: boolean;
             sound: boolean;
-            /** @enum {string} */
-            language: "en" | "hi" | "pa";
         };
         /** @enum {string} */
         DocumentStatus: "verified" | "in_review" | "needs_fix";

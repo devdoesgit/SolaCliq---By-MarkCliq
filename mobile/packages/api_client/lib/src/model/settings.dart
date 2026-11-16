@@ -18,15 +18,7 @@ part 'settings.g.dart';
 )
 class Settings {
   /// Returns a new [Settings] instance.
-  Settings({
-    required this.push,
-
-    required this.whatsapp,
-
-    required this.sound,
-
-    required this.language,
-  });
+  Settings({required this.push, required this.whatsapp, required this.sound});
 
   /// Push notifications for new work, approvals and returns.
   @JsonKey(name: r'push', required: true, includeIfNull: false)
@@ -39,23 +31,19 @@ class Settings {
   @JsonKey(name: r'sound', required: true, includeIfNull: false)
   final bool sound;
 
-  @JsonKey(name: r'language', required: true, includeIfNull: false)
-  final SettingsLanguageEnum language;
-
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is Settings &&
             runtimeType == other.runtimeType &&
             equals(
-              [push, whatsapp, sound, language],
-              [other.push, other.whatsapp, other.sound, other.language],
+              [push, whatsapp, sound],
+              [other.push, other.whatsapp, other.sound],
             );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^
-      mapPropsToHashCode([push, whatsapp, sound, language]);
+      runtimeType.hashCode ^ mapPropsToHashCode([push, whatsapp, sound]);
 
   factory Settings.fromJson(Map<String, dynamic> json) =>
       _$SettingsFromJson(json);
@@ -66,20 +54,4 @@ class Settings {
   String toString() {
     return toJson().toString();
   }
-}
-
-enum SettingsLanguageEnum {
-  @JsonValue(r'en')
-  en(r'en'),
-  @JsonValue(r'hi')
-  hi(r'hi'),
-  @JsonValue(r'pa')
-  pa(r'pa');
-
-  const SettingsLanguageEnum(this.value);
-
-  final String value;
-
-  @override
-  String toString() => value;
 }

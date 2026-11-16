@@ -13,8 +13,6 @@ Date: ______  Attendees: ______
 - Team size: office staff, installers, agents?
 - What do they use today to track customers, jobs and money (Excel, Google
   Sheets, WhatsApp groups, paper)? Can we import their existing customers?
-- What language do workers and customers prefer in an app: English, Hindi,
-  Odia?
 - What phones do workers use (Android? roughly how old)? Is mobile data
   reliable on site?
 
