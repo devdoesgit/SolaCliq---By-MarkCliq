@@ -27,7 +27,7 @@ class TasksApi {
   const TasksApi(this._dio);
 
   /// Attach a proof photo to one of the task&#39;s photo slots
-  /// The photo comes from the live camera only, never the gallery, and carries where and when it was taken. The server flags photos far from the site, with poor accuracy or a mocked location; flags go to the admin, nothing is refused. Replaces an earlier photo in the slot (a retake). 409 &#x60;task.locked&#x60; once submitted.
+  /// The photo comes from the live camera only, never the gallery, and carries where and when it was taken. The server flags photos far from the site (over 500 m), with poor accuracy (over 50 m) or a mocked location; flags go to the admin, nothing is refused. Replaces an earlier photo in the slot (a retake). 422 on &#x60;upload_id&#x60; when the file isn&#39;t in storage whole (the upload didn&#39;t finish). 409 &#x60;task.locked&#x60; once submitted.
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
@@ -415,7 +415,7 @@ class TasksApi {
   }
 
   /// The caller&#39;s tasks in this company
-  /// Workers only. &#x60;today&#x60;: due today, plus any returned or with a problem, in due order. &#x60;upcoming&#x60;: due later, by day. &#x60;done&#x60;: approved and cancelled, newest first.
+  /// Workers only. &#x60;today&#x60;: open work due today or overdue, plus any returned or with a problem whatever its date, and what&#39;s with the admin, in due order (Indian time). &#x60;upcoming&#x60;: due later, by day. &#x60;done&#x60;: approved and cancelled, newest first.
   ///
   /// Parameters:
   /// * [view]
@@ -516,7 +516,7 @@ class TasksApi {
   }
 
   /// Tell the admin the task can&#39;t go ahead as planned
-  /// The admin is notified at once and decides: reschedule, reassign or cancel. The task stays &#x60;assigned&#x60; with &#x60;problem&#x60; set.
+  /// On an &#x60;assigned&#x60; task (409 &#x60;task.locked&#x60; otherwise). The admin decides: reschedule, reassign or cancel. The task stays &#x60;assigned&#x60; with &#x60;problem&#x60; set; submitting it closes the problem.
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
@@ -631,7 +631,7 @@ class TasksApi {
   }
 
   /// Reply to the admin about this task
-  /// Shows in the task&#39;s history and notifies the admin.
+  /// Shows in the task&#39;s history, where the admin reads it. Open tasks only: 409 &#x60;task.locked&#x60; once approved or cancelled.
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.

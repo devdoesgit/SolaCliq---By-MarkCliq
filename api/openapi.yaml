@@ -712,15 +712,20 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
 
-  /uploads:
+  /orgs/{org_id}/uploads:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
     post:
       operationId: createUpload
-      summary: Get a presigned URL to upload one file
+      summary: Get a presigned URL to upload one file for this company
       description: |
         The app PUTs the file to `url` with `headers`, then sends
-        `upload_id` with the record it belongs to. URLs expire after 15
-        minutes. Sample data uses a `.invalid` host, which the development
-        app treats as uploaded.
+        `upload_id` with the record it belongs to, in the same company.
+        Every file belongs to one company: an upload made here can only
+        be attached to this company's records, and is stored under the
+        company's own prefix. URLs expire after 15 minutes. Sample data
+        uses a `.invalid` host, which the development app treats as
+        uploaded.
       tags: [uploads]
       requestBody:
         required: true
@@ -736,6 +741,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Upload"
         "401":
+          $ref: "#/components/responses/Problem"
+        "403":
           $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
@@ -842,9 +849,10 @@ paths:
       operationId: listMyTasks
       summary: The caller's tasks in this company
       description: |
-        Workers only. `today`: due today, plus any returned or with a
-        problem, in due order. `upcoming`: due later, by day. `done`:
-        approved and cancelled, newest first.
+        Workers only. `today`: open work due today or overdue, plus any
+        returned or with a problem whatever its date, and what's with the
+        admin, in due order (Indian time). `upcoming`: due later, by day.
+        `done`: approved and cancelled, newest first.
       tags: [tasks]
       parameters:
         - name: view
@@ -877,6 +885,8 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/tasks/{task_id}:
@@ -927,9 +937,11 @@ paths:
       description: |
         The photo comes from the live camera only, never the gallery, and
         carries where and when it was taken. The server flags photos far
-        from the site, with poor accuracy or a mocked location; flags go to
-        the admin, nothing is refused. Replaces an earlier photo in the
-        slot (a retake). 409 `task.locked` once submitted.
+        from the site (over 500 m), with poor accuracy (over 50 m) or a
+        mocked location; flags go to the admin, nothing is refused.
+        Replaces an earlier photo in the slot (a retake). 422 on
+        `upload_id` when the file isn't in storage whole (the upload
+        didn't finish). 409 `task.locked` once submitted.
       tags: [tasks]
       requestBody:
         required: true
@@ -1061,8 +1073,9 @@ paths:
       operationId: reportTaskProblem
       summary: Tell the admin the task can't go ahead as planned
       description: |
-        The admin is notified at once and decides: reschedule, reassign or
-        cancel. The task stays `assigned` with `problem` set.
+        On an `assigned` task (409 `task.locked` otherwise). The admin
+        decides: reschedule, reassign or cancel. The task stays `assigned`
+        with `problem` set; submitting it closes the problem.
       tags: [tasks]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1088,6 +1101,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "404":
           $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
 
@@ -1098,7 +1113,9 @@ paths:
     post:
       operationId: sendTaskMessage
       summary: Reply to the admin about this task
-      description: Shows in the task's history and notifies the admin.
+      description: |
+        Shows in the task's history, where the admin reads it. Open tasks
+        only: 409 `task.locked` once approved or cancelled.
       tags: [tasks]
       requestBody:
         required: true
@@ -1120,6 +1137,8 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        "409":
           $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"

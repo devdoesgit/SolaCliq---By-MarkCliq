@@ -118,7 +118,7 @@ Class | Method | HTTP request | Description
 [*TeamApi*](doc/TeamApi.md) | [**addMember**](doc/TeamApi.md#addmember) | **POST** /orgs/{org_id}/members | Add a worker or agent
 [*TeamApi*](doc/TeamApi.md) | [**listMembers**](doc/TeamApi.md#listmembers) | **GET** /orgs/{org_id}/members | The org&#39;s admin, workers and agents
 [*TeamApi*](doc/TeamApi.md) | [**removeMember**](doc/TeamApi.md#removemember) | **DELETE** /orgs/{org_id}/members/{user_id} | Remove a worker or agent from the org
-[*UploadsApi*](doc/UploadsApi.md) | [**createUpload**](doc/UploadsApi.md#createupload) | **POST** /uploads | Get a presigned URL to upload one file
+[*UploadsApi*](doc/UploadsApi.md) | [**createUpload**](doc/UploadsApi.md#createupload) | **POST** /orgs/{org_id}/uploads | Get a presigned URL to upload one file for this company
 
 
 ## Documentation For Models

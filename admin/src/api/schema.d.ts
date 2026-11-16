@@ -465,21 +465,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/uploads": {
+    "/orgs/{org_id}/uploads": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
             cookie?: never;
         };
         get?: never;
         put?: never;
         /**
-         * Get a presigned URL to upload one file
+         * Get a presigned URL to upload one file for this company
          * @description The app PUTs the file to `url` with `headers`, then sends
-         *     `upload_id` with the record it belongs to. URLs expire after 15
-         *     minutes. Sample data uses a `.invalid` host, which the development
-         *     app treats as uploaded.
+         *     `upload_id` with the record it belongs to, in the same company.
+         *     Every file belongs to one company: an upload made here can only
+         *     be attached to this company's records, and is stored under the
+         *     company's own prefix. URLs expire after 15 minutes. Sample data
+         *     uses a `.invalid` host, which the development app treats as
+         *     uploaded.
          */
         post: operations["createUpload"];
         delete?: never;
@@ -583,9 +597,10 @@ export interface paths {
         };
         /**
          * The caller's tasks in this company
-         * @description Workers only. `today`: due today, plus any returned or with a
-         *     problem, in due order. `upcoming`: due later, by day. `done`:
-         *     approved and cancelled, newest first.
+         * @description Workers only. `today`: open work due today or overdue, plus any
+         *     returned or with a problem whatever its date, and what's with the
+         *     admin, in due order (Indian time). `upcoming`: due later, by day.
+         *     `done`: approved and cancelled, newest first.
          */
         get: operations["listMyTasks"];
         put?: never;
@@ -653,9 +668,11 @@ export interface paths {
          * Attach a proof photo to one of the task's photo slots
          * @description The photo comes from the live camera only, never the gallery, and
          *     carries where and when it was taken. The server flags photos far
-         *     from the site, with poor accuracy or a mocked location; flags go to
-         *     the admin, nothing is refused. Replaces an earlier photo in the
-         *     slot (a retake). 409 `task.locked` once submitted.
+         *     from the site (over 500 m), with poor accuracy (over 50 m) or a
+         *     mocked location; flags go to the admin, nothing is refused.
+         *     Replaces an earlier photo in the slot (a retake). 422 on
+         *     `upload_id` when the file isn't in storage whole (the upload
+         *     didn't finish). 409 `task.locked` once submitted.
          */
         post: operations["addTaskPhoto"];
         delete?: never;
@@ -754,8 +771,9 @@ export interface paths {
         put?: never;
         /**
          * Tell the admin the task can't go ahead as planned
-         * @description The admin is notified at once and decides: reschedule, reassign or
-         *     cancel. The task stays `assigned` with `problem` set.
+         * @description On an `assigned` task (409 `task.locked` otherwise). The admin
+         *     decides: reschedule, reassign or cancel. The task stays `assigned`
+         *     with `problem` set; submitting it closes the problem.
          */
         post: operations["reportTaskProblem"];
         delete?: never;
@@ -787,7 +805,8 @@ export interface paths {
         put?: never;
         /**
          * Reply to the admin about this task
-         * @description Shows in the task's history and notifies the admin.
+         * @description Shows in the task's history, where the admin reads it. Open tasks
+         *     only: 409 `task.locked` once approved or cancelled.
          */
         post: operations["sendTaskMessage"];
         delete?: never;
@@ -3009,7 +3028,18 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3028,6 +3058,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
@@ -3198,6 +3229,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getTask: {
@@ -3412,6 +3444,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -3452,6 +3485,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
