@@ -67,10 +67,13 @@ void main() {
   });
 
   group('formatLakh', () {
-    test('one decimal at most', () {
+    test('two decimals at most, no trailing zeros', () {
       expect(formatLakh(24000000), '2.4');
       expect(formatLakh(30000000), '3');
       expect(formatLakh(29000000), '2.9');
+      expect(formatLakh(19500000), '1.95');
+      expect(formatLakh(11000000), '1.1');
+      expect(formatLakh(10500000), '1.05');
     });
   });
 }

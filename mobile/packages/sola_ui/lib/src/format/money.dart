@@ -38,13 +38,15 @@ String formatRupees(int paise) {
   return '$sign₹${groupIndian(rupees.abs().toString())}';
 }
 
-/// Paise in lakh of rupees with at most one decimal, for price ranges:
-/// 24000000 → `2.4`, 30000000 → `3`.
+/// Paise in lakh of rupees with at most two decimals and no trailing
+/// zeros, for price ranges: 19500000 → `1.95`, 24000000 → `2.4`,
+/// 30000000 → `3`. Two, so ₹1,95,000 isn't shown as 2 lakh.
 String formatLakh(int paise) {
-  final tenths = (paise / 1000000).round();
-  final whole = tenths ~/ 10;
-  final rest = tenths % 10;
-  return rest == 0 ? '$whole' : '$whole.$rest';
+  final hundredths = (paise / 100000).round();
+  final whole = hundredths ~/ 100;
+  final rest = (hundredths % 100).toString().padLeft(2, '0');
+  final decimals = rest.replaceFirst(RegExp(r'0+$'), '');
+  return decimals.isEmpty ? '$whole' : '$whole.$decimals';
 }
 
 /// Paise as thousands of rupees with at most one decimal, for small
