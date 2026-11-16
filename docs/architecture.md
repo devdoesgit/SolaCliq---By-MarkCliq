@@ -67,18 +67,34 @@ Claude builds every part; the owner reviews.
 
 ## Row-level security
 
-- A safety net under the app's own checks: inside a company request,
-  Postgres itself returns only that company's rows, even from a query
-  that forgets its `org_id` filter.
-- Every company request runs in a transaction from `OrgMember::begin`
-  (`org.rs`), which switches to the `solacliq_app` role and sets
-  `app.org_id`; both end with the transaction. Tables with a policy show
-  that role only rows whose `org_id` matches; with no company set, none.
-- Requests outside a company (log in, `/me`, the personal feed) run as
-  the owner, which policies don't restrict.
-- Policies so far: company notifications. Every company table from
-  phase 8 (tasks, expenses, customers, installs) gets the same policy in
-  its own migration. Proven by `tests/row_level_security.rs`.
+- Strict tenant isolation: Postgres itself decides which rows of
+  `orgs`, `memberships` and `notifications` a query can see or write,
+  on top of the app's own checks. A query that forgets its `org_id`
+  filter gets this company's rows only; a query with no scope at all
+  gets **zero rows**, never another company's (fail closed).
+- Two logins. `DATABASE_URL` is the owner: migrations, the seed, admin
+  commands and the tests' setup. `APP_DATABASE_URL` is `solacliq_api`,
+  the login the server answers requests with: a member of
+  `solacliq_app`, owning nothing, so every policy applies. `make db`
+  makes both roles locally (`backend/dev-roles.sql`). The server refuses
+  to start if its login is a superuser, has `BYPASSRLS`, owns tables or
+  isn't in `solacliq_app` (`scope::check_restricted`).
+- Every query on those tables runs in a transaction with one scope
+  (`src/scope.rs`), set until it ends and taken from what the extractor
+  just checked:
+  - company, `member.begin()` (`OrgMember`): that company's rows;
+  - person, `user.begin()` (`AuthUser`): their own memberships, the
+    companies they're in now, their personal feed (read only, except
+    the feed);
+  - platform, `admin.begin()` (`PlatformAdmin`): every company.
+- Registration writes the new company in its own company scope; the
+  GSTIN check across companies is `gstin_registered()`, a database
+  function that answers only yes or no.
+- The router in tests uses the restricted login too
+  (`tests/common/mod.rs`), so a handler that forgets its scope fails
+  its tests. `tests/row_level_security.rs` proves each scope.
+- Every company table from phase 8 (tasks, expenses, customers,
+  installs) enables it in its own migration with a company policy.
 
 ## Rate limits
 

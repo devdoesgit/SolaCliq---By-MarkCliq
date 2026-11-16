@@ -30,7 +30,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 4 | Companies, memberships, team; company registration and review (F2) | #10, #11, team, platform | Done 2026-11-14 |
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
-| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security done 2026-11-16; uploads wait for the R2 bucket, push for Firebase |
+| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security (restricted login; orgs, memberships, notifications) done 2026-11-16; uploads wait for the R2 bucket, push for Firebase |
 | 8 | Worker | #25–38 | |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |
@@ -85,7 +85,10 @@ Put it on the VPS early so the pilot can test on real phones.
   $remote_addr;` for the rate limits), production `.env` on the server only
   (`CODE_SECRET`, `BANK_KEY`, `REVIEW_EMAIL=info@markcliq.com`,
   `COOKIE_SECURE=true`, `MAIL_FROM`, `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`),
-  daily Postgres backup. CI: `make api-test` and the spec check
+  daily Postgres backup. Two database logins: the owner
+  (`DATABASE_URL`, migrations) and `solacliq_api` (`APP_DATABASE_URL`,
+  a strong password), made as in `backend/dev-roles.sql`; the server
+  won't start on a login that bypasses row-level security. CI: `make api-test` and the spec check
   (`cargo run -- openapi` against `api/openapi.yaml`). Make the first
   platform admin with `make-platform-admin`.
 - **Done when:** the app, built with the production URL, logs in on a

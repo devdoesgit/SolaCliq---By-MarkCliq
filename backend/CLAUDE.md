@@ -25,6 +25,11 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
 
 - Every `/orgs/{org_id}/...` handler takes `OrgMember<Roles>`; every
   `/platform/...` handler takes `PlatformAdmin` (`src/org.rs`).
+- Queries on `orgs`, `memberships`, `notifications` and every company
+  table run in a scoped transaction: `member.begin()`, `user.begin()`
+  or `admin.begin()` (`src/scope.rs`). The server's login is restricted
+  by row-level security, so a query outside one sees nothing. A new
+  company table enables RLS with a company policy in its migration.
 - Errors are `ApiError` with a contract code (`<area>.<reason>`);
   database errors become a plain 500.
 - Queries are runtime `sqlx::query` with binds, and fixed strings (sqlx
@@ -50,6 +55,7 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
   `registration` and `platform` (F2), `quotes` and `profile` (phase 6);
   merged in `routes/mod.rs`.
+- `src/scope.rs`: the row-level security scopes and the startup check.
 - `src/org.rs`: role, pay type, status and business type enums
   (`sqlx::Type`), `OrgMember`, `PlatformAdmin`.
 - `src/session.rs`, `src/codes.rs`, `src/password.rs`: tokens, email

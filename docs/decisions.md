@@ -533,3 +533,12 @@ Change a decision by adding a new line, not by editing an old one.
   in and `/me` unchanged. Details in `architecture.md`.
 - **Uploads wait for the real R2 bucket** (owner, 2026-11-16), not a local
   stand-in.
+- **Strict tenant isolation: the API's login is restricted** (owner,
+  2026-11-16). The server connects as `solacliq_api`
+  (`APP_DATABASE_URL`), which policies restrict, instead of the owner;
+  with no scope a query sees nothing. Policies on `orgs` and
+  `memberships` too, with three scopes (company, person, platform).
+  The server won't start on a login that could bypass them. Replaces
+  "log in and `/me` unchanged" above: they run in the person's scope.
+  No tenant middleware: the extractors already do that check per
+  handler.
