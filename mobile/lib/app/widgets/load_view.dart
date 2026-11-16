@@ -74,6 +74,8 @@ class NavRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SolaListRow(
+      // This row's key as the identifier: tools find it by name.
+      identifier: semanticsIdentifier(key),
       title: title,
       subtitle: subtitle,
       leading: SolaAvatar(icon: icon, color: SolaColors.tan),

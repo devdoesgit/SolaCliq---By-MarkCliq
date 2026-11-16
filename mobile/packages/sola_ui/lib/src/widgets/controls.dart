@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/src/icons/sola_icon.dart';
 import 'package:sola_ui/src/theme/sola_text.dart';
@@ -418,7 +417,7 @@ class SolaTextLink extends StatelessWidget {
 
 /// A line with one link in it: "New to SolaCliq? Create account". The
 /// link is in ink and bold; a screen reader announces it.
-class SolaLinkText extends StatefulWidget {
+class SolaLinkText extends StatelessWidget {
   /// Creates the line: [before], the [link], then [after].
   const new({
     required this.link,
@@ -441,7 +440,7 @@ class SolaLinkText extends StatefulWidget {
   /// Text after the link.
   final String after;
 
-  /// Called when the link is tapped.
+  /// Called when the line is tapped.
   final VoidCallback onTap;
 
   /// Text style of the line.
@@ -457,39 +456,49 @@ class SolaLinkText extends StatefulWidget {
   final TextAlign textAlign;
 
   @override
-  State<SolaLinkText> createState() => _SolaLinkTextState();
-}
-
-class _SolaLinkTextState extends State<SolaLinkText> {
-  late final _recognizer = TapGestureRecognizer()..onTap = _tap;
-
-  void _tap() => widget.onTap();
-
-  @override
-  void dispose() {
-    _recognizer.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final base = widget.style.textStyle(color: widget.color);
-    return Text.rich(
-      TextSpan(
-        style: base,
-        children: [
-          if (widget.before.isNotEmpty) TextSpan(text: widget.before),
-          TextSpan(
-            text: widget.link,
-            recognizer: _recognizer,
-            style: widget.style
-                .withWeight(base, FontWeight.w600)
-                .copyWith(color: widget.linkColor),
+    final base = style.textStyle(color: color);
+    /*
+      The whole line is one button: screen readers announce it as one
+      ("New to SolaCliq? Create account, button"), tools find it by its
+      key, and the target is at least 48 tall. A tappable span alone was
+      none of these
+    */
+    return Semantics(
+      identifier: semanticsIdentifier(key),
+      button: true,
+      label: '$before$link$after'.trim(),
+      onTap: onTap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Align(
+            alignment: textAlign == TextAlign.center
+                ? Alignment.center
+                : AlignmentDirectional.centerStart,
+            widthFactor: 1,
+            child: Text.rich(
+              TextSpan(
+                style: base,
+                children: [
+                  if (before.isNotEmpty) TextSpan(text: before),
+                  TextSpan(
+                    text: link,
+                    style: style
+                        .withWeight(base, FontWeight.w600)
+                        .copyWith(color: linkColor),
+                  ),
+                  if (after.isNotEmpty) TextSpan(text: after),
+                ],
+              ),
+              textAlign: textAlign,
+            ),
           ),
-          if (widget.after.isNotEmpty) TextSpan(text: widget.after),
-        ],
+        ),
       ),
-      textAlign: widget.textAlign,
     );
   }
 }

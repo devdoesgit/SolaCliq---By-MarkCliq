@@ -299,11 +299,17 @@ class SolaListRow extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.semanticsLabel,
+    this.identifier,
     super.key,
   });
 
   /// The first line.
   final String title;
+
+  /// The semantics identifier tools find the row by. Defaults to the
+  /// row's own `ValueKey<String>`; a widget that wraps the row passes
+  /// its key's value here instead of a second copy of the key.
+  final String? identifier;
 
   /// The second line.
   final String? subtitle;
@@ -363,7 +369,7 @@ class SolaListRow extends StatelessWidget {
     final onTap = this.onTap;
     if (onTap == null) return MergeSemantics(child: content);
     return SolaTappable(
-      identifier: semanticsIdentifier(key),
+      identifier: identifier ?? semanticsIdentifier(key),
       semanticsLabel:
           semanticsLabel ?? (subtitle == null ? title : '$title, $subtitle'),
       onTap: onTap,

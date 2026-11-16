@@ -407,21 +407,32 @@ class _SolaCodeInputState extends State<SolaCodeInput> {
         Positioned.fill(
           child: Opacity(
             opacity: 0,
-            child: TextField(
-              key: ValueKey('${key.value}_input'),
-              controller: widget.controller,
-              focusNode: _focus,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              autofillHints: const [AutofillHints.oneTimeCode],
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(widget.length),
-              ],
-              showCursor: false,
-              enableInteractiveSelection: false,
-              decoration: InputDecoration.collapsed(hintText: widget.label),
-              style: const TextStyle(height: 3.5),
+            // Invisible, but still there for screen readers: a fully
+            // transparent widget is otherwise left out of semantics.
+            alwaysIncludeSemantics: true,
+            // Named and identified: screen readers say what to type here,
+            // and tools find the field by the widget's key.
+            child: Semantics(
+              container: true,
+              identifier: key.value,
+              label: widget.label,
+              textField: true,
+              child: TextField(
+                key: ValueKey('${key.value}_input'),
+                controller: widget.controller,
+                focusNode: _focus,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(widget.length),
+                ],
+                showCursor: false,
+                enableInteractiveSelection: false,
+                decoration: InputDecoration.collapsed(hintText: widget.label),
+                style: const TextStyle(height: 3.5),
+              ),
             ),
           ),
         ),

@@ -33,6 +33,57 @@ void main() {
     });
   });
 
+  group(SolaLinkText, () {
+    Widget link(VoidCallback onTap) => SolaLinkText(
+      key: const ValueKey('login_create_account'),
+      before: 'New to SolaCliq? ',
+      link: 'Create account',
+      onTap: onTap,
+    );
+
+    testWidgets('is one named button that tools can find', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(tester, link(() {}));
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('login_create_account'))),
+        matchesSemantics(
+          label: 'New to SolaCliq? Create account',
+          identifier: 'login_create_account',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('the whole line is a 48-tall target', (tester) async {
+      var taps = 0;
+      await _pump(tester, link(() => taps++));
+      final box = tester.getSize(find.byType(SolaLinkText));
+      expect(box.height, greaterThanOrEqualTo(48));
+      // The words before the link work too.
+      await tester.tap(find.byType(SolaLinkText), warnIfMissed: false);
+      expect(taps, 1);
+    });
+  });
+
+  testWidgets('SolaCodeInput is a named field tools can find', (tester) async {
+    final handle = tester.ensureSemantics();
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      SolaCodeInput(
+        key: const ValueKey('verify_code'),
+        label: 'Code',
+        controller: controller,
+      ),
+    );
+    expect(find.bySemanticsIdentifier('verify_code'), findsOneWidget);
+    expect(find.bySemanticsLabel('Code'), findsWidgets);
+    handle.dispose();
+  });
+
   testWidgets('SolaChips reports the chosen value', (tester) async {
     String? chosen;
     await _pump(
