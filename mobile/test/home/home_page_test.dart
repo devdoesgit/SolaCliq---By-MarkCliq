@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
@@ -72,6 +74,7 @@ void main() {
         .thenAnswer((_) async => const PersonalDetails());
     notifications = MockNotificationRepository();
     when(() => notifications.list(any())).thenAnswer((_) async => []);
+    when(() => notifications.unreadCount(any())).thenAnswer((_) async => 0);
     workspace = MockWorkspaceCubit();
     homes = MockHomeRepository();
     when(() => homes.orgHome(any(), any())).thenAnswer((_) async => workerHome);
@@ -112,6 +115,76 @@ void main() {
       expect(find.text('₹78k'), findsOneWidget);
       expect(find.byKey(const Key('home_get_quote')), findsOneWidget);
       expect(find.byKey(const ValueKey('tab_get_quote')), findsOneWidget);
+    });
+
+    testWidgets('personal: the bell shows a dot for unread ones', (
+      tester,
+    ) async {
+      when(() => notifications.unreadCount(null)).thenAnswer((_) async => 2);
+      await pumpHome(tester, const PersonalWorkspace());
+      expect(find.bySemanticsLabel('Notifications, new'), findsOneWidget);
+    });
+
+    testWidgets('personal: no dot when all are read, or the count fails', (
+      tester,
+    ) async {
+      await pumpHome(tester, const PersonalWorkspace());
+      expect(find.bySemanticsLabel('Notifications'), findsOneWidget);
+
+      when(() => notifications.unreadCount(null)).thenAnswer(
+        (_) async => throw const AuthFailure(AuthFailureCode.network),
+      );
+      await pumpHome(tester, const PersonalWorkspace());
+      expect(find.bySemanticsLabel('Notifications'), findsOneWidget);
+    });
+
+    testWidgets('personal: back from the quote form, the dot is asked again', (
+      tester,
+    ) async {
+      await pumpHome(tester, const PersonalWorkspace());
+      verify(() => notifications.unreadCount(null)).called(1);
+      await tester.tapKey('home_get_quote');
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.textContaining('route:'))).pop();
+      await tester.pumpAndSettle();
+      verify(() => notifications.unreadCount(null)).called(1);
+    });
+
+    testWidgets('worker: an empty day explains itself, with nothing to see', (
+      tester,
+    ) async {
+      when(() => homes.orgHome(any(), any())).thenAnswer(
+        (_) async => const HomeSummary(
+          eyebrow: 'Monday, 16 Nov',
+          title: "Ravi's day",
+          week: [HomeDay(day: 'Mon', date: 16, today: true, dots: [])],
+          tiles: [],
+          listTitle: 'Up next',
+          rows: [
+            HomeRow(
+              id: 'no_tasks',
+              visual: HomeVisual(),
+              title: 'Nothing scheduled yet',
+              detail: 'Your company assigns your tasks',
+            ),
+          ],
+        ),
+      );
+      await pumpHome(tester, MemberWorkspace(worker), memberships: [worker]);
+      expect(find.text('Nothing scheduled yet'), findsOneWidget);
+      expect(find.byKey(const Key('home_see_all')), findsNothing);
+      final row = find.byKey(const ValueKey('home_row_no_tasks'));
+      expect(
+        find.descendant(of: row, matching: find.byType(SolaAvatar)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('worker: rows that open something keep "See all"', (
+      tester,
+    ) async {
+      await pumpHome(tester, MemberWorkspace(worker), memberships: [worker]);
+      expect(find.byKey(const Key('home_see_all')), findsOneWidget);
     });
 
     testWidgets('worker: the server-composed home and worker tabs', (
@@ -160,8 +233,9 @@ void main() {
     });
 
     testWidgets('a failed load offers a retry', (tester) async {
-      when(() => homes.orgHome(any(), any()))
-          .thenThrow(const AuthFailure(AuthFailureCode.network));
+      when(() => homes.orgHome(any(), any())).thenAnswer(
+        (_) async => throw const AuthFailure(AuthFailureCode.network),
+      );
       await pumpHome(tester, MemberWorkspace(worker), memberships: [worker]);
       expect(find.byKey(const Key('home_retry')), findsOneWidget);
     });

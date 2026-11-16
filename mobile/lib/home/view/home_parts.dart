@@ -226,7 +226,8 @@ class HomeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = this.title;
-    final onSeeAll = this.onSeeAll;
+    // "See all" only when there's something to see: a row that opens.
+    final onSeeAll = rows.any((r) => r.action != null) ? this.onSeeAll : null;
     final onRow = this.onRow;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -253,7 +254,7 @@ class HomeList extends StatelessWidget {
                   key: ValueKey('home_row_${row.id}'),
                   title: row.title,
                   subtitle: row.detail,
-                  leading: homeThumb(row.visual),
+                  leading: row.visual.isEmpty ? null : homeThumb(row.visual),
                   trailing: row.status == null
                       ? null
                       : SolaPill(

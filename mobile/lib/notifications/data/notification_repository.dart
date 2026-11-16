@@ -108,6 +108,18 @@ class NotificationRepository {
     ];
   }
 
+  /// How many are unread, in one company or with no [orgId] the person's
+  /// own: the bell's dot. Asks for one item; the count comes with it.
+  Future<int> unreadCount(String? orgId) async {
+    final response = await apiCall(
+      () => orgId == null
+          ? _api.listMyNotifications(limit: 1)
+          : _api.listNotifications(orgId: orgId, limit: 1),
+    );
+    // No body: nothing to show, rather than a crash over a dot.
+    return response.data?.unreadCount ?? 0;
+  }
+
   /// In one company, or with no [orgId] the person's own.
   Future<void> markAllRead(String? orgId) => apiCall(
     () => orgId == null

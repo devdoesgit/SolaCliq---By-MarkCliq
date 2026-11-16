@@ -201,6 +201,7 @@ void main() {
       ),
     );
     notifications = MockNotificationRepository();
+    when(() => notifications.unreadCount(any())).thenAnswer((_) async => 0);
     when(() => notifications.list(any())).thenAnswer(
       (_) async => [
         AppNotification(

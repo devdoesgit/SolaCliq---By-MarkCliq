@@ -24,6 +24,9 @@ class HomeVisual extends Equatable {
   final String? initials;
   final HomeGlyph? glyph;
 
+  /// No picture at all: a row that only explains something.
+  bool get isEmpty => image == null && initials == null && glyph == null;
+
   @override
   List<Object?> get props => [image, initials, glyph];
 }

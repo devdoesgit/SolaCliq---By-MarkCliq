@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
@@ -7,22 +8,61 @@ import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/home/view/home_header.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/notifications/data/notification_repository.dart';
 
 /// The home of a person with no company, or of anyone in their Personal
 /// workspace: a free solar quote, and how to get added by an installer.
-class PersonalHome extends StatelessWidget {
+class PersonalHome extends StatefulWidget {
   const new({required this.account, super.key});
 
   final Account account;
 
+  @override
+  State<PersonalHome> createState() => _PersonalHomeState();
+}
+
+class _PersonalHomeState extends State<PersonalHome> {
+  // Whether the bell shows its dot: any of the person's own unread.
+  bool _unread = false;
+
+  Account get account => widget.account;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadUnread());
+  }
+
+  /// Asks the server; on failure the bell just shows no dot.
+  Future<void> _loadUnread() async {
+    try {
+      final count = await context.read<NotificationRepository>().unreadCount(
+        null,
+      );
+      if (mounted) setState(() => _unread = count > 0);
+    } on AuthFailure {
+      return;
+    }
+  }
+
+  /*
+    Opens a screen, and asks for the count again on the way back: reading
+    the list clears the dot, and a quote sent there adds a notification
+  */
+  void _open(String path) => unawaited(
+    context.push(path).then((_) {
+      if (mounted) unawaited(_loadUnread());
+    }),
+  );
+
   void _onTab(BuildContext context, int index) {
     switch (index) {
       case 1 || 2:
-        unawaited(context.push(AppRoutes.quote));
+        _open(AppRoutes.quote);
       case 3:
-        unawaited(context.push(AppRoutes.learn));
+        _open(AppRoutes.learn);
       case 4:
-        unawaited(context.push(AppRoutes.profile));
+        _open(AppRoutes.profile);
     }
   }
 
@@ -78,7 +118,8 @@ class PersonalHome extends StatelessWidget {
             initials: account.initials,
             eyebrow: _greeting(l10n),
             title: account.firstName,
-            onBell: () => unawaited(context.push(AppRoutes.notifications)),
+            unread: _unread,
+            onBell: () => _open(AppRoutes.notifications),
           ),
           Padding(
             padding: const EdgeInsets.only(top: SolaSpace.space22),
@@ -98,7 +139,7 @@ class PersonalHome extends StatelessWidget {
               variant: SolaButtonVariant.cream,
               compact: true,
               expand: false,
-              onPressed: () => unawaited(context.push(AppRoutes.quote)),
+              onPressed: () => _open(AppRoutes.quote),
             ),
           ),
           SolaGroup(
@@ -109,7 +150,7 @@ class PersonalHome extends StatelessWidget {
                 subtitle: l10n.typicalSystemDetail,
                 leading: const SolaThumb(photo: SolaPhotos.quoteHome),
                 trailing: SolaPill(l10n.guide),
-                onTap: () => unawaited(context.push(AppRoutes.learn)),
+                onTap: () => _open(AppRoutes.learn),
               ),
               SolaListRow(
                 key: const Key('home_have_installer'),
