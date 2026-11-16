@@ -206,6 +206,7 @@ async fn serve(config: Config) -> Fallible {
         code_secret: config.code_secret,
         review_email: config.review_email,
         bank_key: config.bank_key,
+        storage: config.storage,
     });
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "listening");

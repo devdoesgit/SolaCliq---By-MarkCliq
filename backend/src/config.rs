@@ -44,6 +44,12 @@ pub struct Config {
         log, which `from_env` allows in development only
     */
     pub gmail: Option<GmailConfig>,
+    /*
+        Cloudflare R2, for uploads (the four R2_* variables). None:
+        `POST /uploads` answers 503, which `from_env` allows in
+        development only
+    */
+    pub storage: Option<crate::storage::Storage>,
 }
 
 /*
@@ -115,8 +121,10 @@ impl Config {
                 )
             })?,
             gmail: gmail_from_env()?,
+            storage: storage_from_env()?,
         })
         .and_then(Self::check_mail)
+        .and_then(Self::check_storage)
     }
 
     /*
@@ -131,6 +139,50 @@ impl Config {
         }
         Ok(self)
     }
+
+    // A production server must store the photos and documents it's sent.
+    fn check_storage(self) -> Result<Self, ConfigError> {
+        if self.environment == Environment::Production && self.storage.is_none() {
+            return Err(ConfigError::Missing(
+                "R2_ACCOUNT_ID (production stores uploads in R2)",
+            ));
+        }
+        Ok(self)
+    }
+}
+
+/*
+    All four R2 settings, or none
+    --------------------------------------------------------------------
+    - R2_ACCOUNT_ID, R2_BUCKET: where (not secret)
+    - R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY: an R2 API token's S3 key
+      pair, limited to that one bucket with Object Read & Write
+*/
+fn storage_from_env() -> Result<Option<crate::storage::Storage>, ConfigError> {
+    const KEYS: [&str; 4] = [
+        "R2_ACCOUNT_ID",
+        "R2_BUCKET",
+        "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY",
+    ];
+    let values: Vec<Option<String>> = KEYS
+        .iter()
+        .map(|k| std::env::var(k).ok().filter(|v| !v.trim().is_empty()))
+        .collect();
+    if values.iter().all(Option::is_none) {
+        return Ok(None);
+    }
+    if let Some(i) = values.iter().position(Option::is_none) {
+        return Err(ConfigError::Missing(KEYS[i]));
+    }
+    let [account, bucket, key_id, secret] =
+        <[Option<String>; 4]>::try_from(values).expect("four values");
+    Ok(Some(crate::storage::Storage::new(
+        account.unwrap().trim().to_owned(),
+        bucket.unwrap().trim().to_owned(),
+        key_id.unwrap().trim().to_owned(),
+        secret.unwrap().trim().to_owned(),
+    )))
 }
 
 // Both settings, or neither (emails go to the log).

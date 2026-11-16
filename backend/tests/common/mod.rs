@@ -37,6 +37,13 @@ pub fn state(db: &PgPool) -> AppState {
             "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         )
         .unwrap(),
+        // Signing needs no network, so tests sign with a made-up key.
+        storage: Some(backend::storage::Storage::new(
+            "test-account".into(),
+            "test-bucket".into(),
+            "test-key-id".into(),
+            "test-secret".into(),
+        )),
     }
 }
 

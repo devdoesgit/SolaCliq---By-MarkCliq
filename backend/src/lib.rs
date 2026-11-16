@@ -19,6 +19,7 @@ pub mod routes;
 pub mod scope;
 pub mod seed;
 pub mod session;
+pub mod storage;
 pub mod validate;
 
 use std::{sync::Arc, time::Duration};
@@ -52,6 +53,8 @@ pub struct AppState {
     pub review_email: String,
     // Encrypts payout bank account numbers (BANK_KEY). See `bank::BankKey`.
     pub bank_key: bank::BankKey,
+    // Cloudflare R2, for uploads. None: `POST /uploads` answers 503.
+    pub storage: Option<storage::Storage>,
 }
 
 /*
