@@ -7,6 +7,7 @@ import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/app/widgets/load_view.dart';
+import 'package:solacliq/app/widgets/mobile_formatter.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
@@ -111,6 +112,7 @@ class _DetailsPageState extends State<DetailsPage> {
                   prefixText: '+91 ',
                   keyboardType: TextInputType.phone,
                   autofillHints: const [AutofillHints.telephoneNumberNational],
+                  inputFormatters: const [MobileNumberFormatter()],
                 ),
                 SolaFieldRow(
                   key: const ValueKey('details_address'),

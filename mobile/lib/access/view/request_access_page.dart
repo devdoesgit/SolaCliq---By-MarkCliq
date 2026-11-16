@@ -10,6 +10,7 @@ import 'package:solacliq/access/data/gstin.dart';
 import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
+import 'package:solacliq/app/widgets/mobile_formatter.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
@@ -247,10 +248,7 @@ class _RequestAccessViewState extends State<RequestAccessView> {
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.telephoneNumberNational],
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d ]')),
-                    LengthLimitingTextInputFormatter(11),
-                  ],
+                  inputFormatters: const [MobileNumberFormatter()],
                   onChanged: (_) => _edited('phone'),
                 ),
               ],

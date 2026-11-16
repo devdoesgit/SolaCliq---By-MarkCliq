@@ -9,6 +9,7 @@ import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/app/widgets/chip_group.dart';
+import 'package:solacliq/app/widgets/mobile_formatter.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
@@ -200,10 +201,7 @@ class _QuoteRequestViewState extends State<QuoteRequestView> {
                       autofillHints: const [
                         AutofillHints.telephoneNumberNational,
                       ],
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d ]')),
-                        LengthLimitingTextInputFormatter(11),
-                      ],
+                      inputFormatters: const [MobileNumberFormatter()],
                     ),
                 ],
               ),

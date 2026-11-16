@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
+import 'package:solacliq/app/widgets/mobile_formatter.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/customers/cubit/add_customer_cubit.dart';
 import 'package:solacliq/customers/data/india.dart';
@@ -450,10 +451,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
               error: _errors['mobile'],
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d ]')),
-                LengthLimitingTextInputFormatter(11),
-              ],
+              inputFormatters: const [MobileNumberFormatter()],
               onChanged: (_) => _clear('mobile'),
             ),
             SolaFieldRow(
