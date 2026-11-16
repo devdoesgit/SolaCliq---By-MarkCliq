@@ -31,8 +31,8 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
 | 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security (restricted login; orgs, memberships, notifications) and uploads (#22, a real photo through R2) done 2026-11-16; push waits for Firebase |
-| 8 | Worker | #25–38 | Building: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats (#25–33) and the worker's home done 2026-11-16; expenses (#34–37) done 2026-11-17; documents (#38) next |
-| 9 | Sales | #39–42 | |
+| 8 | Worker | #25–37 | Done 2026-11-17: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats, the worker's home (#25–33) and expenses (#34–37), each run end to end in the app. #38 moved to phase 9 |
+| 9 | Sales | #38–42 | |
 | 10 | Customer | #43–44 | |
 
 ## Done: what each phase left behind
@@ -132,10 +132,11 @@ its admin-side data seeded (see "Not in the contract yet" in the
 handoff): tasks for workers, approvals for sales, an install for
 customers.
 
-- **8 Worker (#25–38):** tasks, photos with location flags, checklist,
-  submit, problems, history, stats, expenses, documents.
-- **9 Sales (#39–42):** customer registration, my customers, fixing a
-  returned document.
+- **8 Worker (#25–37):** tasks, photos with location flags, checklist,
+  submit, problems, history, stats, expenses.
+- **9 Sales (#38–42):** customer registration with KYC, my customers,
+  fixing a returned document, and "my documents" (#38: a customer's KYC,
+  a worker's ID), on one documents table.
 - **10 Customer (#43–44):** my install and claiming a payment.
 - **Done when:** that role can do a full day's work in the app against
   the real API.
