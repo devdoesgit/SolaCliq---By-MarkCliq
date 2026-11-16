@@ -196,6 +196,9 @@ async fn run_send_test_email(config: Config, to: &str) -> Fallible {
 async fn serve(config: Config) -> Fallible {
     let db = connect_app(&config).await?;
     let (mailer, mail_task) = mailer(&config)?;
+    if let Some(storage) = config.storage.clone() {
+        tokio::spawn(sweep_uploads(db.clone(), storage));
+    }
 
     let app = backend::app(AppState {
         db,
@@ -220,6 +223,23 @@ async fn serve(config: Config) -> Fallible {
     // The router, and with it every mailer, is gone: send what's queued.
     drain(mail_task).await;
     Ok(())
+}
+
+/*
+    Every hour, deletes uploads nothing attached within a day
+    (`routes::uploads::sweep`). Stops with the server; the next start
+    picks up where it left off
+*/
+async fn sweep_uploads(db: sqlx::PgPool, storage: backend::storage::Storage) {
+    let mut every = tokio::time::interval(std::time::Duration::from_secs(60 * 60));
+    loop {
+        every.tick().await;
+        match backend::routes::uploads::sweep(&db, &storage).await {
+            Ok(0) => {}
+            Ok(n) => tracing::info!(deleted = n, "abandoned uploads swept"),
+            Err(e) => tracing::error!(error = ?e, "sweeping abandoned uploads"),
+        }
+    }
 }
 
 fn init_tracing(json: bool) {

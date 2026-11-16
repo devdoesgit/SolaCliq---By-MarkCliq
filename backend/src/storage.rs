@@ -10,11 +10,21 @@
       with the key: no network call. Region `auto`, path-style URLs:
       https://<account>.r2.cloudflarestorage.com/<bucket>/<key>
     - the bucket is private: without a signature, R2 refuses every read
+    - every file belongs to one company and lives under its prefix,
+      `orgs/<org_id>/`. The server signs a URL only for a file under the
+      company the request is for: a bug that picked another company's
+      file fails here, before R2 is asked (the file version of
+      row-level security)
+    - the server itself only asks R2 two things: is a file there and how
+      big (HEAD, when a record attaches an upload), and delete one (the
+      sweep of uploads nothing used)
 */
 
 use chrono::{DateTime, Duration, Utc};
 use hmac::{Hmac, KeyInit, Mac};
+use reqwest::StatusCode;
 use sha2::{Digest, Sha256};
+use uuid::Uuid;
 
 // How long a signed URL works.
 pub const URL_LIFETIME: Duration = Duration::minutes(15);
@@ -26,6 +36,30 @@ pub struct Storage {
     bucket: String,
     access_key_id: String,
     secret_access_key: String,
+    // https://<account>.r2.cloudflarestorage.com; tests point it elsewhere.
+    base: String,
+    http: reqwest::Client,
+}
+
+// R2 didn't answer or answered something unexpected, or a URL was refused.
+#[derive(Debug, thiserror::Error)]
+#[error("R2: {0}")]
+pub struct StorageError(String);
+
+// Where a company's file goes: orgs/<org_id>/<folder>/<id>.
+pub fn file_key(org_id: Uuid, folder: &str, id: Uuid) -> String {
+    format!("orgs/{org_id}/{folder}/{id}")
+}
+
+// Refuses a file outside `org_id`'s prefix.
+fn check_owner(org_id: Uuid, key: &str) -> Result<(), StorageError> {
+    if key.starts_with(&format!("orgs/{org_id}/")) {
+        Ok(())
+    } else {
+        Err(StorageError(format!(
+            "refused to sign {key}: not a file of company {org_id}"
+        )))
+    }
 }
 
 // Never prints the secret, even in a debug log.
@@ -53,72 +87,142 @@ impl Storage {
         access_key_id: String,
         secret_access_key: String,
     ) -> Self {
+        // reqwest's TLS needs a crypto provider; main.rs installs the same one.
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .expect("HTTP client");
         Self {
+            base: format!("https://{account_id}.r2.cloudflarestorage.com"),
             account_id,
             bucket,
             access_key_id,
             secret_access_key,
+            http,
         }
+    }
+
+    /*
+        Points everything at `base` instead of R2, e.g.
+        http://127.0.0.1:4000: the URLs it signs and its own HEAD and
+        DELETE. Tests run a stand-in for R2 there
+    */
+    pub fn with_base(mut self, base: &str) -> Self {
+        self.base = base.trim_end_matches('/').to_owned();
+        self
     }
 
     pub fn bucket(&self) -> &str {
         &self.bucket
     }
 
-    fn host(&self) -> String {
-        format!("{}.r2.cloudflarestorage.com", self.account_id)
-    }
-
-    fn path(&self, key: &str) -> String {
-        format!("/{}/{}", self.bucket, key)
+    fn host(&self) -> &str {
+        self.base.split_once("://").map_or(&self.base, |(_, h)| h)
     }
 
     /*
-        Upload one file. Content-Type and Content-Length are signed: the
-        client sends the type it declared, and its HTTP library sends the
-        file's real length, which must match the declared size
+        Upload one of `org_id`'s files. Content-Type and Content-Length are
+        signed: the client sends the type it declared, and its HTTP
+        library sends the file's real length, which must match the
+        declared size
     */
     pub fn put_url(
         &self,
+        org_id: Uuid,
         key: &str,
         content_type: &str,
         size: i64,
         now: DateTime<Utc>,
-    ) -> SignedPut {
-        let url = presign(&Request {
-            method: "PUT",
-            host: &self.host(),
-            path: &self.path(key),
-            region: "auto",
-            access_key_id: &self.access_key_id,
-            secret_access_key: &self.secret_access_key,
-            headers: &[
+    ) -> Result<SignedPut, StorageError> {
+        check_owner(org_id, key)?;
+        let url = self.signed(
+            "PUT",
+            key,
+            &[
                 ("content-length", &size.to_string()),
                 ("content-type", content_type),
             ],
             now,
-            expires: URL_LIFETIME,
-        });
-        SignedPut {
+        );
+        Ok(SignedPut {
             url,
             headers: vec![("Content-Type", content_type.to_owned())],
             expires_at: now + URL_LIFETIME,
+        })
+    }
+
+    // Read one of `org_id`'s files, for 15 minutes.
+    pub fn get_url(
+        &self,
+        org_id: Uuid,
+        key: &str,
+        now: DateTime<Utc>,
+    ) -> Result<String, StorageError> {
+        check_owner(org_id, key)?;
+        Ok(self.signed("GET", key, &[], now))
+    }
+
+    /*
+        Is the file there, and how big? None when it isn't (the upload
+        never finished). Asked when a record attaches an upload
+    */
+    pub async fn size(&self, key: &str) -> Result<Option<i64>, StorageError> {
+        let url = self.signed("HEAD", key, &[], Utc::now());
+        let res = self
+            .http
+            .head(url)
+            .send()
+            .await
+            .map_err(|e| StorageError(e.to_string()))?;
+        match res.status() {
+            StatusCode::OK => res
+                .headers()
+                .get(reqwest::header::CONTENT_LENGTH)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse().ok())
+                .map(Some)
+                .ok_or_else(|| StorageError("HEAD without a length".into())),
+            StatusCode::NOT_FOUND => Ok(None),
+            other => Err(StorageError(format!("HEAD answered {other}"))),
         }
     }
 
-    // Read one file, for 15 minutes.
-    pub fn get_url(&self, key: &str, now: DateTime<Utc>) -> String {
-        presign(&Request {
-            method: "GET",
-            host: &self.host(),
-            path: &self.path(key),
+    // Deletes one file; one that isn't there counts as deleted.
+    pub async fn delete(&self, key: &str) -> Result<(), StorageError> {
+        let url = self.signed("DELETE", key, &[], Utc::now());
+        let res = self
+            .http
+            .delete(url)
+            .send()
+            .await
+            .map_err(|e| StorageError(e.to_string()))?;
+        match res.status() {
+            s if s.is_success() || s == StatusCode::NOT_FOUND => Ok(()),
+            other => Err(StorageError(format!("DELETE answered {other}"))),
+        }
+    }
+
+    // A presigned URL for one request on one file.
+    fn signed(
+        &self,
+        method: &str,
+        key: &str,
+        headers: &[(&str, &str)],
+        now: DateTime<Utc>,
+    ) -> String {
+        let path_and_query = presign(&Request {
+            method,
+            host: self.host(),
+            path: &format!("/{}/{}", self.bucket, key),
             region: "auto",
             access_key_id: &self.access_key_id,
             secret_access_key: &self.secret_access_key,
-            headers: &[],
+            headers,
             now,
             expires: URL_LIFETIME,
-        })
+        });
+        format!("{}{path_and_query}", self.base)
     }
 }
 
@@ -143,6 +247,7 @@ struct Request<'a> {
     2. string to sign: the algorithm, time, scope, and the request's hash
     3. signing key: HMAC chain of the secret over date, region, service
     4. the signature goes on the URL as X-Amz-Signature
+    Returns the path and query; the caller puts the scheme and host first
 */
 fn presign(r: &Request) -> String {
     let date_time = r.now.format("%Y%m%dT%H%M%SZ").to_string();
@@ -187,10 +292,7 @@ fn presign(r: &Request) -> String {
     let key = hmac(&key, "aws4_request");
     let signature = hex(&hmac(&key, &string_to_sign));
 
-    format!(
-        "https://{}{path}?{query}&X-Amz-Signature={signature}",
-        r.host
-    )
+    format!("{path}?{query}&X-Amz-Signature={signature}")
 }
 
 fn hmac(key: &[u8], data: &str) -> Vec<u8> {
@@ -250,11 +352,12 @@ mod tests {
     fn a_put_url_signs_type_and_size() {
         let storage = Storage::new("acct".into(), "bucket".into(), "AK".into(), "SK".into());
         let now = Utc.with_ymd_and_hms(2026, 11, 16, 12, 0, 0).unwrap();
-        let put = storage.put_url("proof/abc", "image/jpeg", 1234, now);
-        assert!(
-            put.url
-                .starts_with("https://acct.r2.cloudflarestorage.com/bucket/proof/abc?")
-        );
+        let org = Uuid::nil();
+        let key = file_key(org, "proof", org);
+        let put = storage.put_url(org, &key, "image/jpeg", 1234, now).unwrap();
+        assert!(put.url.starts_with(&format!(
+            "https://acct.r2.cloudflarestorage.com/bucket/{key}?"
+        )));
         assert!(
             put.url
                 .contains("X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost")
@@ -262,6 +365,20 @@ mod tests {
         assert!(put.url.contains("X-Amz-Expires=900"));
         assert_eq!(put.headers, [("Content-Type", "image/jpeg".to_owned())]);
         assert_eq!(put.expires_at, now + URL_LIFETIME);
+    }
+
+    #[test]
+    fn only_the_companys_own_files_are_signed() {
+        let storage = Storage::new("acct".into(), "bucket".into(), "AK".into(), "SK".into());
+        let (a, b) = (Uuid::from_u128(1), Uuid::from_u128(2));
+        let file_of_a = file_key(a, "proof", Uuid::from_u128(3));
+        let now = Utc::now();
+        assert!(storage.get_url(a, &file_of_a, now).is_ok());
+        assert!(storage.get_url(b, &file_of_a, now).is_err());
+        assert!(storage.put_url(b, &file_of_a, "image/png", 1, now).is_err());
+        // A lookalike prefix isn't the company's.
+        let lookalike = format!("orgs/{a}x/proof/1");
+        assert!(storage.get_url(a, &lookalike, now).is_err());
     }
 
     #[test]

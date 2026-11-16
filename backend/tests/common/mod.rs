@@ -37,13 +37,19 @@ pub fn state(db: &PgPool) -> AppState {
             "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         )
         .unwrap(),
-        // Signing needs no network, so tests sign with a made-up key.
-        storage: Some(backend::storage::Storage::new(
-            "test-account".into(),
-            "test-bucket".into(),
-            "test-key-id".into(),
-            "test-secret".into(),
-        )),
+        /*
+            Signing needs no network, so tests sign with a made-up key.
+            The server's own calls (HEAD, DELETE) go to the stand-in below
+        */
+        storage: Some(
+            backend::storage::Storage::new(
+                "test-account".into(),
+                "test-bucket".into(),
+                "test-key-id".into(),
+                "test-secret".into(),
+            )
+            .with_base(fake_r2()),
+        ),
     }
 }
 
@@ -291,4 +297,68 @@ pub async fn call_with(
     }
     let body = body.map_or_else(Body::empty, |b| Body::from(b.to_string()));
     send(db, req.body(body).unwrap()).await
+}
+
+/*
+    A stand-in for R2
+    --------------------------------------------------------------------
+    - answers the two things the server asks R2 itself: HEAD (is the
+      file there, how big) and DELETE
+    - its files are a list in memory: `r2_put` plays the app's upload,
+      `r2_has` checks what's left. Keys are unique per test (they hold
+      the upload's id), so tests running at once don't meet
+    - one for the whole test binary, on its own thread: each test's
+      runtime ends with the test, this one has to outlive them
+*/
+static R2_FILES: Mutex<std::collections::BTreeMap<String, i64>> =
+    Mutex::new(std::collections::BTreeMap::new());
+static R2_BASE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+pub fn fake_r2() -> &'static str {
+    R2_BASE.get_or_init(|| {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(async move {
+                let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+                let app = axum::Router::new().fallback(fake_r2_answer);
+                axum::serve(listener, app).await.unwrap();
+            });
+        });
+        format!("http://{addr}")
+    })
+}
+
+async fn fake_r2_answer(
+    method: axum::http::Method,
+    uri: axum::http::Uri,
+) -> axum::response::Response {
+    use axum::{http::header::CONTENT_LENGTH, response::IntoResponse};
+    let key = uri.path().trim_start_matches("/test-bucket/").to_owned();
+    let mut files = R2_FILES.lock().unwrap();
+    match method {
+        axum::http::Method::HEAD => match files.get(&key) {
+            Some(size) => (StatusCode::OK, [(CONTENT_LENGTH, size.to_string())]).into_response(),
+            None => StatusCode::NOT_FOUND.into_response(),
+        },
+        axum::http::Method::DELETE => {
+            files.remove(&key);
+            StatusCode::NO_CONTENT.into_response()
+        }
+        _ => StatusCode::METHOD_NOT_ALLOWED.into_response(),
+    }
+}
+
+// The app's PUT, as far as the server can tell: a file of `size` at `key`.
+pub fn r2_put(key: &str, size: i64) {
+    R2_FILES.lock().unwrap().insert(key.to_owned(), size);
+}
+
+pub fn r2_has(key: &str) -> bool {
+    R2_FILES.lock().unwrap().contains_key(key)
 }
