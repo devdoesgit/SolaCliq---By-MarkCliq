@@ -102,7 +102,7 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
   Future<void> addDocument(KycKind kind, UploadFile file) async {
     _setDoc(kind, const DocUploading());
     try {
-      final id = await _uploads.upload(file, UploadPurpose.kyc);
+      final id = await _uploads.upload(orgId, file, UploadPurpose.kyc);
       _setDoc(kind, DocUploaded(id));
     } on UploadTooLarge {
       _setDoc(kind, const DocFailed(tooLarge: true));

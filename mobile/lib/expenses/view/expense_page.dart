@@ -179,7 +179,11 @@ class _ExpenseViewState extends State<ExpenseView> {
     await context.read<SubmitCubit>().submit(() async {
       final receiptId = receipt == null
           ? null
-          : await uploads.upload(receipt, UploadPurpose.receipt);
+          : await uploads.upload(
+              widget.workspace.orgId,
+              receipt,
+              UploadPurpose.receipt,
+            );
       final expense = await expenses.create(
         orgId: widget.workspace.orgId,
         idempotencyKey: _idempotencyKey,

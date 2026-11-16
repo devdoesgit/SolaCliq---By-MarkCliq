@@ -42,13 +42,19 @@ class UploadRepository {
 
   static const int maxBytes = 10 * 1024 * 1024;
 
-  /// Uploads [file] and returns its upload id, to attach to a record.
-  Future<String> upload(UploadFile file, UploadPurpose purpose) async {
+  /// Uploads [file] for the company [orgId] and returns its upload id, to
+  /// attach to one of that company's records.
+  Future<String> upload(
+    String orgId,
+    UploadFile file,
+    UploadPurpose purpose,
+  ) async {
     if (file.bytes.length > maxBytes) throw const UploadTooLarge();
     final type =
         file.contentType ?? api.UploadCreateContentTypeEnum.imageSlashJpeg;
     final response = await apiCall(
       () => _api.createUpload(
+        orgId: orgId,
         uploadCreate: api.UploadCreate(
           contentType: type,
           sizeBytes: file.bytes.length,

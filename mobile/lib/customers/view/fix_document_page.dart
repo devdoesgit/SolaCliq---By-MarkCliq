@@ -57,7 +57,11 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
       _error = null;
     });
     try {
-      final uploadId = await uploads.upload(photo, UploadPurpose.kyc);
+      final uploadId = await uploads.upload(
+        widget.workspace.orgId,
+        photo,
+        UploadPurpose.kyc,
+      );
       await customers.replaceDocument(
         orgId: widget.workspace.orgId,
         customerId: widget.customerId,

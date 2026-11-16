@@ -88,7 +88,7 @@ class TaskCubit extends Cubit<TaskState> {
     required CaptureFix fix,
     required String localUrl,
   }) => _run(() async {
-    final uploadId = await _uploads.upload(file, UploadPurpose.proof);
+    final uploadId = await _uploads.upload(orgId, file, UploadPurpose.proof);
     final task = await _tasks.addPhoto(
       orgId: orgId,
       taskId: taskId,
@@ -125,7 +125,7 @@ class TaskCubit extends Cubit<TaskState> {
     final ok = await _run(() async {
       final uploadId = photo == null
           ? null
-          : await _uploads.upload(photo, UploadPurpose.proof);
+          : await _uploads.upload(orgId, photo, UploadPurpose.proof);
       return await _tasks.reportProblem(
         orgId: orgId,
         taskId: taskId,

@@ -70,7 +70,7 @@ void main() {
     blocTest<AddCustomerCubit, AddCustomerState>(
       'uploads a document as KYC and records its id',
       setUp: () =>
-          when(() => uploads.upload(any(), any()))
+          when(() => uploads.upload(any(), any(), any()))
               .thenAnswer((_) async => 'up-1'),
       build: build,
       act: (c) => c.addDocument(KycKind.pan, file),
@@ -78,13 +78,14 @@ void main() {
         const AddCustomerState(docs: {KycKind.pan: DocUploading()}),
         const AddCustomerState(docs: {KycKind.pan: DocUploaded('up-1')}),
       ],
-      verify: (_) => verify(() => uploads.upload(file, UploadPurpose.kyc)),
+      verify: (_) =>
+          verify(() => uploads.upload('o1', file, UploadPurpose.kyc)),
     );
 
     blocTest<AddCustomerCubit, AddCustomerState>(
       'a failed or oversized upload can be retried',
       setUp: () =>
-          when(() => uploads.upload(any(), any()))
+          when(() => uploads.upload(any(), any(), any()))
               .thenThrow(const UploadTooLarge()),
       build: build,
       act: (c) => c.addDocument(KycKind.pan, file),

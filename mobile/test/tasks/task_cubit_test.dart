@@ -52,7 +52,7 @@ void main() {
       'a photo is uploaded as proof, attached with its fix, and shown even '
       'if the server has not caught up',
       setUp: () {
-        when(() => uploads.upload(any(), any()))
+        when(() => uploads.upload(any(), any(), any()))
             .thenAnswer((_) async => 'up-1');
         // A server that keeps no state, like the mock.
         when(
@@ -76,7 +76,7 @@ void main() {
         );
       },
       verify: (c) {
-        verify(() => uploads.upload(file, UploadPurpose.proof)).called(1);
+        verify(() => uploads.upload('o1', file, UploadPurpose.proof)).called(1);
         verify(
           () => tasks.addPhoto(
             orgId: 'o1',

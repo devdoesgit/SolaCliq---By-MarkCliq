@@ -11,21 +11,25 @@ void main() {
   late List<RequestOptions> transfers;
   late Dio transfer;
 
+  late List<RequestOptions> apiCalls;
+
   UploadRepository repository(String url) {
     final api = Dio(BaseOptions(baseUrl: 'http://api'))
-      ..httpClientAdapter = FakeAdapter(
-        (o) async => jsonBody(201, {
+      ..httpClientAdapter = FakeAdapter((o) async {
+        apiCalls.add(o);
+        return jsonBody(201, {
           'upload_id': 'up-1',
           'url': url,
           'method': 'PUT',
           'headers': {'x-amz-acl': 'private'},
           'expires_at': '2026-10-26T10:00:00Z',
-        }),
-      );
+        });
+      });
     return UploadRepository(UploadsApi(api), transfer);
   }
 
   setUp(() {
+    apiCalls = [];
     transfers = [];
     transfer = Dio()
       ..httpClientAdapter = FakeAdapter((o) async {
@@ -39,8 +43,9 @@ void main() {
   group(UploadRepository, () {
     test('puts the bytes to the presigned URL, returns the id', () async {
       final id = await repository('https://storage.example.com/u/1?sig=x')
-          .upload(photo, UploadPurpose.receipt);
+          .upload('o1', photo, UploadPurpose.receipt);
       expect(id, 'up-1');
+      expect(apiCalls.single.path, '/orgs/o1/uploads', reason: 'per company');
       expect(transfers.single.method, 'PUT');
       expect(transfers.single.uri.host, 'storage.example.com');
       expect(transfers.single.headers['x-amz-acl'], 'private');
@@ -49,7 +54,7 @@ void main() {
 
     test('the mock .invalid host is treated as already uploaded', () async {
       final id = await repository('https://uploads.mock.invalid/u/1')
-          .upload(photo, UploadPurpose.kyc);
+          .upload('o1', photo, UploadPurpose.kyc);
       expect(id, 'up-1');
       expect(transfers, isEmpty);
     });
@@ -60,7 +65,7 @@ void main() {
         bytes: Uint8List(UploadRepository.maxBytes + 1),
       );
       await expectLater(
-        repository('https://x').upload(big, UploadPurpose.kyc),
+        repository('https://x').upload('o1', big, UploadPurpose.kyc),
         throwsA(isA<UploadTooLarge>()),
       );
     });

@@ -50,7 +50,11 @@ class _ExpenseDetailPageState extends State<ExpenseDetailPage> {
       _error = null;
     });
     try {
-      final uploadId = await uploads.upload(file, UploadPurpose.receipt);
+      final uploadId = await uploads.upload(
+        widget.workspace.orgId,
+        file,
+        UploadPurpose.receipt,
+      );
       final expense = await expenses.replaceReceipt(
         orgId: widget.workspace.orgId,
         expenseId: widget.expenseId,
