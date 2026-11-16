@@ -53,9 +53,11 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
   graceful shutdown (queued emails sent first).
 - `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
-  `registration` and `platform` (F2), `quotes` and `profile` (phase 6);
+  `registration` and `platform` (F2), `quotes` and `profile` (phase 6),
+  `home`, `notifications` and `uploads` (phase 7);
   merged in `routes/mod.rs`.
 - `src/scope.rs`: the row-level security scopes and the startup check.
+- `src/storage.rs`: signed R2 URLs (uploads and reads).
 - `src/org.rs`: role, pay type, status and business type enums
   (`sqlx::Type`), `OrgMember`, `PlatformAdmin`.
 - `src/session.rs`, `src/codes.rs`, `src/password.rs`: tokens, email

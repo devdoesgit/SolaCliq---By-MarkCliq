@@ -36,6 +36,21 @@ Claude builds every part; the owner reviews.
   never carries the API token) and attaches the returned `upload_id` to the
   record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
   `.invalid` URLs, which the app treats as already uploaded.
+- Built 2026-11-16 (`src/storage.rs`, `routes/uploads.rs`). Buckets:
+  `solacliq-uploads-dev` (local) and `solacliq-uploads` (production),
+  private, each with its own API token limited to that bucket (Object
+  Read & Write). CORS allows GET and PUT from `solacliq.markcliq.com` and
+  `localhost:5173` only.
+- The server signs URLs itself (AWS Signature V4, region `auto`); no
+  network call. A PUT URL signs the declared type and size, so R2
+  refuses any other file; read URLs (for showing photos) last 15
+  minutes too. Objects are `<purpose>/<upload_id>`.
+- Each upload is a row in `uploads` (owner, purpose, type, size, key,
+  `used_at`): the record that uses it sets `used_at`, so one file is
+  attached once. 200 uploads an hour per account.
+- Config: `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`,
+  `R2_SECRET_ACCESS_KEY`, all or none. Production won't start without
+  them; development without them answers 503 `upload.unavailable`.
 
 ## Email
 
