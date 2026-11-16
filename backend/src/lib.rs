@@ -4,6 +4,7 @@
 pub mod bank;
 pub mod codes;
 pub mod config;
+pub mod counter;
 pub mod error;
 pub mod extract;
 pub mod gstin;

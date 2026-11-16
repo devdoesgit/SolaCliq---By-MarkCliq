@@ -99,6 +99,12 @@ impl Roles for Workers {
     const ALLOWED: &'static [Role] = &[Role::Worker];
 }
 
+// The people who spend for the company in the field: expenses.
+pub struct WorkersAndAgents;
+impl Roles for WorkersAndAgents {
+    const ALLOWED: &'static [Role] = &[Role::Worker, Role::Agent];
+}
+
 // The company's admin only (the website's team page).
 pub struct Admins;
 impl Roles for Admins {

@@ -4,9 +4,8 @@
     - GET /orgs/{org_id}/home: the parts the app draws (headline, week,
       tiles, progress, a list), so a role's home changes without an app
       update. Shapes and actions: docs/backend-handoff.md, "Home"
-    - built from what exists: a worker's tasks (phase 8). Expenses come
-      later in phase 8, customers and commissions in phase 9, installs
-      in phase 10; until each lands its numbers are honest zeros and the
+    - built from what exists: a worker's tasks and expenses (phase 8).
+      Customers and commissions come in phase 9, installs in phase 10; until each lands its numbers are honest zeros and the
       list says what's coming, never sample data
     - dates and greetings are in Indian time: an installer's "today" is
       today in India, whatever the server's clock says
@@ -230,6 +229,18 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         Role::Worker => week_tasks(&mut tx, member.user_id, &now).await?,
         _ => Vec::new(),
     };
+    // The worker's expenses still with the admin.
+    let in_review: i64 = match member.role {
+        Role::Worker => {
+            sqlx::query_scalar(
+                "SELECT count(*) FROM expenses WHERE owner_id = $1 AND status = 'in_review'",
+            )
+            .bind(member.user_id)
+            .fetch_one(&mut *tx)
+            .await?
+        }
+        _ => 0,
+    };
     tx.commit().await?;
 
     let who = Who {
@@ -238,7 +249,7 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         now,
     };
     let mut summary = match (member.role, member.pay_type) {
-        (Role::Worker, _) => worker(&who, &tasks),
+        (Role::Worker, _) => worker(&who, &tasks, in_review),
         (Role::Agent, Some(PayType::Commission)) => agent(&who, true),
         (Role::Agent, _) => agent(&who, false),
         (Role::Customer, _) => customer(&who),
@@ -411,10 +422,10 @@ fn headline(value: &str, label: &str, detail: &str) -> Option<HomeHeadline> {
 
 /*
     An EPC installer's day: the date, the week with each day's tasks,
-    today's count, what's left to submit and expenses with the admin
-    (later in phase 8), then today's tasks in due order
+    today's count, what's left to submit and expenses with the admin,
+    then today's tasks in due order
 */
-fn worker(who: &Who, tasks: &[WeekTask]) -> HomeSummary {
+fn worker(who: &Who, tasks: &[WeekTask], expenses_in_review: i64) -> HomeSummary {
     let today = who.now.date_naive();
     let by_tonight: Vec<&WeekTask> = tasks
         .iter()
@@ -460,7 +471,7 @@ fn worker(who: &Who, tasks: &[WeekTask]) -> HomeSummary {
             ),
             tile(
                 "Expenses",
-                "0",
+                &expenses_in_review.to_string(),
                 TileIcon::Receipt,
                 "with admin",
                 false,
@@ -643,7 +654,7 @@ mod tests {
     fn today_is_today_in_india() {
         // 20:00 UTC on Sun 15 Nov is 01:30 on Mon 16 Nov in India.
         let w = who(Utc.with_ymd_and_hms(2026, 11, 15, 20, 0, 0).unwrap());
-        let home = worker(&w, &[]);
+        let home = worker(&w, &[], 0);
         assert_eq!(home.eyebrow, "Monday, 16 Nov");
         let today: Vec<_> = home.week.iter().filter(|d| d.today).collect();
         assert_eq!(today.len(), 1);
@@ -677,7 +688,7 @@ mod tests {
             "payments",
         ];
         for home in [
-            worker(&w, &[]),
+            worker(&w, &[], 0),
             agent(&w, true),
             agent(&w, false),
             customer(&w),
@@ -711,7 +722,7 @@ mod tests {
             task(TaskStatus::Submitted, at(18, 6)), // today, with the admin
             task(TaskStatus::Assigned, at(20, 5)),  // Fri
         ];
-        let home = worker(&w, &tasks);
+        let home = worker(&w, &tasks, 0);
         let dots: Vec<Vec<String>> = home.week.iter().map(|d| d.dots.clone()).collect();
         assert_eq!(dots[0], ["done"]);
         assert_eq!(dots[1], ["live"]);
@@ -732,7 +743,7 @@ mod tests {
     #[test]
     fn empty_lists_explain_instead_of_showing_nothing() {
         let w = who(Utc::now());
-        for home in [worker(&w, &[]), agent(&w, true), customer(&w)] {
+        for home in [worker(&w, &[], 0), agent(&w, true), customer(&w)] {
             assert_eq!(home.list.rows.len(), 1);
             assert!(home.list.rows[0].action.is_none(), "not tappable");
         }

@@ -3,6 +3,7 @@
 //! so the spec is generated from them.
 
 pub mod auth;
+pub mod expenses;
 pub mod health;
 pub mod home;
 pub mod me;
@@ -29,6 +30,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(notifications::router())
         .merge(team::router())
         .merge(registration::router())
+        .merge(expenses::router())
         .merge(platform::router())
         .merge(profile::router())
         .merge(quotes::router())
