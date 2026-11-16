@@ -29,7 +29,7 @@ use crate::{
     },
     org::BusinessType,
     rate_limit::{ClientIp, Rule},
-    validate,
+    scope, validate,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -77,20 +77,24 @@ async fn register_org(
 ) -> ApiResult<StatusCode> {
     state.limits.check(Rule::RegistrationByIp, &ip.0)?;
     let r = validate_registration(req)?;
-    let mut tx = state.db.begin().await?;
+    /*
+        In the new company's scope: its row and its first membership are
+        the only company rows this transaction can write
+    */
+    let org_id = Uuid::now_v7();
+    let mut tx = scope::company(&state.db, org_id).await?;
 
     /*
         A GSTIN can have one live registration. Checked first for a clear
         answer; the unique index (orgs_gstin_live) still decides if two
         registrations race, and `taken_on_conflict` maps that to the same
-        409
+        409. `gstin_registered` looks past this scope at every company and
+        answers only yes or no (migration ..._row_level_security.sql)
     */
-    let taken: bool = sqlx::query_scalar(
-        "SELECT EXISTS (SELECT 1 FROM orgs WHERE gstin = $1 AND status <> 'rejected')",
-    )
-    .bind(&r.gstin.number)
-    .fetch_one(&mut *tx)
-    .await?;
+    let taken: bool = sqlx::query_scalar("SELECT gstin_registered($1)")
+        .bind(&r.gstin.number)
+        .fetch_one(&mut *tx)
+        .await?;
     if taken {
         return Err(gstin_taken());
     }
@@ -121,7 +125,6 @@ async fn register_org(
         }
     };
 
-    let org_id = Uuid::now_v7();
     sqlx::query(
         "INSERT INTO orgs (id, name, phone, status, legal_name, business_type,
                            gstin, pan, address_line_1, address_line_2, city,

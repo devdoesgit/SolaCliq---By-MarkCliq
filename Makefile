@@ -73,6 +73,10 @@ db: ## Start local Postgres 17 for the backend (dev only, matches backend/.env.e
 	  -e POSTGRES_USER=solacliq -e POSTGRES_PASSWORD=solacliq -e POSTGRES_DB=solacliq \
 	  -p 127.0.0.1:5432:5432 -v solacliq-pgdata:/var/lib/postgresql/data \
 	  docker.io/library/postgres:17
+	# Over TCP: on first start the image runs a socket-only setup server first.
+	until $(CONTAINER) exec solacliq-pg pg_isready -q -h 127.0.0.1 -U solacliq; do sleep 1; done
+	# The API's restricted login (docs/architecture.md, "Row-level security").
+	$(CONTAINER) exec -i solacliq-pg psql -q -U solacliq -d solacliq -v ON_ERROR_STOP=1 < backend/dev-roles.sql
 
 api: ## Run the Rust API on localhost:8080 (needs backend/.env)
 	cd backend && cargo run

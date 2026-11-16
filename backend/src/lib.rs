@@ -16,6 +16,7 @@ pub mod page;
 pub mod password;
 pub mod rate_limit;
 pub mod routes;
+pub mod scope;
 pub mod seed;
 pub mod session;
 pub mod validate;

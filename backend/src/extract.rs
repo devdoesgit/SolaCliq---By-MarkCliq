@@ -69,6 +69,17 @@ pub struct AuthUser {
     pub session_id: uuid::Uuid,
 }
 
+impl AuthUser {
+    /*
+        A transaction for this person's own rows, under row-level
+        security: their memberships, companies and personal feed
+        (`scope::person`)
+    */
+    pub async fn begin(&self, db: &sqlx::PgPool) -> crate::error::ApiResult<crate::scope::Tx> {
+        crate::scope::person(db, self.user_id).await
+    }
+}
+
 /// The website's access token cookie, sent on every request.
 pub const SESSION_COOKIE: &str = "solacliq_session";
 /// The website's refresh token cookie, sent only to `/auth/refresh`.

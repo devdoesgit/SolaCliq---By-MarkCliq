@@ -15,12 +15,18 @@ use backend::{
 };
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
-use sqlx::PgPool;
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use tower::ServiceExt;
 
+/*
+    The router's state. `db` is the test database's owner, for setting up
+    rows and checking them; the router gets the restricted login instead
+    (`app_db`), as the real server does, so a handler that forgets its
+    row-level security scope fails its tests
+*/
 pub fn state(db: &PgPool) -> AppState {
     AppState {
-        db: db.clone(),
+        db: app_db(db),
         cookie_secure: false,
         lifetimes: Default::default(),
         mailer: Arc::new(Outbox),
@@ -32,6 +38,20 @@ pub fn state(db: &PgPool) -> AppState {
         )
         .unwrap(),
     }
+}
+
+/*
+    The same test database as `solacliq_api` (`make db` creates it, with
+    this local-only password). Lazy: connects on first use
+*/
+pub fn app_db(db: &PgPool) -> PgPool {
+    let options = (*db.connect_options())
+        .clone()
+        .username("solacliq_api")
+        .password("solacliq_api");
+    PgPoolOptions::new()
+        .max_connections(2)
+        .connect_lazy_with(options)
 }
 
 /*
@@ -82,7 +102,11 @@ pub struct Res {
 }
 
 pub async fn send(db: &PgPool, req: Request<Body>) -> Res {
-    let res = app(state(db)).oneshot(req).await.unwrap();
+    let state = state(db);
+    let app_db = state.db.clone();
+    let res = app(state).oneshot(req).await.unwrap();
+    // Closed now, or the test database couldn't be dropped after the test.
+    app_db.close().await;
     let status = res.status();
     let headers = res.headers().clone();
     let bytes = res.into_body().collect().await.unwrap().to_bytes();

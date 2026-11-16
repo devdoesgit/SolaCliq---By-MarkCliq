@@ -132,6 +132,7 @@ async fn list_members(
     ApiQuery(query): ApiQuery<ListQuery>,
 ) -> ApiResult<Json<MemberPage>> {
     let page = Page::new(query.cursor.as_deref(), query.limit)?;
+    let mut tx = member.begin(&state.db).await?;
 
     // `$3::member_role IS NULL OR ...`: one query serves all roles and one.
     let mut rows: Vec<MemberRow> = sqlx::query_as(
@@ -152,8 +153,9 @@ async fn list_members(
     .bind(query.role)
     .bind(page.after_time())
     .bind(page.after_id())
-    .fetch_all(&state.db)
+    .fetch_all(&mut *tx)
     .await?;
+    tx.commit().await?;
 
     let page_info = page.finish(&mut rows, |r| Cursor {
         created_at: r.added_at,
@@ -213,7 +215,7 @@ async fn add_member(
     ApiJson(req): ApiJson<AddMemberRequest>,
 ) -> ApiResult<(StatusCode, Json<Member>)> {
     let input = validate_add(req)?;
-    let mut tx = state.db.begin().await?;
+    let mut tx = admin.begin(&state.db).await?;
 
     /*
         The account. ON CONFLICT DO NOTHING + RETURNING gives the id only
@@ -410,6 +412,7 @@ async fn remove_member(
     ApiPath(path): ApiPath<MemberPath>,
 ) -> ApiResult<StatusCode> {
     let user_id = path.user_id;
+    let mut tx = admin.begin(&state.db).await?;
     /*
         The admin check is part of the UPDATE, so the row can't change
         between checking and removing. When nothing was removed, a second
@@ -422,12 +425,13 @@ async fn remove_member(
     )
     .bind(admin.org_id)
     .bind(user_id)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await?
     .rows_affected()
         == 1;
 
     if removed {
+        tx.commit().await?;
         tracing::info!(org_id = %admin.org_id, %user_id, by = %admin.user_id, "member removed");
         return Ok(StatusCode::NO_CONTENT);
     }
@@ -439,8 +443,9 @@ async fn remove_member(
     )
     .bind(admin.org_id)
     .bind(user_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut *tx)
     .await?;
+    tx.commit().await?;
     if is_admin {
         return Err(ApiError::new(
             StatusCode::UNPROCESSABLE_ENTITY,

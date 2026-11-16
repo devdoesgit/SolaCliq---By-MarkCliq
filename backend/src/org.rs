@@ -15,7 +15,7 @@ use axum::{
     http::{StatusCode, request::Parts},
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::PgPool;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -23,6 +23,7 @@ use crate::{
     AppState,
     error::{ApiError, ApiResult},
     extract::AuthUser,
+    scope::{self, Tx},
 };
 
 /*
@@ -125,32 +126,14 @@ pub struct OrgMember<R = AnyRole> {
 
 impl<R> OrgMember<R> {
     /*
-        A transaction for this company's data, under row-level security
-        --------------------------------------------------------------------
-        - switches to `solacliq_app` and records the company in
-          `app.org_id` (migration ..._row_level_security.sql), both only
-          until the transaction ends
-        - inside it, tables with a policy show only this company's rows,
-          so a query that forgets `org_id` still can't reach another
-          company
-        - every company read and write goes through one of these
+        A transaction for this company's rows, under row-level security
+        (`scope::company`): tables with a policy show only this company,
+        so a query that forgets `org_id` still can't reach another one.
+        Every company read and write goes through one of these
     */
-    pub async fn begin(&self, db: &PgPool) -> ApiResult<Transaction<'static, Postgres>> {
-        begin_for(db, self.org_id).await
+    pub async fn begin(&self, db: &PgPool) -> ApiResult<Tx> {
+        scope::company(db, self.org_id).await
     }
-}
-
-// `OrgMember::begin` for a company id; tests use it directly.
-pub async fn begin_for(db: &PgPool, org_id: Uuid) -> ApiResult<Transaction<'static, Postgres>> {
-    let mut tx = db.begin().await?;
-    sqlx::query("SET LOCAL ROLE solacliq_app")
-        .execute(&mut *tx)
-        .await?;
-    sqlx::query("SELECT set_config('app.org_id', $1, true)")
-        .bind(org_id.to_string())
-        .execute(&mut *tx)
-        .await?;
-    Ok(tx)
 }
 
 impl<R: Roles + Send + Sync> FromRequestParts<AppState> for OrgMember<R> {
@@ -160,6 +143,8 @@ impl<R: Roles + Send + Sync> FromRequestParts<AppState> for OrgMember<R> {
         let user = AuthUser::from_request_parts(parts, state).await?;
         let org_id = org_id_from_path(parts).await?;
 
+        // As the person: their own memberships are all this can see.
+        let mut tx = user.begin(&state.db).await?;
         let row: Option<(Role, Option<PayType>, OrgStatus)> = sqlx::query_as(
             "SELECT m.role, m.pay_type, o.status
              FROM memberships m JOIN orgs o ON o.id = m.org_id
@@ -167,8 +152,9 @@ impl<R: Roles + Send + Sync> FromRequestParts<AppState> for OrgMember<R> {
         )
         .bind(org_id)
         .bind(user.user_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut *tx)
         .await?;
+        tx.commit().await?;
 
         let Some((role, pay_type, status)) = row else {
             return Err(not_member());
@@ -262,6 +248,17 @@ fn role_not_allowed() -> ApiError {
 #[derive(Debug, Clone, Copy)]
 pub struct PlatformAdmin {
     pub user_id: Uuid,
+}
+
+impl PlatformAdmin {
+    /*
+        A transaction that sees every company (`scope::platform`). Only a
+        checked platform admin has one of these values, so only their
+        requests get this scope
+    */
+    pub async fn begin(&self, db: &PgPool) -> ApiResult<Tx> {
+        scope::platform(db).await
+    }
 }
 
 impl FromRequestParts<AppState> for PlatformAdmin {

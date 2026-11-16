@@ -290,7 +290,8 @@ async fn create_quote_request(
         estimate,
     };
 
-    let mut tx = state.db.begin().await?;
+    // As the person: the receipt below goes to their personal feed.
+    let mut tx = user.begin(&state.db).await?;
     sqlx::query(
         "INSERT INTO quote_requests (id, user_id, quote_for, pin_code, city, bill_band,
                                      roof, timeline, phone, kw_min, kw_max, price_min,

@@ -157,10 +157,11 @@ macro_rules! select_org {
     };
 }
 
-async fn load(db: &sqlx::PgPool, org_id: Uuid) -> ApiResult<PlatformOrg> {
+// In the platform scope (`PlatformAdmin::begin`).
+async fn load(conn: &mut sqlx::PgConnection, org_id: Uuid) -> ApiResult<PlatformOrg> {
     let row: OrgRow = sqlx::query_as(concat!(select_org!(), " WHERE o.id = $1"))
         .bind(org_id)
-        .fetch_optional(db)
+        .fetch_optional(conn)
         .await?
         .ok_or_else(ApiError::not_found)?;
     Ok(row.into())
@@ -195,10 +196,11 @@ pub struct ListQuery {
 )]
 async fn list_orgs(
     State(state): State<AppState>,
-    _admin: PlatformAdmin,
+    admin: PlatformAdmin,
     ApiQuery(query): ApiQuery<ListQuery>,
 ) -> ApiResult<Json<PlatformOrgPage>> {
     let page = Page::new(query.cursor.as_deref(), query.limit)?;
+    let mut tx = admin.begin(&state.db).await?;
     let mut rows: Vec<OrgRow> = sqlx::query_as(concat!(
         select_org!(),
         " WHERE ($2::org_status IS NULL OR o.status = $2)
@@ -210,8 +212,9 @@ async fn list_orgs(
     .bind(query.status)
     .bind(page.after_time())
     .bind(page.after_id())
-    .fetch_all(&state.db)
+    .fetch_all(&mut *tx)
     .await?;
+    tx.commit().await?;
 
     let page_info = page.finish(&mut rows, |r| Cursor {
         created_at: r.created_at,
@@ -241,10 +244,13 @@ async fn list_orgs(
 )]
 async fn get_org(
     State(state): State<AppState>,
-    _admin: PlatformAdmin,
+    admin: PlatformAdmin,
     ApiPath(org_id): ApiPath<Uuid>,
 ) -> ApiResult<Json<PlatformOrg>> {
-    Ok(Json(load(&state.db, org_id).await?))
+    let mut tx = admin.begin(&state.db).await?;
+    let org = load(&mut tx, org_id).await?;
+    tx.commit().await?;
+    Ok(Json(org))
 }
 
 // The statuses a platform admin can set (`pending` is only ever the start).
@@ -338,6 +344,7 @@ async fn set_status(
             .field("note", "Say why it was rejected; the owner gets this note."));
     }
 
+    let mut tx = admin.begin(&state.db).await?;
     // RETURNING the old status: the UPDATE sees the row before it changes.
     let previous: Option<OrgStatus> = sqlx::query_scalar(
         "UPDATE orgs o
@@ -352,12 +359,12 @@ async fn set_status(
     .bind(&note)
     .bind(admin.user_id)
     .bind(req.status.allowed_from())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *tx)
     .await?;
 
     let Some(previous) = previous else {
         // Nothing changed: the company is missing (404) or the move isn't allowed (409).
-        let current = load(&state.db, org_id).await?;
+        let current = load(&mut tx, org_id).await?;
         return Err(ApiError::new(
             StatusCode::CONFLICT,
             "org.status_change_not_allowed",
@@ -370,7 +377,8 @@ async fn set_status(
         )));
     };
 
-    let org = load(&state.db, org_id).await?;
+    let org = load(&mut tx, org_id).await?;
+    tx.commit().await?;
     tracing::info!(%org_id, from = ?previous, to = ?org.status, by = %admin.user_id, "company status changed");
     if previous == OrgStatus::Pending
         && let Some(owner) = &org.owner

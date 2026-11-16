@@ -213,12 +213,16 @@ pub struct HomeStatus {
     ),
 )]
 async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Json<HomeSummary>> {
+    let mut tx = member.begin(&state.db).await?;
     let (name, org_name): (String, String) =
         sqlx::query_as("SELECT u.name, o.name FROM users u, orgs o WHERE u.id = $1 AND o.id = $2")
             .bind(member.user_id)
             .bind(member.org_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut *tx)
             .await?;
+    let unread = notify::unread(&mut tx, member.user_id, Some(member.org_id)).await?;
+    tx.commit().await?;
+
     let who = Who {
         first_name: name.split_whitespace().next().unwrap_or(&name).to_owned(),
         org_name,
@@ -231,10 +235,7 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         (Role::Customer, _) => customer(&who),
         (Role::OrgAdmin, _) => admin(&who),
     };
-    let mut tx = member.begin(&state.db).await?;
-    summary.unread_notifications =
-        notify::unread(&mut tx, member.user_id, Some(member.org_id)).await?;
-    tx.commit().await?;
+    summary.unread_notifications = unread;
     Ok(Json(summary))
 }
 

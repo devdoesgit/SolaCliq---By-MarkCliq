@@ -392,9 +392,10 @@ async fn my_notifications(
     ApiQuery(q): ApiQuery<FeedQuery>,
 ) -> ApiResult<Json<NotificationPage>> {
     let page = Page::new(q.cursor.as_deref(), q.limit)?;
-    Ok(Json(
-        notify::page(&mut *state.db.acquire().await?, user.user_id, None, page).await?,
-    ))
+    let mut tx = user.begin(&state.db).await?;
+    let feed = notify::page(&mut tx, user.user_id, None, page).await?;
+    tx.commit().await?;
+    Ok(Json(feed))
 }
 
 #[utoipa::path(
@@ -412,6 +413,8 @@ async fn read_my_notifications(
     State(state): State<AppState>,
     user: AuthUser,
 ) -> ApiResult<axum::http::StatusCode> {
-    notify::read_all(&mut *state.db.acquire().await?, user.user_id, None).await?;
+    let mut tx = user.begin(&state.db).await?;
+    notify::read_all(&mut tx, user.user_id, None).await?;
+    tx.commit().await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

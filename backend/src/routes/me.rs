@@ -123,9 +123,12 @@ struct MembershipRow {
 
 /*
     The person's companies, oldest membership first (the app opens the
-    first one when nothing was chosen before). Removed ones are skipped
+    first one when nothing was chosen before). Removed ones are skipped.
+    In the person's scope: `user_id` comes from their session, or from
+    the password login just checked
 */
 async fn memberships(db: &PgPool, user_id: Uuid) -> ApiResult<Vec<Membership>> {
+    let mut tx = crate::scope::person(db, user_id).await?;
     let rows: Vec<MembershipRow> = sqlx::query_as(
         "SELECT o.id AS org_id, o.name AS org_name, o.status AS org_status,
                 o.phone AS org_phone, m.role, m.pay_type
@@ -134,8 +137,9 @@ async fn memberships(db: &PgPool, user_id: Uuid) -> ApiResult<Vec<Membership>> {
          ORDER BY m.created_at, m.id",
     )
     .bind(user_id)
-    .fetch_all(db)
+    .fetch_all(&mut *tx)
     .await?;
+    tx.commit().await?;
 
     Ok(rows
         .into_iter()
