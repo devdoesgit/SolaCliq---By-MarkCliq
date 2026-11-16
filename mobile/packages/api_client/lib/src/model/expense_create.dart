@@ -33,16 +33,18 @@ class ExpenseCreate {
     this.taskId,
   });
 
-  /// Amount in paise (₹1 = 100). Never a float.
+  /// Paise, 1 to 100000000 (₹10 lakh; more is a typo).
   @JsonKey(name: r'amount', required: true, includeIfNull: false)
   final int amount;
 
   @JsonKey(name: r'category', required: true, includeIfNull: false)
   final ExpenseCategory category;
 
+  /// May be empty.
   @JsonKey(name: r'note', required: true, includeIfNull: false)
   final String note;
 
+  /// In India; not in the future, not over a year ago.
   @JsonKey(name: r'spent_on', required: true, includeIfNull: false)
   final String spentOn;
 

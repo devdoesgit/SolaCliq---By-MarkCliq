@@ -773,10 +773,17 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
     post:
       operationId: createExpense
       summary: Log an expense for the admin to approve
-      description: Goes to the org admin's approvals queue as `in_review`.
+      description: |
+        Workers and agents. Goes to the org admin's approvals queue as
+        `in_review`, numbered `EXP-0001` per company. A receipt is an
+        upload of this company (purpose `receipt`), checked in storage
+        (422 on `receipt_upload_id` if it didn't finish); `task_id` must be
+        one of the caller's own tasks (422 otherwise).
       tags: [expenses]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1203,7 +1210,9 @@ paths:
     put:
       operationId: replaceExpenseReceipt
       summary: Send a new receipt for an expense the admin sent back
-      description: The expense goes back to `in_review`. 409 unless it is `needs_fix`.
+      description: |
+        The expense goes back to `in_review`, and the note goes to the
+        admin with it. 409 `expense.locked` unless it is `needs_fix`.
       tags: [expenses]
       requestBody:
         required: true
@@ -2601,14 +2610,17 @@ components:
       properties:
         amount:
           $ref: "#/components/schemas/Money"
+          description: Paise, 1 to 100000000 (₹10 lakh; more is a typo).
         category:
           $ref: "#/components/schemas/ExpenseCategory"
         note:
           type: string
           maxLength: 200
+          description: May be empty.
         spent_on:
           type: string
           format: date
+          description: In India; not in the future, not over a year ago.
         receipt_upload_id:
           $ref: "#/components/schemas/Id"
         task_id:

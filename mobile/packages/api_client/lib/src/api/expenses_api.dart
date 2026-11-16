@@ -22,7 +22,7 @@ class ExpensesApi {
   const ExpensesApi(this._dio);
 
   /// Log an expense for the admin to approve
-  /// Goes to the org admin&#39;s approvals queue as &#x60;in_review&#x60;.
+  /// Workers and agents. Goes to the org admin&#39;s approvals queue as &#x60;in_review&#x60;, numbered &#x60;EXP-0001&#x60; per company. A receipt is an upload of this company (purpose &#x60;receipt&#x60;), checked in storage (422 on &#x60;receipt_upload_id&#x60; if it didn&#39;t finish); &#x60;task_id&#x60; must be one of the caller&#39;s own tasks (422 otherwise).
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
@@ -319,7 +319,7 @@ class ExpensesApi {
   }
 
   /// Send a new receipt for an expense the admin sent back
-  /// The expense goes back to &#x60;in_review&#x60;. 409 unless it is &#x60;needs_fix&#x60;.
+  /// The expense goes back to &#x60;in_review&#x60;, and the note goes to the admin with it. 409 &#x60;expense.locked&#x60; unless it is &#x60;needs_fix&#x60;.
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.

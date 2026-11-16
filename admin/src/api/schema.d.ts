@@ -528,7 +528,11 @@ export interface paths {
         put?: never;
         /**
          * Log an expense for the admin to approve
-         * @description Goes to the org admin's approvals queue as `in_review`.
+         * @description Workers and agents. Goes to the org admin's approvals queue as
+         *     `in_review`, numbered `EXP-0001` per company. A receipt is an
+         *     upload of this company (purpose `receipt`), checked in storage
+         *     (422 on `receipt_upload_id` if it didn't finish); `task_id` must be
+         *     one of the caller's own tasks (422 otherwise).
          */
         post: operations["createExpense"];
         delete?: never;
@@ -901,7 +905,8 @@ export interface paths {
         get?: never;
         /**
          * Send a new receipt for an expense the admin sent back
-         * @description The expense goes back to `in_review`. 409 unless it is `needs_fix`.
+         * @description The expense goes back to `in_review`, and the note goes to the
+         *     admin with it. 409 `expense.locked` unless it is `needs_fix`.
          */
         put: operations["replaceExpenseReceipt"];
         post?: never;
@@ -1776,10 +1781,15 @@ export interface components {
          */
         ExpenseStatus: "in_review" | "approved" | "needs_fix" | "paid";
         ExpenseCreate: {
+            /** @description Paise, 1 to 100000000 (₹10 lakh; more is a typo). */
             amount: components["schemas"]["Money"];
             category: components["schemas"]["ExpenseCategory"];
+            /** @description May be empty. */
             note: string;
-            /** Format: date */
+            /**
+             * Format: date
+             * @description In India; not in the future, not over a year ago.
+             */
             spent_on: string;
             receipt_upload_id?: components["schemas"]["Id"];
             /** @description The task it was spent on, if any. */
@@ -3100,6 +3110,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     createExpense: {
