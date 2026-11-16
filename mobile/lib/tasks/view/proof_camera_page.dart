@@ -12,6 +12,7 @@ import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/cubit/task_cubit.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
+import 'package:solacliq/tasks/view/capture_problems.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 
@@ -33,14 +34,14 @@ class ProofCameraPage extends StatefulWidget {
   State<ProofCameraPage> createState() => _ProofCameraPageState();
 }
 
-enum _Problem { noCamera, cameraDenied, locationOff, locationDenied }
-
 class _ProofCameraPageState extends State<ProofCameraPage>
     with WidgetsBindingObserver {
   CameraController? _camera;
   StreamSubscription<Position>? _positions;
   Position? _position;
-  _Problem? _problem;
+  final _problems = CaptureProblems();
+  // A start already running (a dialog's resume can ask for another).
+  bool _starting = false;
   String? _slotId;
   bool _flash = false;
   bool _shooting = false;
@@ -74,14 +75,28 @@ class _ProofCameraPageState extends State<ProofCameraPage>
     }
   }
 
+  /*
+    One after the other: started together, the camera's and location's
+    permission dialogs race, and the loser reports a failure even when
+    the person allows both
+  */
   Future<void> _start() async {
-    await Future.wait([_startCamera(), _startLocation()]);
+    if (_starting) return;
+    _starting = true;
+    try {
+      await _startCamera();
+      await _startLocation();
+    } finally {
+      _starting = false;
+    }
   }
 
   Future<void> _startCamera() async {
     try {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) return _fail(_Problem.noCamera);
+      if (cameras.isEmpty) {
+        return _update(() => _problems.camera = CaptureProblem.noCamera);
+      }
       final back = cameras.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
@@ -94,17 +109,21 @@ class _ProofCameraPageState extends State<ProofCameraPage>
       );
       await camera.initialize();
       if (!mounted) return unawaited(camera.dispose());
-      setState(() => _camera = camera);
+      _update(() {
+        _camera = camera;
+        _problems.camera = null;
+      });
     } on CameraException catch (e) {
-      _fail(
-        e.code.contains('Denied') ? _Problem.cameraDenied : _Problem.noCamera,
-      );
+      final problem = e.code.contains('Denied')
+          ? CaptureProblem.cameraDenied
+          : CaptureProblem.noCamera;
+      _update(() => _problems.camera = problem);
     }
   }
 
   Future<void> _startLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      return _fail(_Problem.locationOff);
+      return _update(() => _problems.location = CaptureProblem.locationOff);
     }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -112,18 +131,24 @@ class _ProofCameraPageState extends State<ProofCameraPage>
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      return _fail(_Problem.locationDenied);
+      return _update(() => _problems.location = CaptureProblem.locationDenied);
     }
     await _positions?.cancel();
     _positions =
-        Geolocator.getPositionStream(locationSettings: const LocationSettings())
-            .listen((p) {
-              if (mounted) setState(() => _position = p);
-            }, onError: (Object _) => _fail(_Problem.locationOff));
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(),
+        ).listen(
+          (p) => _update(() {
+            _position = p;
+            _problems.location = null;
+          }),
+          onError: (Object _) =>
+              _update(() => _problems.location = CaptureProblem.locationOff),
+        );
   }
 
-  void _fail(_Problem problem) {
-    if (mounted) setState(() => _problem = problem);
+  void _update(VoidCallback change) {
+    if (mounted) setState(change);
   }
 
   ProofSlot? _slot(Task task) {
@@ -219,8 +244,8 @@ class _ProofCameraPageState extends State<ProofCameraPage>
                   ),
                   Expanded(
                     child: Center(
-                      child: _problem != null
-                          ? _ProblemNotice(problem: _problem!)
+                      child: _problems.current != null
+                          ? _ProblemNotice(problem: _problems.current!)
                           : _Guide(hint: slot?.hint),
                     ),
                   ),
@@ -448,16 +473,22 @@ class _Guide extends StatelessWidget {
 class _ProblemNotice extends StatelessWidget {
   const new({required this.problem});
 
-  final _Problem problem;
+  final CaptureProblem problem;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final (title, body) = switch (problem) {
-      _Problem.noCamera => (l10n.cameraUnavailable, l10n.cameraUnavailableBody),
-      _Problem.cameraDenied => (l10n.cameraDenied, l10n.cameraDeniedBody),
-      _Problem.locationOff => (l10n.locationOff, l10n.locationOffBody),
-      _Problem.locationDenied => (l10n.locationDenied, l10n.locationDeniedBody),
+      CaptureProblem.noCamera => (
+        l10n.cameraUnavailable,
+        l10n.cameraUnavailableBody,
+      ),
+      CaptureProblem.cameraDenied => (l10n.cameraDenied, l10n.cameraDeniedBody),
+      CaptureProblem.locationOff => (l10n.locationOff, l10n.locationOffBody),
+      CaptureProblem.locationDenied => (
+        l10n.locationDenied,
+        l10n.locationDeniedBody,
+      ),
     };
     return Padding(
       padding: const EdgeInsets.all(SolaSpace.space20),
@@ -473,7 +504,7 @@ class _ProblemNotice extends StatelessWidget {
           compact: true,
           expand: false,
           onPressed: () => unawaited(
-            problem == _Problem.locationOff
+            problem == CaptureProblem.locationOff
                 ? Geolocator.openLocationSettings()
                 : Geolocator.openAppSettings(),
           ),
