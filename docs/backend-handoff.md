@@ -98,10 +98,10 @@ milestone, top to bottom.
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
-| 21 | `GET /orgs/{org_id}/home` | any member | — | `HomeSummary` | **Server-composed per role** (see "Home" below) |
+| 21 | `GET /orgs/{org_id}/home` | any member | — | `HomeSummary` | **Built (phase 7).** Server-composed per role (see "Home" below); honest zeros and an explaining row until tasks, customers and installs exist (phases 8–10). Dates in Indian time |
 | 22 | `POST /uploads` | auth | `UploadCreate` | `Upload` | `content_type` jpeg/png/pdf, `size_bytes` ≤ 10 MB (422 over), `purpose` `receipt`/`kyc`/`proof`. Presigned PUT valid 15 min. An upload id can be used once, by its owner |
-| 23 | `GET /orgs/{org_id}/notifications` | any member | cursor | `NotificationPage` | Newest first, `unread_count`. Each carries the id it opens: `task_id`, `expense_id` or `customer_id` |
-| 24 | `POST /orgs/{org_id}/notifications/read` | any member | — | 204 | Marks all read |
+| 23 | `GET /orgs/{org_id}/notifications` | any member | cursor | `NotificationPage` | **Built (phase 7).** Newest first, `unread_count`. Each carries the id it opens: `task_id`, `expense_id` or `customer_id` |
+| 24 | `POST /orgs/{org_id}/notifications/read` | any member | — | 204 | **Built (phase 7).** Marks all read, in that company only |
 
 ### M4. Worker (F6, F7)
 

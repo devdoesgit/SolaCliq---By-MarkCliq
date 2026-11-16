@@ -65,6 +65,21 @@ Claude builds every part; the owner reviews.
   same address.
 - Check the setup with `cargo run -- send-test-email <to>`.
 
+## Row-level security
+
+- A safety net under the app's own checks: inside a company request,
+  Postgres itself returns only that company's rows, even from a query
+  that forgets its `org_id` filter.
+- Every company request runs in a transaction from `OrgMember::begin`
+  (`org.rs`), which switches to the `solacliq_app` role and sets
+  `app.org_id`; both end with the transaction. Tables with a policy show
+  that role only rows whose `org_id` matches; with no company set, none.
+- Requests outside a company (log in, `/me`, the personal feed) run as
+  the owner, which policies don't restrict.
+- Policies so far: company notifications. Every company table from
+  phase 8 (tasks, expenses, customers, installs) gets the same policy in
+  its own migration. Proven by `tests/row_level_security.rs`.
+
 ## Rate limits
 
 - The public endpoints are limited per IP, and log in also per email

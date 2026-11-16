@@ -10,7 +10,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sqlx::{PgConnection, PgPool};
+use sqlx::PgConnection;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -19,11 +19,33 @@ use crate::{
     page::{Cursor, Page, PageInfo},
 };
 
-// The contract's notification kinds. Add one here when a feature needs it.
+/*
+    The contract's notification kinds, all of them: a row of any kind in
+    the table must read back, so the list matches the contract even
+    before the features that write each kind are built
+*/
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "text", rename_all = "snake_case")]
 pub enum Kind {
+    TaskAssigned,
+    TaskApproved,
+    TaskReturned,
+    TaskCancelled,
+    TaskRescheduled,
+    ExpenseApproved,
+    ExpenseReturned,
+    ExpensePaid,
+    KycReturned,
+    KycSubmitted,
+    KycApproved,
+    InstallStarted,
+    CommissionChanged,
+    CommissionPayable,
+    CommissionPaid,
+    VisitBooked,
+    PaymentDue,
+    DocumentsVerified,
     QuoteShared,
     Guide,
 }
@@ -75,16 +97,36 @@ pub async fn add_personal(
 }
 
 // Marks every unread one in a feed read (`org_id` None: the person's own).
-pub async fn read_all(db: &PgPool, user_id: Uuid, org_id: Option<Uuid>) -> ApiResult<()> {
+pub async fn read_all(
+    conn: &mut PgConnection,
+    user_id: Uuid,
+    org_id: Option<Uuid>,
+) -> ApiResult<()> {
     sqlx::query(
         "UPDATE notifications SET read_at = now()
          WHERE user_id = $1 AND org_id IS NOT DISTINCT FROM $2 AND read_at IS NULL",
     )
     .bind(user_id)
     .bind(org_id)
-    .execute(db)
+    .execute(&mut *conn)
     .await?;
     Ok(())
+}
+
+// How many in a feed are unread: the bell's dot.
+pub async fn unread(
+    conn: &mut PgConnection,
+    user_id: Uuid,
+    org_id: Option<Uuid>,
+) -> ApiResult<i64> {
+    Ok(sqlx::query_scalar(
+        "SELECT count(*) FROM notifications
+         WHERE user_id = $1 AND org_id IS NOT DISTINCT FROM $2 AND read_at IS NULL",
+    )
+    .bind(user_id)
+    .bind(org_id)
+    .fetch_one(&mut *conn)
+    .await?)
 }
 
 #[derive(sqlx::FromRow)]
@@ -106,7 +148,7 @@ struct Row {
     which `=` doesn't
 */
 pub async fn page(
-    db: &PgPool,
+    conn: &mut PgConnection,
     user_id: Uuid,
     org_id: Option<Uuid>,
     page: Page,
@@ -125,17 +167,10 @@ pub async fn page(
     .bind(page.fetch())
     .bind(page.after_time())
     .bind(page.after_id())
-    .fetch_all(db)
+    .fetch_all(&mut *conn)
     .await?;
 
-    let unread_count: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM notifications
-         WHERE user_id = $1 AND org_id IS NOT DISTINCT FROM $2 AND read_at IS NULL",
-    )
-    .bind(user_id)
-    .bind(org_id)
-    .fetch_one(db)
-    .await?;
+    let unread_count = unread(conn, user_id, org_id).await?;
 
     let info = page.finish(&mut rows, |r| Cursor {
         created_at: r.created_at,

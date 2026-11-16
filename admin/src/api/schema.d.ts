@@ -3603,6 +3603,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     markNotificationsRead: {

@@ -367,9 +367,9 @@ async fn update_settings(
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct FeedQuery {
     // Opaque cursor from the previous page's `next_cursor`.
-    cursor: Option<String>,
+    pub cursor: Option<String>,
     // Page size, 1 to 100; 25 when left out.
-    limit: Option<i64>,
+    pub limit: Option<i64>,
 }
 
 #[utoipa::path(
@@ -393,7 +393,7 @@ async fn my_notifications(
 ) -> ApiResult<Json<NotificationPage>> {
     let page = Page::new(q.cursor.as_deref(), q.limit)?;
     Ok(Json(
-        notify::page(&state.db, user.user_id, None, page).await?,
+        notify::page(&mut *state.db.acquire().await?, user.user_id, None, page).await?,
     ))
 }
 
@@ -412,6 +412,6 @@ async fn read_my_notifications(
     State(state): State<AppState>,
     user: AuthUser,
 ) -> ApiResult<axum::http::StatusCode> {
-    notify::read_all(&state.db, user.user_id, None).await?;
+    notify::read_all(&mut *state.db.acquire().await?, user.user_id, None).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

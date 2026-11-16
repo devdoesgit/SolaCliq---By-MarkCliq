@@ -30,7 +30,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 4 | Companies, memberships, team; company registration and review (F2) | #10, #11, team, platform | Done 2026-11-14 |
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
-| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Next |
+| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security done 2026-11-16; uploads wait for the R2 bucket, push for Firebase |
 | 8 | Worker | #25–38 | |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |

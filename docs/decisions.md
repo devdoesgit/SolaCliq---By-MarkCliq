@@ -526,3 +526,10 @@ Change a decision by adding a new line, not by editing an old one.
   backend) and no `language` column (removed from the phase 6
   migration; the local database was reset, as before the first deploy). Replaces
   "Language is saved but English only for now".
+- **Row-level security: the mechanism now, tables as they come** (owner,
+  2026-11-16). A `solacliq_app` role that owns nothing; each company
+  request runs in a transaction that switches to it and sets the
+  company; policies on company tables. Company notifications first; log
+  in and `/me` unchanged. Details in `architecture.md`.
+- **Uploads wait for the real R2 bucket** (owner, 2026-11-16), not a local
+  stand-in.
