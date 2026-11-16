@@ -31,7 +31,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
 | 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security (restricted login; orgs, memberships, notifications) and uploads (#22, a real photo through R2) done 2026-11-16; push waits for Firebase |
-| 8 | Worker | #25–38 | Building: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats (#25–33) and the worker's home done 2026-11-16; expenses and documents (#34–38) next |
+| 8 | Worker | #25–38 | Building: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats (#25–33) and the worker's home done 2026-11-16; expenses (#34–37) done 2026-11-17; documents (#38) next |
 | 9 | Sales | #39–42 | |
 | 10 | Customer | #43–44 | |
 

@@ -40,6 +40,7 @@ From `architecture.md`, restated where the app depends on them:
   | `registration.commission_not_allowed` | 422 | Salaried agent sent a commission |
   | `task.incomplete` | 422 | Submit with photos or checklist missing |
   | `task.locked` | 409 | Change to a task not with the worker |
+  | `expense.locked` | 409 | New receipt for an expense not sent back |
   | `quote.consent_required` / `quote.phone_required` | 422 | Quote form |
   | `member.*` | 409/422 | Team (admin website) |
   | `org.not_member` / `org.role_not_allowed` | 403 | Any `/orgs/{org_id}/...` |
@@ -116,10 +117,10 @@ milestone, top to bottom.
 | 31 | `POST .../tasks/{task_id}/messages` | worker | `{text}` | 204 | **Built (phase 8).** Reply to the admin on a returned task; goes into history |
 | 32 | `GET .../tasks/{task_id}/history` | worker | — | `TaskHistory` | **Built (phase 8).** Append-only events |
 | 33 | `GET /orgs/{org_id}/me/stats` | worker | — | `WorkerStats` | **Built (phase 8).** This month: tasks, returned, average minutes on site |
-| 34 | `GET /orgs/{org_id}/expenses` | worker, agent | — | `ExpensePage` | The caller's own, newest first |
-| 35 | `POST /orgs/{org_id}/expenses` | worker, agent, *idem* | `ExpenseCreate` | `Expense` | `amount` (paise), `category`, `note`, `spent_on`, optional `receipt_upload_id`, `task_id` (must be the caller's). Server assigns `reference` `EXP-nnnn` per org |
-| 36 | `GET /orgs/{org_id}/expenses/{expense_id}` | owner | — | `Expense` | |
-| 37 | `PUT .../expenses/{expense_id}/receipt` | owner | `{upload_id, note?}` | `Expense` | Only when `needs_fix` (else 409); → `in_review` |
+| 34 | `GET /orgs/{org_id}/expenses` | worker, agent | — | `ExpensePage` | **Built (phase 8).** The caller's own, newest first |
+| 35 | `POST /orgs/{org_id}/expenses` | worker, agent, *idem* | `ExpenseCreate` | `Expense` | **Built (phase 8).** `amount` (paise), `category`, `note`, `spent_on`, optional `receipt_upload_id`, `task_id` (must be the caller's). Server assigns `reference` `EXP-nnnn` per org |
+| 36 | `GET /orgs/{org_id}/expenses/{expense_id}` | owner | — | `Expense` | **Built (phase 8).** |
+| 37 | `PUT .../expenses/{expense_id}/receipt` | owner | `{upload_id, note?}` | `Expense` | **Built (phase 8).** Only when `needs_fix` (else 409 `expense.locked`); → `in_review` |
 | 38 | `GET /orgs/{org_id}/me/documents` | worker, customer | — | `MyDocumentList` | Worker: their ID (Aadhaar, PAN). Customer: their KYC, with `uploaded_by` (the agent) |
 
 ### M5. Sales: agents and salaried sales staff (F4, F8)

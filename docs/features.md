@@ -86,7 +86,7 @@ live-camera capture with GPS, accuracy and time; server-side location
 flags.
 
 **F7 Expenses.** Workers and agents log expenses with receipts; the shared
-approvals queue for the org admin.
+approvals queue for the org admin. Spec: `features/F7-expenses.md`.
 
 **F8 Commission.** Agents enter commission per customer; goes through the
 approvals queue.

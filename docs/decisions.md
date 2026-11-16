@@ -576,3 +576,17 @@ Change a decision by adding a new line, not by editing an old one.
   an upload is already inside a company, so nothing needed a personal
   upload. One bucket per company was rejected: real separation, but
   buckets, tokens and CORS per customer for no gain at this size.
+
+## 2026-11-17
+
+- **Expense rules (phase 8, F7).** Amounts from 1 paisa to ₹10 lakh: a
+  bigger one is a typo, not a site cost. The day is an Indian date, not
+  in the future and not over a year ago. The note may be empty (the
+  category says what it was). A linked task must be the caller's own. A
+  new receipt is accepted only while the admin has it sent back
+  (`expense.locked` otherwise); the earlier receipt stays in R2 as a
+  record. Spec: `features/F7-expenses.md`.
+- **References come from a per-company counter** (`org_counters`,
+  `counter.rs`): `EXP-0001` now, the admin website's `TSK-` and `SC-`
+  later. Taken in the record's own transaction, so two at once never
+  share a number and a failed request gives its number back.

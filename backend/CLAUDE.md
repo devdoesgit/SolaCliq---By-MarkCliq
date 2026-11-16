@@ -54,7 +54,8 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
 - `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
   `registration` and `platform` (F2), `quotes` and `profile` (phase 6),
-  `home`, `notifications` and `uploads` (phase 7), `tasks` (phase 8);
+  `home`, `notifications` and `uploads` (phase 7), `tasks` and
+  `expenses` (phase 8);
   merged in `routes/mod.rs`.
 - `src/scope.rs`: the row-level security scopes and the startup check.
 - `src/storage.rs`: signed R2 URLs (uploads and reads), and the
@@ -65,6 +66,6 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
   codes, Argon2. `src/mail.rs`: the `Mailer` trait;
   `src/mail/gmail.rs`: the Gmail API mailer.
 - `src/gstin.rs`, `src/validate.rs`, `src/page.rs`: shared checks and
-  paging. `src/idempotency.rs`, `src/notify.rs` (notifications),
+  paging. `src/counter.rs`: per-company references (EXP-0001). `src/idempotency.rs`, `src/notify.rs` (notifications),
   `src/bank.rs` (encryption, bank names). `src/seed.rs`: the seed and platform-admin commands.
 - `tests/`: one file per area; helpers in `tests/common/mod.rs`.
