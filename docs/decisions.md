@@ -542,3 +542,13 @@ Change a decision by adding a new line, not by editing an old one.
   "log in and `/me` unchanged" above: they run in the person's scope.
   No tenant middleware: the extractors already do that check per
   handler.
+- **R2 set up (2026-11-16): two private buckets, one key each.**
+  `solacliq-uploads-dev` and `solacliq-uploads`, in MarkCliq's
+  Cloudflare account (business card on file). Account API tokens (they
+  outlive any one person's login), Object Read & Write on one bucket
+  each. The server signs URLs itself, with no AWS SDK. Upload type and
+  size are part of the signature.
+- **Phase 8 shape (owner, 2026-11-16):** a basic `customers` table now
+  (what a task shows: name, phone, address, map pin, kW, stages);
+  Phase 9 adds the agent, KYC and documents to it. A task's photo slots
+  and checklist are set per task (seed now, admin website later).
