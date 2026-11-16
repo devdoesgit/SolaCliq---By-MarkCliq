@@ -93,6 +93,12 @@ impl Roles for AnyRole {
     const ALLOWED: &'static [Role] = &[Role::OrgAdmin, Role::Worker, Role::Agent, Role::Customer];
 }
 
+// Field workers (installers): tasks, photos, their stats.
+pub struct Workers;
+impl Roles for Workers {
+    const ALLOWED: &'static [Role] = &[Role::Worker];
+}
+
 // The company's admin only (the website's team page).
 pub struct Admins;
 impl Roles for Admins {

@@ -11,6 +11,7 @@ pub mod platform;
 pub mod profile;
 pub mod quotes;
 pub mod registration;
+pub mod tasks;
 pub mod team;
 pub mod uploads;
 
@@ -31,6 +32,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(platform::router())
         .merge(profile::router())
         .merge(quotes::router())
+        .merge(tasks::router())
         .merge(uploads::router())
 }
 

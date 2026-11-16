@@ -4,10 +4,10 @@
     - GET /orgs/{org_id}/home: the parts the app draws (headline, week,
       tiles, progress, a list), so a role's home changes without an app
       update. Shapes and actions: docs/backend-handoff.md, "Home"
-    - built from what exists. Tasks and expenses arrive in phase 8,
-      customers and commissions in phase 9, installs in phase 10; until
-      each lands its numbers are honest zeros and the list says what's
-      coming, never sample data
+    - built from what exists: a worker's tasks (phase 8). Expenses come
+      later in phase 8, customers and commissions in phase 9, installs
+      in phase 10; until each lands its numbers are honest zeros and the
+      list says what's coming, never sample data
     - dates and greetings are in Indian time: an installer's "today" is
       today in India, whatever the server's clock says
     - always `unread_notifications`, for the bell's dot
@@ -19,11 +19,15 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
+use sqlx::PgConnection;
+use uuid::Uuid;
+
 use crate::{
     AppState,
     error::ApiResult,
     notify,
     org::{OrgMember, PayType, Role},
+    routes::tasks::TaskStatus,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -221,15 +225,20 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
             .fetch_one(&mut *tx)
             .await?;
     let unread = notify::unread(&mut tx, member.user_id, Some(member.org_id)).await?;
+    let now = india_now(Utc::now());
+    let tasks = match member.role {
+        Role::Worker => week_tasks(&mut tx, member.user_id, &now).await?,
+        _ => Vec::new(),
+    };
     tx.commit().await?;
 
     let who = Who {
         first_name: name.split_whitespace().next().unwrap_or(&name).to_owned(),
         org_name,
-        now: india_now(Utc::now()),
+        now,
     };
     let mut summary = match (member.role, member.pay_type) {
-        (Role::Worker, _) => worker(&who),
+        (Role::Worker, _) => worker(&who, &tasks),
         (Role::Agent, Some(PayType::Commission)) => agent(&who, true),
         (Role::Agent, _) => agent(&who, false),
         (Role::Customer, _) => customer(&who),
@@ -273,18 +282,89 @@ fn short_day(day: Weekday) -> &'static str {
     }
 }
 
-// This week, Monday to Sunday. Each day's dots come with tasks (phase 8).
-fn week(now: &DateTime<FixedOffset>) -> Vec<HomeDay> {
+// One of the worker's tasks this week, or still open from before.
+#[derive(Debug, sqlx::FromRow)]
+struct WeekTask {
+    id: Uuid,
+    title: String,
+    customer_name: String,
+    status: TaskStatus,
+    due_at: DateTime<Utc>,
+    on_hold: bool,
+}
+
+impl WeekTask {
+    // Still the worker's to do (not with the admin, not final).
+    fn open(&self) -> bool {
+        matches!(self.status, TaskStatus::Assigned | TaskStatus::Returned)
+    }
+}
+
+fn monday(now: &DateTime<FixedOffset>) -> chrono::NaiveDate {
     let today = now.date_naive();
-    let monday = today - Duration::days(i64::from(today.weekday().num_days_from_monday()));
+    today - Duration::days(i64::from(today.weekday().num_days_from_monday()))
+}
+
+/*
+    The worker's tasks from Monday to Sunday (Indian time), plus open ones
+    from before: they're still to do. Cancelled ones are left out
+*/
+async fn week_tasks(
+    conn: &mut PgConnection,
+    user_id: Uuid,
+    now: &DateTime<FixedOffset>,
+) -> ApiResult<Vec<WeekTask>> {
+    let start = monday(now)
+        .and_time(chrono::NaiveTime::MIN)
+        .and_local_timezone(*now.offset())
+        .single()
+        .expect("India has no clock changes");
+    let end = start + Duration::days(7);
+    Ok(sqlx::query_as(
+        "SELECT t.id, t.title, c.name AS customer_name, t.status, t.due_at,
+                t.problem_at IS NOT NULL AS on_hold
+         FROM tasks t JOIN customers c ON c.id = t.customer_id
+         WHERE t.assignee_id = $1 AND t.status <> 'cancelled' AND t.due_at < $3
+           AND (t.due_at >= $2 OR t.status IN ('assigned', 'returned'))
+         ORDER BY t.due_at, t.id",
+    )
+    .bind(user_id)
+    .bind(start.with_timezone(&Utc))
+    .bind(end.with_timezone(&Utc))
+    .fetch_all(conn)
+    .await?)
+}
+
+/*
+    This week, Monday to Sunday, one dot per task: `done` once submitted
+    or approved, `live` for today's (and overdue) open work, `planned`
+    for later in the week
+*/
+fn week(now: &DateTime<FixedOffset>, tasks: &[WeekTask]) -> Vec<HomeDay> {
+    let today = now.date_naive();
+    let monday = monday(now);
     (0..7)
         .map(|i| {
             let date = monday + Duration::days(i);
+            let dots = tasks
+                .iter()
+                .filter(|t| t.due_at.with_timezone(now.offset()).date_naive() == date)
+                .map(|t| {
+                    if !t.open() {
+                        "done"
+                    } else if date <= today {
+                        "live"
+                    } else {
+                        "planned"
+                    }
+                    .to_owned()
+                })
+                .collect();
             HomeDay {
                 day: short_day(date.weekday()).to_owned(),
                 date: date.day(),
                 today: date == today,
-                dots: Vec::new(),
+                dots,
             }
         })
         .collect()
@@ -331,21 +411,48 @@ fn headline(value: &str, label: &str, detail: &str) -> Option<HomeHeadline> {
 
 /*
     An EPC installer's day: the date, the week with each day's tasks,
-    today's count, what's left to submit and expenses with the admin,
-    then the next tasks. Tasks and expenses: phase 8
+    today's count, what's left to submit and expenses with the admin
+    (later in phase 8), then today's tasks in due order
 */
-fn worker(who: &Who) -> HomeSummary {
+fn worker(who: &Who, tasks: &[WeekTask]) -> HomeSummary {
+    let today = who.now.date_naive();
+    let by_tonight: Vec<&WeekTask> = tasks
+        .iter()
+        .filter(|t| t.due_at.with_timezone(who.now.offset()).date_naive() <= today)
+        .collect();
+    let due_today = by_tonight
+        .iter()
+        .filter(|t| t.due_at.with_timezone(who.now.offset()).date_naive() == today)
+        .count();
+    let to_submit = by_tonight.iter().filter(|t| t.open()).count();
+
+    let rows: Vec<HomeRow> = by_tonight
+        .iter()
+        .filter(|t| t.open() || t.status == TaskStatus::Submitted)
+        .take(5)
+        .map(|t| task_row(who, t))
+        .collect();
+    let rows = if rows.is_empty() {
+        vec![note(
+            "no_tasks",
+            "Nothing to do today",
+            &format!("{} assigns your tasks; they show up here", who.org_name),
+        )]
+    } else {
+        rows
+    };
+
     HomeSummary {
         unread_notifications: 0,
         eyebrow: who.now.format("%A, %-d %b").to_string(),
         title: format!("{}'s day", who.first_name),
-        headline: headline("0", "tasks", "on site today"),
-        week: week(&who.now),
+        headline: headline(&due_today.to_string(), "tasks", "on site today"),
+        week: week(&who.now, tasks),
         energy: None,
         tiles: vec![
             tile(
                 "To submit",
-                "0",
+                &to_submit.to_string(),
                 TileIcon::Camera,
                 "today",
                 true,
@@ -363,12 +470,35 @@ fn worker(who: &Who) -> HomeSummary {
         progress: None,
         list: HomeList {
             title: Some("Up next".into()),
-            rows: vec![note(
-                "no_tasks",
-                "Nothing scheduled yet",
-                &format!("{} assigns your tasks; they show up here", who.org_name),
-            )],
+            rows,
         },
+    }
+}
+
+// A task in "Up next": the customer, the work and its time, and its state.
+fn task_row(who: &Who, t: &WeekTask) -> HomeRow {
+    let due = t.due_at.with_timezone(who.now.offset());
+    let (label, tone, when) = match t.status {
+        TaskStatus::Returned => ("Retake", HomeTone::Danger, due.format("%H:%M").to_string()),
+        TaskStatus::Submitted => ("In review", HomeTone::Neutral, "awaiting admin".into()),
+        _ if t.on_hold => ("On hold", HomeTone::Warning, "problem reported".into()),
+        _ if due.date_naive() < who.now.date_naive() => (
+            "Overdue",
+            HomeTone::Danger,
+            due.format("%a %-d %b").to_string(),
+        ),
+        _ => ("Assigned", HomeTone::Live, due.format("%H:%M").to_string()),
+    };
+    HomeRow {
+        visual: HomeVisual::default(),
+        id: t.id.to_string(),
+        title: t.customer_name.clone(),
+        detail: format!("{} · {when}", t.title),
+        status: Some(HomeStatus {
+            label: label.into(),
+            tone,
+        }),
+        action: Some("task"),
     }
 }
 
@@ -513,7 +643,7 @@ mod tests {
     fn today_is_today_in_india() {
         // 20:00 UTC on Sun 15 Nov is 01:30 on Mon 16 Nov in India.
         let w = who(Utc.with_ymd_and_hms(2026, 11, 15, 20, 0, 0).unwrap());
-        let home = worker(&w);
+        let home = worker(&w, &[]);
         assert_eq!(home.eyebrow, "Monday, 16 Nov");
         let today: Vec<_> = home.week.iter().filter(|d| d.today).collect();
         assert_eq!(today.len(), 1);
@@ -546,7 +676,12 @@ mod tests {
             "track",
             "payments",
         ];
-        for home in [worker(&w), agent(&w, true), agent(&w, false), customer(&w)] {
+        for home in [
+            worker(&w, &[]),
+            agent(&w, true),
+            agent(&w, false),
+            customer(&w),
+        ] {
             assert!(home.tiles.len() <= 2);
             for t in &home.tiles {
                 assert!(known.contains(&t.action.unwrap()), "{:?}", t.action);
@@ -557,9 +692,47 @@ mod tests {
     }
 
     #[test]
+    fn a_workers_week_shows_each_task() {
+        // Wed 18 Nov, 10:00 in India.
+        let w = who(Utc.with_ymd_and_hms(2026, 11, 18, 4, 30, 0).unwrap());
+        let at = |d, h| Utc.with_ymd_and_hms(2026, 11, d, h, 0, 0).unwrap();
+        let task = |status, due_at| WeekTask {
+            id: Uuid::now_v7(),
+            title: "Wiring".into(),
+            customer_name: "A".into(),
+            status,
+            due_at,
+            on_hold: false,
+        };
+        let tasks = [
+            task(TaskStatus::Approved, at(16, 5)),  // Mon
+            task(TaskStatus::Assigned, at(17, 5)),  // Tue, overdue
+            task(TaskStatus::Assigned, at(18, 5)),  // today
+            task(TaskStatus::Submitted, at(18, 6)), // today, with the admin
+            task(TaskStatus::Assigned, at(20, 5)),  // Fri
+        ];
+        let home = worker(&w, &tasks);
+        let dots: Vec<Vec<String>> = home.week.iter().map(|d| d.dots.clone()).collect();
+        assert_eq!(dots[0], ["done"]);
+        assert_eq!(dots[1], ["live"]);
+        assert_eq!(dots[2], ["live", "done"]);
+        assert_eq!(dots[4], ["planned"]);
+        assert_eq!(home.headline.unwrap().value, "2", "due today");
+        assert_eq!(home.tiles[0].value, "2", "overdue and today's open one");
+        let labels: Vec<_> = home
+            .list
+            .rows
+            .iter()
+            .map(|r| r.status.as_ref().unwrap().label.as_str())
+            .collect();
+        assert_eq!(labels, ["Overdue", "Assigned", "In review"]);
+        assert!(home.list.rows.iter().all(|r| r.action == Some("task")));
+    }
+
+    #[test]
     fn empty_lists_explain_instead_of_showing_nothing() {
         let w = who(Utc::now());
-        for home in [worker(&w), agent(&w, true), customer(&w)] {
+        for home in [worker(&w, &[]), agent(&w, true), customer(&w)] {
             assert_eq!(home.list.rows.len(), 1);
             assert!(home.list.rows[0].action.is_none(), "not tappable");
         }
