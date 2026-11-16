@@ -590,3 +590,18 @@ Change a decision by adding a new line, not by editing an old one.
   `counter.rs`): `EXP-0001` now, the admin website's `TSK-` and `SC-`
   later. Taken in the record's own transaction, so two at once never
   share a number and a failed request gives its number back.
+- **"My documents" (#38) moves to phase 9 (owner).** It only reads
+  documents, and in phase 8 nothing can write them: worker IDs come from
+  the admin website, customer KYC from customer registration (phase 9).
+  Built now, its table would be designed before the KYC flow it mostly
+  serves, and only the seed would fill it. It's built with registration
+  instead, on one documents table, after the KYC encryption and
+  retention question (handoff, "Open") is decided.
+- **KYC storage and retention (owner).** Aadhaar stored masked (last 4
+  digits), never in full; PAN encrypted like bank account numbers; KYC
+  files get no second layer of encryption (private bucket, per-company
+  folders, 15-minute links, R2's own encryption at rest). A rejected
+  registration's KYC is deleted after 30 days; an installed customer's
+  files 1 year after handover, keeping the masked numbers. Built in
+  phase 9. All data rules now live in `data-policy.md`, one place to
+  read with a client.

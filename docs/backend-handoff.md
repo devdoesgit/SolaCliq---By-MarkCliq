@@ -121,7 +121,7 @@ milestone, top to bottom.
 | 35 | `POST /orgs/{org_id}/expenses` | worker, agent, *idem* | `ExpenseCreate` | `Expense` | **Built (phase 8).** `amount` (paise), `category`, `note`, `spent_on`, optional `receipt_upload_id`, `task_id` (must be the caller's). Server assigns `reference` `EXP-nnnn` per org |
 | 36 | `GET /orgs/{org_id}/expenses/{expense_id}` | owner | — | `Expense` | **Built (phase 8).** |
 | 37 | `PUT .../expenses/{expense_id}/receipt` | owner | `{upload_id, note?}` | `Expense` | **Built (phase 8).** Only when `needs_fix` (else 409 `expense.locked`); → `in_review` |
-| 38 | `GET /orgs/{org_id}/me/documents` | worker, customer | — | `MyDocumentList` | Worker: their ID (Aadhaar, PAN). Customer: their KYC, with `uploaded_by` (the agent) |
+| 38 | `GET /orgs/{org_id}/me/documents` | worker, customer | — | `MyDocumentList` | **Moved to phase 9** (with customer KYC; decided 2026-11-17). Worker: their ID (Aadhaar, PAN). Customer: their KYC, with `uploaded_by` (the agent) |
 
 ### M5. Sales: agents and salaried sales staff (F4, F8)
 
@@ -234,7 +234,8 @@ backend command or SQL so the app has real data:
 
 ## Open
 
-- Encryption and retention for bank account numbers and KYC files.
+- ~~Encryption and retention for bank account numbers and KYC files.~~
+  Decided 2026-11-17: `data-policy.md`.
 - Where the PM Surya Ghar subsidy figure comes from (fixed table by kW, or
   entered by the admin).
 - UPI: the `upi_uri` uses the org's UPI id; who sets it (org settings,

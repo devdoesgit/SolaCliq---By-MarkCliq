@@ -43,6 +43,9 @@ Keep these current. They are the record of what SolaCliq is and why.
 - `docs/features/F<n>-<name>.md`: spec and notes for each feature, written
   when it starts.
 - `docs/decisions.md`: dated log of decisions and their reasons.
+- `docs/data-policy.md`: how data is handled (isolation, files, KYC,
+  encryption, retention), one place to discuss with clients. Update it
+  with any change to those rules.
 - `docs/backend-handoff.md`: what the mobile app needs from the API, in
   build order, with the rules behind each endpoint.
 - `docs/backend-phases.md`: that work in phases, each with how to test
