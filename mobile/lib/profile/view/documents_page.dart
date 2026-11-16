@@ -42,62 +42,77 @@ class _DocumentsPageState extends State<DocumentsPage> {
         leading: const BackTo(fallback: AppRoutes.home),
         title: _worker ? l10n.idDocuments : l10n.documentsTitle,
       ),
-      body: LoadView(
-        future: _docs,
-        failedTitle: l10n.documentsLoadFailed,
-        onRetry: () => setState(() => _docs = _fetch()),
-        builder: (context, docs) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: SolaSpace.space14,
-          children: [
-            SolaGroup(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: SolaSpace.space14,
+        children: [
+          LoadView(
+            future: _docs,
+            failedTitle: l10n.documentsLoadFailed,
+            onRetry: () => setState(() => _docs = _fetch()),
+            builder: (context, docs) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: SolaSpace.space14,
               children: [
-                if (docs.items.isEmpty) SolaListRow(title: l10n.noDocuments),
-                for (final d in docs.items)
-                  SolaListRow(
-                    key: ValueKey('document_${d.kind.name}'),
-                    title: d.kind.label(l10n),
-                    subtitle: d.detail,
-                    leading: const SolaAvatar(
-                      icon: SolaIcons.idCard,
-                      color: SolaColors.tan,
-                    ),
-                    trailing: switch (d.status) {
-                      DocumentStatus.verified => SolaPill(
-                        l10n.verified,
-                        tone: SolaTone.success,
-                        icon: SolaIcons.check,
+                SolaGroup(
+                  children: [
+                    if (docs.items.isEmpty)
+                      SolaListRow(title: l10n.noDocuments),
+                    for (final d in docs.items)
+                      SolaListRow(
+                        key: ValueKey('document_${d.kind.name}'),
+                        title: d.kind.label(l10n),
+                        subtitle: d.detail,
+                        leading: const SolaAvatar(
+                          icon: SolaIcons.idCard,
+                          color: SolaColors.tan,
+                        ),
+                        trailing: switch (d.status) {
+                          DocumentStatus.verified => SolaPill(
+                            l10n.verified,
+                            tone: SolaTone.success,
+                            icon: SolaIcons.check,
+                          ),
+                          DocumentStatus.inReview => SolaPill(
+                            l10n.statusInReview,
+                            icon: SolaIcons.hourglass,
+                          ),
+                          DocumentStatus.needsFix => SolaPill(
+                            l10n.fixKyc,
+                            tone: SolaTone.danger,
+                          ),
+                        },
                       ),
-                      DocumentStatus.inReview => SolaPill(
-                        l10n.statusInReview,
-                        icon: SolaIcons.hourglass,
-                      ),
-                      DocumentStatus.needsFix => SolaPill(
-                        l10n.fixKyc,
-                        tone: SolaTone.danger,
-                      ),
-                    },
-                  ),
-                if (_worker)
-                  NavRow(
-                    key: const Key('documents_bank'),
-                    icon: SolaIcons.wallet,
-                    title: l10n.bankForSalary,
-                    onTap: () => unawaited(context.push(AppRoutes.bank)),
-                  ),
+                  ],
+                ),
+                SolaText(
+                  switch (docs.uploadedBy) {
+                    _ when _worker => l10n.documentsWorkerNote,
+                    final name? => l10n.documentsCustomerNote(name, org),
+                    null => l10n.documentsCustomerNoteNoAgent(org),
+                  },
+                  style: SolaTextStyle.small,
+                  color: SolaColors.muted,
+                ),
               ],
             ),
-            SolaText(
-              switch (docs.uploadedBy) {
-                _ when _worker => l10n.documentsWorkerNote,
-                final name? => l10n.documentsCustomerNote(name, org),
-                null => l10n.documentsCustomerNoteNoAgent(org),
-              },
-              style: SolaTextStyle.small,
-              color: SolaColors.muted,
+          ),
+          /*
+            The bank for a worker's salary: its own endpoint, so it's here
+            even when the documents can't load
+          */
+          if (_worker)
+            SolaGroup(
+              children: [
+                NavRow(
+                  key: const Key('documents_bank'),
+                  icon: SolaIcons.wallet,
+                  title: l10n.bankForSalary,
+                  onTap: () => unawaited(context.push(AppRoutes.bank)),
+                ),
+              ],
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
