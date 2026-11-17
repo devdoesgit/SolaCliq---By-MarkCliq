@@ -43,7 +43,12 @@ decision in `decisions.md`.
 - **Built.** Proof photos come from the live camera only (never the
   gallery), with the GPS position, its accuracy and the time. Photos far
   from the site (over 500 m), with poor GPS (over 50 m) or a faked
-  location are flagged to the admin.
+  location are flagged to the admin. The photo's time is recorded as
+  the phone gives it; the admin judges an odd one.
+- **Built.** Each kind of file is for the people who use it: proof
+  photos for installers, receipts for installers and sales agents, KYC
+  documents for sales agents, any of them for the company's admin.
+  Customers upload nothing yet.
 - **Built.** R2 encrypts every stored file on its disks (Cloudflare's
   default). We add no second layer of file encryption: the private
   bucket, per-company folders and short links protect access.

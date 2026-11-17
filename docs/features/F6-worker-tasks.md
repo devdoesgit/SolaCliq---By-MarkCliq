@@ -97,3 +97,10 @@ attached only once R2 confirms the file arrived whole. The admin side
 (create, approve, return, cancel) comes with the admin website; `cargo
 run -- seed` writes Ravi's tasks meanwhile. Rules: `decisions.md`,
 "Worker task rules".
+
+- 2026-11-17, from the attack testing: a proof photo's `taken_at` is
+  taken as the phone gives it, not checked against the server's clock;
+  the admin judges an odd one (owner). The camera screen asks for camera and location
+  once per visit, not again on every resume (a "Don't allow" used to
+  loop through the prompts), and says "Location not allowed" instead of
+  "Finding your location…" forever.

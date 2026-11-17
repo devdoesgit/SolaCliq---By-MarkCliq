@@ -663,3 +663,26 @@ Change a decision by adding a new line, not by editing an old one.
   back. Keys live outside the repo (`~/Desktop/solacliq-firebase-key.json`,
   `FCM_SERVICE_ACCOUNT_KEY_FILE`). The Gmail and push sign-ins share
   `backend/src/google.rs`.
+- **Attack testing, 2026-11-17.** A black-box script (159 checks: other
+  companies' data, wrong roles, reused and forged tokens, reused or
+  faked uploads, bad input, races, decisions out of order, removed
+  members and suspended companies) and the real app on the emulator
+  (server down, revoked login, removed access, denied permissions, big
+  fonts, double taps). No server error, no data across companies, races
+  held. Fixed: upload kinds are limited
+  to the roles that use them; the app reads every page of tasks and
+  expenses (a month with over 25 claims showed the wrong total); the
+  expense keypad stops at the server's ₹10 lakh; the expense form asks
+  before losing a draft; the camera no longer loops through permission
+  prompts. Notifications still show the first page only (a feed).
+  A proof photo's time is not checked against the server's clock: the
+  admin judges an odd one when reviewing (owner, 2026-11-17).
+- **SolaCliq's logo direction: the sun rising behind MarkCliq's awning
+  (owner, 2026-11-17).** SolaCliq is MarkCliq's product, so its mark uses
+  MarkCliq's own sign, the striped scalloped shop awning in MarkCliq's
+  rust red (#b2402c) and white, with SolaCliq's sun (#f6c445) rising
+  behind it, on a cream app-icon tile. Warm and friendly, for homeowners
+  and field crews. Chosen file: `design/logo/round-3/logo-window-rise.svg`
+  (dark: `-dark.svg`). The wordmark follows MarkCliq's ("Sola" upright,
+  "Cliq" italic, the i's dot a sun). Rounds 1–3 and the rejected
+  readings are kept in `design/logo/`. Not yet trademark-checked.
