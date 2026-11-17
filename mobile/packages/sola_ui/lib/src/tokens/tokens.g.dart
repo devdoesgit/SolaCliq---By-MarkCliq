@@ -386,7 +386,7 @@ abstract final class SolaTextTokens {
   static const display = SolaTextToken(
     fontSize: 38,
     lineHeight: 40,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.045,
     mono: false,
     uppercase: false,
@@ -396,7 +396,7 @@ abstract final class SolaTextTokens {
   static const intro = SolaTextToken(
     fontSize: 34,
     lineHeight: 38,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.04,
     mono: false,
     uppercase: false,
@@ -496,7 +496,7 @@ abstract final class SolaTextTokens {
   static const amount = SolaTextToken(
     fontSize: 64,
     lineHeight: 66,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.06,
     mono: false,
     uppercase: false,
@@ -506,7 +506,7 @@ abstract final class SolaTextTokens {
   static const energy = SolaTextToken(
     fontSize: 56,
     lineHeight: 52,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.06,
     mono: false,
     uppercase: false,
@@ -516,7 +516,7 @@ abstract final class SolaTextTokens {
   static const estimate = SolaTextToken(
     fontSize: 48,
     lineHeight: 48,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.05,
     mono: false,
     uppercase: false,
@@ -526,7 +526,7 @@ abstract final class SolaTextTokens {
   static const stat = SolaTextToken(
     fontSize: 44,
     lineHeight: 44,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacingEm: -0.05,
     mono: false,
     uppercase: false,
@@ -547,7 +547,7 @@ abstract final class SolaTextTokens {
     fontSize: 17,
     lineHeight: 22,
     fontWeight: 600,
-    letterSpacingEm: -0.01,
+    letterSpacingEm: 0,
     mono: false,
     uppercase: false,
   );
@@ -557,7 +557,7 @@ abstract final class SolaTextTokens {
     fontSize: 17,
     lineHeight: 22,
     fontWeight: 600,
-    letterSpacingEm: -0.01,
+    letterSpacingEm: 0,
     mono: false,
     uppercase: false,
   );
@@ -587,7 +587,7 @@ abstract final class SolaTextTokens {
     fontSize: 16,
     lineHeight: 20,
     fontWeight: 600,
-    letterSpacingEm: -0.01,
+    letterSpacingEm: 0,
     mono: false,
     uppercase: false,
   );
@@ -694,31 +694,31 @@ abstract final class SolaTextTokens {
 
   /// Eyebrows and section labels.
   static const eyebrow = SolaTextToken(
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: 600,
-    letterSpacingEm: 0.12,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: 500,
+    letterSpacingEm: 0.01,
     mono: false,
-    uppercase: true,
+    uppercase: false,
   );
 
   /// Week strip day names.
   static const day = SolaTextToken(
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: 600,
-    letterSpacingEm: 0.06,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: 500,
+    letterSpacingEm: 0,
     mono: false,
-    uppercase: true,
+    uppercase: false,
   );
 
   /// Footer marks.
   static const eyebrowSm = SolaTextToken(
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
-    fontWeight: 600,
-    letterSpacingEm: 0.12,
+    fontWeight: 500,
+    letterSpacingEm: 0.01,
     mono: false,
-    uppercase: true,
+    uppercase: false,
   );
 }

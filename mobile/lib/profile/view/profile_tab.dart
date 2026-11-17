@@ -108,7 +108,7 @@ class _ProfileTabState extends State<ProfileTab> {
         return [
           count,
           (
-            value: formatThousands(
+            value: formatRupees(
               sum(
                 (c) =>
                     c.status == CommissionStatus.paid &&
@@ -119,7 +119,7 @@ class _ProfileTabState extends State<ProfileTab> {
             label: l10n.statPaidIn(DateFormat.MMM().format(now)),
           ),
           (
-            value: formatThousands(
+            value: formatRupees(
               sum((c) => c.status == CommissionStatus.payable),
             ),
             label: l10n.statPayable,
@@ -130,7 +130,7 @@ class _ProfileTabState extends State<ProfileTab> {
         return [
           (value: '${formatKw(i.systemKw)} kW', label: l10n.statSystem),
           (value: '${i.stageIndex}/${i.stageCount}', label: l10n.statStage),
-          (value: formatThousands(i.subsidyPaise), label: l10n.statSubsidy2),
+          (value: formatRupees(i.subsidyPaise), label: l10n.statSubsidy2),
         ];
       case OrgRole.orgAdmin:
         return const [];
@@ -370,7 +370,12 @@ class _Stat extends StatelessWidget {
         child: Column(
           spacing: SolaSpace.space2,
           children: [
-            SolaText(value, style: SolaTextStyle.sheetTitle),
+            // Amounts are in full, like everywhere else ("₹1,25,000"); a
+            // long one shrinks to fit its third of the card.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SolaText(value, style: SolaTextStyle.sheetTitle),
+            ),
             SolaText(
               label,
               style: SolaTextStyle.meta,

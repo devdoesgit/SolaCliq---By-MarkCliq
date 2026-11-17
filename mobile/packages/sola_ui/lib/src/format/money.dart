@@ -48,15 +48,3 @@ String formatLakh(int paise) {
   final decimals = rest.replaceFirst(RegExp(r'0+$'), '');
   return decimals.isEmpty ? '$whole' : '$whole.$decimals';
 }
-
-/// Paise as thousands of rupees with at most one decimal, for small
-/// figures in tight places: 400000 → `₹4k`, 410000 → `₹4.1k`, 50000 →
-/// `₹500`.
-String formatThousands(int paise) {
-  final rupees = (paise / 100).round();
-  if (rupees.abs() < 1000) return formatRupees(paise);
-  final tenths = (rupees / 100).round();
-  final whole = tenths ~/ 10;
-  final rest = tenths % 10;
-  return rest == 0 ? '₹${whole}k' : '₹$whole.${rest}k';
-}
