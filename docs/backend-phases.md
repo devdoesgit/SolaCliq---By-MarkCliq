@@ -30,7 +30,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 4 | Companies, memberships, team; company registration and review (F2) | #10, #11, team, platform | Done 2026-11-14 |
 | 5 | First deploy | — | After the app's flows (decided 2026-11-15) |
 | 6 | Personal workspace | #12, #16–20 | Done 2026-11-15 |
-| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Building: home (#21), company notifications (#23–24) and row-level security (restricted login; orgs, memberships, notifications) and uploads (#22, a real photo through R2) done 2026-11-16; push waits for Firebase |
+| 7 | Push notifications; shared company plumbing, row-level security | devices, #21–24 | Done 2026-11-17: home (#21), company notifications (#23–24), row-level security, uploads (#22) and push (`PUT /me/device`, the push worker, FCM; `tests/push.rs`). Run end to end on a phone through the real FCM |
 | 8 | Worker | #25–37 | Done 2026-11-17: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats, the worker's home (#25–33) and expenses (#34–37), each run end to end in the app. #38 moved to phase 9 |
 | 9 | Sales | #38–42 | Built 2026-11-17: customer registration with KYC (#39), my customers (#40–41), fixing a returned document (#42), my documents (#38) and the agent's home, each run end to end in the app. Admin's side built with the admin actions |
 | 10 | Customer | #43–44 | Built 2026-11-17: my install (#43), claiming a payment (#44) and the customer's home, run end to end in the app (UPI without a UPI app, bank transfer claim, an install not set up yet). Confirming payments and handover built with the admin actions |

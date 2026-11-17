@@ -39,7 +39,7 @@ Stack, distribution, updates and tooling: `../docs/architecture.md`.
 
 ## Emulator
 
-`emulator -avd solacliq_phone -gpu host -no-boot-anim`: GPU rendering
+`emulator -avd solacliq_play -gpu host -no-boot-anim`: GPU rendering
 only, never software (`swiftshader`), which hangs the machine. The AVD
 always cold-boots (snapshots off in its `config.ini`).
 
@@ -50,11 +50,29 @@ Known emulator faults on this machine (NVIDIA, Wayland), 2026-11-17:
   or uninstalling the app (which `flutter drive` does at the end of a
   run). Core dumps: `coredumpctl info <pid>`, `TextureResize`.
 - Guest ANGLE (`-feature GuestAngle`, Vulkan) avoids that crash but
-  draws Flutter's Impeller with corrupted frames, and the machine froze
-  hard minutes after starting the app on it with Skia. Not to be used.
-- So: test flows on a real Android phone over USB when possible; on the
-  emulator, expect a crash at the end of `make app-e2e` (the uninstall)
-  and restart it.
+  draws Flutter's Impeller with corrupted frames. Not to be used.
+- **Memory.** The machine has 15 GB and froze twice on 2026-11-17 when
+  it ran out (88% and 97% used; swap is compressed RAM, so it thrashes
+  instead of killing anything). The emulator plus Gradle's daemons plus
+  a full Rust test build is too much at once. So: never run the
+  emulator together with `make api-test` or another heavy build; stop
+  Gradle's daemons after an Android build (`pkill -f '[G]radleDaemon';
+  pkill -f '[K]otlinCompileDaemon'`); build Rust with
+  `CARGO_BUILD_JOBS=4` while the emulator is up.
+- `solacliq_play` (Android 16, Google Play image) is the one to use:
+  its Play services checks in, so it gets push tokens. The older
+  `solacliq_phone` (`google_apis`) fails check-in
+  (`AUTHENTICATION_FAILED`) and never gets one.
+- `make app-e2e` keeps the app installed (`--keep-app-running`), which
+  avoids the uninstall crash. Typing with `adb shell input text` can
+  drop the first key after a field gains focus: wait a second first.
+
+## Push notifications
+
+The Android build needs `android/app/google-services.json` (git-ignored):
+`cp ~/Desktop/solacliq-google-services.json mobile/android/app/google-services.json`.
+The `main_*` files pass `FirebasePushMessaging`; tests get none
+(`lib/push/`).
 
 ## Flow tests
 

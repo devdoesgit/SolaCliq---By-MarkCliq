@@ -29,7 +29,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F9 | Customer app: stage, cost breakdown, payments | building (mobile: track, payments with UPI or bank claim, documents; endpoints await owner review) |
 | F10 | Customer linking | planned |
 | F11 | Referrals | planned |
-| F12 | Notifications | building (in-app lists for every role and Personal; settings; push spec drafted 2026-11-15 in `features/F12-notifications.md`, waiting for review) |
+| F12 | Notifications | built 2026-11-17: in-app lists for every role and Personal, settings, and push (`features/F12-notifications.md`), run end to end on a phone through the real FCM |
 | F13 | Distribution and updates | planned |
 | F14 | Platform admin: suspend, support access | planned |
 

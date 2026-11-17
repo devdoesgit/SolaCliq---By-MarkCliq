@@ -96,6 +96,13 @@ decision in `decisions.md`.
 - **Built.** The database and API run on MarkCliq's own server
   (`solacliq.markcliq.com`); files are in Cloudflare R2; emails are sent
   through Google Workspace (Gmail API).
+- **Built.** Push notifications go through Google's Firebase Cloud
+  Messaging. A push carries only the notification's title and body
+  (e.g. "New task assigned · Site survey") and ids, never codes, bank
+  details or documents. The server keeps each logged-in phone's push
+  token; logging out stops pushes to that phone, and a phone that
+  changes hands only gets the newest login's. A person can turn pushes
+  off in settings. Google Analytics is off in the Firebase project.
 - **Open, at the first deploy (phase 5).** Database backups: how often,
   where they're kept, how long, and a tested restore.
 

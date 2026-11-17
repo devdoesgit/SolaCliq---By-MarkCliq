@@ -86,6 +86,8 @@ api-test: ## Run the backend's tests, clippy and format check
 
 app-e2e: ## Seed the local API, then run each role's flow in the app on the emulator (API and emulator running)
 	cd backend && cargo run -q -- seed > /dev/null
+	# --keep-app-running: no uninstall at the end, which crashes this machine's emulator.
 	cd mobile && flutter drive --driver=test_driver/integration_test.dart \
 		--target=integration_test/flows_test.dart --flavor development \
-		--dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1 --dart-define=QUICK_FORMS=false
+		--dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1 --dart-define=QUICK_FORMS=false \
+		--keep-app-running

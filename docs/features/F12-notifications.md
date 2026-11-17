@@ -1,9 +1,13 @@
 # F12 Notifications: push
 
-Status: `building`. In-app notifications are built (phase 6: the
-`notifications` table, `GET /me/notifications`, settings). This spec adds
-**push**, drafted 2026-11-15. **Waiting for the owner's review** of this
-spec and of `PUT /me/device` in `api/openapi.yaml`.
+Status: `built` 2026-11-17 (approved by the owner the same day).
+Tested: the server side against a stand-in for FCM (`backend/tests/push.rs`)
+and the real FCM with the project's key (`send-test-push`); the app side
+in `test/push/` and `test/profile/settings_page_test.dart`. Run end to
+end on 2026-11-17 on the Google Play emulator through the real FCM:
+each acceptance check below passed (app in background, closed and
+open; sound off; push off; logged out; the phone moving to another
+person; Android blocking notifications).
 
 ## Goal
 
@@ -145,3 +149,11 @@ the in-app list.
   reach production phones it never got a token from.
 - Claimed-then-sent means a server crash mid-send loses that push (never
   sends it twice). Acceptable: the in-app list is the record.
+- 2026-11-17, built: the app sends FCM registration tokens.
+  firebase_messaging 17 deprecates them for installation ids
+  (`register`/`onRegistered`); moving means changing app and server
+  together, so it waits. A push about the customer's install or a
+  payment opens that home tab; one with nothing to open shows the
+  notifications list. `google-services.json` is kept outside the repo
+  (`~/Desktop/solacliq-google-services.json`), copied to
+  `mobile/android/app/` (git-ignored).

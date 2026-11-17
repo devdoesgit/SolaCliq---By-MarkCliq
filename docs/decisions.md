@@ -650,6 +650,16 @@ Change a decision by adding a new line, not by editing an old one.
 - **Emulator on this machine (NVIDIA, Wayland).** The host OpenGL
   translator crashes the emulator when an app's surfaces are torn down
   (snapshot restore, uninstall). Guest ANGLE avoided that but drew
-  Flutter corrupted and the machine froze hard soon after; it is not
-  used. Flow tests are best run on a real phone over USB; see
+  Flutter corrupted; it is not used. The two machine freezes that day
+  were the 15 GB of RAM running out (emulator, Gradle daemons and a
+  full Rust test build at once), not the GPU: those never run together
+  now (`mobile/CLAUDE.md`). Flow tests are best run on a real phone over USB; see
   `mobile/CLAUDE.md`.
+- **Push notifications through Firebase (F12, owner approved the spec
+  2026-11-17).** One Firebase project, `markcliq-solacliq`, under the
+  markcliq.co Google Workspace, Analytics off, the three app ids
+  registered. The server's key was made by allowing key creation on
+  that one project, then the organisation's "no new keys" rule was put
+  back. Keys live outside the repo (`~/Desktop/solacliq-firebase-key.json`,
+  `FCM_SERVICE_ACCOUNT_KEY_FILE`). The Gmail and push sign-ins share
+  `backend/src/google.rs`.
