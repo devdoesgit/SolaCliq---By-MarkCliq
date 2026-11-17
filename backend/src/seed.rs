@@ -816,10 +816,21 @@ async fn registrations(tx: &mut PgConnection) -> Result<(), SeedError> {
         .iter()
         .flat_map(|c| (0..SEED_KYC.len()).map(move |k| reg_upload_id(c.n, k)))
         .collect();
-    // Their visit task first (it points at the customer), then the customers:
-    // documents and installs go with them (ON DELETE CASCADE), then the uploads.
-    sqlx::query("DELETE FROM tasks WHERE id = $1")
-        .bind(RAJINDER_VISIT)
+    /*
+        Every task for these customers first (they point at the customer):
+        the seeded visit, and any an admin made since (TSK-0001 for Arjun),
+        with expenses logged against them. Then the customers: documents
+        and installs go with them (ON DELETE CASCADE), then the uploads
+    */
+    sqlx::query(
+        "DELETE FROM expenses WHERE task_id IN
+           (SELECT id FROM tasks WHERE customer_id = ANY($1))",
+    )
+    .bind(&ids)
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query("DELETE FROM tasks WHERE customer_id = ANY($1)")
+        .bind(&ids)
         .execute(&mut *tx)
         .await?;
     sqlx::query("DELETE FROM customers WHERE id = ANY($1)")
