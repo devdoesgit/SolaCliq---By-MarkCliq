@@ -5,7 +5,7 @@
 mod common;
 
 use axum::http::StatusCode;
-use chrono::{Duration, Utc};
+use chrono::{Duration, FixedOffset, Utc};
 use common::{Res, call, member, org};
 use serde_json::{Value, json};
 use sqlx::PgPool;
@@ -509,7 +509,7 @@ async fn commission_and_payments_follow_their_state(db: PgPool) {
         &co,
         "POST",
         &format!("payments/{}/request", ids[0]),
-        Some(json!({"due_on": Utc::now().date_naive().to_string()})),
+        Some(json!({"due_on": india_today().to_string()})),
     )
     .await;
     assert_eq!(
@@ -553,4 +553,11 @@ async fn commission_and_payments_follow_their_state(db: PgPool) {
     )
     .await;
     assert_eq!(res.body["code"], "commission.locked", "decided once");
+}
+
+// Today in India, as the server counts it (UTC's date lags it 00:00-05:30 IST).
+fn india_today() -> chrono::NaiveDate {
+    Utc::now()
+        .with_timezone(&FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap())
+        .date_naive()
 }
