@@ -1,0 +1,4263 @@
+{
+  "info": {
+    "name": "SolaCliq API (local)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from `api/openapi.yaml` by `api/postman/generate.py` (`make postman`); don't edit by hand. Every person, company and value here is illustrative.\n\nAgainst the seeded local API: `cargo run -- seed`, then run the folders in order. See `api/postman/README.md`."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "sunlight1"
+    },
+    {
+      "key": "org_id",
+      "value": "01928f6e-0000-7000-8000-0000000000a1"
+    },
+    {
+      "key": "token_worker",
+      "value": ""
+    },
+    {
+      "key": "token_agent",
+      "value": ""
+    },
+    {
+      "key": "token_customer",
+      "value": ""
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": "tester1@example.com"
+    },
+    {
+      "key": "new_password",
+      "value": "moonlight44"
+    },
+    {
+      "key": "code",
+      "value": ""
+    },
+    {
+      "key": "run",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const ist = new Date(Date.now() + 5.5 * 3600 * 1000);",
+          "pm.variables.set('today', ist.toISOString().slice(0, 10));",
+          "pm.variables.set('now', new Date().toISOString());",
+          "pm.variables.set('tomorrow', new Date(Date.now() + 86400000).toISOString());",
+          "pm.variables.set('in_ten_days', new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10));",
+          "if (!pm.collectionVariables.get('run')) pm.collectionVariables.set('run', String(Date.now()).slice(-8));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('no server error', () => pm.expect(pm.response.code).to.be.below(500));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Start here: log in as each role",
+      "item": [
+        {
+          "name": "Health (starts a new run)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "**Service health** (`getHealth`) · as no login\n\nWhether the API and its database are up. Needs no authentication.\n503 with the same body when the database can't be reached.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('run', String(Date.now()).slice(-8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as Ravi, installer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ravi@example.com\",\n  \"password\": \"{{password}}\",\n  \"client\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_worker', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_worker', json.tokens.refresh_token);",
+                  "  pm.collectionVariables.set('worker_id', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as Meena, sales agent (commission)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"meena@example.com\",\n  \"password\": \"{{password}}\",\n  \"client\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_agent', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_agent', json.tokens.refresh_token);",
+                  "  pm.collectionVariables.set('agent_id', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as Rajinder, customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rajinder@example.com\",\n  \"password\": \"{{password}}\",\n  \"client\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_customer', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_customer', json.tokens.refresh_token);",
+                  "  pm.collectionVariables.set('customer_id', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as Dev, the company's admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dev@example.com\",\n  \"password\": \"{{password}}\",\n  \"client\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_admin', json.tokens.access_token);",
+                  "  pm.collectionVariables.set('refresh_admin', json.tokens.refresh_token);",
+                  "  pm.collectionVariables.set('admin_id', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who am I (Ravi)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "**The signed-in person and their memberships** (`getMe`) · as Ravi, installer\n\nUsed by both apps on start-up to restore the session.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Seeded people (illustrative), password `sunlight1`. Run this folder first: it fills `token_worker`, `token_agent`, `token_customer` and `token_admin`."
+    },
+    {
+      "name": "2. Company admin: set up work",
+      "item": [
+        {
+          "name": "Create a task for Ravi (approved later)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks"
+              ]
+            },
+            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"01928f6e-0000-7000-8000-0000000000c6\",\n  \"title\": \"Net meter check (illustrative)\",\n  \"stage_index\": 5,\n  \"assignee_id\": \"{{worker_id}}\",\n  \"due_at\": \"{{tomorrow}}\",\n  \"admin_note\": \"Photo of the sealed meter, please.\",\n  \"photos\": [\n    {\n      \"id\": \"meter\",\n      \"label\": \"Net meter\",\n      \"hint\": \"Seal visible\"\n    }\n  ],\n  \"checklist\": [\n    {\n      \"id\": \"seal\",\n      \"text\": \"Meter sealed\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('new_task_id', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a second task for Ravi (sent back later)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks"
+              ]
+            },
+            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"01928f6e-0000-7000-8000-0000000000c6\",\n  \"title\": \"Inverter check (illustrative)\",\n  \"stage_index\": 5,\n  \"assignee_id\": \"{{worker_id}}\",\n  \"due_at\": \"{{tomorrow}}\",\n  \"photos\": [\n    {\n      \"id\": \"inverter\",\n      \"label\": \"Inverter display\"\n    }\n  ],\n  \"checklist\": [\n    {\n      \"id\": \"earthing\",\n      \"text\": \"Earthing checked\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('second_task_id', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "The tasks the installer works on next."
+    },
+    {
+      "name": "3. Installer (Ravi)",
+      "item": [
+        {
+          "name": "Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "home"
+              ]
+            },
+            "description": "**The home screen for the caller's role in this company** (`getOrgHome`) · as Ravi, installer\n\nThe server composes it for the role, from the same parts: a worker's\nweek and tasks, an agent's customers and KYC, a customer's install\nprogress, or their live energy after handover. Images are URLs;\nsample data uses `asset:<name>` for pictures bundled in the app.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tasks: today",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks?view=today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "view",
+                  "value": "today"
+                }
+              ]
+            },
+            "description": "**The caller's tasks in this company** (`listMyTasks`) · as Ravi, installer\n\nWorkers only. `today`: open work due today or overdue, plus any\nreturned or with a problem whatever its date, and what's with the\nadmin, in due order (Indian time). `upcoming`: due later, by day.\n`done`: approved and cancelled, newest first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tasks: upcoming",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks?view=upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "view",
+                  "value": "upcoming"
+                }
+              ]
+            },
+            "description": "**The caller's tasks in this company** (`listMyTasks`) · as Ravi, installer\n\nWorkers only. `today`: open work due today or overdue, plus any\nreturned or with a problem whatever its date, and what's with the\nadmin, in due order (Indian time). `upcoming`: due later, by day.\n`done`: approved and cancelled, newest first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tasks: done",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks?view=done",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "view",
+                  "value": "done"
+                }
+              ]
+            },
+            "description": "**The caller's tasks in this company** (`listMyTasks`) · as Ravi, installer\n\nWorkers only. `today`: open work due today or overdue, plus any\nreturned or with a problem whatever its date, and what's with the\nadmin, in due order (Indian time). `upcoming`: due later, by day.\n`done`: approved and cancelled, newest first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open the new task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}"
+              ]
+            },
+            "description": "**One task with its customer, photos, checklist and status** (`getTask`) · as Ravi, installer\n\nPhoto and receipt links in it expire after 15 minutes.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tick its checklist item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/checklist/seal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "checklist",
+                "seal"
+              ]
+            },
+            "description": "**Tick or untick one checklist item** (`setTaskChecklistItem`) · as Ravi, installer\n\nFails with 409 `task.locked` once submitted.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"done\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get an upload URL (what the scripts below do first)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "uploads"
+              ]
+            },
+            "description": "Returns a signed R2 URL for 15 minutes. The requests that need a file do this, then PUT a small file to that URL, in their pre-request script.\n\n**Get a presigned URL to upload one file for this company** (`createUpload`) · as Ravi, installer\n\nThe app PUTs the file to `url` with `headers`, then sends\n`upload_id` with the record it belongs to, in the same company.\nEvery file belongs to one company: an upload made here can only\nbe attached to this company's records, and is stored under the\ncompany's own prefix. URLs expire after 15 minutes. Sample data\nuses a `.invalid` host, which the development app treats as\nuploaded.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content_type\": \"image/jpeg\",\n  \"size_bytes\": 2048,\n  \"purpose\": \"proof\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add its proof photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "photos"
+              ]
+            },
+            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken. The server flags photos far\nfrom the site (over 500 m), with poor accuracy (over 50 m) or a\nmocked location; flags go to the admin, nothing is refused.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slot_id\": \"meter\",\n  \"upload_id\": \"{{proof_upload_id}}\",\n  \"taken_at\": \"{{now}}\",\n  \"lat\": 30.7046,\n  \"lng\": 76.7179,\n  \"accuracy_m\": 8,\n  \"mocked_location\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_worker', 'proof', 'image/jpeg', 1, (ids) => {",
+                  "  pm.variables.set('proof_upload_id', ids[0]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Message the admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "messages"
+              ]
+            },
+            "description": "**Reply to the admin about this task** (`sendTaskMessage`) · as Ravi, installer\n\nShows in the task's history, where the admin reads it. Open tasks\nonly: 409 `task.locked` once approved or cancelled.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Meter sealed, photo added (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "submit"
+              ]
+            },
+            "description": "**Send the finished work to the admin for approval** (`submitTask`) · as Ravi, installer\n\nNeeds every photo slot filled and every checklist item done\n(422 `task.incomplete`). The task becomes `submitted` and its photos\nlock until the admin approves or returns it.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"All done, meter sealed (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second task: tick",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{second_task_id}}/checklist/earthing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{second_task_id}}",
+                "checklist",
+                "earthing"
+              ]
+            },
+            "description": "**Tick or untick one checklist item** (`setTaskChecklistItem`) · as Ravi, installer\n\nFails with 409 `task.locked` once submitted.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"done\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second task: photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{second_task_id}}/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{second_task_id}}",
+                "photos"
+              ]
+            },
+            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken. The server flags photos far\nfrom the site (over 500 m), with poor accuracy (over 50 m) or a\nmocked location; flags go to the admin, nothing is refused.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slot_id\": \"inverter\",\n  \"upload_id\": \"{{proof_upload_id}}\",\n  \"taken_at\": \"{{now}}\",\n  \"lat\": 30.7046,\n  \"lng\": 76.7179,\n  \"accuracy_m\": 8,\n  \"mocked_location\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_worker', 'proof', 'image/jpeg', 1, (ids) => {",
+                  "  pm.variables.set('proof_upload_id', ids[0]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second task: submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{second_task_id}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{second_task_id}}",
+                "submit"
+              ]
+            },
+            "description": "**Send the finished work to the admin for approval** (`submitTask`) · as Ravi, installer\n\nNeeds every photo slot filled and every checklist item done\n(422 `task.incomplete`). The task becomes `submitted` and its photos\nlock until the admin approves or returns it.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Inverter checked (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Report a problem on another task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/01928f6e-0000-7000-8000-000000000a03/problems",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "01928f6e-0000-7000-8000-000000000a03",
+                "problems"
+              ]
+            },
+            "description": "**Tell the admin the task can't go ahead as planned** (`reportTaskProblem`) · as Ravi, installer\n\nOn an `assigned` task (409 `task.locked` otherwise). The admin\ndecides: reschedule, reassign or cancel. The task stays `assigned`\nwith `problem` set; submitting it closes the problem.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"customer_away\",\n  \"note\": \"Customer not at home (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Task history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "history"
+              ]
+            },
+            "description": "**Everything that happened to a task, newest first** (`getTaskHistory`) · as Ravi, installer\n\nKept for every task and never edited.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/me/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "me",
+                "stats"
+              ]
+            },
+            "description": "**The caller's work this month, for their profile** (`getMyStats`) · as Ravi, installer\n\nWorkers only. Shown on their profile.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My ID documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/me/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "me",
+                "documents"
+              ]
+            },
+            "description": "**The caller's documents this company holds** (`listMyDocuments`) · as Ravi, installer\n\nA worker's ID (for salary and site passes) or a customer's KYC.\nOnly the person and the org's admins see them.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My expenses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses"
+              ]
+            },
+            "description": "**The caller's recent expenses in this company** (`listMyExpenses`) · as Ravi, installer\n\nNewest first; the screen after logging one shows them.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log an expense with a receipt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses"
+              ]
+            },
+            "description": "**Log an expense for the admin to approve** (`createExpense`) · as Ravi, installer\n\nWorkers and agents. Goes to the org admin's approvals queue as\n`in_review`, numbered `EXP-0001` per company. A receipt is an\nupload of this company (purpose `receipt`), checked in storage\n(422 on `receipt_upload_id` if it didn't finish); `task_id` must be\none of the caller's own tasks (422 otherwise).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 124000,\n  \"category\": \"fuel\",\n  \"note\": \"Diesel for the site van (illustrative)\",\n  \"spent_on\": \"{{today}}\",\n  \"receipt_upload_id\": \"{{receipt_upload_id}}\",\n  \"task_id\": \"{{new_task_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_worker', 'receipt', 'application/pdf', 1, (ids) => {",
+                  "  pm.variables.set('receipt_upload_id', ids[0]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('new_expense_id', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open the expense",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/{{new_expense_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "{{new_expense_id}}"
+              ]
+            },
+            "description": "**One of the caller's expenses** (`getExpense`) · as Ravi, installer\n\nWith the admin's note and the receipt link when there is one.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fix a returned receipt",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/01928f6e-0000-7000-8000-0000000000f3/receipt",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "01928f6e-0000-7000-8000-0000000000f3",
+                "receipt"
+              ]
+            },
+            "description": "**Send a new receipt for an expense the admin sent back** (`replaceExpenseReceipt`) · as Ravi, installer\n\nThe expense goes back to `in_review`, and the note goes to the\nadmin with it. 409 `expense.locked` unless it is `needs_fix`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upload_id\": \"{{receipt_upload_id}}\",\n  \"note\": \"Clearer photo (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_worker', 'receipt', 'application/pdf', 1, (ids) => {",
+                  "  pm.variables.set('receipt_upload_id', ids[0]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Seeded worker Ravi, in Example Solar (illustrative)."
+    },
+    {
+      "name": "4. Sales agent (Meena)",
+      "item": [
+        {
+          "name": "Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "home"
+              ]
+            },
+            "description": "**The home screen for the caller's role in this company** (`getOrgHome`) · as Meena, sales agent (commission)\n\nThe server composes it for the role, from the same parts: a worker's\nweek and tasks, an agent's customers and KYC, a customer's install\nprogress, or their live energy after handover. Images are URLs;\nsample data uses `asset:<name>` for pictures bundled in the app.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_agent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register a customer with KYC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customer-registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customer-registrations"
+              ]
+            },
+            "description": "**An agent registers a customer with their KYC** (`submitCustomerRegistration`) · as Meena, sales agent (commission)\n\nAgents only. Submits details, site, connection and KYC documents for\nthe org admin to approve. On submission the customer's account is\ncreated, with no password (or an existing one linked), and they\nare emailed at once: who registered them, what was registered,\nand how to set up the app to follow their install. The admin then\nverifies or rejects it; the customer sees the status in the app. Required documents: Aadhaar,\nPAN, electricity bill, land document and signature\n(`registration.document_required`, 422, naming the kind); bank\nproof too when the subsidy is on (`registration.bank_proof_required`,\n422). Roof photo and name change are optional. Each kind once;\neach file an upload of this company (purpose `kyc`), checked in\nstorage. 409 `registration.duplicate` when the company already has\nthis customer (same email, phone or consumer number), or the\nperson is already in the company in another role; the detail says\nwho registered them and when.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_agent}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Customer {{run}} (illustrative)\",\n  \"phone\": \"9{{run}}1\",\n  \"email\": \"customer{{run}}@example.com\",\n  \"address\": \"House 9, Phase 7\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160062\",\n  \"state\": \"Punjab\",\n  \"discom\": \"PSPCL\",\n  \"consumer_number\": \"PM{{run}}\",\n  \"sanctioned_load_kw\": 5,\n  \"connection_type\": \"residential\",\n  \"proposed_kw\": 5,\n  \"roof\": \"rcc\",\n  \"subsidy\": true,\n  \"documents\": [\n    {\n      \"kind\": \"aadhaar\",\n      \"upload_id\": \"{{kyc_1}}\"\n    },\n    {\n      \"kind\": \"pan\",\n      \"upload_id\": \"{{kyc_2}}\"\n    },\n    {\n      \"kind\": \"electricity_bill\",\n      \"upload_id\": \"{{kyc_3}}\"\n    },\n    {\n      \"kind\": \"land_document\",\n      \"upload_id\": \"{{kyc_4}}\"\n    },\n    {\n      \"kind\": \"signature\",\n      \"upload_id\": \"{{kyc_5}}\"\n    },\n    {\n      \"kind\": \"bank_proof\",\n      \"upload_id\": \"{{kyc_6}}\"\n    }\n  ],\n  \"consent\": true,\n  \"commission\": 1500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_agent', 'kyc', 'application/pdf', 6, (ids) => {",
+                  "  pm.variables.set('kyc_1', ids[0]);",
+                  "  pm.variables.set('kyc_2', ids[1]);",
+                  "  pm.variables.set('kyc_3', ids[2]);",
+                  "  pm.variables.set('kyc_4', ids[3]);",
+                  "  pm.variables.set('kyc_5', ids[4]);",
+                  "  pm.variables.set('kyc_6', ids[5]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('new_customer_id', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/my-customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "my-customers"
+              ]
+            },
+            "description": "**The customers the caller registered, newest first** (`listMyCustomers`) · as Meena, sales agent (commission)\n\nAgents (Sales) only. Each with its KYC status, install stage and,\nfor commission agents, the commission. Earnings are summed from\nthis list.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_agent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open a customer with a returned document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/my-customers/01928f6e-0000-7000-8000-0000000000c2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "my-customers",
+                "01928f6e-0000-7000-8000-0000000000c2"
+              ]
+            },
+            "description": "**One customer the caller registered** (`getMyCustomer`) · as Meena, sales agent (commission)\n\nIts KYC, install progress, advance and commission.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_agent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fix the returned document",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/my-customers/01928f6e-0000-7000-8000-0000000000c2/documents/electricity_bill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "my-customers",
+                "01928f6e-0000-7000-8000-0000000000c2",
+                "documents",
+                "electricity_bill"
+              ]
+            },
+            "description": "**Send a clearer copy of a document the admin sent back** (`replaceCustomerDocument`) · as Meena, sales agent (commission)\n\nOnly the document the admin sent back (409 `registration.locked`\notherwise). The document and the customer go back to `in_review`.\nThe file is an upload of this company (purpose `kyc`), checked in\nstorage (422 on `upload_id` if it didn't finish).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_agent}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upload_id\": \"{{kyc_1}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function uploadFiles(token, purpose, contentType, n, done) {",
+                  "  const ids = [];",
+                  "  const one = () => {",
+                  "    if (ids.length === n) return done(ids);",
+                  "    const body = 'SolaCliq Postman test file (illustrative) ' + Date.now() + ' ' + ids.length;",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/orgs/' + pm.variables.get('org_id') + '/uploads',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.variables.get(token) },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ content_type: contentType, size_bytes: body.length, purpose }) },",
+                  "    }, (err, res) => {",
+                  "      if (err || res.code !== 201) { console.error('upload ticket failed', err || res.text()); return; }",
+                  "      const ticket = res.json();",
+                  "      pm.sendRequest({",
+                  "        url: ticket.url,",
+                  "        method: ticket.method,",
+                  "        header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "        body: { mode: 'raw', raw: body },",
+                  "      }, (err2, res2) => {",
+                  "        if (err2 || res2.code >= 300) { console.error('file PUT failed', err2 || res2.code); return; }",
+                  "        ids.push(ticket.upload_id);",
+                  "        one();",
+                  "      });",
+                  "    });",
+                  "  };",
+                  "  one();",
+                  "}",
+                  "uploadFiles('token_agent', 'kyc', 'application/pdf', 1, (ids) => {",
+                  "  pm.variables.set('kyc_1', ids[0]);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Seeded agent Meena (commission)."
+    },
+    {
+      "name": "5. Customer (Rajinder)",
+      "item": [
+        {
+          "name": "Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "home"
+              ]
+            },
+            "description": "**The home screen for the caller's role in this company** (`getOrgHome`) · as Rajinder, customer\n\nThe server composes it for the role, from the same parts: a worker's\nweek and tasks, an agent's customers and KYC, a customer's install\nprogress, or their live energy after handover. Images are URLs;\nsample data uses `asset:<name>` for pictures bundled in the app.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_customer}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My install",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/my-install",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "my-install"
+              ]
+            },
+            "description": "**The caller's own install with this company** (`getMyInstall`) · as Rajinder, customer\n\nCustomers only. Stages, the next visit and the payment plan. 404\n`install.not_started` until the company has set the install up\n(a registration still in review): the app says it's being set up.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_customer}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "I paid the instalment that's due",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/my-install/payments/01928f6e-0000-7000-8000-000000000211/claim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "my-install",
+                "payments",
+                "01928f6e-0000-7000-8000-000000000211",
+                "claim"
+              ]
+            },
+            "description": "**The customer says they paid an instalment** (`claimInstallPayment`) · as Rajinder, customer\n\nAfter paying by UPI or bank transfer. The company confirms it\n(status `claimed` until then, `paid` after). Only a `due` payment\nof the caller's own install: 409 `payment.not_due` otherwise, 404\nfor a payment that isn't theirs.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_customer}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"upi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Seeded customer Rajinder."
+    },
+    {
+      "name": "6. Company admin: decide",
+      "item": [
+        {
+          "name": "Review queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "review"
+              ]
+            },
+            "description": "**Everything waiting for the admin, oldest first** (`getReviewQueue`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve the new task",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{new_task_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{new_task_id}}",
+                "approve"
+              ]
+            },
+            "description": "**Approve a submitted task; the customer moves to the next stage** (`approveTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send the second task back",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/{{second_task_id}}/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "{{second_task_id}}",
+                "return"
+              ]
+            },
+            "description": "**Send a submitted task back, with photos to retake** (`returnTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Display not readable, retake please (illustrative).\",\n  \"retake\": [\n    \"inverter\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel a task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/01928f6e-0000-7000-8000-000000000a04/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "01928f6e-0000-7000-8000-000000000a04",
+                "cancel"
+              ]
+            },
+            "description": "**Cancel an open task** (`cancelTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Customer postponed (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reschedule the task with a problem",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/tasks/01928f6e-0000-7000-8000-000000000a03/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "tasks",
+                "01928f6e-0000-7000-8000-000000000a03",
+                "schedule"
+              ]
+            },
+            "description": "**Reschedule or reassign an open task; closes a reported problem** (`scheduleTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"due_at\": \"{{tomorrow}}\",\n  \"assignee_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve the new expense",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/{{new_expense_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "{{new_expense_id}}",
+                "approve"
+              ]
+            },
+            "description": "**Approve an expense** (`approveExpense`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark it paid",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/{{new_expense_id}}/paid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "{{new_expense_id}}",
+                "paid"
+              ]
+            },
+            "description": "**Mark an approved expense paid** (`payExpense`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send an expense back",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/01928f6e-0000-7000-8000-0000000000f1/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "01928f6e-0000-7000-8000-0000000000f1",
+                "return"
+              ]
+            },
+            "description": "**Send an expense back for a new receipt** (`returnExpense`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Receipt unreadable (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify the new customer (sets up the install)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/{{new_customer_id}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "{{new_customer_id}}",
+                "verify"
+              ]
+            },
+            "description": "**Verify a registration and set up the install** (`verifyCustomer`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"total\": 28500000,\n  \"subsidy\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve the agent's commission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/{{new_customer_id}}/commission",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "{{new_customer_id}}",
+                "commission"
+              ]
+            },
+            "description": "**Approve an agent's commission, as asked or changed** (`approveCommission`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": null,\n  \"note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send one document back",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/01928f6e-0000-7000-8000-0000000000c3/documents/aadhaar/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "01928f6e-0000-7000-8000-0000000000c3",
+                "documents",
+                "aadhaar",
+                "return"
+              ]
+            },
+            "description": "**Send one KYC document back to the agent** (`returnCustomerDocument`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Aadhaar photo is blurred (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject a customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/01928f6e-0000-7000-8000-0000000000c5/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "01928f6e-0000-7000-8000-0000000000c5",
+                "reject"
+              ]
+            },
+            "description": "**Don't take a customer up** (`rejectCustomer`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Roof not suitable (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pay a payable commission",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/01928f6e-0000-7000-8000-0000000000c1/commission/paid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "01928f6e-0000-7000-8000-0000000000c1",
+                "commission",
+                "paid"
+              ]
+            },
+            "description": "**Mark a payable commission paid** (`payCommission`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask for the last payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/payments/01928f6e-0000-7000-8000-000000000212/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "payments",
+                "01928f6e-0000-7000-8000-000000000212",
+                "request"
+              ]
+            },
+            "description": "**Ask the customer for the next payment** (`requestPayment`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"due_on\": \"{{in_ten_days}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm the claimed payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/payments/01928f6e-0000-7000-8000-000000000211/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "payments",
+                "01928f6e-0000-7000-8000-000000000211",
+                "confirm"
+              ]
+            },
+            "description": "**Confirm a payment was received** (`confirmPayment`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hand over an install",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/customers/01928f6e-0000-7000-8000-0000000000c6/handover",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "customers",
+                "01928f6e-0000-7000-8000-0000000000c6",
+                "handover"
+              ]
+            },
+            "description": "**Hand the system over to the customer** (`handOver`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Seeded admin Dev. Acts on what folders 2–5 made."
+    },
+    {
+      "name": "7. Notifications",
+      "item": [
+        {
+          "name": "Ravi's notifications in the company",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "notifications"
+              ]
+            },
+            "description": "**The caller's notifications in this company, newest first** (`listNotifications`) · as Ravi, installer\n\nThe `unread_count` drives the dot on the bell.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark them read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/notifications/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "notifications",
+                "read"
+              ]
+            },
+            "description": "**Mark all of the caller's notifications here as read** (`markNotificationsRead`) · as Ravi, installer\n\nThe \"Read all\" link on the notifications screen.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ravi's personal notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "notifications"
+              ]
+            },
+            "description": "**The caller's own notifications, outside any company** (`listMyNotifications`) · as Ravi, installer\n\nQuote requests and guides, for the Personal workspace.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark personal ones read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/notifications/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "notifications",
+                "read"
+              ]
+            },
+            "description": "**Mark all of the caller's own notifications as read** (`markMyNotificationsRead`) · as Ravi, installer\n\nThe \"Read all\" link in the Personal workspace.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Save a push token (made up)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/device",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "device"
+              ]
+            },
+            "description": "A made-up token: the push worker's send to it fails and is logged. Use a phone's real token to test pushes.\n\n**Save this phone's push token** (`registerMyDevice`) · as Ravi, installer\n\nThe Firebase Cloud Messaging token for the caller's session (one\nlogin on one phone). Send it after log in, on each app start\nwhile logged in, and whenever Firebase issues a new one. It\nreplaces this session's earlier token, and is taken from any\nother session that had it, so pushes go to whoever logged in on\nthe phone last. Log out (or any revoked session) stops pushes to\nit; there is no separate call. App sessions only: the website\ngets 403 (`auth.app_only`). Pushes carry the notification's\n`title` and `body`, with `data` holding `notification_id`,\n`kind`, and whichever of `org_id`, `task_id`, `expense_id` and\n`customer_id` it has (see docs/features/F12-notifications.md).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"postman-test-token-{{run}}\",\n  \"platform\": \"android\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": ""
+    },
+    {
+      "name": "8. Profile and settings (Ravi)",
+      "item": [
+        {
+          "name": "My details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "details"
+              ]
+            },
+            "description": "**The caller's personal details and payout bank** (`getMyDetails`) · as Ravi, installer\n\nShared by every company the person works with: their admins see\nthem for salary, commission payouts and site passes. The bank\naccount number comes back masked (`account_last4`).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update my details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "details"
+              ]
+            },
+            "description": "**Change the caller's personal details or payout bank** (`updateMyDetails`) · as Ravi, installer\n\nSend only what changes. A new bank needs `account_number` and\n`ifsc`; the server fills `bank_name` from the IFSC.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876500001\",\n  \"address\": \"House 12, Sector 70, Mohali (illustrative)\",\n  \"emergency_contact\": \"Sita Example, 9876500002 (illustrative)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "settings"
+              ]
+            },
+            "description": "**The caller's notification settings** (`getMySettings`) · as Ravi, installer\n\nThe same on every phone the person signs in on.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update my settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "settings"
+              ]
+            },
+            "description": "**Change the caller's settings** (`updateMySettings`) · as Ravi, installer\n\nSend the whole object.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"push\": true,\n  \"whatsapp\": false,\n  \"sound\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask for a solar quote (Personal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/quote-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "quote-requests"
+              ]
+            },
+            "description": "**Ask for a solar quote** (`createQuoteRequest`) · as Ravi, installer\n\nSaves a lead and emails it to MarkCliq (`REVIEW_EMAIL`), who calls\nthe person on their phone (the account's, or `phone` here if the\naccount has none; 422 `quote.phone_required` if neither). The\nperson gets a `quote_shared` notification. Returns a general,\nindicative estimate from the bill band. At most 5 a day per account\n(429 `auth.too_many_attempts`); a retry with the same key isn't counted. Companies accepting leads\ncomes with the admin website.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quote_for\": \"home\",\n  \"pin_code\": \"160055\",\n  \"city\": \"Mohali\",\n  \"bill_band\": \"under_1500\",\n  \"roof\": \"rcc\",\n  \"timeline\": \"this_month\",\n  \"phone\": \"9876500001\",\n  \"share_consent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": ""
+    },
+    {
+      "name": "9. Team (admin)",
+      "item": [
+        {
+          "name": "Workers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/members?role=worker",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "worker"
+                }
+              ]
+            },
+            "description": "**The org's admin, workers and agents** (`listMembers`) · as Dev, the company's admin\n\nOrg admin only. Used by the admin website's team page.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add a worker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "members"
+              ]
+            },
+            "description": "**Add a worker or agent** (`addMember`) · as Dev, the company's admin\n\nOrg admin only. If the email has no account, one is created with no\npassword and a set-up email is sent (the person then uses \"Set up\nyour account\", F1). If it has an account, only a membership is\nadded and the person is emailed that they were added. One role per\nperson per org: `member.already_in_org` (409) otherwise. The role\nmust be `worker` or `agent`: `member.role_not_allowed` (422). Agents\nneed a `pay_type` (`member.pay_type_required`, 422) and other roles\ncan't have one (`member.pay_type_not_allowed`, 422). Someone removed earlier can be added again: their\nmembership comes back with the new role and pay type.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Worker {{run}} (illustrative)\",\n  \"email\": \"worker{{run}}@example.com\",\n  \"role\": \"worker\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('new_member_id', json.user_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove them",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/members/{{new_member_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "members",
+                "{{new_member_id}}"
+              ]
+            },
+            "description": "**Remove a worker or agent from the org** (`removeMember`) · as Dev, the company's admin\n\nOrg admin only. Ends the membership, not the account: it is marked\nremoved (kept, not deleted), drops out of the member list and the\nperson's `/me`, and their requests to this org get 403\n`org.not_member` at once. The org admin can't be\nremoved (`member.cannot_remove_admin`, 422). Their past records\n(jobs, expenses, customers) stay with the org.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Adding a member emails them: run against a server whose mail goes to the log (README.md)."
+    },
+    {
+      "name": "10. Company registration and MarkCliq review",
+      "item": [
+        {
+          "name": "Register a company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/org-registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "org-registrations"
+              ]
+            },
+            "description": "**A solar company registers with SolaCliq** (`registerOrg`) · as no login\n\nPublic. The server checks the details first: GSTIN format and\nchecksum (`org.gstin_invalid`, 422), a GSTIN already registered and\nnot rejected (`org.gstin_taken`, 409), and the usual field rules\n(`validation.failed`). PAN and state are taken from the GSTIN.\n\nThen, in one transaction, it saves the company as `pending`, the\nowner's account (no password; an existing account with this email\nis used as it is) and their `org_admin` membership. MarkCliq is\nemailed to review it, and the owner is emailed that it arrived.\nA platform admin then approves or rejects it\n(`/platform/orgs/{org_id}/status`).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"Postman Solar {{run}} Private Limited (illustrative)\",\n  \"trade_name\": \"Postman Solar {{run}} (illustrative)\",\n  \"business_type\": \"proprietorship\",\n  \"gstin\": \"{{gstin}}\",\n  \"address_line_1\": \"Plot 7, Industrial Area\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160055\",\n  \"owner_name\": \"Postman Owner (illustrative)\",\n  \"email\": \"owner{{run}}@example.com\",\n  \"phone\": \"8{{run}}1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';",
+                  "const run = pm.collectionVariables.get('run');",
+                  "const letters = run.split('').map((d) => 'ABCDEFGHIJ'[Number(d)]).join('');",
+                  "const first14 = '03' + 'AAA' + letters.slice(0, 1) + 'P' + run.slice(-4) + 'Q' + '1' + 'Z';",
+                  "let sum = 0;",
+                  "for (let i = 0; i < 14; i++) {",
+                  "  const p = CH.indexOf(first14[i]) * (i % 2 === 0 ? 1 : 2);",
+                  "  sum += Math.floor(p / 36) + (p % 36);",
+                  "}",
+                  "pm.variables.set('gstin', first14 + CH[(36 - (sum % 36)) % 36]);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pending companies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/orgs?status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "orgs"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            },
+            "description": "Needs Dev to be a platform admin: `cargo run -- make-platform-admin dev@example.com` once.\n\n**Every company, newest first** (`listPlatformOrgs`) · as Dev, the company's admin\n\nPlatform admins only (`users.is_platform_admin`); anyone else gets\n403 `platform.not_admin`. Filter with `status` (e.g. `pending` for\nthe review queue).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('pending_org_id', (json.items.find((o) => o.gstin === pm.variables.get('gstin')) || json.items[0]).id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open it",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/orgs/{{pending_org_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "orgs",
+                "{{pending_org_id}}"
+              ]
+            },
+            "description": "**One company's registration details** (`getPlatformOrg`) · as Dev, the company's admin\n\nPlatform admins only.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/orgs/{{pending_org_id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "orgs",
+                "{{pending_org_id}}",
+                "status"
+              ]
+            },
+            "description": "**Approve, reject, suspend or reactivate a company** (`setPlatformOrgStatus`) · as Dev, the company's admin\n\nPlatform admins only. Allowed moves: `pending` → `active`\n(approve) or `rejected` (reject); `active` → `suspended`;\n`suspended` → `active`. Anything else is 409\n`org.status_change_not_allowed`. Rejecting needs a `note`, which is\nemailed to the owner (`validation.failed` without one). Approving\nemails the owner how to log in.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"note\": \"Test registration from Postman (illustrative).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Registering emails MarkCliq's review inbox and the owner: run against a server whose mail goes to the log (README.md)."
+    },
+    {
+      "name": "11. Sessions",
+      "item": [
+        {
+          "name": "Refresh Ravi's tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "**Get new tokens** (`refreshSession`) · as no login\n\nOAuth 2.1 rotation, for the app and the website alike: returns a\nnew access token and a new refresh token, and the old refresh token\nstops working. Reusing an old refresh token revokes that login. A\ndead refresh token gets 401 `auth.session_expired`; the client logs\nout. Clients run one refresh at a time.\n\nThe app sends `RefreshRequest` and gets a `TokenPair`. The website\nsends no body (its `solacliq_refresh` cookie goes along) and gets\n204 with new cookies.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_worker}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_worker', json.access_token);",
+                  "  pm.collectionVariables.set('refresh_worker', json.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Website log in (cookie)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "The website's way: a session cookie instead of tokens. Postman keeps the cookie for localhost.\n\n**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dev@example.com\",\n  \"password\": \"{{password}}\",\n  \"client\": \"web\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who am I (by the cookie)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "**The signed-in person and their memberships** (`getMe`) · as no login\n\nUsed by both apps on start-up to restore the session.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log out (cookie)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "**Log out of this session** (`logout`) · as no login\n\nRevokes this session: its access and refresh tokens stop working at\nonce. Web clients also get both cookies cleared.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log Ravi out",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "**Log out of this session** (`logout`) · as Ravi, installer\n\nRevokes this session: its access and refresh tokens stop working at\nonce. Web clients also get both cookies cleared.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_worker}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": ""
+    },
+    {
+      "name": "12. By hand: sign up and passwords",
+      "item": [
+        {
+          "name": "Sign up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "**Create a customer account** (`signup`) · as no login\n\nCreates an unverified account and emails a 6-digit code. Always 202,\nwhether or not the email already has an account (no enumeration);\nan existing account gets an \"you already have an account\" email.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Asha Example (illustrative)\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{new_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify the email (code from the email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/email/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "email",
+                "verify"
+              ]
+            },
+            "description": "**Verify an email with its code** (`verifyEmail`) · as no login\n\nMarks the email verified so the account can log in. Codes last 5\nminutes and allow 5 tries; after that, request a new one.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send the code again",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/email/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "email",
+                "resend"
+              ]
+            },
+            "description": "**Send a new verification code** (`resendVerification`) · as no login\n\nAlways 202 (no enumeration).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/password/forgot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "password",
+                "forgot"
+              ]
+            },
+            "description": "**Email a password reset or set-up code** (`forgotPassword`) · as no login\n\nAlways 202 (no enumeration). Also used to set a first password on an\naccount created for someone. Codes last 5 minutes.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset password (code from the email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/password/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "password",
+                "reset"
+              ]
+            },
+            "description": "**Set a new password with the reset code** (`resetPassword`) · as no login\n\nEnds every session of the account.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\",\n  \"new_password\": \"{{new_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "These send real emails and need the code from them: set `email` to an inbox you read, then `code`. Not part of the automatic run."
+    }
+  ]
+}

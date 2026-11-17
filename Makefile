@@ -14,7 +14,7 @@ SPEC := api/openapi.yaml
 API_CLIENT := mobile/packages/api_client
 SOLA_UI := mobile/packages/sola_ui
 
-.PHONY: help setup tokens gen gen-dart gen-ts mock lint test check db api api-test app-e2e
+.PHONY: help setup tokens gen gen-dart gen-ts postman postman-run mock lint test check db api api-test app-e2e
 
 help: ## List tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -29,6 +29,23 @@ setup: ## Install tools and app dependencies
 tokens: ## Regenerate both apps' design tokens from design/tokens.json
 	node tools/tokens.mjs
 	dart format $(SOLA_UI)/lib/src/tokens
+
+postman: ## Regenerate the Postman collection from the spec (api/postman/)
+	python3 api/postman/generate.py
+
+postman-run: ## Run the Postman collection against the seeded local API (api/postman/README.md)
+	npx -y newman@6.2.1 run api/postman/SolaCliq.postman_collection.json \
+		--folder "1. Start here: log in as each role" \
+		--folder "2. Company admin: set up work" \
+		--folder "3. Installer (Ravi)" \
+		--folder "4. Sales agent (Meena)" \
+		--folder "5. Customer (Rajinder)" \
+		--folder "6. Company admin: decide" \
+		--folder "7. Notifications" \
+		--folder "8. Profile and settings (Ravi)" \
+		--folder "9. Team (admin)" \
+		--folder "10. Company registration and MarkCliq review" \
+		--folder "11. Sessions"
 
 gen: gen-dart gen-ts ## Regenerate the API clients from the spec
 
