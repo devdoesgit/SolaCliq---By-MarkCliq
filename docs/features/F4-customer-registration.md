@@ -167,3 +167,17 @@ document can change).
   deal the company later turns down doesn't silently vanish.
 - New error codes: `registration.duplicate` (409) and
   `registration.locked` (409, a document that wasn't sent back).
+
+## Notes (tested 2026-11-17)
+
+- Scenario tests (`backend/tests/customers.rs`, 25): two agents
+  registering one household at once give one customer; an email in other
+  capitals is the same customer; a receipt, another agent's or another
+  company's file, or one file twice is refused with nothing kept and no
+  email; one person registered by two companies is one account in two
+  workspaces; two returned documents are fixed one at a time; the new
+  customer sets a password with the emailed code and sees the company.
+- In the app: a duplicate shows who registered the customer first; the
+  agent corrects the details and resubmits with the same documents
+  (the refused attempt used none of them). Leaving the form with
+  anything entered asks before discarding it.
