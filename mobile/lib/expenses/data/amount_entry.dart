@@ -1,14 +1,16 @@
 import 'package:sola_ui/sola_ui.dart';
 
 /// An amount in rupees typed on the keypad: digits, one point, at most two
-/// decimals, up to ₹99,99,999.
+/// decimals, up to [maxPaise] (the server's limit for an expense), so an
+/// amount it would refuse can't be typed at all.
 class AmountEntry {
   const new([this.text = '']);
 
   /// What was typed: "1240.5".
   final String text;
 
-  static const _maxWhole = 7;
+  /// ₹10,00,000: more is a typo (the API's `ExpenseCreate.amount`).
+  static const maxPaise = 100000000;
 
   /// [key] added: a digit or ".". Ignores keys that would make it invalid.
   AmountEntry add(String key) {
@@ -17,11 +19,13 @@ class AmountEntry {
       if (point >= 0) return this;
       return AmountEntry(text.isEmpty ? '0.' : '$text.');
     }
+    if (point >= 0 && text.length - point > 2) return this;
     if (point >= 0) {
-      return text.length - point > 2 ? this : AmountEntry('$text$key');
+      final next = AmountEntry('$text$key');
+      return next.paise > maxPaise ? this : next;
     }
-    if (text == '0') return AmountEntry(key);
-    return text.length >= _maxWhole ? this : AmountEntry('$text$key');
+    final next = AmountEntry(text == '0' ? key : '$text$key');
+    return next.paise > maxPaise ? this : next;
   }
 
   /// The last key removed.

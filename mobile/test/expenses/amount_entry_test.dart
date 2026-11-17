@@ -25,9 +25,13 @@ void main() {
       expect(_type('1240.').display, '₹1,240.');
     });
 
-    test('no leading zeros, and seven digits at most', () {
+    test("no leading zeros, and never past the server's ₹10,00,000", () {
       expect(_type('007').text, '7');
-      expect(_type('123456789').text, '1234567');
+      expect(_type('1000000').paise, AmountEntry.maxPaise);
+      expect(_type('10000000').text, '1000000');
+      expect(_type('1234567').text, '123456');
+      expect(_type('1000000.5').text, '1000000.');
+      expect(_type('999999.99').paise, 99999999);
     });
 
     test('delete removes the last key', () {
