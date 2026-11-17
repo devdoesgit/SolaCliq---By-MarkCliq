@@ -117,6 +117,12 @@ impl Roles for WorkersAndCustomers {
     const ALLOWED: &'static [Role] = &[Role::Worker, Role::Customer];
 }
 
+// A company's customers: their own install.
+pub struct Customers;
+impl Roles for Customers {
+    const ALLOWED: &'static [Role] = &[Role::Customer];
+}
+
 // The company's admin only (the website's team page).
 pub struct Admins;
 impl Roles for Admins {

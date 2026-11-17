@@ -5,8 +5,8 @@
       tiles, progress, a list), so a role's home changes without an app
       update. Shapes and actions: docs/backend-handoff.md, "Home"
     - built from what exists: a worker's tasks and expenses (phase 8),
-      an agent's customers and commissions (phase 9). Installs come in
-      phase 10; until each lands its numbers are honest zeros and the
+      an agent's customers and commissions (phase 9), a customer's
+      install (phase 10). Live energy after handover needs inverter data; until each lands its numbers are honest zeros and the
       list says what's coming, never sample data
     - dates and greetings are in Indian time: an installer's "today" is
       today in India, whatever the server's clock says
@@ -29,6 +29,7 @@ use crate::{
     org::{OrgMember, PayType, Role},
     routes::{
         customers::{CommissionStatus, KycKind, KycStatus, STAGES},
+        install::{self, Install, PaymentStatus, StageStatus},
         quotes::rupees,
         tasks::TaskStatus,
     },
@@ -250,6 +251,13 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         Role::Agent => agent_customers(&mut tx, member.user_id).await?,
         _ => Vec::new(),
     };
+    let (my_install, my_documents) = match member.role {
+        Role::Customer => (
+            install::load(&mut tx, member.user_id).await?,
+            document_counts(&mut tx, member.user_id).await?,
+        ),
+        _ => (None, (0, 0)),
+    };
     tx.commit().await?;
 
     let who = Who {
@@ -261,7 +269,7 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         (Role::Worker, _) => worker(&who, &tasks, in_review),
         (Role::Agent, Some(PayType::Commission)) => agent(&who, true, &customers),
         (Role::Agent, _) => agent(&who, false, &customers),
-        (Role::Customer, _) => customer(&who),
+        (Role::Customer, _) => customer(&who, my_install.as_ref(), my_documents),
         (Role::OrgAdmin, _) => admin(&who),
     };
     summary.unread_notifications = unread;
@@ -725,12 +733,176 @@ fn agent(who: &Who, commission: bool, customers: &[AgentCustomer]) -> HomeSummar
     }
 }
 
+// A customer's KYC documents in this company: (all, verified).
+async fn document_counts(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<(i64, i64)> {
+    Ok(sqlx::query_as(
+        "SELECT count(*), count(*) FILTER (WHERE d.status = 'verified')
+         FROM documents d JOIN customers c ON c.id = d.customer_id
+         WHERE c.user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_one(conn)
+    .await?)
+}
+
 /*
     A customer's install: where it is (stage x of 7), the next visit and
-    the next payment. Their install arrives in phase 10; until the
-    company sets it up, the home says so
+    the payment due, the install bar, then their documents and the next
+    visit. Until the company sets the install up, the home says so
 */
-fn customer(who: &Who) -> HomeSummary {
+fn customer(who: &Who, install: Option<&Install>, documents: (i64, i64)) -> HomeSummary {
+    let Some(i) = install else {
+        return customer_waiting(who);
+    };
+    let current = &i.stages[(i.stage_index - 1).max(0) as usize];
+    let handed_over = i.handed_over_on.is_some();
+    let headline_detail = match i.handed_over_on {
+        Some(d) => format!("Handed over on {}", d.format("%-d %b")),
+        None => format!("{} is next", current.name),
+    };
+
+    let visit_tile = match &i.next_visit {
+        Some(v) => {
+            let at = v.starts_at.with_timezone(who.now.offset());
+            tile(
+                "Next visit",
+                short_day(at.weekday()),
+                TileIcon::Alarm,
+                &v.title.to_lowercase(),
+                true,
+                "track",
+            )
+        }
+        None => tile(
+            "Next visit",
+            "—",
+            TileIcon::Alarm,
+            if handed_over {
+                "all done"
+            } else {
+                "not booked yet"
+            },
+            true,
+            "track",
+        ),
+    };
+    let payment_tile = match i
+        .payments
+        .iter()
+        .find(|p| matches!(p.status, PaymentStatus::Due | PaymentStatus::Claimed))
+    {
+        Some(p) => {
+            // "Advance, 30%" → "Advance".
+            let name = p.label.split(',').next().unwrap_or(&p.label);
+            let footer = match (p.status, p.due_on) {
+                (PaymentStatus::Claimed, _) => "sent, company confirms".to_owned(),
+                (_, Some(d)) => format!("due {}", d.format("%-d %b")),
+                _ => "due now".to_owned(),
+            };
+            tile(
+                name,
+                &rupees(p.amount),
+                TileIcon::Wallet,
+                &footer,
+                false,
+                "payments",
+            )
+        }
+        None => tile(
+            "Payments",
+            "—",
+            TileIcon::Wallet,
+            "nothing due",
+            false,
+            "payments",
+        ),
+    };
+
+    let segments = i
+        .stages
+        .iter()
+        .map(|s| HomeSegment {
+            weight: 1,
+            tone: match s.status {
+                StageStatus::Done => HomeTone::Success,
+                StageStatus::Next => HomeTone::Live,
+                StageStatus::Upcoming => HomeTone::Empty,
+            },
+            label: None,
+        })
+        .collect();
+
+    let (all, verified) = documents;
+    let mut rows = Vec::new();
+    if all > 0 {
+        let (label, tone) = if verified == all {
+            ("Verified", HomeTone::Success)
+        } else {
+            ("In review", HomeTone::Neutral)
+        };
+        rows.push(HomeRow {
+            visual: HomeVisual {
+                glyph: Some(Glyph::Card),
+                ..HomeVisual::default()
+            },
+            id: "documents".into(),
+            title: "Documents".into(),
+            detail: format!("{all} documents with {}", who.org_name),
+            status: Some(HomeStatus {
+                label: label.into(),
+                tone,
+            }),
+            action: Some("documents"),
+        });
+    }
+    if let Some(v) = &i.next_visit {
+        let at = v.starts_at.with_timezone(who.now.offset());
+        let first = v
+            .person
+            .name
+            .split_whitespace()
+            .next()
+            .unwrap_or(&v.person.name);
+        rows.push(HomeRow {
+            visual: HomeVisual::default(),
+            id: "next_visit".into(),
+            title: v.title.clone(),
+            detail: format!("{} · {first}", at.format("%a %-d %b, %H:%M")),
+            status: Some(HomeStatus {
+                label: "Next".into(),
+                tone: HomeTone::Warning,
+            }),
+            action: Some("track"),
+        });
+    }
+
+    HomeSummary {
+        unread_notifications: 0,
+        eyebrow: "Your solar".into(),
+        title: format!("{} kW · {}", trim_kw(i.system_kw), i.place),
+        headline: headline(&i.stage_index.to_string(), "of 7 stages", &headline_detail),
+        week: Vec::new(),
+        energy: None,
+        tiles: vec![visit_tile, payment_tile],
+        progress: Some(HomeProgress {
+            label: "Install progress".into(),
+            trailing: Some(who.org_name.clone()),
+            segments,
+            stages: vec!["Survey".into(), "Install".into(), "Handover".into()],
+            legend: false,
+        }),
+        list: HomeList { title: None, rows },
+    }
+}
+
+// 5 → "5", 3.5 → "3.5".
+fn trim_kw(kw: f64) -> String {
+    let s = format!("{kw:.2}");
+    s.trim_end_matches('0').trim_end_matches('.').to_owned()
+}
+
+// Before the company has set the install up.
+fn customer_waiting(who: &Who) -> HomeSummary {
     let empty = |_| HomeSegment {
         weight: 1,
         tone: HomeTone::Empty,
@@ -855,7 +1027,7 @@ mod tests {
             worker(&w, &[], 0),
             agent(&w, true, &[]),
             agent(&w, false, &[]),
-            customer(&w),
+            customer(&w, None, (0, 0)),
         ] {
             assert!(home.tiles.len() <= 2);
             for t in &home.tiles {
@@ -907,7 +1079,11 @@ mod tests {
     #[test]
     fn empty_lists_explain_instead_of_showing_nothing() {
         let w = who(Utc::now());
-        for home in [worker(&w, &[], 0), agent(&w, true, &[]), customer(&w)] {
+        for home in [
+            worker(&w, &[], 0),
+            agent(&w, true, &[]),
+            customer(&w, None, (0, 0)),
+        ] {
             assert_eq!(home.list.rows.len(), 1);
             assert!(home.list.rows[0].action.is_none(), "not tappable");
         }
