@@ -5,9 +5,10 @@ use std::{sync::Arc, time::Duration};
 use backend::{
     AppState, PRODUCT_NAME,
     config::Config,
+    google::ServiceAccount,
     mail::{
         Email, LogMailer, Mailer,
-        gmail::{GmailMailer, ServiceAccount},
+        gmail::GmailMailer,
         template::{self as t, Badge, EmailPage, Tone},
     },
     openapi, seed,
