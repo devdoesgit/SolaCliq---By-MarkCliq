@@ -708,3 +708,329 @@ async fn a_salaried_agents_home_shows_what_is_with_the_admin(db: PgPool) {
     .await;
     assert!(list.body["items"][0].get("commission").is_none());
 }
+
+/*
+    Scenarios: races, tidy-ups, files that aren't the agent's to use,
+    who may register, customers in two companies, fixing two documents
+*/
+
+#[sqlx::test]
+async fn two_registrations_at_once_make_one_customer(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let aman = member(&db, a, "aman@example.com", "agent", Some("salary")).await;
+    let first = form(&db, a, &meena, "race@example.com", "9814000120").await;
+    let mut second = form(&db, a, &aman, "race2@example.com", "9814000120").await;
+    second.as_object_mut().unwrap().remove("commission");
+    let (x, y) = tokio::join!(
+        register(&db, a, &meena, first),
+        register(&db, a, &aman, second)
+    );
+    let mut statuses = [x.status, y.status];
+    statuses.sort();
+    assert_eq!(statuses, [StatusCode::CREATED, StatusCode::CONFLICT]);
+    assert_eq!(count(&db, "SELECT count(*) FROM customers").await, 1);
+    // The loser's files weren't used: they can go into a corrected registration.
+    assert_eq!(
+        count(&db, "SELECT count(*) FROM uploads WHERE used_at IS NULL").await,
+        5
+    );
+}
+
+#[sqlx::test]
+async fn an_email_written_differently_is_still_the_same_customer(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let body = form(&db, a, &meena, "same.person@example.com", "9814000121").await;
+    register(&db, a, &meena, body).await;
+    let again = form(&db, a, &meena, "  Same.Person@Example.COM ", "9814000122").await;
+    let res = register(&db, a, &meena, again).await;
+    assert_eq!(res.body["code"], "registration.duplicate");
+}
+
+#[sqlx::test]
+async fn files_that_arent_the_agents_kyc_are_refused(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let aman = member(&db, a, "aman@example.com", "agent", Some("salary")).await;
+    let b = org(&db, "Solar B", "active").await;
+    common::join(&db, b, "meena@example.com", "agent", Some("commission")).await;
+
+    // A receipt, not a KYC upload.
+    let receipt = call(
+        &db,
+        "POST",
+        &format!("/api/v1/orgs/{a}/uploads"),
+        &meena,
+        Some(json!({"content_type": "image/jpeg", "size_bytes": 3000, "purpose": "receipt"})),
+    )
+    .await;
+    let receipt = receipt.body["upload_id"].as_str().unwrap().to_owned();
+    r2_put(&format!("orgs/{a}/receipt/{receipt}"), 3000);
+    let others = kyc_file(&db, a, &aman).await; // Aman's
+    let elsewhere = kyc_file(&db, b, &meena).await; // Solar B's
+    let base = form(&db, a, &meena, "files@example.com", "9814000123").await;
+    let same = base["documents"][1]["upload_id"].clone();
+
+    for (i, upload) in [json!(receipt), json!(others), json!(elsewhere), same]
+        .into_iter()
+        .enumerate()
+    {
+        let mut body = base.clone();
+        body["documents"][0]["upload_id"] = upload;
+        let res = register(&db, a, &meena, body).await;
+        assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY, "case {i}");
+        assert_eq!(res.body["errors"][0]["field"], "documents", "case {i}");
+    }
+    assert_eq!(count(&db, "SELECT count(*) FROM customers").await, 0);
+    assert!(
+        emails_to("files@example.com").is_empty(),
+        "no email for a refusal"
+    );
+}
+
+#[sqlx::test]
+async fn only_an_active_companys_own_agents_register(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let body = form(&db, a, &meena, "who@example.com", "9814000124").await;
+    let b = org(&db, "Solar B", "active").await;
+    let outsider = member(&db, b, "outsider@example.com", "agent", Some("salary")).await;
+    let res = register(&db, a, &outsider, body.clone()).await;
+    assert_eq!(res.body["code"], "org.not_member");
+
+    // Meena registers herself: she's already in the company.
+    let mut herself = body.clone();
+    herself["email"] = json!("meena@example.com");
+    let res = register(&db, a, &meena, herself).await;
+    assert_eq!(res.body["code"], "registration.duplicate");
+
+    sqlx::query("UPDATE orgs SET status = 'suspended' WHERE id = $1")
+        .bind(a)
+        .execute(&db)
+        .await
+        .unwrap();
+    let res = register(&db, a, &meena, body).await;
+    assert_eq!(res.body["code"], "org.suspended");
+}
+
+#[sqlx::test]
+async fn a_customer_in_two_companies_sees_each_ones_documents(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let b = org(&db, "Solar B", "active").await;
+    let ravi = member(&db, b, "ravi.agent@example.com", "agent", Some("salary")).await;
+    let body = form(&db, a, &meena, "twice@example.com", "9814000125").await;
+    register(&db, a, &meena, body).await;
+    let mut body = form(&db, b, &ravi, "twice@example.com", "9814000125").await;
+    body.as_object_mut().unwrap().remove("commission");
+    body["documents"].as_array_mut().unwrap().truncate(5);
+    let res = register(&db, b, &ravi, body).await;
+    assert_eq!(
+        res.status,
+        StatusCode::CREATED,
+        "another company may: {}",
+        res.body
+    );
+    assert_eq!(
+        count(
+            &db,
+            "SELECT count(*) FROM users WHERE email = 'twice@example.com'"
+        )
+        .await,
+        1,
+        "one person, two memberships"
+    );
+    sqlx::query(
+        "UPDATE users SET email_verified_at = now(),
+                          password_hash = (SELECT password_hash FROM users WHERE email = 'meena@example.com')
+         WHERE email = 'twice@example.com'",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+    let token = common::token(&db, "twice@example.com").await;
+    for (company, agent) in [(a, "Asha Example"), (b, "Asha Example")] {
+        let res = call(
+            &db,
+            "GET",
+            &format!("/api/v1/orgs/{company}/me/documents"),
+            &token,
+            None,
+        )
+        .await;
+        assert_eq!(res.body["items"].as_array().unwrap().len(), 5);
+        assert_eq!(res.body["uploaded_by"], agent);
+    }
+    let self_signed = common::post(
+        &db,
+        "/api/v1/auth/signup",
+        json!({"name": "Walk In", "email": "walkin@example.com", "password": "sunlight1"}),
+    )
+    .await;
+    assert_eq!(self_signed.status, StatusCode::ACCEPTED);
+    sqlx::query("UPDATE users SET email_verified_at = now() WHERE email = 'walkin@example.com'")
+        .execute(&db)
+        .await
+        .unwrap();
+    common::join(&db, a, "walkin@example.com", "customer", None).await;
+    let walkin = common::token(&db, "walkin@example.com").await;
+    let res = call(
+        &db,
+        "GET",
+        &format!("/api/v1/orgs/{a}/me/documents"),
+        &walkin,
+        None,
+    )
+    .await;
+    assert_eq!(
+        res.body,
+        json!({"items": []}),
+        "no registration, no documents"
+    );
+}
+
+#[sqlx::test]
+async fn a_removed_customer_comes_back_when_registered_again(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    member(&db, a, "back@example.com", "customer", None).await;
+    sqlx::query(
+        "UPDATE memberships SET removed_at = now()
+         WHERE user_id = (SELECT id FROM users WHERE email = 'back@example.com')",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+    let body = form(&db, a, &meena, "back@example.com", "9814000126").await;
+    let res = register(&db, a, &meena, body).await;
+    assert_eq!(res.status, StatusCode::CREATED, "{}", res.body);
+    assert_eq!(
+        count(
+            &db,
+            "SELECT count(*) FROM memberships WHERE removed_at IS NULL
+               AND user_id = (SELECT id FROM users WHERE email = 'back@example.com')"
+        )
+        .await,
+        1
+    );
+}
+
+#[sqlx::test]
+async fn two_returned_documents_are_fixed_one_at_a_time(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    member(&db, a, "dev@example.com", "org_admin", None).await;
+    let body = form(&db, a, &meena, "two.fixes@example.com", "9814000127").await;
+    let id = register(&db, a, &meena, body).await.body["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    sqlx::query(
+        "UPDATE documents SET status = 'needs_fix', admin_note = 'Unreadable.',
+                              admin_note_by = (SELECT id FROM users WHERE email = 'dev@example.com'),
+                              admin_note_at = now()
+         WHERE customer_id = $1::uuid AND kind IN ('pan', 'signature')",
+    )
+    .bind(&id)
+    .execute(&db)
+    .await
+    .unwrap();
+    sqlx::query("UPDATE customers SET kyc_status = 'needs_fix' WHERE id = $1::uuid")
+        .bind(&id)
+        .execute(&db)
+        .await
+        .unwrap();
+    let path = format!("/api/v1/orgs/{a}/my-customers/{id}");
+
+    // A file that never arrived changes nothing.
+    let lost = call(
+        &db,
+        "POST",
+        &format!("/api/v1/orgs/{a}/uploads"),
+        &meena,
+        Some(json!({"content_type": "image/jpeg", "size_bytes": 3000, "purpose": "kyc"})),
+    )
+    .await;
+    let res = call(
+        &db,
+        "PUT",
+        &format!("{path}/documents/pan"),
+        &meena,
+        Some(json!({"upload_id": lost.body["upload_id"]})),
+    )
+    .await;
+    assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
+
+    let file = kyc_file(&db, a, &meena).await;
+    let res = call(
+        &db,
+        "PUT",
+        &format!("{path}/documents/pan"),
+        &meena,
+        Some(json!({"upload_id": file})),
+    )
+    .await;
+    assert_eq!(res.status, StatusCode::OK);
+    assert_eq!(
+        res.body["kyc_status"], "needs_fix",
+        "the signature is still to fix"
+    );
+    assert_eq!(res.body["returned"]["kind"], "signature");
+
+    let file = kyc_file(&db, a, &meena).await;
+    let res = call(
+        &db,
+        "PUT",
+        &format!("{path}/documents/signature"),
+        &meena,
+        Some(json!({"upload_id": file})),
+    )
+    .await;
+    assert_eq!(res.body["kyc_status"], "in_review");
+
+    // Once approved, nothing is replaced.
+    sqlx::query("UPDATE customers SET kyc_status = 'approved' WHERE id = $1::uuid")
+        .bind(&id)
+        .execute(&db)
+        .await
+        .unwrap();
+    let file = kyc_file(&db, a, &meena).await;
+    let res = call(
+        &db,
+        "PUT",
+        &format!("{path}/documents/pan"),
+        &meena,
+        Some(json!({"upload_id": file})),
+    )
+    .await;
+    assert_eq!(res.body["code"], "registration.locked");
+}
+
+#[sqlx::test]
+async fn bounds_on_size_and_text(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let base = form(&db, a, &meena, "bounds@example.com", "9814000128").await;
+    for (field, value) in [
+        ("proposed_kw", json!(0)),
+        ("proposed_kw", json!(1000.5)),
+        ("sanctioned_load_kw", json!(-1)),
+        ("name", json!("x".repeat(101))),
+        ("consumer_number", json!("  ")),
+        ("phone", json!("5814000128")),
+        ("email", json!("not-an-email")),
+        ("commission", json!(-5)),
+    ] {
+        let mut body = base.clone();
+        body[field] = value;
+        let res = register(&db, a, &meena, body).await;
+        assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY, "{field}");
+        assert_eq!(res.body["errors"][0]["field"], field);
+    }
+    assert_eq!(
+        register(&db, a, &meena, base).await.status,
+        StatusCode::CREATED
+    );
+}
+
+#[sqlx::test]
+async fn an_agent_with_no_customers_gets_a_plain_home(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let res = call(&db, "GET", &format!("/api/v1/orgs/{a}/home"), &meena, None).await;
+    assert_eq!(res.body["headline"]["value"], "0");
+    assert!(res.body.get("progress").is_none());
+    assert_eq!(res.body["list"]["rows"][0]["id"], "no_customers");
+}
