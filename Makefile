@@ -14,7 +14,7 @@ SPEC := api/openapi.yaml
 API_CLIENT := mobile/packages/api_client
 SOLA_UI := mobile/packages/sola_ui
 
-.PHONY: help setup tokens gen gen-dart gen-ts mock lint test check db api api-test
+.PHONY: help setup tokens gen gen-dart gen-ts mock lint test check db api api-test app-e2e
 
 help: ## List tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -83,3 +83,9 @@ api: ## Run the Rust API on localhost:8080 (needs backend/.env)
 
 api-test: ## Run the backend's tests, clippy and format check
 	cd backend && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+
+app-e2e: ## Seed the local API, then run each role's flow in the app on the emulator (API and emulator running)
+	cd backend && cargo run -q -- seed > /dev/null
+	cd mobile && flutter drive --driver=test_driver/integration_test.dart \
+		--target=integration_test/flows_test.dart --flavor development \
+		--dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1 --dart-define=QUICK_FORMS=false

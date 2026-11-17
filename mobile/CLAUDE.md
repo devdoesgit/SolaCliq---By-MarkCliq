@@ -41,9 +41,26 @@ Stack, distribution, updates and tooling: `../docs/architecture.md`.
 
 `emulator -avd solacliq_phone -gpu host -no-boot-anim`: GPU rendering
 only, never software (`swiftshader`), which hangs the machine. The AVD
-always cold-boots (snapshots off in its `config.ini`): restoring a
-snapshot saved by an abrupt exit crashed the GPU layer. If it crashes,
-read the core dump (`coredumpctl info <pid>`) and fix the cause.
+always cold-boots (snapshots off in its `config.ini`).
+
+Known emulator faults on this machine (NVIDIA, Wayland), 2026-11-17:
+
+- The host OpenGL translator loses its context and crashes the
+  emulator when an app's surfaces are torn down: restoring a snapshot,
+  or uninstalling the app (which `flutter drive` does at the end of a
+  run). Core dumps: `coredumpctl info <pid>`, `TextureResize`.
+- Guest ANGLE (`-feature GuestAngle`, Vulkan) avoids that crash but
+  draws Flutter's Impeller with corrupted frames, and the machine froze
+  hard minutes after starting the app on it with Skia. Not to be used.
+- So: test flows on a real Android phone over USB when possible; on the
+  emulator, expect a crash at the end of `make app-e2e` (the uninstall)
+  and restart it.
+
+## Flow tests
+
+`make app-e2e` (API and emulator running) seeds the local API, then
+drives each role's main flow in the real app (`integration_test/`).
+The whole lifecycle through the API is `backend/tests/lifecycle.rs`.
 
 ## Hot reload
 
