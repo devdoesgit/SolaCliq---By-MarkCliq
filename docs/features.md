@@ -32,6 +32,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F12 | Notifications | built 2026-11-17: in-app lists for every role and Personal, settings, and push (`features/F12-notifications.md`), run end to end on a phone through the real FCM |
 | F13 | Distribution and updates | planned |
 | F14 | Platform admin: suspend, support access | planned |
+| F15 | Company logo | building 2026-11-18: backend and app done, checked end to end with RY Enterprises' logo in the R2 dev bucket; website upload page to build (`features/F15-company-logo.md`) |
 
 ## Which part each feature touches
 
@@ -52,6 +53,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F12 | Email, push, in-app | Notifications | Notifications |
 | F13 | — | Updater, Shorebird, signing | APK download page |
 | F14 | Suspension, support access, audit | Suspended-org message | Org list, suspend, support access |
+| F15 | Logo upload kind, set and remove, link in `/me` | Logo in the home header and workspace list | Logo upload in settings |
 
 ## Scope per feature
 

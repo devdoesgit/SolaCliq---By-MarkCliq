@@ -10,7 +10,9 @@ nothing listed there is settled.
 
 - One shared app, **SolaCliq**, used by every org. It onboards solar
   businesses and runs their whole customer, worker and agent lifecycle. Not
-  white-labelled per vendor.
+  white-labelled per vendor: the app's name, icon and splash stay
+  SolaCliq's. Inside it, each company shows its own logo to its people
+  (F15).
 - **A product MarkCliq sells to solar EPC businesses.** Pilot with 2–3
   vendors for about 2–3 months, then open to more businesses.
 - Multi-tenant: every org-owned row belongs to an org (vendor).

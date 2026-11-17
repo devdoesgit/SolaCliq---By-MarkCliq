@@ -49,6 +49,11 @@ decision in `decisions.md`.
   photos for installers, receipts for installers and sales agents, KYC
   documents for sales agents, any of them for the company's admin.
   Customers upload nothing yet.
+- **Built.** A company's logo (F15) is stored like every other file:
+  private, in the company's own folder, shown through 15-minute links,
+  and only to that company's own people (workers, sales agents,
+  customers). Only the company's admin can upload or remove it. A
+  replaced logo is deleted.
 - **Built.** R2 encrypts every stored file on its disks (Cloudflare's
   default). We add no second layer of file encryption: the private
   bucket, per-company folders and short links protect access.

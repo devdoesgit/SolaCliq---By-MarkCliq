@@ -82,6 +82,13 @@ design/logo/kit/build_kit.py` (needs fontTools). Don't edit
 `res/drawable/ic_launcher_*`, `ic_notification.xml` or the mipmap PNGs by
 hand. Logo rules: `design/logo/kit/GUIDELINES.md`.
 
+The launch screen (`launch_background.xml`, `values-v31` styles) and
+`SplashPage` both show the mark over the "SolaCliq" wordmark, generated
+by the kit: `res/drawable/ic_splash.xml` and, for Dart, `sola_ui`'s
+`logo.g.dart` (`SolaSplashMark`). Both are a 288 dp square, centred,
+which is how Android 12+ draws its splash icon; keep it that way, or
+the hand-over jumps. Don't edit either by hand.
+
 ## Flow tests
 
 `make app-e2e` (API and emulator running) seeds the local API, then
