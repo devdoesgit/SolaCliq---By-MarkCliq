@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Push notifications (F12). -->
+<resources>
+    <!-- The status-bar icon's tint: sun-deep (design/tokens.json). -->
+    <color name="notification_tint">#C9971A</color>
+    <string name="channel_updates">Updates</string>
+    <string name="channel_updates_silent">Updates (silent)</string>
+</resources>

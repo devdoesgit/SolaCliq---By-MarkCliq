@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Firebase app config (F12): kept outside the repo, copied in (mobile/CLAUDE.md).
+/app/google-services.json
