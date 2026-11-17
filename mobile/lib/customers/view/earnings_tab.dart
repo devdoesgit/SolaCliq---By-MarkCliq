@@ -30,7 +30,9 @@ class EarningsTabState extends State<EarningsTab> {
   Future<List<CustomerSummary>> _fetch() =>
       context.read<CustomerRepository>().mine(widget.orgId);
 
-  void reload() => setState(() => _customers = _fetch());
+  void reload() => setState(() {
+    _customers = _fetch();
+  });
 
   Future<void> _open(CustomerSummary c) async {
     await context.push(AppRoutes.customer(c.id));

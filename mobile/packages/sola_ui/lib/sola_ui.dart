@@ -5,6 +5,7 @@ library;
 
 export 'src/format/date.dart';
 export 'src/format/money.dart';
+export 'src/format/power.dart';
 export 'src/icons/sola_icon.dart';
 export 'src/theme/sola_fonts.dart';
 export 'src/theme/sola_text.dart';

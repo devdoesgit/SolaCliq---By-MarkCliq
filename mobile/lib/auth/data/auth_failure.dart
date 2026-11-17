@@ -39,6 +39,12 @@ enum AuthFailureCode {
   /// The server has no file storage set up.
   uploadUnavailable('upload.unavailable'),
 
+  /// My install before the company has set it up.
+  installNotStarted('install.not_started'),
+
+  /// A payment claimed that isn't due (already claimed or paid).
+  paymentNotDue('payment.not_due'),
+
   /// A file didn't reach storage whole (the server's field error on an
   /// upload id): send it again.
   uploadIncomplete(null),

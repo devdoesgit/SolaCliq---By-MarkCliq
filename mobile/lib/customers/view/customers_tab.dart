@@ -37,7 +37,9 @@ class CustomersTabState extends State<CustomersTab> {
       context.read<CustomerRepository>().mine(widget.orgId);
 
   /// Fetches the list again, as the tab is opened.
-  void reload() => setState(() => _customers = _fetch());
+  void reload() => setState(() {
+    _customers = _fetch();
+  });
 
   @override
   void didUpdateWidget(CustomersTab oldWidget) {
@@ -97,7 +99,9 @@ class CustomersTabState extends State<CustomersTab> {
                     label: l10n.searchLabel,
                     placeholder: l10n.searchCustomers,
                     textInputAction: TextInputAction.search,
-                    onChanged: (v) => setState(() => _query = v),
+                    onChanged: (v) => setState(() {
+                      _query = v;
+                    }),
                   ),
                 ],
               ),
@@ -105,7 +109,9 @@ class CustomersTabState extends State<CustomersTab> {
               key: const ValueKey('customers_filter'),
               label: l10n.tabCustomers,
               selected: _filter,
-              onChanged: (f) => setState(() => _filter = f),
+              onChanged: (f) => setState(() {
+                _filter = f;
+              }),
               choices: [
                 SolaChoice(CustomerFilter.all, l10n.filterAll),
                 SolaChoice(CustomerFilter.fix, l10n.filterFix),

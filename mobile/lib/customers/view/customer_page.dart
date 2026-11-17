@@ -35,7 +35,9 @@ class _CustomerPageState extends State<CustomerPage> {
     widget.customerId,
   );
 
-  void _reload() => setState(() => _customer = _fetch());
+  void _reload() => setState(() {
+    _customer = _fetch();
+  });
 
   Future<void> _fix() async {
     await context.push(AppRoutes.customerFix(widget.customerId));

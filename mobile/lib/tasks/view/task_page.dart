@@ -312,14 +312,11 @@ class _Header extends StatelessWidget {
       ),
       _ => [
         shortName(task.customer.name),
-        if (task.customer.systemKw case final kw?) l10n.kwValue(_kw(kw)),
+        if (task.customer.systemKw case final kw?) l10n.kwValue(formatKw(kw)),
         task.customer.address,
       ].join(' · '),
     };
   }
-
-  static String _kw(double kw) =>
-      kw == kw.roundToDouble() ? '${kw.round()}' : '$kw';
 
   @override
   Widget build(BuildContext context) {
@@ -439,7 +436,7 @@ class _CustomerRow extends StatelessWidget {
             spacing: SolaSpace.space2,
             children: [
               SolaText(
-                kw == null ? name : '$name · ${l10n.kwValue(_Header._kw(kw))}',
+                kw == null ? name : '$name · ${l10n.kwValue(formatKw(kw))}',
                 style: SolaTextStyle.rowTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -683,7 +680,7 @@ class _Approved extends StatelessWidget {
             label: [
               shortName(task.customer.name),
               if (task.customer.systemKw case final kw?)
-                l10n.kwValue(_Header._kw(kw)),
+                l10n.kwValue(formatKw(kw)),
             ].join(' · '),
             trailing: l10n.stageOf(nextStage, task.stageCount),
             trailingTone: SolaTone.live,

@@ -64,5 +64,6 @@ extension CustomerSummaryText on CustomerSummary {
   String get initials => initialsOf(name);
 
   /// "3 kW · Sector 69, Mohali".
-  String place2(AppLocalizations l10n) => l10n.kwPlace('$systemKw', place);
+  String place2(AppLocalizations l10n) =>
+      l10n.kwPlace(formatKw(systemKw), place);
 }

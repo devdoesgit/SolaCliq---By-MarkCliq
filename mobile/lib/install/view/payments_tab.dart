@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
@@ -35,7 +36,25 @@ class PaymentsTabState extends State<PaymentsTab> {
   Future<Install> _fetch() =>
       context.read<InstallRepository>().mine(widget.workspace.orgId);
 
-  void reload() => setState(() => _install = _fetch());
+  void reload() => setState(() {
+    _install = _fetch();
+  });
+
+  /*
+    Opens a UPI app. Android throws, rather than answering false, when no
+    app on the phone handles UPI links: both mean "no UPI app", and
+    nothing is claimed
+  */
+  static Future<bool> _openUpi(String uri) async {
+    try {
+      return await launchUrl(
+        Uri.parse(uri),
+        mode: LaunchMode.externalApplication,
+      );
+    } on PlatformException {
+      return false;
+    }
+  }
 
   Future<void> _pay(Install install, PaymentMethod method) async {
     final due = install.due;
@@ -43,11 +62,13 @@ class PaymentsTabState extends State<PaymentsTab> {
     final l10n = context.l10n;
     if (method == PaymentMethod.upi) {
       final uri = install.upiUri;
-      final opened =
-          uri != null &&
-          await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
+      final opened = uri != null && await _openUpi(uri);
       if (!opened) {
-        if (mounted) setState(() => _error = l10n.noUpiApp);
+        if (mounted) {
+          setState(() {
+            _error = l10n.noUpiApp;
+          });
+        }
         return;
       }
     }
@@ -65,11 +86,23 @@ class PaymentsTabState extends State<PaymentsTab> {
         idempotencyKey: _idempotencyKey,
       );
       _idempotencyKey = const Uuid().v4();
-      if (mounted) setState(() => _install = Future.value(updated));
+      if (mounted) {
+        setState(() {
+          _install = Future.value(updated);
+        });
+      }
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.code.message(l10n));
+      if (mounted) {
+        setState(() {
+          _error = failure.code.message(l10n);
+        });
+      }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) {
+        setState(() {
+          _sending = false;
+        });
+      }
     }
   }
 
@@ -86,6 +119,13 @@ class PaymentsTabState extends State<PaymentsTab> {
           body: LoadView(
             future: _install,
             failedTitle: l10n.installLoadFailed,
+            notReadyCode: AuthFailureCode.installNotStarted,
+            notReady: SolaNotice(
+              key: const Key('install_not_started'),
+              title: l10n.installSetUpTitle,
+              body: l10n.installSetUpBody,
+              tone: SolaTone.neutral,
+            ),
             onRetry: reload,
             builder: (context, install) => _Plan(
               install: install,
@@ -155,7 +195,7 @@ class _Plan extends StatelessWidget {
                 style: SolaTextStyle.amount,
               ),
               SolaText(
-                l10n.totalLine('${install.systemKw}'),
+                l10n.totalLine(formatKw(install.systemKw)),
                 color: SolaColors.muted,
               ),
             ],
@@ -188,7 +228,10 @@ class _Plan extends StatelessWidget {
                     color: SolaColors.cream,
                   ),
                   SolaText(
-                    l10n.bookedOnceReceived(org),
+                    // Only the first payment books the install.
+                    install.payments.first == due
+                        ? l10n.bookedOnceReceived(org)
+                        : l10n.confirmedOnceReceived(org),
                     style: SolaTextStyle.small,
                     color: SolaColors.onBrownMuted,
                   ),

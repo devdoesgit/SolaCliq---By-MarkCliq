@@ -31,12 +31,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _save(AppSettings next) async {
     final before = _settings;
-    setState(() => _settings = next);
+    setState(() {
+      _settings = next;
+    });
     try {
       await _repo.saveSettings(next);
     } on AuthFailure {
       // Put it back, so the screen never shows a setting that isn't saved.
-      if (mounted) setState(() => _settings = before);
+      if (mounted) {
+        setState(() {
+          _settings = before;
+        });
+      }
     }
   }
 
@@ -51,7 +57,9 @@ class _SettingsPageState extends State<SettingsPage> {
       body: LoadView(
         future: _loaded,
         failedTitle: l10n.settingsLoadFailed,
-        onRetry: () => setState(() => _loaded = _repo.settings()),
+        onRetry: () => setState(() {
+          _loaded = _repo.settings();
+        }),
         builder: (context, loaded) {
           final s = _settings ??= loaded;
           return Column(

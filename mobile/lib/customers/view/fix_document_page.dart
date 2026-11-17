@@ -43,7 +43,11 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
 
   Future<void> _take(String title) async {
     final file = await pickDocument(context, title);
-    if (file != null && mounted) setState(() => _photo = file);
+    if (file != null && mounted) {
+      setState(() {
+        _photo = file;
+      });
+    }
   }
 
   Future<void> _send(ReturnedDocument returned) async {
@@ -68,13 +72,29 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
         kind: returned.kind,
         uploadId: uploadId,
       );
-      if (mounted) setState(() => _sent = true);
+      if (mounted) {
+        setState(() {
+          _sent = true;
+        });
+      }
     } on UploadTooLarge {
-      if (mounted) setState(() => _error = l10n.fileTooBig);
+      if (mounted) {
+        setState(() {
+          _error = l10n.fileTooBig;
+        });
+      }
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.code.message(l10n));
+      if (mounted) {
+        setState(() {
+          _error = failure.code.message(l10n);
+        });
+      }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) {
+        setState(() {
+          _sending = false;
+        });
+      }
     }
   }
 
@@ -94,7 +114,9 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
           body: LoadView(
             future: _customer,
             failedTitle: l10n.customerLoadFailed,
-            onRetry: () => setState(() => _customer = _fetch()),
+            onRetry: () => setState(() {
+              _customer = _fetch();
+            }),
             builder: (context, c) => _body(l10n, c),
           ),
           bottom: returned == null

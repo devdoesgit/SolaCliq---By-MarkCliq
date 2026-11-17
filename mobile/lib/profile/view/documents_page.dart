@@ -49,7 +49,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
           LoadView(
             future: _docs,
             failedTitle: l10n.documentsLoadFailed,
-            onRetry: () => setState(() => _docs = _fetch()),
+            onRetry: () => setState(() {
+              _docs = _fetch();
+            }),
             builder: (context, docs) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: SolaSpace.space14,

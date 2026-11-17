@@ -82,6 +82,8 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.registrationLocked => l10n.failRegistrationLocked,
     AuthFailureCode.uploadUnavailable => l10n.failUploadUnavailable,
     AuthFailureCode.uploadIncomplete => l10n.failUploadIncomplete,
+    AuthFailureCode.installNotStarted => l10n.installSetUpTitle,
+    AuthFailureCode.paymentNotDue => l10n.failPaymentNotDue,
     AuthFailureCode.network => l10n.failNetwork,
     AuthFailureCode.unknown => l10n.failUnknown,
   };

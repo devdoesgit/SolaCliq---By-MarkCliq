@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/app/widgets/load_view.dart';
+import 'package:solacliq/auth/data/auth_failure.dart';
 import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
@@ -25,7 +26,9 @@ class TrackTabState extends State<TrackTab> {
   Future<Install> _fetch() =>
       context.read<InstallRepository>().mine(widget.orgId);
 
-  void reload() => setState(() => _install = _fetch());
+  void reload() => setState(() {
+    _install = _fetch();
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +46,13 @@ class TrackTabState extends State<TrackTab> {
         body: LoadView(
           future: _install,
           failedTitle: l10n.installLoadFailed,
+          notReadyCode: AuthFailureCode.installNotStarted,
+          notReady: SolaNotice(
+            key: const Key('install_not_started'),
+            title: l10n.installSetUpTitle,
+            body: l10n.installSetUpBody,
+            tone: SolaTone.neutral,
+          ),
           onRetry: reload,
           builder: (context, install) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

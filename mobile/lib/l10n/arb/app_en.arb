@@ -2702,6 +2702,18 @@
     "@keepEditing": {
         "description": "Sheet button: stay on the form."
     },
+    "installSetUpTitle": "Your install is being set up",
+    "@installSetUpTitle": {
+        "description": "Track and Payments before the company has set the install up."
+    },
+    "installSetUpBody": "Your company adds your stages, visits and payment plan here once your documents are checked.",
+    "@installSetUpBody": {
+        "description": "Under installSetUpTitle."
+    },
+    "failPaymentNotDue": "This payment isn't due. Pull down to refresh.",
+    "@failPaymentNotDue": {
+        "description": "Claiming a payment that's already claimed or paid."
+    },
     "notTakenUp": "Not taken up",
     "@notTakenUp": {
         "description": "A customer the company decided not to go ahead with (pill and banner title)."
@@ -3043,6 +3055,15 @@
         }
     },
     "bookedOnceReceived": "Your install is booked once {org} receives this.",
+    "confirmedOnceReceived": "{org} marks it paid here once they receive it.",
+    "@confirmedOnceReceived": {
+        "description": "Under a due payment after the first one.",
+        "placeholders": {
+            "org": {
+                "type": "String"
+            }
+        }
+    },
     "@bookedOnceReceived": {
         "description": "Due payment explanation.",
         "placeholders": {
@@ -3055,7 +3076,7 @@
     "@paymentClaimedTitle": {
         "description": "Banner after claiming a payment."
     },
-    "paymentClaimedBody": "{org} confirms it, usually the same day. Your receipt will appear here.",
+    "paymentClaimedBody": "{org} confirms it, usually the same day, and it shows as paid here.",
     "@paymentClaimedBody": {
         "description": "Banner.",
         "placeholders": {

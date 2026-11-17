@@ -75,7 +75,9 @@ class _BankPageState extends State<BankPage> {
     });
     if (_errors.values.any((e) => e != null)) return;
     final repo = context.read<ProfileRepository>();
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+    });
     try {
       final d = await repo.saveBank(
         holder: _holder.text.trim(),
@@ -89,9 +91,17 @@ class _BankPageState extends State<BankPage> {
         _saved = true;
       });
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.code.message(l10n));
+      if (mounted) {
+        setState(() {
+          _error = failure.code.message(l10n);
+        });
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
     }
   }
 
@@ -109,7 +119,9 @@ class _BankPageState extends State<BankPage> {
       body: LoadView(
         future: _loaded,
         failedTitle: l10n.detailsLoadFailed,
-        onRetry: () => setState(() => _loaded = _fetch()),
+        onRetry: () => setState(() {
+          _loaded = _fetch();
+        }),
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: SolaSpace.space14,

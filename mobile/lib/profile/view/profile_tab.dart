@@ -127,7 +127,7 @@ class _ProfileTabState extends State<ProfileTab> {
       case OrgRole.customer:
         final i = await context.read<InstallRepository>().mine(workspace.orgId);
         return [
-          (value: '${i.systemKw} kW', label: l10n.statSystem),
+          (value: '${formatKw(i.systemKw)} kW', label: l10n.statSystem),
           (value: '${i.stageIndex}/${i.stageCount}', label: l10n.statStage),
           (value: formatThousands(i.subsidyPaise), label: l10n.statSubsidy2),
         ];

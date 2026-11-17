@@ -136,11 +136,16 @@ class SolaStatTile extends StatelessWidget {
               if (icon != null) SolaIcon(icon, size: 16, color: soft),
             ],
           ),
-          SolaText(
-            value,
-            style: SolaTextStyle.stat,
-            color: dark ? SolaColors.cream : SolaColors.ink,
-            maxLines: 1,
+          // A long figure ("₹1,71,000") shrinks to fit, never cut off.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: SolaText(
+              value,
+              style: SolaTextStyle.stat,
+              color: dark ? SolaColors.cream : SolaColors.ink,
+              maxLines: 1,
+            ),
           ),
           Row(
             children: [

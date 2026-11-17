@@ -12,6 +12,8 @@ class LoadView<T> extends StatelessWidget {
     required this.failedTitle,
     required this.onRetry,
     required this.builder,
+    this.notReadyCode,
+    this.notReady,
     super.key,
   });
 
@@ -20,11 +22,22 @@ class LoadView<T> extends StatelessWidget {
   final VoidCallback onRetry;
   final Widget Function(BuildContext context, T data) builder;
 
+  /// A failure that only means "not there yet" (an install the company
+  /// hasn't set up): shows [notReady] instead of an error and a retry.
+  final AuthFailureCode? notReadyCode;
+  final Widget? notReady;
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<T>(
       future: future,
       builder: (context, snapshot) => switch (snapshot) {
+        AsyncSnapshot(:final AuthFailure error)
+            when notReady != null && error.code == notReadyCode =>
+          Padding(
+            padding: const EdgeInsets.only(top: SolaSpace.space26),
+            child: notReady,
+          ),
         AsyncSnapshot(:final Object error) => Padding(
           padding: const EdgeInsets.only(top: SolaSpace.space26),
           child: SolaNotice(

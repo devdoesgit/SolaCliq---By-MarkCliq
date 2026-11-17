@@ -63,18 +63,32 @@ class _DetailsPageState extends State<DetailsPage> {
     });
     if (phoneError != null) return;
     final repo = context.read<ProfileRepository>();
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+    });
     try {
       await repo.saveDetails(
         phone: AuthValidators.digits(_phone.text),
         address: _address.text.trim(),
         emergencyContact: _emergency.text.trim(),
       );
-      if (mounted) setState(() => _saved = true);
+      if (mounted) {
+        setState(() {
+          _saved = true;
+        });
+      }
     } on AuthFailure catch (failure) {
-      if (mounted) setState(() => _error = failure.code.message(l10n));
+      if (mounted) {
+        setState(() {
+          _error = failure.code.message(l10n);
+        });
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
     }
   }
 
@@ -91,7 +105,9 @@ class _DetailsPageState extends State<DetailsPage> {
       body: LoadView(
         future: _loaded,
         failedTitle: l10n.detailsLoadFailed,
-        onRetry: () => setState(() => _loaded = _fetch()),
+        onRetry: () => setState(() {
+          _loaded = _fetch();
+        }),
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: SolaSpace.space14,
