@@ -13,6 +13,8 @@ use crate::{
     error::ApiResult,
     extract::AuthUser,
     org::{OrgStatus, PayType, Role},
+    routes::uploads,
+    storage::Storage,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -55,6 +57,14 @@ pub struct OrgSummary {
     pub status: OrgStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
+    /*
+        The company's logo (F15): a 15-minute link to the PNG or JPEG.
+        Left out when the company has none (the app shows initials). The
+        path part stays the same until the logo changes, so the app can
+        cache the image by it
+    */
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logo_url: Option<String>,
 }
 
 /// The signed-in person and their memberships
@@ -72,7 +82,9 @@ pub struct OrgSummary {
     ),
 )]
 async fn get_me(State(state): State<AppState>, user: AuthUser) -> ApiResult<Json<Me>> {
-    Ok(Json(load(&state.db, user.user_id).await?))
+    Ok(Json(
+        load(&state.db, state.storage.as_ref(), user.user_id).await?,
+    ))
 }
 
 /// The row this reads. `FromRow` maps columns to fields by name.
@@ -87,7 +99,7 @@ struct UserRow {
 }
 
 /// Builds `Me` for a user. Shared with login, which returns the same shape.
-pub async fn load(db: &PgPool, user_id: Uuid) -> ApiResult<Me> {
+pub async fn load(db: &PgPool, storage: Option<&Storage>, user_id: Uuid) -> ApiResult<Me> {
     // fetch_one fails with RowNotFound (→ 404) if the account is gone.
     let u: UserRow = sqlx::query_as(
         "SELECT id, name, email, phone,
@@ -106,7 +118,7 @@ pub async fn load(db: &PgPool, user_id: Uuid) -> ApiResult<Me> {
         phone: u.phone,
         email_verified: u.email_verified,
         is_platform_admin: u.is_platform_admin,
-        memberships: memberships(db, user_id).await?,
+        memberships: memberships(db, storage, user_id).await?,
     })
 }
 
@@ -117,6 +129,7 @@ struct MembershipRow {
     org_name: String,
     org_status: OrgStatus,
     org_phone: Option<String>,
+    org_logo_key: Option<String>,
     role: Role,
     pay_type: Option<PayType>,
 }
@@ -127,11 +140,15 @@ struct MembershipRow {
     In the person's scope: `user_id` comes from their session, or from
     the password login just checked
 */
-async fn memberships(db: &PgPool, user_id: Uuid) -> ApiResult<Vec<Membership>> {
+async fn memberships(
+    db: &PgPool,
+    storage: Option<&Storage>,
+    user_id: Uuid,
+) -> ApiResult<Vec<Membership>> {
     let mut tx = crate::scope::person(db, user_id).await?;
     let rows: Vec<MembershipRow> = sqlx::query_as(
         "SELECT o.id AS org_id, o.name AS org_name, o.status AS org_status,
-                o.phone AS org_phone, m.role, m.pay_type
+                o.phone AS org_phone, o.logo_key AS org_logo_key, m.role, m.pay_type
          FROM memberships m JOIN orgs o ON o.id = m.org_id
          WHERE m.user_id = $1 AND m.removed_at IS NULL
          ORDER BY m.created_at, m.id",
@@ -141,17 +158,26 @@ async fn memberships(db: &PgPool, user_id: Uuid) -> ApiResult<Vec<Membership>> {
     .await?;
     tx.commit().await?;
 
-    Ok(rows
-        .into_iter()
-        .map(|r| Membership {
-            org: OrgSummary {
-                id: r.org_id,
-                name: r.org_name,
-                status: r.org_status,
-                phone: r.org_phone,
-            },
-            role: r.role,
-            pay_type: r.pay_type,
+    rows.into_iter()
+        .map(|r| {
+            // No link when uploads aren't set up (development without R2).
+            let logo_url = match &r.org_logo_key {
+                Some(key) => {
+                    Some(uploads::read_url(storage, r.org_id, key)?).filter(|url| !url.is_empty())
+                }
+                None => None,
+            };
+            Ok(Membership {
+                org: OrgSummary {
+                    id: r.org_id,
+                    name: r.org_name,
+                    status: r.org_status,
+                    phone: r.org_phone,
+                    logo_url,
+                },
+                role: r.role,
+                pay_type: r.pay_type,
+            })
         })
-        .collect())
+        .collect()
 }

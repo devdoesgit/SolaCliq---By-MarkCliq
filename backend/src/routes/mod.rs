@@ -10,6 +10,7 @@ pub mod expenses;
 pub mod health;
 pub mod home;
 pub mod install;
+pub mod logo;
 pub mod me;
 pub mod notifications;
 pub mod platform;
@@ -43,6 +44,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(profile::router())
         .merge(quotes::router())
         .merge(tasks::router())
+        .merge(logo::router())
         .merge(uploads::router())
 }
 

@@ -382,7 +382,7 @@ async fn login(
         Start a new session
     */
     let tokens = session::create(&state.db, &state.lifetimes, user_id, req.client).await?;
-    let user = me::load(&state.db, user_id).await?;
+    let user = me::load(&state.db, state.storage.as_ref(), user_id).await?;
 
     match req.client {
         Client::App => Ok(Json(LoginResponse {

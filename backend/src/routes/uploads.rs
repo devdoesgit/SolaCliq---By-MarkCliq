@@ -47,7 +47,8 @@ pub fn router() -> OpenApiRouter<AppState> {
     - proof photos (and a problem's photo): installers
     - receipts: whoever logs expenses, installers and agents
     - KYC documents: agents, who register customers and fix them
-    - the company's admin: any (the website, for staff ID documents)
+    - the company's admin: any (the website, for staff ID documents);
+      the company's logo is theirs alone
     - customers: none yet
 */
 fn may_upload(role: Role, purpose: UploadPurpose) -> bool {
@@ -55,11 +56,15 @@ fn may_upload(role: Role, purpose: UploadPurpose) -> bool {
         UploadPurpose::Proof => matches!(role, Role::Worker | Role::OrgAdmin),
         UploadPurpose::Receipt => matches!(role, Role::Worker | Role::Agent | Role::OrgAdmin),
         UploadPurpose::Kyc => matches!(role, Role::Agent | Role::OrgAdmin),
+        UploadPurpose::Logo => role == Role::OrgAdmin,
     }
 }
 
 // Up to 10 MB: a phone photo, a scanned document.
 const MAX_BYTES: i64 = 10 * 1024 * 1024;
+
+// A logo is shown small and fetched by every member: up to 1 MB.
+const MAX_LOGO_BYTES: i64 = 1024 * 1024;
 
 // The file types the app and website send.
 #[derive(Debug, Clone, Copy, Deserialize, ToSchema)]
@@ -91,6 +96,8 @@ pub enum UploadPurpose {
     Kyc,
     // A task's photo from the live camera.
     Proof,
+    // The company's logo (F15): PNG or JPEG, up to 1 MB.
+    Logo,
 }
 
 impl UploadPurpose {
@@ -99,6 +106,7 @@ impl UploadPurpose {
             UploadPurpose::Receipt => "receipt",
             UploadPurpose::Kyc => "kyc",
             UploadPurpose::Proof => "proof",
+            UploadPurpose::Logo => "logo",
         }
     }
 }
@@ -154,6 +162,17 @@ async fn create_upload(
     }
     if !may_upload(member.role, req.purpose) {
         return Err(role_not_allowed());
+    }
+    if req.purpose == UploadPurpose::Logo {
+        if matches!(req.content_type, ContentType::Pdf) {
+            return Err(ApiError::validation(Vec::new())
+                .field("content_type", "A logo is a PNG or JPEG image."));
+        }
+        if req.size_bytes > MAX_LOGO_BYTES {
+            return Err(
+                ApiError::validation(Vec::new()).field("size_bytes", "A logo is up to 1 MB.")
+            );
+        }
     }
     let Some(storage) = &state.storage else {
         return Err(unavailable());
