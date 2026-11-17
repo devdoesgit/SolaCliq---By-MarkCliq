@@ -1,7 +1,9 @@
 import 'package:api_client/src/model/add_member_request.dart';
+import 'package:api_client/src/model/checklist_create.dart';
 import 'package:api_client/src/model/checklist_item.dart';
 import 'package:api_client/src/model/claim_install_payment_request.dart';
 import 'package:api_client/src/model/commission.dart';
+import 'package:api_client/src/model/commission_decision.dart';
 import 'package:api_client/src/model/customer_detail.dart';
 import 'package:api_client/src/model/customer_detail_advance.dart';
 import 'package:api_client/src/model/customer_detail_documents.dart';
@@ -12,7 +14,9 @@ import 'package:api_client/src/model/customer_registration.dart';
 import 'package:api_client/src/model/customer_registration_create.dart';
 import 'package:api_client/src/model/customer_registration_create_documents_inner.dart';
 import 'package:api_client/src/model/customer_summary.dart';
+import 'package:api_client/src/model/customer_verify.dart';
 import 'package:api_client/src/model/device_registration.dart';
+import 'package:api_client/src/model/done.dart';
 import 'package:api_client/src/model/email_request.dart';
 import 'package:api_client/src/model/expense.dart';
 import 'package:api_client/src/model/expense_create.dart';
@@ -43,11 +47,13 @@ import 'package:api_client/src/model/membership.dart';
 import 'package:api_client/src/model/membership_org.dart';
 import 'package:api_client/src/model/my_document.dart';
 import 'package:api_client/src/model/my_document_list.dart';
+import 'package:api_client/src/model/note_body.dart';
 import 'package:api_client/src/model/notification.dart';
 import 'package:api_client/src/model/notification_page.dart';
 import 'package:api_client/src/model/org_registration_create.dart';
 import 'package:api_client/src/model/org_status_change.dart';
 import 'package:api_client/src/model/page_info.dart';
+import 'package:api_client/src/model/payment_request.dart';
 import 'package:api_client/src/model/payout_bank.dart';
 import 'package:api_client/src/model/person.dart';
 import 'package:api_client/src/model/personal_details.dart';
@@ -66,13 +72,17 @@ import 'package:api_client/src/model/refresh_request.dart';
 import 'package:api_client/src/model/replace_customer_document_request.dart';
 import 'package:api_client/src/model/replace_expense_receipt_request.dart';
 import 'package:api_client/src/model/reset_password_request.dart';
+import 'package:api_client/src/model/review_item.dart';
+import 'package:api_client/src/model/review_queue.dart';
 import 'package:api_client/src/model/send_task_message_request.dart';
 import 'package:api_client/src/model/set_task_checklist_item_request.dart';
 import 'package:api_client/src/model/settings.dart';
 import 'package:api_client/src/model/signup_request.dart';
+import 'package:api_client/src/model/slot_create.dart';
 import 'package:api_client/src/model/submit_task_request.dart';
 import 'package:api_client/src/model/task.dart';
 import 'package:api_client/src/model/task_approved.dart';
+import 'package:api_client/src/model/task_create.dart';
 import 'package:api_client/src/model/task_customer.dart';
 import 'package:api_client/src/model/task_event.dart';
 import 'package:api_client/src/model/task_history.dart';
@@ -81,6 +91,8 @@ import 'package:api_client/src/model/task_page.dart';
 import 'package:api_client/src/model/task_problem.dart';
 import 'package:api_client/src/model/task_problem_create.dart';
 import 'package:api_client/src/model/task_ref.dart';
+import 'package:api_client/src/model/task_return.dart';
+import 'package:api_client/src/model/task_schedule.dart';
 import 'package:api_client/src/model/task_stage.dart';
 import 'package:api_client/src/model/task_summary.dart';
 import 'package:api_client/src/model/token_pair.dart';
@@ -116,6 +128,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'BillBand':
     case 'BusinessType':
+    case 'ChecklistCreate':
+      return ChecklistCreate.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ChecklistItem':
       return ChecklistItem.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -124,6 +139,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'Commission':
       return Commission.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'CommissionDecision':
+      return CommissionDecision.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'CommissionStatus':
     case 'ConnectionType':
     case 'CustomerDetail':
@@ -156,10 +174,15 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'CustomerSummary':
       return CustomerSummary.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'CustomerVerify':
+      return CustomerVerify.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'DeviceRegistration':
       return DeviceRegistration.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'DocumentStatus':
+    case 'Done':
+      return Done.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'EmailRequest':
       return EmailRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Expense':
@@ -235,6 +258,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'MyDocumentList':
       return MyDocumentList.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'NoteBody':
+      return NoteBody.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Notification':
       return Notification.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'NotificationPage':
@@ -250,6 +275,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'PageInfo':
       return PageInfo.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'PayType':
+    case 'PaymentRequest':
+      return PaymentRequest.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'PayoutBank':
       return PayoutBank.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Person':
@@ -301,6 +329,10 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ResetPasswordRequest':
       return ResetPasswordRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'ReviewItem':
+      return ReviewItem.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ReviewQueue':
+      return ReviewQueue.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Role':
     case 'RoofType':
     case 'SendTaskMessageRequest':
@@ -314,6 +346,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'SignupRequest':
       return SignupRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'SlotCreate':
+      return SlotCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'SubmitTaskRequest':
       return SubmitTaskRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -321,6 +355,8 @@ ReturnType deserialize<ReturnType, BaseType>(
       return Task.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TaskApproved':
       return TaskApproved.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TaskCreate':
+      return TaskCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TaskCustomer':
       return TaskCustomer.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TaskEvent':
@@ -339,6 +375,10 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'TaskProblemReason':
     case 'TaskRef':
       return TaskRef.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TaskReturn':
+      return TaskReturn.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TaskSchedule':
+      return TaskSchedule.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TaskStage':
       return TaskStage.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TaskStatus':

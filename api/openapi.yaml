@@ -50,6 +50,8 @@ tags:
     description: The person's details, documents and settings.
   - name: install
     description: A customer's own install and payments.
+  - name: admin
+    description: The company's side of each flow, for the admin website.
 
 paths:
   /health:
@@ -901,6 +903,35 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
 
+    post:
+      operationId: createTask
+      summary: Create a task for an installer (TSK-0001)
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Assigned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
   /orgs/{org_id}/tasks/{task_id}:
     parameters:
       - $ref: "#/components/parameters/OrgId"
@@ -1675,7 +1706,10 @@ paths:
     get:
       operationId: getMyInstall
       summary: The caller's own install with this company
-      description: Customers only. Stages, the next visit and the payment plan.
+      description: |
+        Customers only. Stages, the next visit and the payment plan. 404
+        `install.not_started` until the company has set the install up
+        (a registration still in review): the app says it's being set up.
       tags: [install]
       responses:
         "200":
@@ -1695,6 +1729,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/my-install/payments/{payment_id}/claim:
     parameters:
@@ -1709,7 +1745,9 @@ paths:
       summary: The customer says they paid an instalment
       description: |
         After paying by UPI or bank transfer. The company confirms it
-        (status `claimed` until then, `paid` after).
+        (status `claimed` until then, `paid` after). Only a `due` payment
+        of the caller's own install: 409 `payment.not_due` otherwise, 404
+        for a payment that isn't theirs.
       tags: [install]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1739,8 +1777,530 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
         "409":
           $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/customers/{customer_id}/commission:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: approveCommission
+      summary: Approve an agent's commission, as asked or changed
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommissionDecision'
+      responses:
+        '200':
+          description: Approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/customers/{customer_id}/commission/paid:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: payCommission
+      summary: Mark a payable commission paid
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: Paid out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/customers/{customer_id}/documents/{kind}/return:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: returnCustomerDocument
+      summary: Send one KYC document back to the agent
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      parameters:
+      - name: kind
+        in: path
+        description: The document to send back.
+        required: true
+        schema:
+          $ref: '#/components/schemas/KycKind'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteBody'
+      responses:
+        '200':
+          description: Sent back to the agent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/customers/{customer_id}/handover:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: handOver
+      summary: Hand the system over to the customer
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: Handed over.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/customers/{customer_id}/reject:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: rejectCustomer
+      summary: Don't take a customer up
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteBody'
+      responses:
+        '200':
+          description: Not taken up.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/customers/{customer_id}/verify:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/CustomerId'
+    post:
+      operationId: verifyCustomer
+      summary: Verify a registration and set up the install
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerVerify'
+      responses:
+        '200':
+          description: Verified, install set up.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/expenses/{expense_id}/approve:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/ExpenseId'
+    post:
+      operationId: approveExpense
+      summary: Approve an expense
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: Approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/expenses/{expense_id}/paid:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/ExpenseId'
+    post:
+      operationId: payExpense
+      summary: Mark an approved expense paid
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: Paid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/expenses/{expense_id}/return:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/ExpenseId'
+    post:
+      operationId: returnExpense
+      summary: Send an expense back for a new receipt
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteBody'
+      responses:
+        '200':
+          description: Sent back.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/payments/{payment_id}/confirm:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    post:
+      operationId: confirmPayment
+      summary: Confirm a payment was received
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      parameters:
+      - name: payment_id
+        in: path
+        description: The payment.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Paid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/payments/{payment_id}/request:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    post:
+      operationId: requestPayment
+      summary: Ask the customer for the next payment
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      parameters:
+      - name: payment_id
+        in: path
+        description: The payment.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Due.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/review:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    get:
+      operationId: getReviewQueue
+      summary: Everything waiting for the admin, oldest first
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: What's waiting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueue'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/tasks/{task_id}/approve:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/TaskId'
+    post:
+      operationId: approveTask
+      summary: Approve a submitted task; the customer moves to the next stage
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      responses:
+        '200':
+          description: Approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/tasks/{task_id}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/TaskId'
+    post:
+      operationId: cancelTask
+      summary: Cancel an open task
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteBody'
+      responses:
+        '200':
+          description: Cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/tasks/{task_id}/return:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/TaskId'
+    post:
+      operationId: returnTask
+      summary: Send a submitted task back, with photos to retake
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReturn'
+      responses:
+        '200':
+          description: Sent back.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+
+  /orgs/{org_id}/tasks/{task_id}/schedule:
+    parameters:
+    - $ref: '#/components/parameters/OrgId'
+    - $ref: '#/components/parameters/TaskId'
+    put:
+      operationId: scheduleTask
+      summary: Reschedule or reassign an open task; closes a reported problem
+      description: Company admins only (the website). Writes the history and the notification
+        the other person sees. See docs/features/admin-actions.md.
+      tags:
+      - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSchedule'
+      responses:
+        '200':
+          description: Rescheduled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Done'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
 
 components:
   securitySchemes:
@@ -3447,3 +4007,203 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/InstallPayment"
+
+    ChecklistCreate:
+      type: object
+      required:
+      - id
+      - text
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+
+    CommissionDecision:
+      type: object
+      properties:
+        amount:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        note:
+          type:
+          - string
+          - 'null'
+
+    CustomerVerify:
+      type: object
+      required:
+      - total
+      properties:
+        subsidy:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        total:
+          type: integer
+          format: int64
+
+    Done:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type:
+          - string
+          - 'null'
+
+    NoteBody:
+      type: object
+      required:
+      - note
+      properties:
+        note:
+          type: string
+
+    PaymentRequest:
+      type: object
+      required:
+      - due_on
+      properties:
+        due_on:
+          type: string
+          format: date
+
+    ReviewItem:
+      type: object
+      required:
+      - id
+      - reference
+      - title
+      - person
+      - status
+      - at
+      properties:
+        at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        person:
+          type: string
+        reference:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+
+    ReviewQueue:
+      type: object
+      required:
+      - tasks
+      - expenses
+      - registrations
+      - commissions
+      - payments
+      properties:
+        commissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+        registrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+
+    SlotCreate:
+      type: object
+      required:
+      - id
+      - label
+      properties:
+        hint:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+        label:
+          type: string
+
+    TaskCreate:
+      type: object
+      required:
+      - customer_id
+      - title
+      - stage_index
+      - assignee_id
+      - due_at
+      properties:
+        admin_note:
+          type:
+          - string
+          - 'null'
+        assignee_id:
+          type: string
+          format: uuid
+        checklist:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistCreate'
+        customer_id:
+          type: string
+          format: uuid
+        due_at:
+          type: string
+          format: date-time
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotCreate'
+        stage_index:
+          type: integer
+          format: int32
+        title:
+          type: string
+
+    TaskReturn:
+      type: object
+      required:
+      - note
+      properties:
+        note:
+          type: string
+        retake:
+          type: array
+          items:
+            type: string
+
+    TaskSchedule:
+      type: object
+      required:
+      - due_at
+      properties:
+        assignee_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        due_at:
+          type: string
+          format: date-time

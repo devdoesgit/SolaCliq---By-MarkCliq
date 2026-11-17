@@ -20,7 +20,7 @@ class InstallApi {
   const InstallApi(this._dio);
 
   /// The customer says they paid an instalment
-  /// After paying by UPI or bank transfer. The company confirms it (status &#x60;claimed&#x60; until then, &#x60;paid&#x60; after).
+  /// After paying by UPI or bank transfer. The company confirms it (status &#x60;claimed&#x60; until then, &#x60;paid&#x60; after). Only a &#x60;due&#x60; payment of the caller&#39;s own install: 409 &#x60;payment.not_due&#x60; otherwise, 404 for a payment that isn&#39;t theirs.
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.
@@ -135,7 +135,7 @@ class InstallApi {
   }
 
   /// The caller&#39;s own install with this company
-  /// Customers only. Stages, the next visit and the payment plan.
+  /// Customers only. Stages, the next visit and the payment plan. 404 &#x60;install.not_started&#x60; until the company has set the install up (a registration still in review): the app says it&#39;s being set up.
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.

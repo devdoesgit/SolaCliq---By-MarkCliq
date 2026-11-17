@@ -53,13 +53,16 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import 'package:api_client/api_client.dart';
 
 
-final api = ApiClient().getAuthApi();
-final EmailRequest emailRequest = ; // EmailRequest | 
+final api = ApiClient().getAdminApi();
+final String orgId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message. 
+final String customerId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final CommissionDecision commissionDecision = ; // CommissionDecision | 
 
 try {
-    api.forgotPassword(emailRequest);
+    final response = await api.approveCommission(orgId, customerId, commissionDecision);
+    print(response);
 } on DioException catch (e) {
-    print("Exception when calling AuthApi->forgotPassword: $e\n");
+    print("Exception when calling AdminApi->approveCommission: $e\n");
 }
 
 ```
@@ -70,6 +73,23 @@ All URIs are relative to *https://solacliq.markcliq.com/api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AdminApi*](doc/AdminApi.md) | [**approveCommission**](doc/AdminApi.md#approvecommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission | Approve an agent&#39;s commission, as asked or changed
+[*AdminApi*](doc/AdminApi.md) | [**approveExpense**](doc/AdminApi.md#approveexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/approve | Approve an expense
+[*AdminApi*](doc/AdminApi.md) | [**approveTask**](doc/AdminApi.md#approvetask) | **POST** /orgs/{org_id}/tasks/{task_id}/approve | Approve a submitted task; the customer moves to the next stage
+[*AdminApi*](doc/AdminApi.md) | [**cancelTask**](doc/AdminApi.md#canceltask) | **POST** /orgs/{org_id}/tasks/{task_id}/cancel | Cancel an open task
+[*AdminApi*](doc/AdminApi.md) | [**confirmPayment**](doc/AdminApi.md#confirmpayment) | **POST** /orgs/{org_id}/payments/{payment_id}/confirm | Confirm a payment was received
+[*AdminApi*](doc/AdminApi.md) | [**createTask**](doc/AdminApi.md#createtask) | **POST** /orgs/{org_id}/tasks | Create a task for an installer (TSK-0001)
+[*AdminApi*](doc/AdminApi.md) | [**getReviewQueue**](doc/AdminApi.md#getreviewqueue) | **GET** /orgs/{org_id}/review | Everything waiting for the admin, oldest first
+[*AdminApi*](doc/AdminApi.md) | [**handOver**](doc/AdminApi.md#handover) | **POST** /orgs/{org_id}/customers/{customer_id}/handover | Hand the system over to the customer
+[*AdminApi*](doc/AdminApi.md) | [**payCommission**](doc/AdminApi.md#paycommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission/paid | Mark a payable commission paid
+[*AdminApi*](doc/AdminApi.md) | [**payExpense**](doc/AdminApi.md#payexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/paid | Mark an approved expense paid
+[*AdminApi*](doc/AdminApi.md) | [**rejectCustomer**](doc/AdminApi.md#rejectcustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/reject | Don&#39;t take a customer up
+[*AdminApi*](doc/AdminApi.md) | [**requestPayment**](doc/AdminApi.md#requestpayment) | **POST** /orgs/{org_id}/payments/{payment_id}/request | Ask the customer for the next payment
+[*AdminApi*](doc/AdminApi.md) | [**returnCustomerDocument**](doc/AdminApi.md#returncustomerdocument) | **POST** /orgs/{org_id}/customers/{customer_id}/documents/{kind}/return | Send one KYC document back to the agent
+[*AdminApi*](doc/AdminApi.md) | [**returnExpense**](doc/AdminApi.md#returnexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/return | Send an expense back for a new receipt
+[*AdminApi*](doc/AdminApi.md) | [**returnTask**](doc/AdminApi.md#returntask) | **POST** /orgs/{org_id}/tasks/{task_id}/return | Send a submitted task back, with photos to retake
+[*AdminApi*](doc/AdminApi.md) | [**scheduleTask**](doc/AdminApi.md#scheduletask) | **PUT** /orgs/{org_id}/tasks/{task_id}/schedule | Reschedule or reassign an open task; closes a reported problem
+[*AdminApi*](doc/AdminApi.md) | [**verifyCustomer**](doc/AdminApi.md#verifycustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/verify | Verify a registration and set up the install
 [*AuthApi*](doc/AuthApi.md) | [**forgotPassword**](doc/AuthApi.md#forgotpassword) | **POST** /auth/password/forgot | Email a password reset or set-up code
 [*AuthApi*](doc/AuthApi.md) | [**getMe**](doc/AuthApi.md#getme) | **GET** /me | The signed-in person and their memberships
 [*AuthApi*](doc/AuthApi.md) | [**login**](doc/AuthApi.md#login) | **POST** /auth/login | Log in
@@ -126,9 +146,11 @@ Class | Method | HTTP request | Description
  - [AddMemberRequest](doc/AddMemberRequest.md)
  - [BillBand](doc/BillBand.md)
  - [BusinessType](doc/BusinessType.md)
+ - [ChecklistCreate](doc/ChecklistCreate.md)
  - [ChecklistItem](doc/ChecklistItem.md)
  - [ClaimInstallPaymentRequest](doc/ClaimInstallPaymentRequest.md)
  - [Commission](doc/Commission.md)
+ - [CommissionDecision](doc/CommissionDecision.md)
  - [CommissionStatus](doc/CommissionStatus.md)
  - [ConnectionType](doc/ConnectionType.md)
  - [CustomerDetail](doc/CustomerDetail.md)
@@ -141,8 +163,10 @@ Class | Method | HTTP request | Description
  - [CustomerRegistrationCreate](doc/CustomerRegistrationCreate.md)
  - [CustomerRegistrationCreateDocumentsInner](doc/CustomerRegistrationCreateDocumentsInner.md)
  - [CustomerSummary](doc/CustomerSummary.md)
+ - [CustomerVerify](doc/CustomerVerify.md)
  - [DeviceRegistration](doc/DeviceRegistration.md)
  - [DocumentStatus](doc/DocumentStatus.md)
+ - [Done](doc/Done.md)
  - [EmailRequest](doc/EmailRequest.md)
  - [Expense](doc/Expense.md)
  - [ExpenseCategory](doc/ExpenseCategory.md)
@@ -179,6 +203,7 @@ Class | Method | HTTP request | Description
  - [MembershipOrg](doc/MembershipOrg.md)
  - [MyDocument](doc/MyDocument.md)
  - [MyDocumentList](doc/MyDocumentList.md)
+ - [NoteBody](doc/NoteBody.md)
  - [Notification](doc/Notification.md)
  - [NotificationPage](doc/NotificationPage.md)
  - [OrgRegistrationCreate](doc/OrgRegistrationCreate.md)
@@ -186,6 +211,7 @@ Class | Method | HTTP request | Description
  - [OrgStatusChange](doc/OrgStatusChange.md)
  - [PageInfo](doc/PageInfo.md)
  - [PayType](doc/PayType.md)
+ - [PaymentRequest](doc/PaymentRequest.md)
  - [PayoutBank](doc/PayoutBank.md)
  - [Person](doc/Person.md)
  - [PersonalDetails](doc/PersonalDetails.md)
@@ -206,15 +232,19 @@ Class | Method | HTTP request | Description
  - [ReplaceCustomerDocumentRequest](doc/ReplaceCustomerDocumentRequest.md)
  - [ReplaceExpenseReceiptRequest](doc/ReplaceExpenseReceiptRequest.md)
  - [ResetPasswordRequest](doc/ResetPasswordRequest.md)
+ - [ReviewItem](doc/ReviewItem.md)
+ - [ReviewQueue](doc/ReviewQueue.md)
  - [Role](doc/Role.md)
  - [RoofType](doc/RoofType.md)
  - [SendTaskMessageRequest](doc/SendTaskMessageRequest.md)
  - [SetTaskChecklistItemRequest](doc/SetTaskChecklistItemRequest.md)
  - [Settings](doc/Settings.md)
  - [SignupRequest](doc/SignupRequest.md)
+ - [SlotCreate](doc/SlotCreate.md)
  - [SubmitTaskRequest](doc/SubmitTaskRequest.md)
  - [Task](doc/Task.md)
  - [TaskApproved](doc/TaskApproved.md)
+ - [TaskCreate](doc/TaskCreate.md)
  - [TaskCustomer](doc/TaskCustomer.md)
  - [TaskEvent](doc/TaskEvent.md)
  - [TaskHistory](doc/TaskHistory.md)
@@ -224,6 +254,8 @@ Class | Method | HTTP request | Description
  - [TaskProblemCreate](doc/TaskProblemCreate.md)
  - [TaskProblemReason](doc/TaskProblemReason.md)
  - [TaskRef](doc/TaskRef.md)
+ - [TaskReturn](doc/TaskReturn.md)
+ - [TaskSchedule](doc/TaskSchedule.md)
  - [TaskStage](doc/TaskStage.md)
  - [TaskStatus](doc/TaskStatus.md)
  - [TaskSummary](doc/TaskSummary.md)
