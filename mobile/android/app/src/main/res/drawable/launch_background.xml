@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- The launch screen (Android 7 to 11): cream, with SolaCliq's mark over its
+     wordmark (ic_splash, from the logo kit) in a 288 dp square, as Android 12+ draws
+     its splash (values-v31). The app's SplashPage continues it at the same size and
+     place. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <item android:gravity="center" android:drawable="@drawable/ic_launch_image" />
+    <item android:drawable="@color/ic_launcher_background" />
+    <item android:gravity="center" android:width="288dp" android:height="288dp"
+        android:drawable="@drawable/ic_splash" />
 </layer-list>

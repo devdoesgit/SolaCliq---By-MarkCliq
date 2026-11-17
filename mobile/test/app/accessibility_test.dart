@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:solacliq/access/view/request_access_page.dart';
+import 'package:solacliq/app/view/splash_page.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/intro_page.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
@@ -346,6 +347,7 @@ void main() {
     'earnings': (const EarningsTab(orgId: 'o1'), agent),
     'track': (const TrackTab(orgId: 'o1'), customer),
     'payments': (PaymentsTab(workspace: customer), customer),
+    'splash': (const SplashPage(), worker),
     'settings': (const SettingsPage(), worker),
     'personal details': (DetailsPage(account: testAccount()), worker),
     'bank': (const BankPage(title: 'Bank for payouts'), agent),

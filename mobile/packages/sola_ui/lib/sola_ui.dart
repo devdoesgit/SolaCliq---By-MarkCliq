@@ -3,6 +3,7 @@
 /// `src/`.
 library;
 
+export 'src/brand/sola_logo.dart';
 export 'src/format/date.dart';
 export 'src/format/money.dart';
 export 'src/format/power.dart';
