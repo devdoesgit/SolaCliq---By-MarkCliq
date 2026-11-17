@@ -3,7 +3,8 @@ import 'package:equatable/equatable.dart';
 import 'package:solacliq/app/data/api_call.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
 
-enum KycStatus { inReview, needsFix, approved }
+/// `rejected`: the company decided not to take the customer up.
+enum KycStatus { inReview, needsFix, approved, rejected }
 
 /// `approved` waits for the customer's advance; `payable` once it is paid.
 enum CommissionStatus { inReview, approved, payable, paid }
@@ -240,6 +241,7 @@ class CustomerRepository {
       api.KycStatus.inReview => KycStatus.inReview,
       api.KycStatus.needsFix => KycStatus.needsFix,
       api.KycStatus.approved => KycStatus.approved,
+      api.KycStatus.rejected => KycStatus.rejected,
     },
     detail: detail,
     sentAt: sentAt,

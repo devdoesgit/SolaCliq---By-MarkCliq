@@ -1408,7 +1408,7 @@
     "@checkSubmit": {
         "description": "Review title."
     },
-    "checkSubmitBody": "Your admin approves before {name} gets their login.",
+    "checkSubmitBody": "{name} gets an email to set up the app at once; your admin checks the documents.",
     "@checkSubmitBody": {
         "description": "Review text.",
         "placeholders": {
@@ -2657,6 +2657,10 @@
                 "type": "int"
             }
         }
+    },
+    "notTakenUp": "Not taken up",
+    "@notTakenUp": {
+        "description": "A customer the company decided not to go ahead with (pill and banner title)."
     },
     "withAdmin": "With your admin",
     "@withAdmin": {

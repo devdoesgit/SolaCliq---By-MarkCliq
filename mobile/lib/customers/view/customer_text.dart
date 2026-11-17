@@ -20,6 +20,7 @@ extension KycStatusText on KycStatus {
       tone: SolaTone.success,
       icon: SolaIcons.check,
     ),
+    KycStatus.rejected => SolaPill(l10n.notTakenUp, icon: SolaIcons.close),
   };
 }
 

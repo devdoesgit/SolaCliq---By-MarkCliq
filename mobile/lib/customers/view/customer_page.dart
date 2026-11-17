@@ -123,16 +123,18 @@ class _Details extends StatelessWidget {
             ],
           ),
         ),
-        SolaProgressCard(
-          label: c.stageIndex == null
-              ? l10n.installProgress
-              : l10n.stageXofY(index, count),
-          trailing: c.stageLabel ?? l10n.startsAfterKyc,
-          segments: [
-            for (var i = 1; i <= count; i++)
-              SolaSegment(1, i <= index ? SolaColors.sun : SolaColors.track),
-          ],
-        ),
+        // A customer not taken up has no install to follow.
+        if (s.kyc != KycStatus.rejected)
+          SolaProgressCard(
+            label: c.stageIndex == null
+                ? l10n.installProgress
+                : l10n.stageXofY(index, count),
+            trailing: c.stageLabel ?? l10n.startsAfterKyc,
+            segments: [
+              for (var i = 1; i <= count; i++)
+                SolaSegment(1, i <= index ? SolaColors.sun : SolaColors.track),
+            ],
+          ),
         if (returned != null)
           SolaBanner(
             title: l10n.docReturned(returned.title.toLowerCase()),
@@ -147,6 +149,12 @@ class _Details extends StatelessWidget {
             title: l10n.withAdmin,
             body: l10n.withAdminSent(formatWhen(s.sentAt)),
             icon: SolaIcons.hourglass,
+          )
+        else if (s.kyc == KycStatus.rejected)
+          SolaBanner(
+            title: l10n.notTakenUp,
+            body: s.detail,
+            icon: SolaIcons.close,
           ),
         if (c.documentsDetail != null || c.advancePaidOn != null)
           SolaGroup(
