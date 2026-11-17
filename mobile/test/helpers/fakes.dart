@@ -122,6 +122,7 @@ AccountMembership testMembership({
   OrgStatus status = OrgStatus.active,
   OrgRole role = OrgRole.worker,
   PayType? payType,
+  String? orgLogoUrl,
 }) => AccountMembership(
   orgId: orgId,
   orgName: orgName,
@@ -129,6 +130,7 @@ AccountMembership testMembership({
   role: role,
   payType: payType,
   orgPhone: '9814000000',
+  orgLogoUrl: orgLogoUrl,
 );
 
 Account testAccount({

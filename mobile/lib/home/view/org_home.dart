@@ -170,6 +170,7 @@ class _OrgHomeViewState extends State<OrgHomeView> {
               initials: widget.account.initials,
               eyebrow: summary?.eyebrow ?? workspace.orgName,
               title: summary?.title ?? widget.account.firstName,
+              logoUrl: workspace.orgLogoUrl,
               workspaceLine: line,
               unread: (summary?.unreadNotifications ?? 0) > 0,
               onAvatar: widget.onOpen == null ? null : () => _open('profile'),

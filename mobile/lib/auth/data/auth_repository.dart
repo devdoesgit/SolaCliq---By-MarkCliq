@@ -249,6 +249,7 @@ class AuthRepository {
         AccountMembership(
           orgId: m.org.id,
           orgName: m.org.name,
+          orgLogoUrl: m.org.logoUrl,
           orgStatus: switch (m.org.status) {
             api.OrgStatus.pending => OrgStatus.pending,
             api.OrgStatus.active => OrgStatus.active,

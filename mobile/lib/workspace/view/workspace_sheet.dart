@@ -10,6 +10,7 @@ import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/workspace/cubit/workspace_cubit.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
+import 'package:solacliq/workspace/view/company_logo.dart';
 
 /// Opens the workspace sheet: every company the person works with, their
 /// Personal workspace, and log out. Choosing one switches at once.
@@ -96,27 +97,17 @@ class _WorkspaceRow extends StatelessWidget {
         semanticsLabel: selected ? '${l10n.personal}, ${l10n.selected}' : null,
         onTap: onTap,
       ),
-      MemberWorkspace(
-        :final orgName,
-        :final role,
-        :final orgStatus,
-        :final orgInitials,
-      ) =>
-        SolaListRow(
-          key: ValueKey('workspace_${workspace.id}'),
-          title: orgName,
-          subtitle: orgStatus == OrgStatus.active
-              ? role.label(l10n)
-              : '${role.label(l10n)} · ${orgStatus.label(l10n)}',
-          leading: SolaAvatar(
-            initials: orgInitials,
-            color: SolaColors.brown,
-            foreground: SolaColors.cream,
-          ),
-          trailing: trailing,
-          semanticsLabel: selected ? '$orgName, ${l10n.selected}' : null,
-          onTap: onTap,
-        ),
+      final MemberWorkspace member => SolaListRow(
+        key: ValueKey('workspace_${workspace.id}'),
+        title: member.orgName,
+        subtitle: member.orgStatus == OrgStatus.active
+            ? member.role.label(l10n)
+            : '${member.role.label(l10n)} · ${member.orgStatus.label(l10n)}',
+        leading: CompanyBadge(workspace: member),
+        trailing: trailing,
+        semanticsLabel: selected ? '${member.orgName}, ${l10n.selected}' : null,
+        onTap: onTap,
+      ),
     };
   }
 }

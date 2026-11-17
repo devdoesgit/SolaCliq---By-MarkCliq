@@ -35,6 +35,7 @@ final class MemberWorkspace extends Workspace {
   OrgRole get role => membership.role;
   OrgStatus get orgStatus => membership.orgStatus;
   String? get orgPhone => membership.orgPhone;
+  String? get orgLogoUrl => membership.orgLogoUrl;
 
   /// Sales who earn a commission on each customer they add. Without a pay
   /// type they are treated as salaried, so no commission is ever offered

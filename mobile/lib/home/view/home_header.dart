@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/workspace/view/company_logo.dart';
 import 'package:solacliq/workspace/view/workspace_sheet.dart';
 
 /// The top of every home: the person's avatar (workspaces and log out), an
@@ -13,6 +14,7 @@ class HomeHeader extends StatelessWidget {
     required this.initials,
     required this.eyebrow,
     required this.title,
+    this.logoUrl,
     this.workspaceLine,
     this.onAvatar,
     this.onBell,
@@ -23,6 +25,10 @@ class HomeHeader extends StatelessWidget {
   final String initials;
   final String eyebrow;
   final String title;
+
+  /// The company's logo, shown above the titles: the company's own look
+  /// in its people's app (F15).
+  final String? logoUrl;
 
   /// "Arka Solar · Worker", which opens the workspace sheet.
   final String? workspaceLine;
@@ -40,9 +46,15 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final line = workspaceLine;
+    final logo = logoUrl;
     final titles = Column(
       spacing: SolaSpace.space2,
       children: [
+        if (logo != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: SolaSpace.space4),
+            child: CompanyLogo(url: logo),
+          ),
         SolaText(
           eyebrow,
           style: SolaTextStyle.eyebrow,

@@ -19,6 +19,7 @@ class AccountMembership extends Equatable {
     required this.role,
     this.payType,
     this.orgPhone,
+    this.orgLogoUrl,
   });
 
   final String orgId;
@@ -32,6 +33,9 @@ class AccountMembership extends Equatable {
   /// The company's number, ten digits, for its people to call.
   final String? orgPhone;
 
+  /// The company's logo, a short-lived link; null shows its initials.
+  final String? orgLogoUrl;
+
   @override
   List<Object?> get props => [
     orgId,
@@ -40,6 +44,7 @@ class AccountMembership extends Equatable {
     role,
     payType,
     orgPhone,
+    orgLogoUrl,
   ];
 }
 
