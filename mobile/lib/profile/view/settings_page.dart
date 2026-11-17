@@ -11,9 +11,6 @@ import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/push/push_controller.dart';
 
-/// The app's version, set at build time (`--dart-define=APP_VERSION=`).
-const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0');
-
 /// Notification settings, the same on every phone the person uses. The
 /// app is English only, so there's no language choice.
 /// Each change saves straight away.
@@ -137,13 +134,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-              const SizedBox(height: SolaSpace.space10),
-              SolaText(
-                l10n.appVersion(appVersion),
-                style: SolaTextStyle.meta,
-                color: SolaColors.muted,
-                textAlign: TextAlign.center,
-              ),
             ],
           );
         },

@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/account/widgets/log_out_bar.dart';
 import 'package:solacliq/app/routes.dart';
+import 'package:solacliq/app/widgets/app_version.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/app/widgets/help_sheet.dart';
 import 'package:solacliq/app/widgets/load_view.dart';
@@ -321,6 +322,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ],
           ),
           const LogOutButton(variant: SolaButtonVariant.warn),
+          const AppVersionFooter(),
         ],
       ),
     );

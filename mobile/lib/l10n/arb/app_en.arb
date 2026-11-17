@@ -3277,14 +3277,33 @@
     "@soundSettingSub": {
         "description": "Setting."
     },
-    "appVersion": "SolaCliq by MarkCliq · version {version}",
+    "appVersion": "v{version} · {appName} by MarkCliq",
     "@appVersion": {
-        "description": "Footer.",
+        "description": "Footer at the bottom of the Profile tab: the installed version and the product name.",
         "placeholders": {
             "version": {
-                "type": "String"
+                "type": "String",
+                "example": "1.0.0"
+            },
+            "appName": {
+                "type": "String",
+                "example": "SolaCliq"
             }
         }
+    },
+    "appVersionNumber": "v{version} ·",
+    "@appVersionNumber": {
+        "description": "Profile footer, before the SolaCliq wordmark: the installed version.",
+        "placeholders": {
+            "version": {
+                "type": "String",
+                "example": "1.0.0"
+            }
+        }
+    },
+    "appByMarkCliq": "by MarkCliq",
+    "@appByMarkCliq": {
+        "description": "Profile footer, after the SolaCliq wordmark."
     },
     "settingsLoadFailed": "Couldn't load your settings",
     "@settingsLoadFailed": {
