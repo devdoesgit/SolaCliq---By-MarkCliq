@@ -629,7 +629,7 @@ async fn editable(conn: &mut PgConnection, user_id: Uuid, task_id: Uuid) -> ApiR
 }
 
 // One line in the task's history, in the caller's transaction.
-async fn event(
+pub(crate) async fn event(
     conn: &mut PgConnection,
     org_id: Uuid,
     task_id: Uuid,

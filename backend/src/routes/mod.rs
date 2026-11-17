@@ -2,6 +2,7 @@
 //! `router()` that `router()` below merges; handlers carry `#[utoipa::path]`
 //! so the spec is generated from them.
 
+pub mod admin;
 pub mod auth;
 pub mod customers;
 pub mod expenses;
@@ -33,6 +34,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(notifications::router())
         .merge(team::router())
         .merge(registration::router())
+        .merge(admin::router())
         .merge(customers::router())
         .merge(expenses::router())
         .merge(platform::router())

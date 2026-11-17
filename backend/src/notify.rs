@@ -96,6 +96,46 @@ pub async fn add_personal(
     Ok(())
 }
 
+// What a company notification opens in the app, when anything.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Links {
+    pub task_id: Option<Uuid>,
+    pub expense_id: Option<Uuid>,
+    pub customer_id: Option<Uuid>,
+}
+
+/*
+    A notification for `user_id` in one company, in the caller's
+    transaction: it exists only if the change it describes does
+*/
+pub async fn add(
+    conn: &mut PgConnection,
+    org_id: Uuid,
+    user_id: Uuid,
+    kind: Kind,
+    title: &str,
+    body: &str,
+    links: Links,
+) -> ApiResult<()> {
+    sqlx::query(
+        "INSERT INTO notifications (id, user_id, org_id, kind, title, body,
+                                    task_id, expense_id, customer_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    )
+    .bind(Uuid::now_v7())
+    .bind(user_id)
+    .bind(org_id)
+    .bind(kind)
+    .bind(title)
+    .bind(body)
+    .bind(links.task_id)
+    .bind(links.expense_id)
+    .bind(links.customer_id)
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
 // Marks every unread one in a feed read (`org_id` None: the person's own).
 pub async fn read_all(
     conn: &mut PgConnection,
