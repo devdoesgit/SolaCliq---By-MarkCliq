@@ -34,7 +34,7 @@ class UploadCreate {
   @JsonKey(name: r'size_bytes', required: true, includeIfNull: false)
   final int sizeBytes;
 
-  /// `proof`: a task's photo from the live camera.
+  /// `proof`: a task's photo from the live camera. `logo`: the company's logo (F15), org admin only, PNG or JPEG up to 1 MB.
   @JsonKey(name: r'purpose', required: true, includeIfNull: false)
   final UploadCreatePurposeEnum purpose;
 
@@ -80,14 +80,16 @@ enum UploadCreateContentTypeEnum {
   String toString() => value;
 }
 
-/// `proof`: a task's photo from the live camera.
+/// `proof`: a task's photo from the live camera. `logo`: the company's logo (F15), org admin only, PNG or JPEG up to 1 MB.
 enum UploadCreatePurposeEnum {
   @JsonValue(r'receipt')
   receipt(r'receipt'),
   @JsonValue(r'kyc')
   kyc(r'kyc'),
   @JsonValue(r'proof')
-  proof(r'proof');
+  proof(r'proof'),
+  @JsonValue(r'logo')
+  logo(r'logo');
 
   const UploadCreatePurposeEnum(this.value);
 

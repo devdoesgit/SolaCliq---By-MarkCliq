@@ -128,4 +128,5 @@ const _$UploadCreatePurposeEnumEnumMap = {
   UploadCreatePurposeEnum.receipt: 'receipt',
   UploadCreatePurposeEnum.kyc: 'kyc',
   UploadCreatePurposeEnum.proof: 'proof',
+  UploadCreatePurposeEnum.logo: 'logo',
 };

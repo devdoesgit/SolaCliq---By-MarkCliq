@@ -27,6 +27,8 @@ class MembershipOrg {
     required this.status,
 
     this.phone,
+
+    this.logoUrl,
   });
 
   /// UUIDv7.
@@ -43,19 +45,24 @@ class MembershipOrg {
   @JsonKey(name: r'phone', required: false, includeIfNull: false)
   final String? phone;
 
+  /// The company's logo (F15), PNG or JPEG: a link that works for 15 minutes. Absent when the company has none (the app shows its initials). The URL's path stays the same until the logo changes, so clients cache the image by it.
+  @JsonKey(name: r'logo_url', required: false, includeIfNull: false)
+  final String? logoUrl;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is MembershipOrg &&
             runtimeType == other.runtimeType &&
             equals(
-              [id, name, status, phone],
-              [other.id, other.name, other.status, other.phone],
+              [id, name, status, phone, logoUrl],
+              [other.id, other.name, other.status, other.phone, other.logoUrl],
             );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([id, name, status, phone]);
+      runtimeType.hashCode ^
+      mapPropsToHashCode([id, name, status, phone, logoUrl]);
 
   factory MembershipOrg.fromJson(Map<String, dynamic> json) =>
       _$MembershipOrgFromJson(json);

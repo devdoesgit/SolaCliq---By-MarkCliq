@@ -76,6 +76,7 @@ export 'package:api_client/src/model/kyc_kind.dart';
 export 'package:api_client/src/model/kyc_status.dart';
 export 'package:api_client/src/model/login_request.dart';
 export 'package:api_client/src/model/login_response.dart';
+export 'package:api_client/src/model/logo_set.dart';
 export 'package:api_client/src/model/me.dart';
 export 'package:api_client/src/model/member.dart';
 export 'package:api_client/src/model/member_page.dart';

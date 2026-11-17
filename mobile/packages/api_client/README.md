@@ -84,11 +84,13 @@ Class | Method | HTTP request | Description
 [*AdminApi*](doc/AdminApi.md) | [**payCommission**](doc/AdminApi.md#paycommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission/paid | Mark a payable commission paid
 [*AdminApi*](doc/AdminApi.md) | [**payExpense**](doc/AdminApi.md#payexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/paid | Mark an approved expense paid
 [*AdminApi*](doc/AdminApi.md) | [**rejectCustomer**](doc/AdminApi.md#rejectcustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/reject | Don&#39;t take a customer up
+[*AdminApi*](doc/AdminApi.md) | [**removeOrgLogo**](doc/AdminApi.md#removeorglogo) | **DELETE** /orgs/{org_id}/logo | Remove the company&#39;s logo (F15)
 [*AdminApi*](doc/AdminApi.md) | [**requestPayment**](doc/AdminApi.md#requestpayment) | **POST** /orgs/{org_id}/payments/{payment_id}/request | Ask the customer for the next payment
 [*AdminApi*](doc/AdminApi.md) | [**returnCustomerDocument**](doc/AdminApi.md#returncustomerdocument) | **POST** /orgs/{org_id}/customers/{customer_id}/documents/{kind}/return | Send one KYC document back to the agent
 [*AdminApi*](doc/AdminApi.md) | [**returnExpense**](doc/AdminApi.md#returnexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/return | Send an expense back for a new receipt
 [*AdminApi*](doc/AdminApi.md) | [**returnTask**](doc/AdminApi.md#returntask) | **POST** /orgs/{org_id}/tasks/{task_id}/return | Send a submitted task back, with photos to retake
 [*AdminApi*](doc/AdminApi.md) | [**scheduleTask**](doc/AdminApi.md#scheduletask) | **PUT** /orgs/{org_id}/tasks/{task_id}/schedule | Reschedule or reassign an open task; closes a reported problem
+[*AdminApi*](doc/AdminApi.md) | [**setOrgLogo**](doc/AdminApi.md#setorglogo) | **PUT** /orgs/{org_id}/logo | Set the company&#39;s logo (F15)
 [*AdminApi*](doc/AdminApi.md) | [**verifyCustomer**](doc/AdminApi.md#verifycustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/verify | Verify a registration and set up the install
 [*AuthApi*](doc/AuthApi.md) | [**forgotPassword**](doc/AuthApi.md#forgotpassword) | **POST** /auth/password/forgot | Email a password reset or set-up code
 [*AuthApi*](doc/AuthApi.md) | [**getMe**](doc/AuthApi.md#getme) | **GET** /me | The signed-in person and their memberships
@@ -195,6 +197,7 @@ Class | Method | HTTP request | Description
  - [KycStatus](doc/KycStatus.md)
  - [LoginRequest](doc/LoginRequest.md)
  - [LoginResponse](doc/LoginResponse.md)
+ - [LogoSet](doc/LogoSet.md)
  - [Me](doc/Me.md)
  - [Member](doc/Member.md)
  - [MemberPage](doc/MemberPage.md)

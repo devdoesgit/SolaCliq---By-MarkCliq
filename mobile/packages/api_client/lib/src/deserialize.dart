@@ -40,6 +40,7 @@ import 'package:api_client/src/model/install_payment.dart';
 import 'package:api_client/src/model/install_stage.dart';
 import 'package:api_client/src/model/login_request.dart';
 import 'package:api_client/src/model/login_response.dart';
+import 'package:api_client/src/model/logo_set.dart';
 import 'package:api_client/src/model/me.dart';
 import 'package:api_client/src/model/member.dart';
 import 'package:api_client/src/model/member_page.dart';
@@ -241,6 +242,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'LoginResponse':
       return LoginResponse.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'LogoSet':
+      return LogoSet.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Me':
       return Me.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Member':

@@ -15,13 +15,21 @@ abstract class _$MembershipOrgCWProxy {
 
   MembershipOrg phone(String? phone);
 
+  MembershipOrg logoUrl(String? logoUrl);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `MembershipOrg(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
   /// ```dart
   /// MembershipOrg(...).copyWith(id: 12, name: "My name")
   /// ````
-  MembershipOrg call({String id, String name, OrgStatus status, String? phone});
+  MembershipOrg call({
+    String id,
+    String name,
+    OrgStatus status,
+    String? phone,
+    String? logoUrl,
+  });
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfMembershipOrg.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfMembershipOrg.copyWith.fieldName(...)`
@@ -43,6 +51,9 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
   MembershipOrg phone(String? phone) => this(phone: phone);
 
   @override
+  MembershipOrg logoUrl(String? logoUrl) => this(logoUrl: logoUrl);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `MembershipOrg(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -54,6 +65,7 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
     Object? name = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? phone = const $CopyWithPlaceholder(),
+    Object? logoUrl = const $CopyWithPlaceholder(),
   }) {
     return MembershipOrg(
       id: id == const $CopyWithPlaceholder()
@@ -72,6 +84,10 @@ class _$MembershipOrgCWProxyImpl implements _$MembershipOrgCWProxy {
           ? _value.phone
           // ignore: cast_nullable_to_non_nullable
           : phone as String?,
+      logoUrl: logoUrl == const $CopyWithPlaceholder()
+          ? _value.logoUrl
+          // ignore: cast_nullable_to_non_nullable
+          : logoUrl as String?,
     );
   }
 }
@@ -97,9 +113,10 @@ MembershipOrg _$MembershipOrgFromJson(Map<String, dynamic> json) =>
           (v) => $enumDecode(_$OrgStatusEnumMap, v),
         ),
         phone: $checkedConvert('phone', (v) => v as String?),
+        logoUrl: $checkedConvert('logo_url', (v) => v as String?),
       );
       return val;
-    });
+    }, fieldKeyMap: const {'logoUrl': 'logo_url'});
 
 Map<String, dynamic> _$MembershipOrgToJson(MembershipOrg instance) =>
     <String, dynamic>{
@@ -107,6 +124,7 @@ Map<String, dynamic> _$MembershipOrgToJson(MembershipOrg instance) =>
       'name': instance.name,
       'status': _$OrgStatusEnumMap[instance.status]!,
       'phone': ?instance.phone,
+      'logo_url': ?instance.logoUrl,
     };
 
 const _$OrgStatusEnumMap = {

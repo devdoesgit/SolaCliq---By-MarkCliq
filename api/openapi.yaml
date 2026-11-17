@@ -729,7 +729,9 @@ paths:
         uses a `.invalid` host, which the development app treats as
         uploaded. Each kind is for the roles that use it: `proof` for
         workers, `receipt` for workers and agents, `kyc` for agents; the
-        org admin may upload any. Otherwise 403 `org.role_not_allowed`.
+        org admin may upload any, and only the org admin uploads `logo`.
+        Otherwise 403 `org.role_not_allowed`. A `logo` is PNG or JPEG, up
+        to 1 MB (422 on `content_type` or `size_bytes` otherwise).
       tags: [uploads]
       requestBody:
         required: true
@@ -753,6 +755,49 @@ paths:
         "429":
           $ref: "#/components/responses/Problem"
         "503":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/logo:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    put:
+      operationId: setOrgLogo
+      summary: Set the company's logo (F15)
+      description: |
+        The org admin only. `upload_id` is an upload of purpose `logo` by
+        the caller, in this company, not used yet, and present in storage
+        (422 on `upload_id` otherwise). Replaces the current logo; the old
+        file is deleted. Members see it through `/me`
+        (`memberships[].org.logo_url`).
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoSet"
+      responses:
+        "204":
+          description: The logo is set.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removeOrgLogo
+      summary: Remove the company's logo (F15)
+      description: The org admin only. The app shows the company's initials again.
+      tags: [admin]
+      responses:
+        "204":
+          description: No logo now.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/expenses:
@@ -2635,6 +2680,15 @@ components:
             phone:
               $ref: "#/components/schemas/Phone"
               description: The company's number, for its people to call.
+            logo_url:
+              type: string
+              format: uri
+              description: |
+                The company's logo (F15), PNG or JPEG: a link that works
+                for 15 minutes. Absent when the company has none (the app
+                shows its initials). The URL's path stays the same until
+                the logo changes, so clients cache the image by it.
+              examples: ["https://uploads.mock.invalid/orgs/01928f6e/logo/01928f70"]
         role:
           $ref: "#/components/schemas/Role"
         pay_type:
@@ -3147,8 +3201,15 @@ components:
           maximum: 10485760
         purpose:
           type: string
-          enum: [receipt, kyc, proof]
-          description: "`proof`: a task's photo from the live camera."
+          enum: [receipt, kyc, proof, logo]
+          description: "`proof`: a task's photo from the live camera. `logo`: the company's logo (F15), org admin only, PNG or JPEG up to 1 MB."
+
+    LogoSet:
+      type: object
+      required: [upload_id]
+      properties:
+        upload_id:
+          $ref: "#/components/schemas/Id"
 
     Upload:
       type: object

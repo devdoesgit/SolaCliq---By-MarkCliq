@@ -495,10 +495,51 @@ export interface paths {
          *     uses a `.invalid` host, which the development app treats as
          *     uploaded. Each kind is for the roles that use it: `proof` for
          *     workers, `receipt` for workers and agents, `kyc` for agents; the
-         *     org admin may upload any. Otherwise 403 `org.role_not_allowed`.
+         *     org admin may upload any, and only the org admin uploads `logo`.
+         *     Otherwise 403 `org.role_not_allowed`. A `logo` is PNG or JPEG, up
+         *     to 1 MB (422 on `content_type` or `size_bytes` otherwise).
          */
         post: operations["createUpload"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the company's logo (F15)
+         * @description The org admin only. `upload_id` is an upload of purpose `logo` by
+         *     the caller, in this company, not used yet, and present in storage
+         *     (422 on `upload_id` otherwise). Replaces the current logo; the old
+         *     file is deleted. Members see it through `/me`
+         *     (`memberships[].org.logo_url`).
+         */
+        put: operations["setOrgLogo"];
+        post?: never;
+        /**
+         * Remove the company's logo (F15)
+         * @description The org admin only. The app shows the company's initials again.
+         */
+        delete: operations["removeOrgLogo"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2001,6 +2042,15 @@ export interface components {
                 status: components["schemas"]["OrgStatus"];
                 /** @description The company's number, for its people to call. */
                 phone?: components["schemas"]["Phone"];
+                /**
+                 * Format: uri
+                 * @description The company's logo (F15), PNG or JPEG: a link that works
+                 *     for 15 minutes. Absent when the company has none (the app
+                 *     shows its initials). The URL's path stays the same until
+                 *     the logo changes, so clients cache the image by it.
+                 * @example https://uploads.mock.invalid/orgs/01928f6e/logo/01928f70
+                 */
+                logo_url?: string;
             };
             role: components["schemas"]["Role"];
             pay_type?: components["schemas"]["PayType"];
@@ -2281,10 +2331,13 @@ export interface components {
             content_type: "image/jpeg" | "image/png" | "application/pdf";
             size_bytes: number;
             /**
-             * @description `proof`: a task's photo from the live camera.
+             * @description `proof`: a task's photo from the live camera. `logo`: the company's logo (F15), org admin only, PNG or JPEG up to 1 MB.
              * @enum {string}
              */
-            purpose: "receipt" | "kyc" | "proof";
+            purpose: "receipt" | "kyc" | "proof" | "logo";
+        };
+        LogoSet: {
+            upload_id: components["schemas"]["Id"];
         };
         Upload: {
             upload_id: components["schemas"]["Id"];
@@ -3676,6 +3729,74 @@ export interface operations {
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+        };
+    };
+    setOrgLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoSet"];
+            };
+        };
+        responses: {
+            /** @description The logo is set. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    removeOrgLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No logo now. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
         };
     };
     listMyExpenses: {
