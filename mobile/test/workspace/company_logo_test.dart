@@ -84,6 +84,21 @@ void main() {
       );
     });
 
+    testWidgets('shows where the person is, without switching from here', (
+      tester,
+    ) async {
+      await tester.pumpApp(
+        const HomeHeader(
+          initials: 'RA',
+          title: 'Ravi',
+          workspaceLine: 'RY Enterprises · EPC Installer',
+          onAvatar: _noop,
+        ),
+      );
+      expect(find.text('RY Enterprises · EPC Installer'), findsOneWidget);
+      expect(find.byKey(const Key('home_workspace_line')), findsNothing);
+    });
+
     testWidgets('has no logo when the company has none', (tester) async {
       await tester.pumpApp(
         const HomeHeader(initials: 'RA', eyebrow: 'Today', title: 'Ravi'),
@@ -92,3 +107,5 @@ void main() {
     });
   });
 }
+
+void _noop() {}

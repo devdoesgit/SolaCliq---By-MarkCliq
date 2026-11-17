@@ -6,14 +6,15 @@ import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/workspace/view/company_logo.dart';
 import 'package:solacliq/workspace/view/workspace_sheet.dart';
 
-/// The top of every home: the person's avatar (workspaces and log out), an
-/// eyebrow and title in the middle with an optional workspace line, and
-/// the bell.
+/// The top of every home: the person's avatar (their profile), the
+/// company's logo, an optional eyebrow and the title in the middle with an
+/// optional workspace line, and the bell. Switching workspaces lives on the
+/// Profile tab, not here (owner, 2026-11-18).
 class HomeHeader extends StatelessWidget {
   const new({
     required this.initials,
-    required this.eyebrow,
     required this.title,
+    this.eyebrow,
     this.logoUrl,
     this.workspaceLine,
     this.onAvatar,
@@ -23,17 +24,23 @@ class HomeHeader extends StatelessWidget {
   });
 
   final String initials;
-  final String eyebrow;
+
+  /// The line above the title, like "Good morning". None on the worker
+  /// home, whose week strip already shows the day.
+  final String? eyebrow;
   final String title;
 
   /// The company's logo, shown above the titles: the company's own look
   /// in its people's app (F15).
   final String? logoUrl;
 
-  /// "Arka Solar · Worker", which opens the workspace sheet.
+  /// "Arka Solar · Worker": where the person is. Plain text; workspaces
+  /// are switched from the Profile tab.
   final String? workspaceLine;
 
-  /// What the avatar opens; the workspace sheet by default.
+  /// What the avatar opens: the Profile tab. The workspace sheet by default,
+  /// for the one home with no tabs (a company that isn't active), where
+  /// it's the only way out.
   final VoidCallback? onAvatar;
 
   /// What the bell opens; "coming soon" by default.
@@ -47,6 +54,7 @@ class HomeHeader extends StatelessWidget {
     final l10n = context.l10n;
     final line = workspaceLine;
     final logo = logoUrl;
+    final eyebrow = this.eyebrow;
     final titles = Column(
       spacing: SolaSpace.space2,
       children: [
@@ -55,11 +63,12 @@ class HomeHeader extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: SolaSpace.space4),
             child: CompanyLogo(url: logo),
           ),
-        SolaText(
-          eyebrow,
-          style: SolaTextStyle.eyebrow,
-          color: SolaColors.muted,
-        ),
+        if (eyebrow != null)
+          SolaText(
+            eyebrow,
+            style: SolaTextStyle.eyebrow,
+            color: SolaColors.muted,
+          ),
         SolaText(
           title,
           style: SolaTextStyle.navTitle,
@@ -67,25 +76,12 @@ class HomeHeader extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         if (line != null)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: SolaSpace.space4,
-            children: [
-              Flexible(
-                child: SolaText(
-                  line,
-                  style: SolaTextStyle.meta,
-                  color: SolaColors.muted,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SolaIcon(
-                SolaIcons.chevronDown,
-                size: 14,
-                color: SolaColors.muted,
-              ),
-            ],
+          SolaText(
+            line,
+            style: SolaTextStyle.meta,
+            color: SolaColors.muted,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
       ],
     );
@@ -108,18 +104,7 @@ class HomeHeader extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            // With a workspace line, the whole block opens the workspaces.
-            child: line == null
-                ? titles
-                : SolaTappable(
-                    key: const Key('home_workspace_line'),
-                    identifier: 'home_workspace_line',
-                    semanticsLabel: '$title, $line',
-                    onTap: () => unawaited(showWorkspaceSheet(context)),
-                    builder: (context, state) => titles,
-                  ),
-          ),
+          Expanded(child: titles),
           // No bell where there is nothing to notify yet (a company that
           // isn't active).
           if (onBell case final bell?)

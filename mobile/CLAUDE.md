@@ -113,7 +113,7 @@ a feature's tab there when its feature is built, never as an empty
 placeholder. Org admins get only a "use the website" screen.
 
 In development, pick the mock person (personal, customer, worker, agent,
-sales, multi_org, org_admin) in the workspace sheet (tap the avatar) under
+sales, multi_org, org_admin) in the workspace sheet (Profile tab → Workspaces) under
 Development, or run with `--dart-define=MOCK_PERSONA=<name>`. The same
 section simulates a customer whose system is handed over (live energy
 home).

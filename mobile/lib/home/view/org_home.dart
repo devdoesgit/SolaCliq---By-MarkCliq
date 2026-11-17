@@ -168,7 +168,10 @@ class _OrgHomeViewState extends State<OrgHomeView> {
           children: [
             HomeHeader(
               initials: widget.account.initials,
-              eyebrow: summary?.eyebrow ?? workspace.orgName,
+              // Workers' week strip already shows the day.
+              eyebrow: _role == OrgRole.worker
+                  ? null
+                  : summary?.eyebrow ?? workspace.orgName,
               title: summary?.title ?? widget.account.firstName,
               logoUrl: workspace.orgLogoUrl,
               workspaceLine: line,

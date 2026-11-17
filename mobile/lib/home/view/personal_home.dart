@@ -131,6 +131,7 @@ class _PersonalHomeState extends State<PersonalHome> {
             eyebrow: _greeting(l10n),
             title: account.firstName,
             unread: _unread,
+            onAvatar: () => _open(AppRoutes.profile),
             onBell: () => _open(AppRoutes.notifications),
           ),
           Padding(

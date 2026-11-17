@@ -83,9 +83,10 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
       expect(store.session, isA<StoredSession>());
 
+      // The avatar opens the profile, which has Log out.
       await tester.tap(find.byKey(const Key('home_profile')));
       await tester.pumpAndSettle();
-      await tester.tapKey('workspace_log_out');
+      await tester.tapKey('log_out');
       await tester.pumpAndSettle();
       expect(find.byType(WelcomePage), findsOneWidget);
       expect(store.session, isNull);
