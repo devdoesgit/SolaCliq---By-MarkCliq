@@ -50,6 +50,12 @@ pub struct Config {
         development only
     */
     pub storage: Option<crate::storage::Storage>,
+    /*
+        The Firebase service account key for push notifications
+        (FCM_SERVICE_ACCOUNT_KEY_FILE). None: pushes only go to the log,
+        which `from_env` allows in development only
+    */
+    pub fcm_key_file: Option<PathBuf>,
 }
 
 /*
@@ -122,9 +128,14 @@ impl Config {
             })?,
             gmail: gmail_from_env()?,
             storage: storage_from_env()?,
+            fcm_key_file: std::env::var("FCM_SERVICE_ACCOUNT_KEY_FILE")
+                .ok()
+                .filter(|v| !v.trim().is_empty())
+                .map(PathBuf::from),
         })
         .and_then(Self::check_mail)
         .and_then(Self::check_storage)
+        .and_then(Self::check_push)
     }
 
     /*
@@ -135,6 +146,16 @@ impl Config {
         if self.environment == Environment::Production && self.gmail.is_none() {
             return Err(ConfigError::Missing(
                 "MAIL_FROM (production sends email through the Gmail API)",
+            ));
+        }
+        Ok(self)
+    }
+
+    // A production server must really send push notifications.
+    fn check_push(self) -> Result<Self, ConfigError> {
+        if self.environment == Environment::Production && self.fcm_key_file.is_none() {
+            return Err(ConfigError::Missing(
+                "FCM_SERVICE_ACCOUNT_KEY_FILE (production sends push notifications)",
             ));
         }
         Ok(self)

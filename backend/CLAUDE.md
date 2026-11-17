@@ -19,6 +19,7 @@ cargo run -- openapi                     # (in backend/) the generated spec
 cargo run -- seed                        # illustrative data, APP_ENV=development only
 cargo run -- make-platform-admin <email>
 cargo run -- send-test-email <to>        # checks the Gmail API setup
+cargo run -- send-test-push <token>      # checks the Firebase (push) setup
 ```
 
 ## Rules
@@ -49,7 +50,8 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
 ## Layout
 
 - `src/main.rs`: commands (serve, `openapi`, `seed`,
-  `make-platform-admin`, `send-test-email`), migrations at start,
+  `make-platform-admin`, `send-test-email`, `send-test-push`),
+  migrations at start, the push worker,
   graceful shutdown (queued emails sent first).
 - `src/lib.rs`: `AppState` and `app(state)`, the router tests also use.
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),

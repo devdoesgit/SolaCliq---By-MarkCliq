@@ -5,6 +5,7 @@
 pub mod admin;
 pub mod auth;
 pub mod customers;
+pub mod devices;
 pub mod expenses;
 pub mod health;
 pub mod home;
@@ -32,6 +33,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(home::router())
         .merge(install::router())
         .merge(notifications::router())
+        .merge(devices::router())
         .merge(team::router())
         .merge(registration::router())
         .merge(admin::router())

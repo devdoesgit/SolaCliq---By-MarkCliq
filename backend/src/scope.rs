@@ -13,6 +13,7 @@
         - `OrgMember::begin`     → `company` (the company of the path)
         - `AuthUser::begin`      → `person`  (the logged-in person)
         - `PlatformAdmin::begin` → `platform`
+      and the push worker (`push.rs`) → `push`
 */
 
 use sqlx::{PgPool, Postgres, Transaction};
@@ -38,6 +39,14 @@ pub async fn person(db: &PgPool, user_id: Uuid) -> ApiResult<Tx> {
 */
 pub async fn platform(db: &PgPool) -> ApiResult<Tx> {
     begin(db, "app.platform", "on").await
+}
+
+/*
+    The push worker: every person's notifications, to send and mark them
+    handled (`push.rs`). Nothing else
+*/
+pub async fn push(db: &PgPool) -> ApiResult<Tx> {
+    begin(db, "app.push", "on").await
 }
 
 async fn begin(db: &PgPool, setting: &'static str, value: &str) -> ApiResult<Tx> {

@@ -16,6 +16,7 @@ pub mod openapi;
 pub mod org;
 pub mod page;
 pub mod password;
+pub mod push;
 pub mod rate_limit;
 pub mod routes;
 pub mod scope;

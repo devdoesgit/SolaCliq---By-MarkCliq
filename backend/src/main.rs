@@ -59,6 +59,7 @@ async fn main() -> ExitCode {
         ["seed"] => run_seed(config).await,
         ["make-platform-admin", email] => run_make_platform_admin(config, email).await,
         ["send-test-email", to] => run_send_test_email(config, to).await,
+        ["send-test-push", token] => run_send_test_push(config, token).await,
         _ => Err(USAGE.into()),
     };
     match result {
@@ -70,8 +71,7 @@ async fn main() -> ExitCode {
     }
 }
 
-const USAGE: &str =
-    "usage: backend [openapi | seed | make-platform-admin <email> | send-test-email <to>]";
+const USAGE: &str = "usage: backend [openapi | seed | make-platform-admin <email> | send-test-email <to> | send-test-push <token>]";
 
 type Fallible = Result<(), Box<dyn std::error::Error>>;
 // A mailer, and Gmail's background task when there is one (see `mailer`).
@@ -154,6 +154,28 @@ fn mailer(config: &Config) -> Result<MailerAndTask, Box<dyn std::error::Error>> 
     Ok((Arc::new(mailer), Some(task)))
 }
 
+/*
+    Where push notifications go: Firebase when FCM_SERVICE_ACCOUNT_KEY_FILE
+    is set; otherwise the log (Config allows that in development only)
+*/
+fn pusher(config: &Config) -> Result<backend::push::Sender, Box<dyn std::error::Error>> {
+    let Some(path) = &config.fcm_key_file else {
+        tracing::info!("push notifications go to the log (no FCM key set)");
+        return Ok(backend::push::Sender::Log);
+    };
+    let account = ServiceAccount::from_file(path)?;
+    if account.project_id().is_empty() {
+        return Err("FCM_SERVICE_ACCOUNT_KEY_FILE has no project_id".into());
+    }
+    tracing::info!(
+        project = account.project_id(),
+        "sending push notifications through FCM"
+    );
+    Ok(backend::push::Sender::Fcm(Box::new(
+        backend::push::Fcm::new(account),
+    )))
+}
+
 // Lets queued emails go out, for up to 30 seconds.
 async fn drain(task: Option<JoinHandle<()>>) {
     if let Some(task) = task
@@ -194,12 +216,28 @@ async fn run_send_test_email(config: Config, to: &str) -> Fallible {
     Ok(())
 }
 
+/*
+    `cargo run -- send-test-push <token>`: one push straight to a phone's
+    FCM token (the devices table has them), to check the Firebase setup.
+    A made-up token checks the key alone: Firebase answers that the
+    token isn't valid, which it can only say after accepting the key
+*/
+async fn run_send_test_push(config: Config, token: &str) -> Fallible {
+    let backend::push::Sender::Fcm(mut fcm) = pusher(&config)? else {
+        return Err("FCM_SERVICE_ACCOUNT_KEY_FILE is not set".into());
+    };
+    let outcome = fcm.send_test(token).await;
+    println!("{outcome:?}");
+    Ok(())
+}
+
 async fn serve(config: Config) -> Fallible {
     let db = connect_app(&config).await?;
     let (mailer, mail_task) = mailer(&config)?;
     if let Some(storage) = config.storage.clone() {
         tokio::spawn(sweep_uploads(db.clone(), storage));
     }
+    tokio::spawn(backend::push::run(db.clone(), pusher(&config)?));
 
     let app = backend::app(AppState {
         db,
