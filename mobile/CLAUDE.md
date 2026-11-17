@@ -74,6 +74,14 @@ The Android build needs `android/app/google-services.json` (git-ignored):
 The `main_*` files pass `FirebasePushMessaging`; tests get none
 (`lib/push/`).
 
+## App icons
+
+The launcher, round, themed (monochrome) and status-bar icons, for every
+flavour, are generated from the logo: `python3
+design/logo/kit/build_kit.py` (needs fontTools). Don't edit
+`res/drawable/ic_launcher_*`, `ic_notification.xml` or the mipmap PNGs by
+hand. Logo rules: `design/logo/kit/GUIDELINES.md`.
+
 ## Flow tests
 
 `make app-e2e` (API and emulator running) seeds the local API, then

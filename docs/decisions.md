@@ -686,3 +686,12 @@ Change a decision by adding a new line, not by editing an old one.
   (dark: `-dark.svg`). The wordmark follows MarkCliq's ("Sola" upright,
   "Cliq" italic, the i's dot a sun). Rounds 1–3 and the rejected
   readings are kept in `design/logo/`. Not yet trademark-checked.
+- **Logo kit built (2026-11-17).** `design/logo/kit/build_kit.py`
+  generates every logo file from one geometry: SVG masters, PNGs, web
+  icons and favicon, and the app's Android icons for all three flavours
+  (adaptive launcher in a cream tile, round, themed monochrome, the
+  status-bar icon). Below 24 px a small cut is used: all five awning
+  panels solid and joined (three separate panels read as legs). Usage
+  rules: `design/logo/kit/GUIDELINES.md`. Checked on the emulator: the
+  launcher icon inside the round mask with its DEV badge, and a real
+  push's status-bar and shade icons.
