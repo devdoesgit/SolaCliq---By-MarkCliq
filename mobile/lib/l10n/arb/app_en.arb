@@ -186,6 +186,34 @@
     "@failNetwork": {
         "description": "Request couldn't reach the server."
     },
+    "failTaskLocked": "This task can't be changed now. It's with your admin or closed.",
+    "@failTaskLocked": {
+        "description": "A task no longer with the worker."
+    },
+    "failTaskIncomplete": "Add every photo and tick every step before you submit.",
+    "@failTaskIncomplete": {
+        "description": "Submit with photos or checklist missing."
+    },
+    "failExpenseLocked": "This expense isn't waiting for a new receipt.",
+    "@failExpenseLocked": {
+        "description": "A new receipt for an expense not sent back."
+    },
+    "failRegistrationDuplicate": "This customer is already registered with your company.",
+    "@failRegistrationDuplicate": {
+        "description": "The company already has this customer (email, phone or consumer number)."
+    },
+    "failRegistrationLocked": "Only the document your admin sent back can be replaced.",
+    "@failRegistrationLocked": {
+        "description": "A new copy of a document that wasn't sent back."
+    },
+    "failUploadUnavailable": "Uploads aren't available right now. Try again later.",
+    "@failUploadUnavailable": {
+        "description": "The server has no file storage."
+    },
+    "failUploadIncomplete": "A file didn't finish uploading. Add it again and retry.",
+    "@failUploadIncomplete": {
+        "description": "A photo or document didn't reach storage whole."
+    },
     "failUnknown": "Something went wrong. Try again.",
     "@failUnknown": {
         "description": "Unexpected error."
@@ -2657,6 +2685,22 @@
                 "type": "int"
             }
         }
+    },
+    "discardCustomerTitle": "Discard this customer?",
+    "@discardCustomerTitle": {
+        "description": "Sheet title when leaving add customer with details or documents entered."
+    },
+    "discardCustomerBody": "What you've typed and the documents you added will be lost.",
+    "@discardCustomerBody": {
+        "description": "Under the discard title."
+    },
+    "discardCustomer": "Discard",
+    "@discardCustomer": {
+        "description": "Button: leave add customer and lose the draft."
+    },
+    "keepEditing": "Keep editing",
+    "@keepEditing": {
+        "description": "Sheet button: stay on the form."
     },
     "notTakenUp": "Not taken up",
     "@notTakenUp": {

@@ -20,6 +20,28 @@ enum AuthFailureCode {
   /// already registered.
   gstinInvalid('org.gstin_invalid'),
   gstinTaken('org.gstin_taken'),
+
+  /// A task no longer with the worker (submitted, approved, cancelled).
+  taskLocked('task.locked'),
+
+  /// Submit with photos or checklist items still missing.
+  taskIncomplete('task.incomplete'),
+
+  /// A new receipt for an expense the admin didn't send back.
+  expenseLocked('expense.locked'),
+
+  /// The company already has this customer; `detail` says who and when.
+  registrationDuplicate('registration.duplicate'),
+
+  /// A new copy of a document the admin didn't send back.
+  registrationLocked('registration.locked'),
+
+  /// The server has no file storage set up.
+  uploadUnavailable('upload.unavailable'),
+
+  /// A file didn't reach storage whole (the server's field error on an
+  /// upload id): send it again.
+  uploadIncomplete(null),
   network(null),
   unknown(null);
 
@@ -31,14 +53,18 @@ enum AuthFailureCode {
 
 /// An auth request failed. Screens map [code] to a message.
 class AuthFailure implements Exception {
-  const new(this.code, [this.cause]);
+  const new(this.code, [this.cause, this.detail]);
 
   /// Reads the problem+json body of a failed request, or classifies a
   /// network failure.
   factory fromDio(DioException error) {
     final response = error.response;
     if (response == null) return AuthFailure(AuthFailureCode.network, error);
-    final apiCode = _problemCode(response.data);
+    final body = _problem(response.data);
+    final apiCode = body?['code'] as String?;
+    if (apiCode == 'validation.failed' && _uploadField(body)) {
+      return AuthFailure(AuthFailureCode.uploadIncomplete, error);
+    }
     final code = AuthFailureCode.values.firstWhere(
       (c) => c.apiCode != null && c.apiCode == apiCode,
       orElse: () => switch (response.statusCode) {
@@ -48,20 +74,35 @@ class AuthFailure implements Exception {
         _ => AuthFailureCode.unknown,
       },
     );
-    return AuthFailure(code, error);
+    final detail = body?['detail'];
+    return AuthFailure(code, error, detail is String ? detail : null);
   }
 
   final AuthFailureCode code;
   final Object? cause;
 
-  static String? _problemCode(Object? data) {
+  /// The server's explanation, safe to show (problem+json `detail`), e.g.
+  /// who registered a customer first.
+  final String? detail;
+
+  /// The fields that carry an upload id: a field error there means the
+  /// file itself didn't arrive.
+  static const _uploadFields = {'upload_id', 'receipt_upload_id', 'documents'};
+
+  static Map<String, dynamic>? _problem(Object? data) {
     try {
       final body = data is String ? jsonDecode(data) : data;
-      if (body is Map && body['code'] is String) return body['code'] as String;
+      if (body is Map<String, dynamic>) return body;
     } on FormatException {
       return null;
     }
     return null;
+  }
+
+  static bool _uploadField(Map<String, dynamic>? body) {
+    final errors = body?['errors'];
+    return errors is List &&
+        errors.any((e) => e is Map && _uploadFields.contains(e['field']));
   }
 
   @override

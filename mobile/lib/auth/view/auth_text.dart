@@ -75,6 +75,13 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.validation => l10n.failValidation,
     AuthFailureCode.gstinInvalid => l10n.failGstinInvalid,
     AuthFailureCode.gstinTaken => l10n.failGstinTaken,
+    AuthFailureCode.taskLocked => l10n.failTaskLocked,
+    AuthFailureCode.taskIncomplete => l10n.failTaskIncomplete,
+    AuthFailureCode.expenseLocked => l10n.failExpenseLocked,
+    AuthFailureCode.registrationDuplicate => l10n.failRegistrationDuplicate,
+    AuthFailureCode.registrationLocked => l10n.failRegistrationLocked,
+    AuthFailureCode.uploadUnavailable => l10n.failUploadUnavailable,
+    AuthFailureCode.uploadIncomplete => l10n.failUploadIncomplete,
     AuthFailureCode.network => l10n.failNetwork,
     AuthFailureCode.unknown => l10n.failUnknown,
   };
