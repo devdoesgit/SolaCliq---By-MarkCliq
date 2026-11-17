@@ -619,3 +619,37 @@ Change a decision by adding a new line, not by editing an old one.
   and read a null string (core dumps, `gfxstream::TextureResize`). The
   AVD now never loads or saves snapshots; rendering stays `-gpu host`
   (RTX 3060). Software rendering is never used: it hangs the machine.
+- **Customer install (owner, phase 10; spec `features/F9-customer-install.md`).**
+  The subsidy is worked out from the PM Surya Ghar table (homes: ₹30,000
+  per kW for 2 kW, ₹18,000 for the 3rd, ₹78,000 at most) and the admin
+  can change it. The default payment plan is advance 30%, on
+  installation 60%, on handover 10% (provisional, for the pilot vendor
+  to confirm). Companies get a UPI id; without one the app offers bank
+  transfer only. A customer whose install isn't set up gets
+  `install.not_started` and the app says so instead of an error. Live
+  energy after handover is out: it needs inverter data.
+- **App fixes from testing phase 10.** "Pay by UPI" with no UPI app on
+  the phone now says so (Android throws instead of answering false); ten
+  screens' reload and retry no longer crash debug builds (a `setState`
+  that returned a Future); home tiles shrink a long amount to fit
+  instead of cutting it off; sizes read "5 kW", not "5.0 kW"; the
+  payment screens no longer promise a receipt that doesn't exist.
+- **The admin actions are built before the website (owner: "complete
+  the app end to end").** Every app flow stopped at a step only the
+  company takes (approve a task, verify a customer, confirm a payment);
+  the API for those steps is built and tested now, the website's screens
+  come on top later. A verified customer gets the install with the
+  default plan, the advance due in 7 days; approving a task moves the
+  customer to the next stage; paying the advance makes an approved
+  commission payable. Spec: `features/admin-actions.md`.
+- **End-to-end tests.** `backend/tests/lifecycle.rs` runs one install
+  from company registration to handover through the API (every person
+  sets a password with the emailed code). `make app-e2e` drives each
+  role's main flow in the real app on the emulator against the seeded
+  API.
+- **Emulator on this machine (NVIDIA, Wayland).** The host OpenGL
+  translator crashes the emulator when an app's surfaces are torn down
+  (snapshot restore, uninstall). Guest ANGLE avoided that but drew
+  Flutter corrupted and the machine froze hard soon after; it is not
+  used. Flow tests are best run on a real phone over USB; see
+  `mobile/CLAUDE.md`.

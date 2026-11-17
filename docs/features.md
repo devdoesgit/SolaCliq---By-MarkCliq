@@ -92,7 +92,7 @@ approvals queue for the org admin. Spec: `features/F7-expenses.md`.
 approvals queue.
 
 **F9 Customer app.** Customer sees stage timeline, cost breakdown and
-payments.
+payments. Spec: `features/F9-customer-install.md`.
 
 **F10 Customer linking.** Auto-link org customer records to accounts on
 verified email or phone; notify on every link.

@@ -43,6 +43,9 @@ From `architecture.md`, restated where the app depends on them:
   | `expense.locked` | 409 | New receipt for an expense not sent back |
   | `registration.duplicate` | 409 | The company already has this customer (email, phone or consumer number) |
   | `registration.locked` | 409 | New copy of a document that wasn't sent back |
+  | `install.not_started` | 404 | My install before the company has set it up |
+  | `payment.not_due` | 409 | Claim of a payment that isn't due |
+  | `commission.locked` | 409 | Admin: a commission not in the state the action needs |
   | `quote.consent_required` / `quote.phone_required` | 422 | Quote form |
   | `member.*` | 409/422 | Team (admin website) |
   | `org.not_member` / `org.role_not_allowed` | 403 | Any `/orgs/{org_id}/...` |
@@ -138,8 +141,8 @@ milestone, top to bottom.
 
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
-| 43 | `GET /orgs/{org_id}/my-install` | customer | — | `Install` | Stages with `done`/`next`/`upcoming`, `next_visit` (who, when, phone), `total`, `subsidy`, `payments[]` (`due`/`claimed`/`paid`/`later`), `upi_uri` for the due one, `handed_over_on` after handover |
-| 44 | `POST .../my-install/payments/{payment_id}/claim` | customer, *idem* | `{method: upi\|bank_transfer}` | `Install` | Only the `due` payment (else 409) → `claimed`, and notify the admin. The company marks it `paid` (website). **Paying the advance makes the agent's commission `payable`** |
+| 43 | `GET /orgs/{org_id}/my-install` | customer | — | `Install` | **Built (phase 10).** Stages with `done`/`next`/`upcoming`, `next_visit` (who, when, phone), `total`, `subsidy`, `payments[]` (`due`/`claimed`/`paid`/`later`), `upi_uri` for the due one, `handed_over_on` after handover |
+| 44 | `POST .../my-install/payments/{payment_id}/claim` | customer, *idem* | `{method: upi\|bank_transfer}` | **Built (phase 10).** `Install` | Only the `due` payment (else 409) → `claimed`, and notify the admin. The company marks it `paid` (website). **Paying the advance makes the agent's commission `payable`** |
 
 ### Admin website and MarkCliq (F1–F3, built in phase 4)
 
@@ -210,20 +213,15 @@ may change the amount: keep the agent's as `proposed_amount` and add an
 | Visit booked, payment due, documents verified | `visit_booked`, `payment_due`, `documents_verified` | customer | — (opens Track, Payments, Documents) |
 | Quote sent, new guide | `quote_shared`, `guide` | person (`/me/notifications`) | — |
 
-## Not in the contract yet: the admin actions behind this data
+## The admin actions behind this data (built 2026-11-17)
 
-The app reads tasks, approvals, KYC decisions, commissions and payments
-that an org admin creates on the website. Those admin endpoints are drafted
-in the admin phase (build order: admin last). Until then, seed them with a
-backend command or SQL so the app has real data:
-
-- Create a customer's install (stages, payment plan, subsidy) and tasks per
-  stage with photo slots and a checklist; assign a worker.
-- Approve or return a submitted task; cancel or reschedule a task.
-- Approve, return or mark paid an expense.
-- Approve a customer registration or return one document; approve or
-  change a commission; mark a commission paid.
-- Mark a customer's payment paid; book the next visit; hand over.
+The company's side of every flow is in the contract (tag `admin`) and
+built: the review queue; create, approve, return, cancel and reschedule
+tasks; approve, return and pay expenses; verify (sets up the install),
+reject and return a document for customers; approve and pay
+commissions; ask for and confirm payments; hand over. Spec:
+`features/admin-actions.md`. The website's screens on top of them come
+later; the seed still writes illustrative data for the app.
 
 ## Not needed
 
@@ -238,7 +236,7 @@ backend command or SQL so the app has real data:
 
 - ~~Encryption and retention for bank account numbers and KYC files.~~
   Decided 2026-11-17: `data-policy.md`.
-- Where the PM Surya Ghar subsidy figure comes from (fixed table by kW, or
-  entered by the admin).
-- UPI: the `upi_uri` uses the org's UPI id; who sets it (org settings,
-  admin phase).
+- ~~Where the PM Surya Ghar subsidy figure comes from.~~ Decided
+  2026-11-17: the government table by default, the admin can change it.
+- ~~UPI: who sets the org's UPI id.~~ Decided 2026-11-17: `orgs.upi_id`,
+  set on the website's settings page (the seed sets an illustrative one).

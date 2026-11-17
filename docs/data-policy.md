@@ -86,6 +86,10 @@ decision in `decisions.md`.
   only ever shows the last 4 digits.
 - **Built.** SolaCliq tracks expenses and payments; it never collects
   money or holds card details. There is no payment gateway.
+- **Built.** A customer pays the company directly, by UPI or bank
+  transfer, then taps "I paid"; the company confirms it. The app only
+  opens the customer's own UPI app with the company's UPI id and the
+  amount filled in; it never sees bank or UPI credentials.
 
 ## Where it all lives
 
