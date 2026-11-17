@@ -196,4 +196,5 @@ const _$KycStatusEnumMap = {
   KycStatus.inReview: 'in_review',
   KycStatus.needsFix: 'needs_fix',
   KycStatus.approved: 'approved',
+  KycStatus.rejected: 'rejected',
 };

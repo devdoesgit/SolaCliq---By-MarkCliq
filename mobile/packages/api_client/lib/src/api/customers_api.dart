@@ -209,7 +209,7 @@ class CustomersApi {
   }
 
   /// Send a clearer copy of a document the admin sent back
-  /// The customer goes back to &#x60;in_review&#x60;.
+  /// Only the document the admin sent back (409 &#x60;registration.locked&#x60; otherwise). The document and the customer go back to &#x60;in_review&#x60;. The file is an upload of this company (purpose &#x60;kyc&#x60;), checked in storage (422 on &#x60;upload_id&#x60; if it didn&#39;t finish).
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
@@ -331,7 +331,7 @@ class CustomersApi {
   }
 
   /// An agent registers a customer with their KYC
-  /// Agents only. Submits details, site, connection and KYC documents for the org admin to approve. On submission the customer&#39;s account is created, with no password (or an existing one linked), and they are emailed at once: who registered them, what was registered, and how to set up the app to follow their install. The admin then verifies or rejects it; the customer sees the status in the app. Required documents: Aadhaar, PAN, electricity bill, land document and signature (&#x60;registration.document_required&#x60;, 422, naming the kind); bank proof too when the subsidy is on (&#x60;registration.bank_proof_required&#x60;, 422). Roof photo and name change are optional.
+  /// Agents only. Submits details, site, connection and KYC documents for the org admin to approve. On submission the customer&#39;s account is created, with no password (or an existing one linked), and they are emailed at once: who registered them, what was registered, and how to set up the app to follow their install. The admin then verifies or rejects it; the customer sees the status in the app. Required documents: Aadhaar, PAN, electricity bill, land document and signature (&#x60;registration.document_required&#x60;, 422, naming the kind); bank proof too when the subsidy is on (&#x60;registration.bank_proof_required&#x60;, 422). Roof photo and name change are optional. Each kind once; each file an upload of this company (purpose &#x60;kyc&#x60;), checked in storage. 409 &#x60;registration.duplicate&#x60; when the company already has this customer (same email, phone or consumer number), or the person is already in the company in another role; the detail says who registered them and when.
   ///
   /// Parameters:
   /// * [idempotencyKey] - Unique per logical write (UUID). Sent on writes from the mobile app so a retry after a lost response never creates a duplicate.

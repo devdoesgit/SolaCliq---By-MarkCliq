@@ -572,7 +572,12 @@ export interface paths {
          *     PAN, electricity bill, land document and signature
          *     (`registration.document_required`, 422, naming the kind); bank
          *     proof too when the subsidy is on (`registration.bank_proof_required`,
-         *     422). Roof photo and name change are optional.
+         *     422). Roof photo and name change are optional. Each kind once;
+         *     each file an upload of this company (purpose `kyc`), checked in
+         *     storage. 409 `registration.duplicate` when the company already has
+         *     this customer (same email, phone or consumer number), or the
+         *     person is already in the company in another role; the detail says
+         *     who registered them and when.
          */
         post: operations["submitCustomerRegistration"];
         delete?: never;
@@ -1250,7 +1255,10 @@ export interface paths {
         get?: never;
         /**
          * Send a clearer copy of a document the admin sent back
-         * @description The customer goes back to `in_review`.
+         * @description Only the document the admin sent back (409 `registration.locked`
+         *     otherwise). The document and the customer go back to `in_review`.
+         *     The file is an upload of this company (purpose `kyc`), checked in
+         *     storage (422 on `upload_id` if it didn't finish).
          */
         put: operations["replaceCustomerDocument"];
         post?: never;
@@ -2333,8 +2341,12 @@ export interface components {
             /** @description The agent who collected a customer's KYC. */
             uploaded_by?: string;
         };
-        /** @enum {string} */
-        KycStatus: "in_review" | "needs_fix" | "approved";
+        /**
+         * @description `rejected`: the company decided not to take the customer up; they
+         *     stay in the agent's list.
+         * @enum {string}
+         */
+        KycStatus: "in_review" | "needs_fix" | "approved" | "rejected";
         /**
          * @description `approved` waits for the customer's advance; `payable` once it is
          *     paid; `paid` when the admin pays it out.
@@ -4022,7 +4034,9 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getMyInstall: {

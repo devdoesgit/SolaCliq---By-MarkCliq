@@ -823,7 +823,12 @@ paths:
         PAN, electricity bill, land document and signature
         (`registration.document_required`, 422, naming the kind); bank
         proof too when the subsidy is on (`registration.bank_proof_required`,
-        422). Roof photo and name change are optional.
+        422). Roof photo and name change are optional. Each kind once;
+        each file an upload of this company (purpose `kyc`), checked in
+        storage. 409 `registration.duplicate` when the company already has
+        this customer (same email, phone or consumer number), or the
+        person is already in the company in another role; the detail says
+        who registered them and when.
       tags: [customers]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1626,7 +1631,11 @@ paths:
     put:
       operationId: replaceCustomerDocument
       summary: Send a clearer copy of a document the admin sent back
-      description: The customer goes back to `in_review`.
+      description: |
+        Only the document the admin sent back (409 `registration.locked`
+        otherwise). The document and the customer go back to `in_review`.
+        The file is an upload of this company (purpose `kyc`), checked in
+        storage (422 on `upload_id` if it didn't finish).
       tags: [customers]
       requestBody:
         required: true
@@ -1653,7 +1662,11 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
         "409":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/my-install:
@@ -3227,7 +3240,10 @@ components:
 
     KycStatus:
       type: string
-      enum: [in_review, needs_fix, approved]
+      description: |
+        `rejected`: the company decided not to take the customer up; they
+        stay in the agent's list.
+      enum: [in_review, needs_fix, approved, rejected]
 
     CommissionStatus:
       type: string
