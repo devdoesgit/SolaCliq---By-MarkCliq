@@ -11,12 +11,21 @@ class TaskRepository {
 
   final api.TasksApi _api;
 
-  Future<List<TaskSummary>> list(String orgId, TaskView view) async {
+  /// Every task in [view] (done grows for good: all its pages).
+  Future<List<TaskSummary>> list(String orgId, TaskView view) => allPages((
+    cursor,
+  ) async {
     final response = await apiCall(
-      () => _api.listMyTasks(orgId: orgId, view: view.name),
+      () => _api.listMyTasks(
+        orgId: orgId,
+        view: view.name,
+        cursor: cursor,
+        limit: pageSizeMax,
+      ),
     );
-    return [for (final t in response.data!.items) _summary(t)];
-  }
+    final data = response.data!;
+    return ([for (final t in data.items) _summary(t)], data.page.nextCursor);
+  });
 
   Future<Task> get(String orgId, String taskId) async {
     final response = await apiCall(

@@ -70,11 +70,15 @@ class ExpenseRepository {
 
   final api.ExpensesApi _api;
 
-  /// The latest first.
-  Future<List<Expense>> mine(String orgId) async {
-    final response = await apiCall(() => _api.listMyExpenses(orgId: orgId));
-    return [for (final e in response.data!.items) _expense(e)];
-  }
+  /// All of them, the latest first: the month's totals need every one.
+  Future<List<Expense>> mine(String orgId) => allPages((cursor) async {
+    final response = await apiCall(
+      () =>
+          _api.listMyExpenses(orgId: orgId, cursor: cursor, limit: pageSizeMax),
+    );
+    final data = response.data!;
+    return ([for (final e in data.items) _expense(e)], data.page.nextCursor);
+  });
 
   /// Sends an expense to the admin. Pass the same [idempotencyKey] when
   /// retrying, so a retry never logs it twice.

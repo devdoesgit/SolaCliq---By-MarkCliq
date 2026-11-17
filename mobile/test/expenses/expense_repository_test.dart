@@ -38,6 +38,26 @@ void main() {
   }
 
   group(ExpenseRepository, () {
+    test('reads every page, 100 at a time', () async {
+      final seen = <RequestOptions>[];
+      final dio = Dio(BaseOptions(baseUrl: 'http://api'))
+        ..httpClientAdapter = FakeAdapter((o) async {
+          seen.add(o);
+          final second = o.queryParameters['cursor'] == 'c2';
+          return jsonBody(200, {
+            'items': [
+              {...expenseJson, 'id': second ? 'e2' : 'e1'},
+            ],
+            'page': {'next_cursor': second ? null : 'c2'},
+          });
+        });
+      final all = await ExpenseRepository(ExpensesApi(dio)).mine('o1');
+      expect(all.map((e) => e.id), ['e1', 'e2']);
+      expect(seen, hasLength(2));
+      expect(seen.first.queryParameters['limit'], 100);
+      expect(seen.last.queryParameters['cursor'], 'c2');
+    });
+
     test('sends paise, the day as YYYY-MM-DD and the key', () async {
       final repo = repository();
       final e = await repo.create(
