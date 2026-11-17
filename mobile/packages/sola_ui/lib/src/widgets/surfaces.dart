@@ -211,7 +211,7 @@ class SolaGroup extends StatelessWidget {
   }
 }
 
-/// A small uppercase label above a group or row of chips.
+/// A small label above a group or row of chips.
 class SolaSectionLabel extends StatelessWidget {
   /// Creates the label.
   const new(
@@ -271,37 +271,6 @@ class SolaSectionHeader extends StatelessWidget {
           ?action,
         ],
       ),
-    );
-  }
-}
-
-/// A sun dot then an uppercase line: "SOLACLIQ · BY MARKCLIQ".
-class SolaEyebrow extends StatelessWidget {
-  /// Creates the eyebrow.
-  const new(this.text, {this.color = SolaColors.ink, super.key});
-
-  /// The words.
-  final String text;
-
-  /// Text colour.
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: SolaSpace.space8,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: SolaColors.sun,
-            shape: BoxShape.circle,
-          ),
-        ),
-        SolaText(text, style: SolaTextStyle.eyebrow, color: color),
-      ],
     );
   }
 }

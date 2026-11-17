@@ -39,7 +39,10 @@ class _AdminOnlyPageState extends State<AdminOnlyPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: SolaSpace.space26),
-          SolaEyebrow(l10n.appName),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SolaLockup(height: 30, semanticsLabel: l10n.appName),
+          ),
           const SizedBox(height: SolaSpace.space12),
           SolaTitleBlock(
             title: l10n.adminOnlyTitle,

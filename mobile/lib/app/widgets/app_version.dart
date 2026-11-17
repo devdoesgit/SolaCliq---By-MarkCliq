@@ -41,7 +41,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
             // The wordmark's ink runs from the sun dot to the q's tail, so
             // this height sets its letters at about the text's size.
             const SolaWordmark(height: 17),
-            SolaText(
+            SolaBrandText(
               l10n.appByMarkCliq,
               style: SolaTextStyle.meta,
               color: SolaColors.muted,

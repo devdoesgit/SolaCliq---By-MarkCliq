@@ -310,7 +310,7 @@
     "@roleCustomer": {
         "description": "Role name for a customer of a company."
     },
-    "welcomeHeadline": "Every solar install,\nin one place.",
+    "welcomeHeadline": "Every solar install,\nin one place",
     "@welcomeHeadline": {
         "description": "Welcome headline."
     },

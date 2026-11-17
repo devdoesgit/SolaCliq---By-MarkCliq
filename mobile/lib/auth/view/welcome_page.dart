@@ -131,7 +131,12 @@ class _Content extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: SolaSpace.space12,
             children: [
-              SolaEyebrow(l10n.welcomeEyebrow),
+              SolaLockup(
+                height: 26,
+                mark: false,
+                byline: l10n.appByMarkCliq,
+                semanticsLabel: l10n.welcomeEyebrow,
+              ),
               SolaText(l10n.welcomeHeadline, style: SolaTextStyle.display),
               SolaText(l10n.welcomeBody, color: SolaColors.muted),
               Row(

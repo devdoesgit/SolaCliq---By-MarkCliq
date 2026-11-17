@@ -229,7 +229,7 @@ class _SecuredBy extends StatelessWidget {
       spacing: SolaSpace.space6,
       children: [
         const SolaIcon(SolaIcons.lock, size: 12, color: SolaColors.muted),
-        SolaText(
+        SolaBrandText(
           context.l10n.securedBy,
           style: SolaTextStyle.eyebrowSm,
           color: SolaColors.muted,
