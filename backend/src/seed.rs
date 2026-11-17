@@ -2,8 +2,9 @@
     Command-line tools (phase 4)
     --------------------------------------------------------------------
     - `cargo run -- seed`: an illustrative company with one person per
-      role, and Ravi's tasks and expenses (phase 8), for trying the app
-      and the website locally. Development only
+      role, Ravi's tasks and expenses (phase 8) and the agents' customers
+      (phase 9), for trying the app and the website locally. Development
+      only
     - `cargo run -- make-platform-admin <email>`: gives an account the
       MarkCliq platform admin role. Works in production; that's its job
 */
@@ -197,6 +198,7 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
 
     tasks(&mut tx).await?;
     expenses(&mut tx).await?;
+    registrations(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -653,6 +655,267 @@ async fn expenses(tx: &mut PgConnection) -> Result<(), SeedError> {
     )
     .bind(EXAMPLE_SOLAR)
     .bind(EXPENSES.len() as i32)
+    .execute(&mut *tx)
+    .await?;
+    Ok(())
+}
+
+/*
+    The agents' customers (phase 9)
+    --------------------------------------------------------------------
+    - Meena (commission) and Aman (salary) each have customers in every
+      state the admin website will set: with the admin, a document sent
+      back, approved at a stage, not taken up
+    - Rajinder (the seeded customer) is one of Meena's, approved, so his
+      Documents screen has his KYC
+    - each document points at an upload row with no file behind it: the
+      app never shows KYC images, and `used_at` keeps the sweep off them
+    - reset on every run; the SC counter moves past them
+*/
+struct SeedCustomerReg {
+    n: u128,
+    reference: &'static str,
+    name: &'static str,
+    email: &'static str,
+    phone: &'static str,
+    city: &'static str,
+    kw: f64,
+    agent: &'static str,
+    status: &'static str,
+    days_ago: i32,
+    stage: Option<i32>,
+    // (paise, status)
+    commission: Option<(i64, &'static str)>,
+    // The document sent back, and why.
+    fix: Option<(&'static str, &'static str)>,
+    rejected_note: Option<&'static str>,
+}
+
+const REGISTRATIONS: &[SeedCustomerReg] = &[
+    SeedCustomerReg {
+        n: 1,
+        reference: "SC-0001",
+        name: "Rajinder Kaur (illustrative)",
+        email: "rajinder@example.com",
+        phone: "9814033001",
+        city: "Mohali",
+        kw: 5.0,
+        agent: "meena@example.com",
+        status: "approved",
+        days_ago: 20,
+        stage: Some(2),
+        commission: Some((500_000, "payable")),
+        fix: None,
+        rejected_note: None,
+    },
+    SeedCustomerReg {
+        n: 2,
+        reference: "SC-0002",
+        name: "Sunita Rao (illustrative)",
+        email: "sunita@example.com",
+        phone: "9814033002",
+        city: "Kharar",
+        kw: 3.0,
+        agent: "meena@example.com",
+        status: "needs_fix",
+        days_ago: 4,
+        stage: None,
+        commission: Some((300_000, "in_review")),
+        fix: Some((
+            "electricity_bill",
+            "Bill photo is blurry. Take it again in daylight.",
+        )),
+        rejected_note: None,
+    },
+    SeedCustomerReg {
+        n: 3,
+        reference: "SC-0003",
+        name: "Arjun Mehra (illustrative)",
+        email: "arjun@example.com",
+        phone: "9814033003",
+        city: "Zirakpur",
+        kw: 4.0,
+        agent: "meena@example.com",
+        status: "in_review",
+        days_ago: 0,
+        stage: None,
+        commission: Some((450_000, "in_review")),
+        fix: None,
+        rejected_note: None,
+    },
+    SeedCustomerReg {
+        n: 4,
+        reference: "SC-0004",
+        name: "Harpal Singh (illustrative)",
+        email: "harpal@example.com",
+        phone: "9814033004",
+        city: "Kurali",
+        kw: 3.0,
+        agent: "meena@example.com",
+        status: "rejected",
+        days_ago: 12,
+        stage: None,
+        commission: None,
+        fix: None,
+        rejected_note: Some("The roof is shaded most of the day."),
+    },
+    SeedCustomerReg {
+        n: 5,
+        reference: "SC-0005",
+        name: "Kiran Patel (illustrative)",
+        email: "kiran@example.com",
+        phone: "9814033005",
+        city: "Mohali",
+        kw: 6.0,
+        agent: "aman@example.com",
+        status: "in_review",
+        days_ago: 1,
+        stage: None,
+        commission: None,
+        fix: None,
+        rejected_note: None,
+    },
+    SeedCustomerReg {
+        n: 6,
+        reference: "SC-0006",
+        name: "Gurpreet Kaur (illustrative)",
+        email: "gurpreet@example.com",
+        phone: "9814033006",
+        city: "Panchkula",
+        kw: 5.0,
+        agent: "aman@example.com",
+        status: "approved",
+        days_ago: 30,
+        stage: Some(5),
+        commission: None,
+        fix: None,
+        rejected_note: None,
+    },
+];
+
+const SEED_KYC: [&str; 5] = [
+    "aadhaar",
+    "pan",
+    "electricity_bill",
+    "land_document",
+    "signature",
+];
+
+// Fixed ids per customer (…c1, …c2) and per document upload (…c101…).
+fn reg_id(n: u128) -> Uuid {
+    Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000000c0 + n)
+}
+fn reg_upload_id(n: u128, k: usize) -> Uuid {
+    Uuid::from_u128(0x01928f6e_0000_7000_8000_00000000c000 + n * 0x10 + k as u128)
+}
+
+async fn registrations(tx: &mut PgConnection) -> Result<(), SeedError> {
+    let ids: Vec<Uuid> = REGISTRATIONS.iter().map(|c| reg_id(c.n)).collect();
+    let uploads: Vec<Uuid> = REGISTRATIONS
+        .iter()
+        .flat_map(|c| (0..SEED_KYC.len()).map(move |k| reg_upload_id(c.n, k)))
+        .collect();
+    // Documents go with their customer (ON DELETE CASCADE), then the uploads.
+    sqlx::query("DELETE FROM customers WHERE id = ANY($1)")
+        .bind(&ids)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("DELETE FROM uploads WHERE id = ANY($1)")
+        .bind(&uploads)
+        .execute(&mut *tx)
+        .await?;
+
+    for c in REGISTRATIONS {
+        let id = reg_id(c.n);
+        let commission = c.commission.map(|(amount, _)| amount);
+        let commission_status = c.commission.map(|(_, status)| status);
+        sqlx::query(
+            "INSERT INTO customers (id, org_id, reference, name, phone, email, address, city,
+                                    pin_code, state, discom, consumer_number, sanctioned_load_kw,
+                                    connection_type, roof, subsidy, consent_at, system_kw,
+                                    registered_by, user_id, kyc_status, stage_index, decided_by,
+                                    decided_at, rejected_note, commission, commission_status,
+                                    commission_payable_since, created_at)
+             SELECT $1, $2, $3, $4, $5, $6, 'House ' || $13::text || ', Main Road', $7, '160062',
+                    'Punjab', 'PSPCL', 'C-' || $5, 5, 'residential', 'rcc', false,
+                    now() - make_interval(days => $9), $8,
+                    a.id, (SELECT id FROM users WHERE email = $6), $10::kyc_status, $11,
+                    CASE WHEN $10 IN ('approved', 'rejected') THEN d.id END,
+                    CASE WHEN $10 IN ('approved', 'rejected') THEN now() - interval '1 day' END,
+                    $12, $14, $15::commission_status,
+                    CASE WHEN $15 = 'payable' THEN current_date - 3 END,
+                    now() - make_interval(days => $9)
+             FROM users a, users d
+             WHERE a.email = $16 AND d.email = 'dev@example.com'",
+        )
+        .bind(id)
+        .bind(EXAMPLE_SOLAR)
+        .bind(c.reference)
+        .bind(c.name)
+        .bind(c.phone)
+        .bind(c.email)
+        .bind(c.city)
+        .bind(c.kw)
+        .bind(c.days_ago)
+        .bind(c.status)
+        .bind(c.stage)
+        .bind(c.rejected_note)
+        .bind(c.n as i32)
+        .bind(commission)
+        .bind(commission_status)
+        .bind(c.agent)
+        .execute(&mut *tx)
+        .await?;
+
+        for (k, kind) in SEED_KYC.iter().enumerate() {
+            let upload = reg_upload_id(c.n, k);
+            sqlx::query(
+                "INSERT INTO uploads (id, org_id, owner_id, purpose, content_type, size_bytes,
+                                      r2_key, used_at)
+                 SELECT $1, $2, id, 'kyc', 'image/jpeg', 1000,
+                        'orgs/' || $2::text || '/kyc/' || $1::text, now()
+                 FROM users WHERE email = $3",
+            )
+            .bind(upload)
+            .bind(EXAMPLE_SOLAR)
+            .bind(c.agent)
+            .execute(&mut *tx)
+            .await?;
+            let (status, note) = match (c.fix, c.status) {
+                (Some((fix_kind, note)), _) if fix_kind == *kind => ("needs_fix", Some(note)),
+                (_, "approved") => ("verified", None),
+                _ => ("in_review", None),
+            };
+            sqlx::query(
+                "INSERT INTO documents (id, org_id, customer_id, kind, upload_id, status,
+                                        admin_note, admin_note_by, admin_note_at, uploaded_by,
+                                        created_at, updated_at)
+                 SELECT $1, $2, $3, $4::kyc_kind, $5, $6::document_status, $7,
+                        CASE WHEN $7 IS NULL THEN NULL ELSE d.id END,
+                        CASE WHEN $7 IS NULL THEN NULL ELSE now() - interval '1 day' END, a.id,
+                        c.created_at, c.created_at
+                 FROM users a, users d, customers c
+                 WHERE a.email = $8 AND d.email = 'dev@example.com' AND c.id = $3",
+            )
+            .bind(Uuid::now_v7())
+            .bind(EXAMPLE_SOLAR)
+            .bind(id)
+            .bind(*kind)
+            .bind(upload)
+            .bind(status)
+            .bind(note)
+            .bind(c.agent)
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+    sqlx::query(
+        "INSERT INTO org_counters (org_id, series, value) VALUES ($1, 'SC', $2)
+         ON CONFLICT (org_id, series)
+            DO UPDATE SET value = GREATEST(org_counters.value, EXCLUDED.value)",
+    )
+    .bind(EXAMPLE_SOLAR)
+    .bind(REGISTRATIONS.len() as i32)
     .execute(&mut *tx)
     .await?;
     Ok(())
