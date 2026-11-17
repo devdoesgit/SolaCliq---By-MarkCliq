@@ -144,6 +144,45 @@ void main() {
     );
 
     blocTest<AddCustomerCubit, AddCustomerState>(
+      'a duplicate shows who registered the customer first',
+      setUp: () =>
+          when(
+            () => registrations.submit(
+              orgId: any(named: 'orgId'),
+              idempotencyKey: any(named: 'idempotencyKey'),
+              draft: any(named: 'draft'),
+            ),
+          ).thenThrow(
+            const AuthFailure(
+              AuthFailureCode.registrationDuplicate,
+              null,
+              'Meena registered this customer on 14 Nov 2026 (SC-0002).',
+            ),
+          ),
+      build: build,
+      act: (c) => c.submit(draft),
+      expect: () => [
+        const AddCustomerState(submitting: true),
+        const AddCustomerState(
+          failure: AuthFailureCode.registrationDuplicate,
+          failureDetail:
+              'Meena registered this customer on 14 Nov 2026 (SC-0002).',
+        ),
+      ],
+    );
+
+    blocTest<AddCustomerCubit, AddCustomerState>(
+      'going back to edit forgets the last refusal',
+      build: build,
+      seed: () => const AddCustomerState(
+        failure: AuthFailureCode.registrationDuplicate,
+        failureDetail: 'Meena registered this customer.',
+      ),
+      act: (c) => c.clearFailure(),
+      expect: () => [const AddCustomerState()],
+    );
+
+    blocTest<AddCustomerCubit, AddCustomerState>(
       'success keeps the reference',
       setUp: () => when(
         () => registrations.submit(

@@ -199,16 +199,63 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
     setState(() => _step = _Step.values[_step.index + 1]);
   }
 
+  /*
+    Back to an earlier step to change something: the last refusal no
+    longer applies to what will be sent
+  */
+  void _goTo(_Step step) {
+    context.read<AddCustomerCubit>().clearFailure();
+    setState(() => _step = step);
+  }
+
   void _back() {
     if (_step == _Step.details) {
-      _leave();
+      unawaited(_leave());
     } else {
-      setState(() => _step = _Step.values[_step.index - 1]);
+      _goTo(_Step.values[_step.index - 1]);
     }
   }
 
-  void _leave() =>
-      context.canPop() ? context.pop() : context.go(AppRoutes.home);
+  /// Anything typed or uploaded that leaving would throw away.
+  bool get _hasDraft {
+    final state = context.read<AddCustomerCubit>().state;
+    if (state.reference != null) return false;
+    return state.docs.isNotEmpty ||
+        _controllers.any((c) => c.text.trim().isNotEmpty);
+  }
+
+  /*
+    Leaving with a draft asks first: one stray Back press on site would
+    otherwise lose the details and every document added
+  */
+  Future<void> _leave() async {
+    if (_hasDraft && !await _confirmDiscard()) return;
+    if (!mounted) return;
+    context.canPop() ? context.pop() : context.go(AppRoutes.home);
+  }
+
+  Future<bool> _confirmDiscard() async {
+    final l10n = context.l10n;
+    final discard = await showSolaSheet<bool>(
+      context: context,
+      title: l10n.discardCustomerTitle,
+      doneLabel: l10n.keepEditing,
+      builder: (sheet) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: SolaSpace.space14,
+        children: [
+          SolaText(l10n.discardCustomerBody, color: SolaColors.muted),
+          SolaButton(
+            key: const Key('discard_customer'),
+            label: l10n.discardCustomer,
+            variant: SolaButtonVariant.dark,
+            onPressed: () => Navigator.of(sheet).pop(true),
+          ),
+        ],
+      ),
+    );
+    return discard ?? false;
+  }
 
   /// The documents that go with the customer: the uploaded ones, plus with
   /// quick forms (development) a sample for each required one not picked.
@@ -313,7 +360,8 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
         ),
       ),
       child: PopScope(
-        canPop: _step == _Step.details,
+        // Back always comes here: a step back, or leaving (asked first).
+        canPop: false,
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) _back();
         },
@@ -333,7 +381,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             trailing: SolaTextLink(
               l10n.cancel,
               key: const Key('add_customer_cancel'),
-              onPressed: _leave,
+              onPressed: () => unawaited(_leave()),
             ),
           ),
           body: Column(
@@ -416,6 +464,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             SolaNotice(
               key: const Key('failure_notice'),
               title: failure.message(l10n),
+              body: state.failureDetail,
               announce: true,
             ),
           SolaButton(
@@ -721,7 +770,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             l10n.edit,
             key: ValueKey('review_edit_${step.name}'),
             style: SolaTextStyle.small,
-            onPressed: () => setState(() => _step = step),
+            onPressed: () => _goTo(step),
           ),
         ),
         SolaGroup(children: rows),

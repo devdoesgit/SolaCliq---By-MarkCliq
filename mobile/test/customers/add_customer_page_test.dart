@@ -184,5 +184,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('route:/home'), findsOneWidget);
     });
+
+    testWidgets('leaving with a draft asks first', (tester) async {
+      await pump(tester);
+      await tester.enterText(_input('customer_name'), 'Test Customer');
+      await tester.tapKey('add_customer_cancel');
+      await tester.pumpAndSettle();
+      expect(find.text('Discard this customer?'), findsOneWidget);
+
+      // Keep editing: still on the form, nothing lost.
+      await tester.tap(find.text('Keep editing'));
+      await tester.pumpAndSettle();
+      expect(find.text('Test Customer'), findsOneWidget);
+
+      // The system Back button asks too.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard this customer?'), findsOneWidget);
+      await tester.tapKey('discard_customer');
+      await tester.pumpAndSettle();
+      expect(find.text('route:/home'), findsOneWidget);
+    });
   });
 }

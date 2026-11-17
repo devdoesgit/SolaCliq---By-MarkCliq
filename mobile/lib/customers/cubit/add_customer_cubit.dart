@@ -40,12 +40,17 @@ class AddCustomerState extends Equatable {
     this.docs = const {},
     this.submitting = false,
     this.failure,
+    this.failureDetail,
     this.reference,
   });
 
   final Map<KycKind, DocState> docs;
   final bool submitting;
   final AuthFailureCode? failure;
+
+  /// The server's explanation of [failure], e.g. who registered the
+  /// customer first.
+  final String? failureDetail;
 
   /// Set once the admin has the request: "SC-1042".
   final String? reference;
@@ -74,16 +79,24 @@ class AddCustomerState extends Equatable {
     Map<KycKind, DocState>? docs,
     bool? submitting,
     AuthFailureCode? Function()? failure,
+    String? Function()? failureDetail,
     String? reference,
   }) => AddCustomerState(
     docs: docs ?? this.docs,
     submitting: submitting ?? this.submitting,
     failure: failure == null ? this.failure : failure(),
+    failureDetail: failureDetail == null ? this.failureDetail : failureDetail(),
     reference: reference ?? this.reference,
   );
 
   @override
-  List<Object?> get props => [docs, submitting, failure, reference];
+  List<Object?> get props => [
+    docs,
+    submitting,
+    failure,
+    failureDetail,
+    reference,
+  ];
 }
 
 /// Holds an agent's new customer across the steps: uploads each document
@@ -111,6 +124,12 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
     }
   }
 
+  /// Forgets the last refusal, once the agent goes back to change things.
+  void clearFailure() {
+    if (state.failure == null || isClosed) return;
+    emit(state.copyWith(failure: () => null, failureDetail: () => null));
+  }
+
   void _setDoc(KycKind kind, DocState doc) {
     if (isClosed) return;
     emit(state.copyWith(docs: {...state.docs, kind: doc}));
@@ -120,7 +139,13 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
     CustomerDraft Function(Map<KycKind, String>) draft,
   ) async {
     if (state.submitting) return;
-    emit(state.copyWith(submitting: true, failure: () => null));
+    emit(
+      state.copyWith(
+        submitting: true,
+        failure: () => null,
+        failureDetail: () => null,
+      ),
+    );
     try {
       final reference = await _registrations.submit(
         orgId: orgId,
@@ -132,7 +157,13 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
       }
     } on AuthFailure catch (failure) {
       if (!isClosed) {
-        emit(state.copyWith(submitting: false, failure: () => failure.code));
+        emit(
+          state.copyWith(
+            submitting: false,
+            failure: () => failure.code,
+            failureDetail: () => failure.detail,
+          ),
+        );
       }
     }
   }
