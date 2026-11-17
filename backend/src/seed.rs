@@ -2,9 +2,9 @@
     Command-line tools (phase 4)
     --------------------------------------------------------------------
     - `cargo run -- seed`: an illustrative company with one person per
-      role, Ravi's tasks and expenses (phase 8) and the agents' customers
-      (phase 9), for trying the app and the website locally. Development
-      only
+      role, Ravi's tasks and expenses (phase 8), the agents' customers
+      (phase 9) and installs (phase 10), for trying the app and the
+      website locally. Development only
     - `cargo run -- make-platform-admin <email>`: gives an account the
       MarkCliq platform admin role. Works in production; that's its job
 */
@@ -199,6 +199,7 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
     tasks(&mut tx).await?;
     expenses(&mut tx).await?;
     registrations(&mut tx).await?;
+    installs(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -815,7 +816,12 @@ async fn registrations(tx: &mut PgConnection) -> Result<(), SeedError> {
         .iter()
         .flat_map(|c| (0..SEED_KYC.len()).map(move |k| reg_upload_id(c.n, k)))
         .collect();
-    // Documents go with their customer (ON DELETE CASCADE), then the uploads.
+    // Their visit task first (it points at the customer), then the customers:
+    // documents and installs go with them (ON DELETE CASCADE), then the uploads.
+    sqlx::query("DELETE FROM tasks WHERE id = $1")
+        .bind(RAJINDER_VISIT)
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM customers WHERE id = ANY($1)")
         .bind(&ids)
         .execute(&mut *tx)
@@ -916,6 +922,115 @@ async fn registrations(tx: &mut PgConnection) -> Result<(), SeedError> {
     )
     .bind(EXAMPLE_SOLAR)
     .bind(REGISTRATIONS.len() as i32)
+    .execute(&mut *tx)
+    .await?;
+    Ok(())
+}
+
+/*
+    Installs (phase 10)
+    --------------------------------------------------------------------
+    - the two approved customers: Rajinder (Meena's, stage 2) and Gurpreet
+      (Aman's, stage 5). Price ₹57,000 a kW, the PM Surya Ghar subsidy
+      from the table, the default plan
+    - Rajinder: advance paid, the installation payment due, and his next
+      visit (a Structure task for Ravi tomorrow), so Track and Payments
+      have everything to show and claim
+    - Example Solar gets an illustrative UPI id, for "Pay by UPI"
+*/
+const RAJINDER_VISIT: Uuid = Uuid::from_u128(0x01928f6e_0000_7000_8000_000000000a08);
+
+async fn installs(tx: &mut PgConnection) -> Result<(), SeedError> {
+    use crate::routes::install::{default_plan, pm_surya_ghar};
+
+    sqlx::query("UPDATE orgs SET upi_id = 'examplesolar@okhdfc' WHERE id = $1")
+        .bind(EXAMPLE_SOLAR)
+        .execute(&mut *tx)
+        .await?;
+
+    let india = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
+    let today = Utc::now().with_timezone(&india).date_naive();
+    // (customer n, statuses of the three payments)
+    for (n, statuses) in [(1, ["paid", "due", "later"]), (6, ["paid", "paid", "due"])] {
+        let c = REGISTRATIONS
+            .iter()
+            .find(|c| c.n == n)
+            .expect("a seeded customer");
+        let total = (c.kw * 5_700_000.0) as i64;
+        let install = Uuid::from_u128(0x01928f6e_0000_7000_8000_0000000001e0 + n);
+        sqlx::query(
+            "INSERT INTO installs (id, org_id, customer_id, total, subsidy)
+             VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(install)
+        .bind(EXAMPLE_SOLAR)
+        .bind(reg_id(n))
+        .bind(total)
+        .bind(pm_surya_ghar(c.kw))
+        .execute(&mut *tx)
+        .await?;
+        for (position, ((label, detail, amount), status)) in
+            default_plan(total).into_iter().zip(statuses).enumerate()
+        {
+            sqlx::query(
+                "INSERT INTO install_payments (id, org_id, install_id, position, label, detail,
+                                               amount, due_on, status, paid_on)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7,
+                         CASE WHEN $8 = 'due' THEN $9::date END, $8::payment_status,
+                         CASE WHEN $8 = 'paid' THEN $10::date END)",
+            )
+            .bind(Uuid::from_u128(
+                0x01928f6e_0000_7000_8000_000000000200 + n * 0x10 + position as u128,
+            ))
+            .bind(EXAMPLE_SOLAR)
+            .bind(install)
+            .bind(position as i32)
+            .bind(label)
+            .bind(detail)
+            .bind(amount)
+            .bind(status)
+            .bind(today + Duration::days(7))
+            .bind(today - Duration::days(15))
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+
+    // Rajinder's next visit: Structure (stage 2), Ravi, tomorrow 10:00.
+    let due_at = india
+        .from_local_datetime(
+            &(today + Duration::days(1))
+                .and_time(NaiveTime::from_hms_opt(10, 0, 0).expect("10:00")),
+        )
+        .single()
+        .expect("India has no clock changes")
+        .with_timezone(&Utc);
+    sqlx::query(
+        "INSERT INTO tasks (id, org_id, customer_id, reference, title, stage_index, assignee_id,
+                            assigned_by, due_at)
+         SELECT $1, $2, $3, 'TSK-0430', 'Structure', 2, r.id, d.id, $4
+         FROM users r, users d WHERE r.email = 'ravi@example.com' AND d.email = 'dev@example.com'",
+    )
+    .bind(RAJINDER_VISIT)
+    .bind(EXAMPLE_SOLAR)
+    .bind(reg_id(1))
+    .bind(due_at)
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query(
+        "INSERT INTO task_photo_slots (org_id, task_id, slot_id, position, label, hint)
+         VALUES ($1, $2, 'frame', 0, 'Structure frame', 'The whole frame, bolted down')",
+    )
+    .bind(EXAMPLE_SOLAR)
+    .bind(RAJINDER_VISIT)
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query(
+        "INSERT INTO task_checklist_items (org_id, task_id, item_id, position, text)
+         VALUES ($1, $2, 'level', 0, 'Level and bolt the frame')",
+    )
+    .bind(EXAMPLE_SOLAR)
+    .bind(RAJINDER_VISIT)
     .execute(&mut *tx)
     .await?;
     Ok(())
