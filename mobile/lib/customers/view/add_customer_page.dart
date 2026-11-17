@@ -536,7 +536,8 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             SolaValueRow(
               key: const Key('customer_state'),
               label: l10n.fieldState,
-              value: _state ?? l10n.chooseState,
+              value: _state,
+              placeholder: l10n.chooseState,
               error: _errors['state'],
               onTap: () => unawaited(
                 _pick(l10n.fieldState, indianStates, _state, (v) {
@@ -585,8 +586,9 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
                 key: const Key('customer_discom'),
                 label: l10n.fieldDiscom,
                 value: discom == null
-                    ? l10n.chooseDiscom
+                    ? null
                     : l10n.discomInState(discom, _state!),
+                placeholder: l10n.chooseDiscom,
                 error: _errors['discom'],
                 onTap: () => unawaited(
                   _pick(l10n.fieldDiscom, discoms, discom, (v) {
@@ -646,7 +648,8 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             SolaValueRow(
               key: const Key('customer_roof'),
               label: l10n.fieldRoof,
-              value: _roof == null ? l10n.chooseRoof : _roofLabel(l10n, _roof!),
+              value: _roof == null ? null : _roofLabel(l10n, _roof!),
+              placeholder: l10n.chooseRoof,
               error: _errors['roof'],
               onTap: () => unawaited(_pickRoof(l10n)),
             ),

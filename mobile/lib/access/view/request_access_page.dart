@@ -276,7 +276,8 @@ class _RequestAccessViewState extends State<RequestAccessView> {
                 SolaValueRow(
                   key: const Key('access_state'),
                   label: l10n.fieldState,
-                  value: state ?? l10n.stateFromGstin,
+                  value: state,
+                  placeholder: l10n.stateFromGstin,
                 ),
                 SolaFieldRow(
                   key: const ValueKey('access_legal_name'),
@@ -301,7 +302,8 @@ class _RequestAccessViewState extends State<RequestAccessView> {
                 SolaValueRow(
                   key: const Key('access_business_type'),
                   label: l10n.fieldBusinessType,
-                  value: _businessType?.label(l10n) ?? l10n.chooseBusinessType,
+                  value: _businessType?.label(l10n),
+                  placeholder: l10n.chooseBusinessType,
                   error: _errors['businessType'],
                   onTap: () => unawaited(_pickBusinessType()),
                 ),

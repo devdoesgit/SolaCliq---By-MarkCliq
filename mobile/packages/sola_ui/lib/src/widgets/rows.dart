@@ -221,16 +221,21 @@ class SolaValueRow extends StatelessWidget {
   const new({
     required Key super.key,
     required this.label,
-    required this.value,
+    this.value,
+    this.placeholder,
     this.onTap,
     this.error,
-  });
+  }) : assert(value != null || placeholder != null, 'a value or a placeholder');
 
   /// Above the value.
   final String label;
 
-  /// The value, or a placeholder.
-  final String value;
+  /// The value; null shows [placeholder].
+  final String? value;
+
+  /// Shown in the placeholder colour while there's no [value], like a text
+  /// field's hint, so an unfilled row never looks filled in.
+  final String? placeholder;
 
   /// Opens the choice; null makes the row read-only.
   final VoidCallback? onTap;
@@ -242,6 +247,7 @@ class SolaValueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final error = this.error;
     final onTap = this.onTap;
+    final value = this.value;
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: SolaSpace.space10),
       child: Row(
@@ -257,7 +263,11 @@ class SolaValueRow extends StatelessWidget {
                   style: SolaTextStyle.fieldLabel,
                   color: error != null ? SolaColors.danger : SolaColors.muted,
                 ),
-                SolaText(value, style: SolaTextStyle.input),
+                SolaText(
+                  value ?? placeholder ?? '',
+                  style: SolaTextStyle.input,
+                  color: value == null ? SolaColors.faint : SolaColors.ink,
+                ),
                 if (error != null)
                   SolaText(
                     error,
