@@ -493,7 +493,9 @@ export interface paths {
          *     be attached to this company's records, and is stored under the
          *     company's own prefix. URLs expire after 15 minutes. Sample data
          *     uses a `.invalid` host, which the development app treats as
-         *     uploaded.
+         *     uploaded. Each kind is for the roles that use it: `proof` for
+         *     workers, `receipt` for workers and agents, `kyc` for agents; the
+         *     org admin may upload any. Otherwise 403 `org.role_not_allowed`.
          */
         post: operations["createUpload"];
         delete?: never;

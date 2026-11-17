@@ -259,7 +259,7 @@ fn org_rejected() -> ApiError {
     )
 }
 
-fn role_not_allowed() -> ApiError {
+pub fn role_not_allowed() -> ApiError {
     ApiError::new(
         StatusCode::FORBIDDEN,
         "org.role_not_allowed",

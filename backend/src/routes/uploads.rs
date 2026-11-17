@@ -11,6 +11,8 @@
       that company's records can take it
     - jpeg, png or pdf, up to 10 MB; the type and size are signed into
       the URL, so R2 refuses anything else (`storage.rs`)
+    - each kind of file is for the roles that use it (`may_upload`):
+      a customer can't ask for a KYC slot just to fill storage
     - `attach`: how a record takes an upload. It checks with R2 that the
       file arrived, whole, before the record points at it
     - `sweep`: uploads nothing attached within a day are deleted, file
@@ -29,7 +31,7 @@ use crate::{
     AppState,
     error::{ApiError, ApiResult},
     extract::ApiJson,
-    org::OrgMember,
+    org::{OrgMember, Role, role_not_allowed},
     rate_limit::Rule,
     scope,
     storage::{self, Storage},
@@ -37,6 +39,23 @@ use crate::{
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(create_upload))
+}
+
+/*
+    Who may upload what
+    --------------------------------------------------------------------
+    - proof photos (and a problem's photo): installers
+    - receipts: whoever logs expenses, installers and agents
+    - KYC documents: agents, who register customers and fix them
+    - the company's admin: any (the website, for staff ID documents)
+    - customers: none yet
+*/
+fn may_upload(role: Role, purpose: UploadPurpose) -> bool {
+    match purpose {
+        UploadPurpose::Proof => matches!(role, Role::Worker | Role::OrgAdmin),
+        UploadPurpose::Receipt => matches!(role, Role::Worker | Role::Agent | Role::OrgAdmin),
+        UploadPurpose::Kyc => matches!(role, Role::Agent | Role::OrgAdmin),
+    }
 }
 
 // Up to 10 MB: a phone photo, a scanned document.
@@ -132,6 +151,9 @@ async fn create_upload(
 ) -> ApiResult<(StatusCode, Json<Upload>)> {
     if !(1..=MAX_BYTES).contains(&req.size_bytes) {
         return Err(ApiError::validation(Vec::new()).field("size_bytes", "Up to 10 MB."));
+    }
+    if !may_upload(member.role, req.purpose) {
+        return Err(role_not_allowed());
     }
     let Some(storage) = &state.storage else {
         return Err(unavailable());

@@ -136,3 +136,46 @@ async fn a_company_sees_only_its_own_uploads(db: PgPool) {
     drop(tx);
     app.close().await;
 }
+
+#[sqlx::test]
+async fn each_kind_of_file_is_for_the_roles_that_use_it(db: PgPool) {
+    let a = org(&db, "Solar A", "active").await;
+    let worker = member(&db, a, "ravi@example.com", "worker", None).await;
+    let agent = member(&db, a, "meena@example.com", "agent", Some("commission")).await;
+    let customer = member(&db, a, "rajinder@example.com", "customer", None).await;
+    let admin = member(&db, a, "dev@example.com", "org_admin", None).await;
+    let ask = |token: String, purpose: &'static str| {
+        let db = &db;
+        async move {
+            call(
+                db,
+                "POST",
+                &format!("/api/v1/orgs/{a}/uploads"),
+                &token,
+                Some(json!({"content_type": "application/pdf", "size_bytes": 100, "purpose": purpose})),
+            )
+            .await
+        }
+    };
+    for (token, purpose, ok) in [
+        (&worker, "proof", true),
+        (&worker, "receipt", true),
+        (&worker, "kyc", false),
+        (&agent, "kyc", true),
+        (&agent, "receipt", true),
+        (&agent, "proof", false),
+        (&customer, "kyc", false),
+        (&customer, "receipt", false),
+        (&customer, "proof", false),
+        (&admin, "kyc", true),
+        (&admin, "proof", true),
+    ] {
+        let res = ask(token.clone(), purpose).await;
+        if ok {
+            assert_eq!(res.status, StatusCode::CREATED, "{purpose}: {}", res.body);
+        } else {
+            assert_eq!(res.status, StatusCode::FORBIDDEN, "{purpose}: {}", res.body);
+            assert_eq!(res.body["code"], "org.role_not_allowed");
+        }
+    }
+}
