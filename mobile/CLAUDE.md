@@ -37,6 +37,14 @@ Stack, distribution, updates and tooling: `../docs/architecture.md`.
 - **design-polish** (project skill, `.claude/skills/`): visual polish pass per
   screen against the design system, with an evaluator sub-agent.
 
+## Emulator
+
+`emulator -avd solacliq_phone -gpu host -no-boot-anim`: GPU rendering
+only, never software (`swiftshader`), which hangs the machine. The AVD
+always cold-boots (snapshots off in its `config.ini`): restoring a
+snapshot saved by an abrupt exit crashed the GPU layer. If it crashes,
+read the core dump (`coredumpctl info <pid>`) and fix the cause.
+
 ## Hot reload
 
 When the app is running, after editing `mobile/lib/` code (not tests or
