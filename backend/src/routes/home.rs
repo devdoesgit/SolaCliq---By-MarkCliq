@@ -4,8 +4,9 @@
     - GET /orgs/{org_id}/home: the parts the app draws (headline, week,
       tiles, progress, a list), so a role's home changes without an app
       update. Shapes and actions: docs/backend-handoff.md, "Home"
-    - built from what exists: a worker's tasks and expenses (phase 8).
-      Customers and commissions come in phase 9, installs in phase 10; until each lands its numbers are honest zeros and the
+    - built from what exists: a worker's tasks and expenses (phase 8),
+      an agent's customers and commissions (phase 9). Installs come in
+      phase 10; until each lands its numbers are honest zeros and the
       list says what's coming, never sample data
     - dates and greetings are in Indian time: an installer's "today" is
       today in India, whatever the server's clock says
@@ -26,7 +27,11 @@ use crate::{
     error::ApiResult,
     notify,
     org::{OrgMember, PayType, Role},
-    routes::tasks::TaskStatus,
+    routes::{
+        customers::{CommissionStatus, KycKind, KycStatus, STAGES},
+        quotes::rupees,
+        tasks::TaskStatus,
+    },
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -241,6 +246,10 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         }
         _ => 0,
     };
+    let customers = match member.role {
+        Role::Agent => agent_customers(&mut tx, member.user_id).await?,
+        _ => Vec::new(),
+    };
     tx.commit().await?;
 
     let who = Who {
@@ -250,8 +259,8 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
     };
     let mut summary = match (member.role, member.pay_type) {
         (Role::Worker, _) => worker(&who, &tasks, in_review),
-        (Role::Agent, Some(PayType::Commission)) => agent(&who, true),
-        (Role::Agent, _) => agent(&who, false),
+        (Role::Agent, Some(PayType::Commission)) => agent(&who, true, &customers),
+        (Role::Agent, _) => agent(&who, false, &customers),
         (Role::Customer, _) => customer(&who),
         (Role::OrgAdmin, _) => admin(&who),
     };
@@ -513,16 +522,123 @@ fn task_row(who: &Who, t: &WeekTask) -> HomeRow {
     }
 }
 
+// One customer an agent registered, as their home shows it.
+#[derive(Debug, sqlx::FromRow)]
+struct AgentCustomer {
+    id: Uuid,
+    name: String,
+    kyc_status: KycStatus,
+    created_at: DateTime<Utc>,
+    stage_index: Option<i32>,
+    commission: Option<i64>,
+    commission_status: Option<CommissionStatus>,
+    // The document sent back, while one is.
+    fix_kind: Option<KycKind>,
+}
+
+// The agent's customers, newest first.
+async fn agent_customers(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Vec<AgentCustomer>> {
+    Ok(sqlx::query_as(
+        "SELECT c.id, c.name, c.kyc_status, c.created_at, c.stage_index,
+                c.commission, c.commission_status,
+                (SELECT d.kind FROM documents d
+                 WHERE d.customer_id = c.id AND d.status = 'needs_fix' LIMIT 1) AS fix_kind
+         FROM customers c WHERE c.registered_by = $1
+         ORDER BY c.created_at DESC, c.id DESC",
+    )
+    .bind(user_id)
+    .fetch_all(conn)
+    .await?)
+}
+
+// "Ramesh Sahoo" → "RS".
+fn initials(name: &str) -> String {
+    name.split_whitespace()
+        .filter_map(|w| w.chars().next())
+        .take(2)
+        .collect::<String>()
+        .to_uppercase()
+}
+
+// A recent customer: who, where it stands, and a pill.
+fn customer_row(who: &Who, c: &AgentCustomer) -> HomeRow {
+    let (detail, label, tone) = match c.kyc_status {
+        KycStatus::InReview => {
+            let sent = c.created_at.with_timezone(who.now.offset()).date_naive();
+            let when = if sent == who.now.date_naive() {
+                "Sent today".to_owned()
+            } else {
+                format!("Sent {}", sent.format("%-d %b"))
+            };
+            (when, "In review", HomeTone::Neutral)
+        }
+        KycStatus::NeedsFix => (
+            c.fix_kind.map_or_else(
+                || "A document to fix".into(),
+                |k| format!("{} to fix", k.label()),
+            ),
+            "Fix KYC",
+            HomeTone::Danger,
+        ),
+        KycStatus::Approved => (
+            c.stage_index
+                .and_then(|i| {
+                    Some(format!(
+                        "Stage {i} · {}",
+                        STAGES.get(usize::try_from(i).ok()?.checked_sub(1)?)?
+                    ))
+                })
+                .unwrap_or_else(|| "Approved".into()),
+            "Approved",
+            HomeTone::Success,
+        ),
+        KycStatus::Rejected => (
+            "The company won't go ahead".into(),
+            "Not taken up",
+            HomeTone::Neutral,
+        ),
+    };
+    HomeRow {
+        visual: HomeVisual {
+            initials: Some(initials(&c.name)),
+            ..HomeVisual::default()
+        },
+        id: c.id.to_string(),
+        title: c.name.clone(),
+        detail,
+        status: Some(HomeStatus {
+            label: label.into(),
+            tone,
+        }),
+        action: Some("customer"),
+    }
+}
+
 /*
     A sales agent's customers: added this month, KYC to fix, then
-    earnings (commission) or what's with the admin (salary), and recent
-    customers. Customers and commissions: phase 9
+    earnings (commission: payable) or what's with the admin (salary),
+    KYC this month as a bar, and the latest customers
 */
-fn agent(who: &Who, commission: bool) -> HomeSummary {
+fn agent(who: &Who, commission: bool, customers: &[AgentCustomer]) -> HomeSummary {
+    let month = |c: &&AgentCustomer| {
+        let d = c.created_at.with_timezone(who.now.offset()).date_naive();
+        (d.year(), d.month()) == (who.now.year(), who.now.month())
+    };
+    let this_month: Vec<&AgentCustomer> = customers.iter().filter(month).collect();
+    let count =
+        |list: &[&AgentCustomer], s: KycStatus| list.iter().filter(|c| c.kyc_status == s).count();
+    let all: Vec<&AgentCustomer> = customers.iter().collect();
+    let to_fix = count(&all, KycStatus::NeedsFix);
+
     let second = if commission {
+        let payable: i64 = customers
+            .iter()
+            .filter(|c| c.commission_status == Some(CommissionStatus::Payable))
+            .filter_map(|c| c.commission)
+            .sum();
         tile(
             "Earnings",
-            "₹0",
+            &rupees(payable),
             TileIcon::Wallet,
             "payable",
             false,
@@ -531,32 +647,80 @@ fn agent(who: &Who, commission: bool) -> HomeSummary {
     } else {
         tile(
             "In review",
-            "0",
+            &count(&all, KycStatus::InReview).to_string(),
             TileIcon::Hourglass,
             "with admin",
             false,
             "review",
         )
     };
+
+    // KYC this month: approved, in review, to fix (empty parts left out).
+    let segments: Vec<HomeSegment> = [
+        (KycStatus::Approved, HomeTone::Success, "approved"),
+        (KycStatus::InReview, HomeTone::Neutral, "review"),
+        (KycStatus::NeedsFix, HomeTone::Danger, "fix"),
+    ]
+    .into_iter()
+    .filter_map(|(s, tone, word)| {
+        let n = count(&this_month, s);
+        (n > 0).then(|| HomeSegment {
+            weight: n as u32,
+            tone,
+            label: Some(format!("{n} {word}")),
+        })
+    })
+    .collect();
+    // Customers not taken up have no KYC to follow: not in the bar or its total.
+    let in_bar: u32 = segments.iter().map(|s| s.weight).sum();
+    let progress = (!segments.is_empty()).then(|| HomeProgress {
+        label: "KYC this month".into(),
+        trailing: Some(format!("{in_bar} total")),
+        segments,
+        stages: Vec::new(),
+        legend: true,
+    });
+
+    let rows = if customers.is_empty() {
+        vec![note(
+            "no_customers",
+            "No customers yet",
+            "Customers you register show up here",
+        )]
+    } else {
+        customers
+            .iter()
+            .take(3)
+            .map(|c| customer_row(who, c))
+            .collect()
+    };
+
     HomeSummary {
         unread_notifications: 0,
         eyebrow: greeting(&who.now).into(),
         title: format!("{}'s customers", who.first_name),
-        headline: headline("0", "customers", "added this month"),
+        headline: headline(
+            &this_month.len().to_string(),
+            "customers",
+            "added this month",
+        ),
         week: Vec::new(),
         energy: None,
         tiles: vec![
-            tile("Needs fix", "0", TileIcon::Alarm, "KYC", true, "fix"),
+            tile(
+                "Needs fix",
+                &to_fix.to_string(),
+                TileIcon::Alarm,
+                "KYC",
+                true,
+                "fix",
+            ),
             second,
         ],
-        progress: None,
+        progress,
         list: HomeList {
             title: Some("Recent customers".into()),
-            rows: vec![note(
-                "no_customers",
-                "No customers yet",
-                "Customers you register show up here",
-            )],
+            rows,
         },
     }
 }
@@ -689,8 +853,8 @@ mod tests {
         ];
         for home in [
             worker(&w, &[], 0),
-            agent(&w, true),
-            agent(&w, false),
+            agent(&w, true, &[]),
+            agent(&w, false, &[]),
             customer(&w),
         ] {
             assert!(home.tiles.len() <= 2);
@@ -698,8 +862,8 @@ mod tests {
                 assert!(known.contains(&t.action.unwrap()), "{:?}", t.action);
             }
         }
-        assert_eq!(agent(&w, true).tiles[1].action, Some("earnings"));
-        assert_eq!(agent(&w, false).tiles[1].action, Some("review"));
+        assert_eq!(agent(&w, true, &[]).tiles[1].action, Some("earnings"));
+        assert_eq!(agent(&w, false, &[]).tiles[1].action, Some("review"));
     }
 
     #[test]
@@ -743,7 +907,7 @@ mod tests {
     #[test]
     fn empty_lists_explain_instead_of_showing_nothing() {
         let w = who(Utc::now());
-        for home in [worker(&w, &[], 0), agent(&w, true), customer(&w)] {
+        for home in [worker(&w, &[], 0), agent(&w, true, &[]), customer(&w)] {
             assert_eq!(home.list.rows.len(), 1);
             assert!(home.list.rows[0].action.is_none(), "not tappable");
         }

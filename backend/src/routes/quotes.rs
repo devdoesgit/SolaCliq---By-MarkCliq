@@ -433,7 +433,7 @@ fn lead_email(
     Paise as whole rupees, grouped the Indian way: 19_500_000 paise is
     "₹1,95,000" (the last three digits, then pairs)
 */
-fn rupees(paise: i64) -> String {
+pub(crate) fn rupees(paise: i64) -> String {
     let digits = (paise / 100).to_string();
     let (rest, last3) = digits.split_at(digits.len().saturating_sub(3));
     let mut groups: Vec<&str> = Vec::new();

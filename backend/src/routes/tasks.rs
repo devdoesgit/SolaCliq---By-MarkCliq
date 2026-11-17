@@ -116,7 +116,7 @@ pub struct Person {
 
 impl Person {
     // The company's side: only admins assign, return, approve and cancel.
-    fn admin(name: String) -> Self {
+    pub fn admin(name: String) -> Self {
         Person {
             name,
             role: Some("Admin".into()),

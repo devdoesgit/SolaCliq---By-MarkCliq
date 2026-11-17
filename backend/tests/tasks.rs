@@ -47,7 +47,9 @@ async fn task(db: &PgPool, s: &Setup, worker: &str, status: &str, due_at: DateTi
     let customer = Uuid::now_v7();
     sqlx::query(
         "INSERT INTO customers (id, org_id, reference, name, phone, address, lat, lng, system_kw)
-         VALUES ($1, $2, 'SC-' || $1::text, 'Ramesh Sahoo', '9814022671', 'Sector 70, Mohali',
+         VALUES ($1, $2, 'SC-' || $1::text, 'Ramesh Sahoo',
+                 -- A phone per customer: a company has each customer once.
+                 '98' || lpad((SELECT count(*) FROM customers)::text, 8, '0'), 'Sector 70, Mohali',
                  $3, $4, 5)",
     )
     .bind(customer)
@@ -308,7 +310,7 @@ async fn a_task_shows_its_customer_slots_and_checklist(db: PgPool) {
     assert_eq!(res.status, StatusCode::OK, "{}", res.body);
     let t = &res.body;
     assert_eq!(t["stage"], json!({"index": 3, "count": 7}));
-    assert_eq!(t["customer"]["phone"], "9814022671");
+    assert_eq!(t["customer"]["phone"], "9800000000");
     assert_eq!(t["assigned_by"]["role"], "Admin");
     assert_eq!(t["admin_note"]["text"], "Use the new clamps.");
     assert_eq!(t["photos"][1]["id"], "clamp");

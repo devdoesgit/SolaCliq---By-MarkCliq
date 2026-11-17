@@ -105,6 +105,18 @@ impl Roles for WorkersAndAgents {
     const ALLOWED: &'static [Role] = &[Role::Worker, Role::Agent];
 }
 
+// Sales agents, either pay type: their customers.
+pub struct Agents;
+impl Roles for Agents {
+    const ALLOWED: &'static [Role] = &[Role::Agent];
+}
+
+// The people whose documents a company holds: a worker's ID, a customer's KYC.
+pub struct WorkersAndCustomers;
+impl Roles for WorkersAndCustomers {
+    const ALLOWED: &'static [Role] = &[Role::Worker, Role::Customer];
+}
+
 // The company's admin only (the website's team page).
 pub struct Admins;
 impl Roles for Admins {
