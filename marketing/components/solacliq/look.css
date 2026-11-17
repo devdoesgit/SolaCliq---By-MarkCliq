@@ -1,0 +1,131 @@
+/* SolaCliq's look for the feature cards (design/tokens.json, the iOS v2
+   design): Inter, warm cream and sand, ink text, the sun as the one accent,
+   white rounded cards, pill buttons. Scoped to .sq-tile stages. */
+@font-face {
+  font-family: 'SQ Inter';
+  src: url('./assets/Inter-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: block;
+}
+
+.sq-tile {
+  & .ss-stage {
+    --sq-ink: #2a1f19;
+    --sq-brown: #2e211b;
+    --sq-muted: #6d635a;
+    --sq-faint: #8d837b;
+    --sq-sun: #f6c445;
+    --sq-tan: #f1e7db;
+    --sq-tan-text: #835f3c;
+    --sq-avatar: #e6d3bc;
+    --sq-butter: #fdf1cc;
+    --sq-warning: #875d09;
+    --sq-success: #2e7445;
+    --sq-success-tint: #e1f1e4;
+    --sq-track: #e4dad0;
+    --ss-font: 'SQ Inter', system-ui, sans-serif;
+    --ss-accent: #f6c445;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #f5f5f7;
+    font-family: var(--ss-font);
+    color: var(--sq-ink);
+  }
+
+  /* Pinned, bottom bleed: a gutter from the top, off the bottom */
+  & .sq-phone {
+    position: absolute;
+    top: 32px;
+  }
+
+  & .sq-app {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #fcf7ee 0%, #f4e8d3 100%);
+  }
+
+  & .sq-screen {
+    position: absolute;
+    top: 62px;
+    right: 18px;
+    left: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  & .sq-white {
+    box-sizing: border-box;
+    padding: 16px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(46, 33, 27, 0.04);
+  }
+
+  & .sq-pill {
+    display: inline-flex;
+    height: 26px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 11px;
+    border-radius: 13px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  & .sq-pill--ok {
+    color: var(--sq-success);
+    background: var(--sq-success-tint);
+  }
+
+  & .sq-pill--sun {
+    color: var(--sq-ink);
+    background: var(--sq-sun);
+  }
+
+  & .sq-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sq-muted);
+  }
+
+  & .sq-h {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  /* A detail card on the stage, straddling the phone's edge */
+  & .sq-satellite {
+    position: absolute;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: var(--ss-shadow-satellite);
+  }
+
+  /* Filler rows: the rest of the screen, running off the bottom */
+  & .sq-filler {
+    display: grid;
+    gap: 16px;
+  }
+
+  & .sq-filler__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  & .sq-filler__lead {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--sq-tan);
+  }
+
+  & .sq-filler__lines {
+    display: grid;
+    gap: 8px;
+  }
+}

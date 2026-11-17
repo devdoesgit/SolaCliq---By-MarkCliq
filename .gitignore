@@ -44,3 +44,7 @@ build/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Remotion (marketing/remotion)
+marketing/remotion/node_modules/
+marketing/remotion/out/

@@ -1,0 +1,80 @@
+.sq-expense {
+  & .sq-phone {
+    left: 32px;
+  }
+
+  & .sq-amount {
+    position: relative;
+    margin: -4px 0 4px 26px;
+    font-size: 52px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .sq-amount__sign {
+    position: absolute;
+    right: 100%;
+    padding-right: 2px;
+  }
+
+  & .sq-rows {
+    display: grid;
+    gap: 0;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  & .sq-row {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  & .sq-row + .sq-row {
+    border-top: 1px solid rgba(46, 33, 27, 0.08);
+  }
+
+  & .sq-row--receipt {
+    justify-content: flex-start;
+    min-height: 64px;
+  }
+
+  & .sq-row__label {
+    font-size: 15px;
+    color: var(--sq-muted);
+  }
+
+  & .sq-row__value {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  & .sq-receipt {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--sq-tan-text);
+    background: var(--sq-tan);
+  }
+
+  /* The admin's decision, straddling the phone's right edge beside the amount */
+  & .sq-decision {
+    top: 72px;
+    right: 32px;
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+  }
+
+  & .sq-decision__line {
+    font-size: 13px;
+    color: var(--sq-muted);
+  }
+}

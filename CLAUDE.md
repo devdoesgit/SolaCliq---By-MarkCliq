@@ -31,6 +31,7 @@ One repo, three parts sharing one API contract. Each part has its own
 | `backend/` | Rust API, Postgres, R2 | — | Claude, owner reviews |
 | `mobile/` | Flutter app | Workers, agents, customers | Claude |
 | `admin/` | React + Vite website | Org admins, platform admin | Claude |
+| `marketing/` | Website graphics of the app (Stageshow) | Vendors, on markcliq.com | Claude |
 
 ## Records
 

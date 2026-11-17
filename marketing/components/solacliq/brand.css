@@ -1,0 +1,161 @@
+.sq-brand {
+  & .sq-phone {
+    left: 72px;
+  }
+
+  & .sq-header {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  & .sq-avatar,
+  & .sq-bell {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  & .sq-avatar {
+    background: var(--sq-avatar);
+  }
+
+  & .sq-bell {
+    background: #fff;
+  }
+
+  & .sq-header__middle {
+    display: grid;
+    gap: 2px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  /* The vendor's wordmark: illustrative, a plain word in its own colour */
+  & .sq-vendor,
+  & .sq-setting__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #1d4f91;
+  }
+
+  & .sq-vendor {
+    margin-bottom: 4px;
+    font-size: 18px;
+  }
+
+  & .sq-vendor__sun {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: #e8a317;
+  }
+
+  & .sq-header__title {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  & .sq-header__line {
+    font-size: 13px;
+    color: var(--sq-muted);
+  }
+
+  & .sq-week {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+  }
+
+  & .sq-day {
+    display: grid;
+    width: 40px;
+    gap: 8px;
+    justify-items: center;
+    padding: 8px 0;
+    border-radius: 14px;
+  }
+
+  & .sq-day[data-on] {
+    color: #fff;
+    background: var(--sq-brown);
+  }
+
+  & .sq-day__n {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  & .sq-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  & .sq-tile-dark,
+  & .sq-tile-light {
+    box-sizing: border-box;
+    display: grid;
+    height: 124px;
+    align-content: space-between;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  & .sq-tile-dark {
+    color: #fff;
+    background: var(--sq-brown);
+  }
+
+  & .sq-tile__n {
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+  }
+
+  /* The admin's setting, straddling the phone's left edge */
+  & .sq-setting {
+    top: 296px;
+    left: 32px;
+    display: flex;
+    padding: 16px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* The uploaded logo itself, then a hairline, then the setting */
+  & .sq-setting__logo {
+    padding-right: 14px;
+    font-size: 15px;
+    line-height: 20px;
+    border-right: 1px solid rgba(46, 33, 27, 0.1);
+  }
+
+  & .sq-setting__text {
+    display: grid;
+    gap: 3px;
+  }
+
+  & .sq-setting__title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  & .sq-setting__ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sq-success);
+  }
+}

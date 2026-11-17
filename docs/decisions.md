@@ -723,3 +723,18 @@ Change a decision by adding a new line, not by editing an old one.
   circle visible, not the 240 dp assumed before. So the lockup is sized
   to that circle, Android 7–11 and the app's `SplashPage` draw the same
   288 dp square, centred, and the hand-over holds still.
+- **Marketing graphics with Stageshow (owner, 2026-11-18).** Four graphics
+  of the app for the website, for vendors: an animated hero (a worker's
+  proof photo approved, a 12 s loop) and three feature cards (install
+  tracker, expenses, the vendor's own logo). Built with Stageshow (MIT) in
+  the app's own look and icons, kept in `marketing/` as React components
+  plus MP4/WebM and 2x PNGs; the website copies what it needs (this repo
+  never writes there). All data illustrative; the hero's photos are the
+  design files' thumbnails, licence unknown, to confirm before publishing.
+- **A promo video with Remotion, as an evaluation (owner asked, 2026-11-18).**
+  A 31 s video in `marketing/remotion/`, 16:9 for the website and 9:16 for
+  Reels and Status (`marketing/media/solacliq-promo.mp4`, `-vertical.mp4`): the mark animating in, the
+  promise, proof photos, expenses, the homeowner's tracker, the vendor's
+  logo, the lockup. Remotion's licence is free only up to 3 employees or
+  while evaluating; MarkCliq has four, so publishing it needs a Remotion
+  Company License. Not decided yet.

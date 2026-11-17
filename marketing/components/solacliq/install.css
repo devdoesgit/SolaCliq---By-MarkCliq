@@ -1,0 +1,99 @@
+.sq-install {
+  & .sq-phone {
+    left: 28px;
+  }
+
+  & .sq-track__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  & .sq-track__title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  & .sq-segments {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  & .sq-segment {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--sq-track);
+  }
+
+  & .sq-segment[data-on] {
+    background: var(--sq-sun);
+  }
+
+  & .sq-stages {
+    display: grid;
+    gap: 14px;
+  }
+
+  & .sq-stage {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 22px;
+  }
+
+  & .sq-tick,
+  & .sq-now,
+  & .sq-later {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    flex: none;
+    place-items: center;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
+
+  & .sq-tick {
+    color: var(--sq-success);
+    background: var(--sq-success-tint);
+  }
+
+  & .sq-now {
+    border: 6px solid var(--sq-sun);
+    background: #fff;
+  }
+
+  & .sq-later {
+    border: 2px solid var(--sq-track);
+  }
+
+  & .sq-stage__name {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Straddles the phone's right edge, over its margin */
+  & .sq-pay {
+    top: 236px;
+    left: 212px;
+    display: grid;
+    width: 156px;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  & .sq-pay__amount {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .sq-pay .sq-pill {
+    margin-top: 4px;
+  }
+}
