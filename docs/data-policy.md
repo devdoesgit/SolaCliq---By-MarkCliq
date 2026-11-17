@@ -50,18 +50,20 @@ decision in `decisions.md`.
 
 ## KYC (Aadhaar, PAN and other documents)
 
-- **Decided 2026-11-17** (built with customer registration, phase 9):
-  - Aadhaar numbers are stored **masked, last 4 digits only**. The full
-    number is never stored as text.
-  - PAN numbers are stored **encrypted**, with the same method as bank
-    account numbers.
+- **Built 2026-11-17** (customer registration, phase 9):
+  - **No Aadhaar or PAN number is collected or stored**: the agent
+    photographs the documents, and nothing asks for the numbers.
+    (Agreed earlier: if numbers are ever added, Aadhaar is stored masked
+    to the last 4 digits and PAN encrypted, like bank account numbers.)
   - KYC files: protected as photos and documents above.
+- **Built 2026-11-17: who sees KYC.** The customer, the agent who
+  registered them, and their company's admin. Not other agents or
+  workers, and not MarkCliq's platform admins by default.
 - **Decided 2026-11-17: how long KYC is kept.**
   - A registration that's rejected: its KYC files and details are
     deleted 30 days after the rejection.
   - An installed customer: KYC files are kept until **1 year after
-    handover** (covering the subsidy claim), then deleted; only the
-    masked numbers stay.
+    handover** (covering the subsidy claim), then deleted.
 - **Open.** Whether a customer can ask for earlier deletion, and how
   (in the app, or through the company).
 

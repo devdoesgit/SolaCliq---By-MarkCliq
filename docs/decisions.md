@@ -605,3 +605,17 @@ Change a decision by adding a new line, not by editing an old one.
   files 1 year after handover, keeping the masked numbers. Built in
   phase 9. All data rules now live in `data-policy.md`, one place to
   read with a client.
+- **Customer registration rules (owner; spec `features/F4-customer-registration.md`).**
+  A company can't register the same customer twice (same email, phone
+  or consumer number): 409 `registration.duplicate`, naming who
+  registered them; the first stands. An existing account whose email
+  was never verified is linked with its password cleared, so only the
+  email's owner can set one. No Aadhaar or PAN number is collected, only
+  the document photos. A rejected customer stays in the agent's list as
+  "Not taken up" (`KycStatus.rejected`).
+- **The emulator always cold-boots, on the GPU (owner).** Its crashes
+  came from restoring a quick-boot snapshot saved by an abrupt exit:
+  the GPU layer rebuilt the screen before its graphics context existed
+  and read a null string (core dumps, `gfxstream::TextureResize`). The
+  AVD now never loads or saves snapshots; rendering stays `-gpu host`
+  (RTX 3060). Software rendering is never used: it hangs the machine.

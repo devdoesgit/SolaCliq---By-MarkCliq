@@ -55,7 +55,8 @@ cargo run -- send-test-email <to>        # checks the Gmail API setup
 - `src/routes/`: `health`, `auth` (F1), `me`, `team` (F3),
   `registration` and `platform` (F2), `quotes` and `profile` (phase 6),
   `home`, `notifications` and `uploads` (phase 7), `tasks` and
-  `expenses` (phase 8);
+  `expenses` (phase 8), `customers` (phase 9: registration, my
+  customers, documents);
   merged in `routes/mod.rs`.
 - `src/scope.rs`: the row-level security scopes and the startup check.
 - `src/storage.rs`: signed R2 URLs (uploads and reads), and the
