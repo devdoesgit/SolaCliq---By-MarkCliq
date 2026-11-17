@@ -37,11 +37,14 @@ dev_dependencies:
   bloc_lint: ^0.4.2
   bloc_test: ^10.0.0
   bloc_tools: ^0.1.0-dev.24
+  camera_platform_interface: ^2.15.0
   flutter_test:
     sdk: flutter
+  geolocator_platform_interface: ^4.4.1
   integration_test:
     sdk: flutter
   mocktail: ^1.0.5
+  plugin_platform_interface: ^2.1.8
   very_good_analysis: ^11.0.0
 
 flutter:

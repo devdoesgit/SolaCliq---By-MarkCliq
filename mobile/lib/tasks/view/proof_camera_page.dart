@@ -42,6 +42,13 @@ class _ProofCameraPageState extends State<ProofCameraPage>
   final _problems = CaptureProblems();
   // A start already running (a dialog's resume can ask for another).
   bool _starting = false;
+  /*
+    Whether coming back to the app should start again: only after the
+    camera was released for the background, or the person was sent to
+    Settings. Not after a permission dialog closes: that resume would
+    ask again, and a "Don't allow" would loop through the prompts
+  */
+  bool _restartOnResume = false;
   String? _slotId;
   bool _flash = false;
   bool _shooting = false;
@@ -67,10 +74,13 @@ class _ProofCameraPageState extends State<ProofCameraPage>
     // The camera is released while the app is in the background.
     if (state == AppLifecycleState.inactive) {
       final camera = _camera;
+      if (camera == null) return;
       _camera = null;
+      _restartOnResume = true;
       if (mounted) setState(() {});
-      unawaited(camera?.dispose());
-    } else if (state == AppLifecycleState.resumed && _camera == null) {
+      unawaited(camera.dispose());
+    } else if (state == AppLifecycleState.resumed && _restartOnResume) {
+      _restartOnResume = false;
       unawaited(_start());
     }
   }
@@ -245,7 +255,12 @@ class _ProofCameraPageState extends State<ProofCameraPage>
                   Expanded(
                     child: Center(
                       child: _problems.current != null
-                          ? _ProblemNotice(problem: _problems.current!)
+                          ? _ProblemNotice(
+                              problem: _problems.current!,
+                              // Back from Settings, try again with what was
+                              // allowed there.
+                              onSettings: () => _restartOnResume = true,
+                            )
                           : _Guide(hint: slot?.hint),
                     ),
                   ),
@@ -253,6 +268,7 @@ class _ProofCameraPageState extends State<ProofCameraPage>
                     task: task,
                     slot: slot,
                     position: _position,
+                    locationProblem: _problems.location,
                     failure: state.failure?.message(l10n),
                     busy: _shooting || state.busy,
                     onSlot: (id) => setState(() => _slotId = id),
@@ -471,9 +487,12 @@ class _Guide extends StatelessWidget {
 }
 
 class _ProblemNotice extends StatelessWidget {
-  const new({required this.problem});
+  const new({required this.problem, required this.onSettings});
 
   final CaptureProblem problem;
+
+  /// Called before opening Settings.
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -503,11 +522,14 @@ class _ProblemNotice extends StatelessWidget {
           variant: SolaButtonVariant.white,
           compact: true,
           expand: false,
-          onPressed: () => unawaited(
-            problem == CaptureProblem.locationOff
-                ? Geolocator.openLocationSettings()
-                : Geolocator.openAppSettings(),
-          ),
+          onPressed: () {
+            onSettings();
+            unawaited(
+              problem == CaptureProblem.locationOff
+                  ? Geolocator.openLocationSettings()
+                  : Geolocator.openAppSettings(),
+            );
+          },
         ),
       ),
     );
@@ -520,6 +542,7 @@ class _Panel extends StatelessWidget {
     required this.task,
     required this.slot,
     required this.position,
+    required this.locationProblem,
     required this.failure,
     required this.busy,
     required this.onSlot,
@@ -529,6 +552,10 @@ class _Panel extends StatelessWidget {
   final Task? task;
   final ProofSlot? slot;
   final Position? position;
+
+  /// Why there's no position, if location failed: shown instead of
+  /// "Finding your location…", which would never end.
+  final CaptureProblem? locationProblem;
   final String? failure;
   final bool busy;
   final ValueChanged<String> onSlot;
@@ -537,7 +564,13 @@ class _Panel extends StatelessWidget {
   String _where(AppLocalizations l10n) {
     final p = position;
     final site = task?.customer;
-    if (p == null) return l10n.findingLocation;
+    if (p == null) {
+      return switch (locationProblem) {
+        CaptureProblem.locationDenied => l10n.locationDenied,
+        CaptureProblem.locationOff => l10n.locationOff,
+        _ => l10n.findingLocation,
+      };
+    }
     final accuracy = l10n.accuracyM(p.accuracy.round());
     if (site?.lat == null || site?.lng == null) return accuracy;
     final metres = Geolocator.distanceBetween(
