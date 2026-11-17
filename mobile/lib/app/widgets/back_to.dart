@@ -7,13 +7,22 @@ import 'package:solacliq/l10n/l10n.dart';
 /// [fallback] when there is nothing to go back to (a deep link, a fresh
 /// start).
 class BackTo extends StatelessWidget {
-  const new({required this.fallback, this.close = false, super.key});
+  const new({
+    required this.fallback,
+    this.close = false,
+    this.onPressed,
+    super.key,
+  });
 
   /// Where to go when nothing is behind this screen.
   final String fallback;
 
   /// A cross instead of a chevron: the end of a flow.
   final bool close;
+
+  /// Instead of leaving straight away: a form that asks before losing a
+  /// draft.
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +31,9 @@ class BackTo extends StatelessWidget {
       key: const Key('nav_back'),
       icon: close ? SolaIcons.close : SolaIcons.back,
       semanticsLabel: close ? l10n.close : l10n.back,
-      onPressed: () => context.canPop() ? context.pop() : context.go(fallback),
+      onPressed:
+          onPressed ??
+          () => context.canPop() ? context.pop() : context.go(fallback),
     );
   }
 }

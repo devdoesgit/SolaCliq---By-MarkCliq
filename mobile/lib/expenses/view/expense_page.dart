@@ -203,162 +203,209 @@ class _ExpenseViewState extends State<ExpenseView> {
     });
   }
 
+  bool get _hasDraft =>
+      _amount.paise > 0 || _note.text.trim().isNotEmpty || _receipt != null;
+
+  /*
+    Leaving with something typed asks first: a stray Back press would
+    otherwise lose the amount, the note and the receipt photo
+  */
+  Future<void> _leave() async {
+    if (_hasDraft && !await _confirmDiscard()) return;
+    if (!mounted) return;
+    context.canPop() ? context.pop() : context.go(AppRoutes.home);
+  }
+
+  Future<bool> _confirmDiscard() async {
+    final l10n = context.l10n;
+    final discard = await showSolaSheet<bool>(
+      context: context,
+      title: l10n.discardExpenseTitle,
+      doneLabel: l10n.keepEditing,
+      builder: (sheet) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: SolaSpace.space14,
+        children: [
+          SolaText(l10n.discardExpenseBody, color: SolaColors.muted),
+          SolaButton(
+            key: const Key('discard_expense'),
+            label: l10n.discardCustomer,
+            variant: SolaButtonVariant.dark,
+            onPressed: () => Navigator.of(sheet).pop(true),
+          ),
+        ],
+      ),
+    );
+    return discard ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = context.watch<SubmitCubit>().state;
     final today = DateUtils.isSameDay(_day, DateTime.now());
     final amountError = _errors['amount'];
-    return SolaScreen(
-      background: SolaBackground.sand,
-      navBar: SolaNavBar(
-        leading: const BackTo(fallback: AppRoutes.home, close: true),
-        title: l10n.logExpense,
-        subtitle: widget.workspace.orgName,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: SolaSpace.space10),
-          if (state.status == SubmitStatus.failure) ...[
-            FailureNotice(state: state),
-            const SizedBox(height: SolaSpace.space12),
-          ],
-          SolaText(
-            l10n.amount,
-            style: SolaTextStyle.eyebrow,
-            color: amountError != null ? SolaColors.danger : SolaColors.muted,
-            textAlign: TextAlign.center,
+    return PopScope(
+      // Back comes here, so a draft is never lost without asking.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_leave());
+      },
+      child: SolaScreen(
+        background: SolaBackground.sand,
+        navBar: SolaNavBar(
+          leading: BackTo(
+            fallback: AppRoutes.home,
+            close: true,
+            onPressed: () => unawaited(_leave()),
           ),
-          const SizedBox(height: SolaSpace.space4),
-          Semantics(
-            label: l10n.amount,
-            value: _amount.display,
-            liveRegion: true,
-            excludeSemantics: true,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: SolaText(
-                      _amount.display,
-                      style: SolaTextStyle.amount,
-                      color: _amount.text.isEmpty
-                          ? SolaColors.faint
-                          : SolaColors.ink,
+          title: l10n.logExpense,
+          subtitle: widget.workspace.orgName,
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: SolaSpace.space10),
+            if (state.status == SubmitStatus.failure) ...[
+              FailureNotice(state: state),
+              const SizedBox(height: SolaSpace.space12),
+            ],
+            SolaText(
+              l10n.amount,
+              style: SolaTextStyle.eyebrow,
+              color: amountError != null ? SolaColors.danger : SolaColors.muted,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: SolaSpace.space4),
+            Semantics(
+              label: l10n.amount,
+              value: _amount.display,
+              liveRegion: true,
+              excludeSemantics: true,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: SolaText(
+                        _amount.display,
+                        style: SolaTextStyle.amount,
+                        color: _amount.text.isEmpty
+                            ? SolaColors.faint
+                            : SolaColors.ink,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 3,
+                    height: 50,
+                    margin: const EdgeInsetsDirectional.only(
+                      start: SolaSpace.space4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: SolaColors.sun,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (amountError != null) Center(child: _Error(amountError)),
+            if (_tasks.isNotEmpty) ...[
+              const SizedBox(height: SolaSpace.space4),
+              Center(
+                child: SolaTappable(
+                  key: const Key('expense_task'),
+                  identifier: 'expense_task',
+                  semanticsLabel: l10n.expenseForTaskValue(
+                    _task?.customerName ?? l10n.noTask,
+                  ),
+                  onTap: () => unawaited(_pickTask()),
+                  builder: (context, state) => SizedBox(
+                    height: SolaSize.tapMin,
+                    child: Center(
+                      child: SolaPill(
+                        _task == null
+                            ? l10n.noTask
+                            : '${_task!.customerName} · ${_task!.title}',
+                        icon: SolaIcons.bolt,
+                      ),
                     ),
                   ),
                 ),
-                Container(
-                  width: 3,
-                  height: 50,
-                  margin: const EdgeInsetsDirectional.only(
-                    start: SolaSpace.space4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: SolaColors.sun,
-                    borderRadius: BorderRadius.circular(2),
+              ),
+            ],
+            const SizedBox(height: SolaSpace.space14),
+            SolaChips<ExpenseCategory>(
+              key: const ValueKey('expense_category'),
+              label: l10n.category,
+              selected: _category,
+              onChanged: (v) => setState(() {
+                _category = v;
+                _errors['category'] = null;
+              }),
+              choices: [
+                SolaChoice(ExpenseCategory.fuel, l10n.categoryFuel),
+                SolaChoice(ExpenseCategory.material, l10n.categoryMaterial),
+                SolaChoice(ExpenseCategory.labour, l10n.categoryLabour),
+                SolaChoice(ExpenseCategory.other, l10n.categoryOther),
+              ],
+            ),
+            if (_errors['category'] case final error?) _Error(error),
+            const SizedBox(height: SolaSpace.space10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: SolaSpace.space10,
+              children: [
+                _ReceiptTile(
+                  receipt: _receipt,
+                  onTap: () => unawaited(_pickReceipt()),
+                ),
+                Expanded(
+                  child: SolaGroup(
+                    children: [
+                      SolaFieldRow(
+                        key: const ValueKey('expense_note'),
+                        label: l10n.noteForAdmin,
+                        placeholder: l10n.notePlaceholder,
+                        controller: _note,
+                        error: _errors['note'],
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (_) => _errors['note'] = null,
+                      ),
+                      SolaValueRow(
+                        key: const Key('expense_date'),
+                        label: l10n.date,
+                        value: today
+                            ? l10n.today2(formatDayMonth(_day))
+                            : formatDayMonth(_day),
+                        onTap: () => unawaited(_pickDay()),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          if (amountError != null) Center(child: _Error(amountError)),
-          if (_tasks.isNotEmpty) ...[
-            const SizedBox(height: SolaSpace.space4),
-            Center(
-              child: SolaTappable(
-                key: const Key('expense_task'),
-                identifier: 'expense_task',
-                semanticsLabel: l10n.expenseForTaskValue(
-                  _task?.customerName ?? l10n.noTask,
-                ),
-                onTap: () => unawaited(_pickTask()),
-                builder: (context, state) => SizedBox(
-                  height: SolaSize.tapMin,
-                  child: Center(
-                    child: SolaPill(
-                      _task == null
-                          ? l10n.noTask
-                          : '${_task!.customerName} · ${_task!.title}',
-                      icon: SolaIcons.bolt,
-                    ),
-                  ),
-                ),
-              ),
+            if (_errors['receipt'] case final error?) _Error(error),
+          ],
+        ),
+        bottom: SolaBottomBar(
+          children: [
+            SolaKeypad(
+              onKey: _key,
+              onDelete: _delete,
+              deleteLabel: l10n.deleteDigit,
+            ),
+            SolaButton(
+              key: const Key('expense_submit'),
+              label: l10n.sendToAdmin,
+              icon: SolaIcons.receipt,
+              onPressed: state.isSubmitting ? null : _submit,
             ),
           ],
-          const SizedBox(height: SolaSpace.space14),
-          SolaChips<ExpenseCategory>(
-            key: const ValueKey('expense_category'),
-            label: l10n.category,
-            selected: _category,
-            onChanged: (v) => setState(() {
-              _category = v;
-              _errors['category'] = null;
-            }),
-            choices: [
-              SolaChoice(ExpenseCategory.fuel, l10n.categoryFuel),
-              SolaChoice(ExpenseCategory.material, l10n.categoryMaterial),
-              SolaChoice(ExpenseCategory.labour, l10n.categoryLabour),
-              SolaChoice(ExpenseCategory.other, l10n.categoryOther),
-            ],
-          ),
-          if (_errors['category'] case final error?) _Error(error),
-          const SizedBox(height: SolaSpace.space10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: SolaSpace.space10,
-            children: [
-              _ReceiptTile(
-                receipt: _receipt,
-                onTap: () => unawaited(_pickReceipt()),
-              ),
-              Expanded(
-                child: SolaGroup(
-                  children: [
-                    SolaFieldRow(
-                      key: const ValueKey('expense_note'),
-                      label: l10n.noteForAdmin,
-                      placeholder: l10n.notePlaceholder,
-                      controller: _note,
-                      error: _errors['note'],
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (_) => _errors['note'] = null,
-                    ),
-                    SolaValueRow(
-                      key: const Key('expense_date'),
-                      label: l10n.date,
-                      value: today
-                          ? l10n.today2(formatDayMonth(_day))
-                          : formatDayMonth(_day),
-                      onTap: () => unawaited(_pickDay()),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (_errors['receipt'] case final error?) _Error(error),
-        ],
-      ),
-      bottom: SolaBottomBar(
-        children: [
-          SolaKeypad(
-            onKey: _key,
-            onDelete: _delete,
-            deleteLabel: l10n.deleteDigit,
-          ),
-          SolaButton(
-            key: const Key('expense_submit'),
-            label: l10n.sendToAdmin,
-            icon: SolaIcons.receipt,
-            onPressed: state.isSubmitting ? null : _submit,
-          ),
-        ],
+        ),
       ),
     );
   }

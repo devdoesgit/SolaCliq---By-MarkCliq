@@ -2698,6 +2698,14 @@
     "@discardCustomer": {
         "description": "Button: leave add customer and lose the draft."
     },
+    "discardExpenseTitle": "Discard this expense?",
+    "@discardExpenseTitle": {
+        "description": "Sheet title when leaving log expense with an amount, note or receipt entered."
+    },
+    "discardExpenseBody": "The amount, note and receipt you added will be lost.",
+    "@discardExpenseBody": {
+        "description": "Under the discard title."
+    },
     "keepEditing": "Keep editing",
     "@keepEditing": {
         "description": "Sheet button: stay on the form."

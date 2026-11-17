@@ -58,6 +58,31 @@ void main() {
   }
 
   group(ExpensePage, () {
+    testWidgets('leaving with nothing typed just goes', (tester) async {
+      await pump(tester);
+      await tester.tapKey('nav_back');
+      await tester.pumpAndSettle();
+      expect(find.text('route:/home'), findsOneWidget);
+    });
+
+    testWidgets('leaving with an amount asks first', (tester) async {
+      await pump(tester);
+      await type(tester, '50');
+      await tester.tapKey('nav_back');
+      await tester.pumpAndSettle();
+      expect(find.text('Discard this expense?'), findsOneWidget);
+      // Keep editing: still here, amount kept.
+      await tester.tap(find.text('Keep editing'));
+      await tester.pumpAndSettle();
+      expect(find.text('₹50'), findsOneWidget);
+      // Discard: gone.
+      await tester.tapKey('nav_back');
+      await tester.pumpAndSettle();
+      await tester.tapKey('discard_expense');
+      await tester.pumpAndSettle();
+      expect(find.text('route:/home'), findsOneWidget);
+    });
+
     testWidgets('the keypad types the amount', (tester) async {
       await pump(tester);
       await type(tester, '1240');
