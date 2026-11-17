@@ -9,6 +9,7 @@ import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/home/view/home_header.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
+import 'package:solacliq/push/push_controller.dart';
 
 /// The home of a person with no company, or of anyone in their Personal
 /// workspace: a free solar quote, and how to get added by an installer.
@@ -24,6 +25,7 @@ class PersonalHome extends StatefulWidget {
 class _PersonalHomeState extends State<PersonalHome> {
   // Whether the bell shows its dot: any of the person's own unread.
   bool _unread = false;
+  StreamSubscription<PushMessage>? _pushes;
 
   Account get account => widget.account;
 
@@ -31,6 +33,16 @@ class _PersonalHomeState extends State<PersonalHome> {
   void initState() {
     super.initState();
     unawaited(_loadUnread());
+    // A push with the app open: the bell's dot may change.
+    _pushes = context.read<PushController?>()?.arrived.listen(
+      (_) => unawaited(_loadUnread()),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_pushes?.cancel());
+    super.dispose();
   }
 
   /// Asks the server; on failure the bell just shows no dot.

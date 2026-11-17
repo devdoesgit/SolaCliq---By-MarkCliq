@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
@@ -13,6 +14,7 @@ import 'package:solacliq/install/view/track_tab.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
 import 'package:solacliq/profile/view/profile_tab.dart';
+import 'package:solacliq/push/push_controller.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// A tab of a role's bar: a page kept alive under the bar, or (raised) an
@@ -212,6 +214,28 @@ class _CustomerShellState extends State<CustomerShell> {
   String _tab = 'home';
   final _track = GlobalKey<TrackTabState>();
   final _payments = GlobalKey<PaymentsTabState>();
+  PushController? _push;
+
+  @override
+  void initState() {
+    super.initState();
+    // A tapped push about the install or a payment opens its tab.
+    _push = context.read<PushController?>()?..pendingTab.addListener(_pushTab);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _pushTab());
+  }
+
+  @override
+  void dispose() {
+    _push?.pendingTab.removeListener(_pushTab);
+    super.dispose();
+  }
+
+  void _pushTab() {
+    final tab = _push?.pendingTab.value;
+    if (tab == null || !mounted) return;
+    _push?.pendingTab.value = null;
+    _open(tab.name);
+  }
 
   void _go(String tab) {
     setState(() => _tab = tab);

@@ -10,6 +10,7 @@ import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
+import 'package:solacliq/push/push_controller.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 
 /// What changed for the person in this company (tasks, expenses,
@@ -37,6 +38,7 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   List<AppNotification>? _items;
   AuthFailureCode? _failure;
+  StreamSubscription<PushMessage>? _pushes;
 
   NotificationRepository get _repo => context.read<NotificationRepository>();
 
@@ -44,6 +46,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void initState() {
     super.initState();
     unawaited(_load());
+    // A push with the app open: show it at the top.
+    _pushes = context.read<PushController?>()?.arrived.listen(
+      (_) => unawaited(_load()),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_pushes?.cancel());
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -258,8 +270,8 @@ class _Icon extends StatelessWidget {
 /// Home tabs a notification can open; the page closes with one of these.
 enum NotificationTab { track, payments }
 
-/// Where [n] leads: a route, a [NotificationTab]'s name, or null.
-@visibleForTesting
+/// Where [n] leads: a route, a [NotificationTab]'s name, or null. The
+/// list and a tapped push (F12) both open notifications this way.
 String? destination(AppNotification n) => switch (n) {
   AppNotification(:final taskId?) => AppRoutes.task(taskId),
   AppNotification(:final expenseId?) => AppRoutes.expenseDetail(expenseId),

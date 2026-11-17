@@ -16,6 +16,7 @@ import 'package:solacliq/home/view/home_parts.dart';
 import 'package:solacliq/home/view/org_status_view.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
+import 'package:solacliq/push/push_controller.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// A company home for the person's role there, composed by the server: a
@@ -79,11 +80,16 @@ class OrgHomeView extends StatefulWidget {
 
 class _OrgHomeViewState extends State<OrgHomeView> {
   MockPersonaInterceptor? _mock;
+  StreamSubscription<PushMessage>? _pushes;
 
   @override
   void initState() {
     super.initState();
     if (_active) unawaited(_load());
+    // A push with the app open: the bell's dot and the numbers may change.
+    _pushes = context.read<PushController?>()?.arrived.listen((_) {
+      if (_active) unawaited(_load());
+    });
     // Development: the "handed over" switch reloads the customer's home.
     if (context.read<AppConfig>().showDevTools) {
       _mock = context.read<MockPersonaInterceptor>()
@@ -94,6 +100,7 @@ class _OrgHomeViewState extends State<OrgHomeView> {
   @override
   void dispose() {
     _mock?.handedOver.removeListener(_load);
+    unawaited(_pushes?.cancel());
     super.dispose();
   }
 

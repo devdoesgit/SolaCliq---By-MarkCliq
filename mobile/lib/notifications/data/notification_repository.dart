@@ -120,6 +120,16 @@ class NotificationRepository {
     return response.data?.unreadCount ?? 0;
   }
 
+  /// Saves this phone's push token for the logged-in session (F12).
+  Future<void> registerDevice(String token) => apiCall(
+    () => _api.registerMyDevice(
+      deviceRegistration: api.DeviceRegistration(
+        token: token,
+        platform: api.DeviceRegistrationPlatformEnum.android,
+      ),
+    ),
+  );
+
   /// In one company, or with no [orgId] the person's own.
   Future<void> markAllRead(String? orgId) => apiCall(
     () => orgId == null

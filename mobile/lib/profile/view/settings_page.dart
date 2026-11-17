@@ -9,6 +9,7 @@ import 'package:solacliq/app/widgets/load_view.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
+import 'package:solacliq/push/push_controller.dart';
 
 /// The app's version, set at build time (`--dart-define=APP_VERSION=`).
 const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0');
@@ -26,6 +27,33 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   late Future<AppSettings> _loaded = _repo.settings();
   AppSettings? _settings;
+
+  /// Android blocks the app's notifications (F12): checked on opening and
+  /// on coming back from Android settings.
+  bool _blocked = false;
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_checkAllowed());
+    _lifecycle = AppLifecycleListener(
+      onResume: () => unawaited(_checkAllowed()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkAllowed() async {
+    final push = context.read<PushController?>();
+    if (push == null) return;
+    final allowed = await push.allowed();
+    if (mounted) setState(() => _blocked = !allowed);
+  }
 
   ProfileRepository get _repo => context.read<ProfileRepository>();
 
@@ -92,6 +120,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+              if (_blocked && s.push)
+                SolaNotice(
+                  key: const Key('settings_push_blocked'),
+                  title: l10n.pushBlockedTitle,
+                  body: l10n.pushBlockedBody,
+                  tone: SolaTone.warning,
+                  action: SolaButton(
+                    key: const Key('settings_open_android'),
+                    label: l10n.pushOpenSettings,
+                    variant: SolaButtonVariant.white,
+                    compact: true,
+                    expand: false,
+                    onPressed: () => unawaited(
+                      context.read<PushController?>()?.openSettings(),
+                    ),
+                  ),
+                ),
               const SizedBox(height: SolaSpace.space10),
               SolaText(
                 l10n.appVersion(appVersion),

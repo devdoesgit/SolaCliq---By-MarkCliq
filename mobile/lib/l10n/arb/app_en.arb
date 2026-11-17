@@ -3241,6 +3241,18 @@
     "@pushNotificationsSub": {
         "description": "Setting."
     },
+    "pushBlockedTitle": "Notifications are off for this app",
+    "@pushBlockedTitle": {
+        "description": "Settings: Android blocks the app's notifications, so pushes can't show."
+    },
+    "pushBlockedBody": "Turn them on in Android settings to get updates on this phone.",
+    "@pushBlockedBody": {
+        "description": "Settings: under pushBlockedTitle."
+    },
+    "pushOpenSettings": "Open Android settings",
+    "@pushOpenSettings": {
+        "description": "Settings: button that opens the app's notification settings in Android."
+    },
     "whatsappUpdates": "WhatsApp updates",
     "@whatsappUpdates": {
         "description": "Setting."

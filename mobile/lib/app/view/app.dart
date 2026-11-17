@@ -20,6 +20,7 @@ import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
+import 'package:solacliq/push/push_controller.dart';
 import 'package:solacliq/quotes/data/quote_repository.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
@@ -32,6 +33,7 @@ class App extends StatefulWidget {
     this.dio,
     this.tokenStore,
     this.workspaceStore,
+    this.push = const NoPushMessaging(),
     super.key,
   });
 
@@ -46,6 +48,10 @@ class App extends StatefulWidget {
 
   /// For tests. Otherwise the phone's secure storage.
   final WorkspaceStore? workspaceStore;
+
+  /// Push notifications (F12): Firebase in the real app (the `main_*`
+  /// files), none in tests.
+  final PushMessaging push;
 
   @override
   State<App> createState() => _AppState();
@@ -68,6 +74,8 @@ class _AppState extends State<App> {
   late final AppRouter _router;
   late final MockPersonaInterceptor _persona;
   late final AppLifecycleListener _lifecycle;
+  late final NotificationRepository _notifications;
+  late final PushController _push;
   final _pendingLogin = PendingLogin();
   late final QuickForms _quickForms = QuickForms(
     available: widget.config.showDevTools,
@@ -99,6 +107,15 @@ class _AppState extends State<App> {
       store: widget.workspaceStore ?? SecureWorkspaceStore(),
     );
     _router = AppRouter(widget.config, _workspace);
+    _notifications = NotificationRepository(_api.getNotificationsApi());
+    _push = PushController(
+      messaging: widget.push,
+      auth: _auth,
+      notifications: _notifications,
+      workspace: _workspace,
+      router: _router.router,
+    );
+    unawaited(_push.start());
     // Back in the app: pick up new companies, removals and suspensions.
     _lifecycle = AppLifecycleListener(
       onResume: () => unawaited(_auth.refreshAccount()),
@@ -109,6 +126,7 @@ class _AppState extends State<App> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    unawaited(_push.dispose());
     _router.dispose();
     unawaited(_workspace.close());
     _persona.dispose();
@@ -153,9 +171,8 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (_) => InstallRepository(_api.getInstallApi()),
         ),
-        RepositoryProvider(
-          create: (_) => NotificationRepository(_api.getNotificationsApi()),
-        ),
+        RepositoryProvider.value(value: _notifications),
+        RepositoryProvider.value(value: _push),
       ],
       child: BlocProvider.value(
         value: _workspace,
