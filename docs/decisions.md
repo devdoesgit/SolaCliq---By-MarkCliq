@@ -738,3 +738,18 @@ Change a decision by adding a new line, not by editing an old one.
   logo, the lockup. Remotion's licence is free only up to 3 employees or
   while evaluating; MarkCliq has four, so publishing it needs a Remotion
   Company License. Not decided yet.
+- **First deploy kit (owner, 2026-11-19).** The VPS already runs Caddy,
+  so Caddy fronts SolaCliq instead of nginx (HTTPS without certbot). The
+  owner runs every server command; Claude has no access to production.
+  The API binary is built locally with cargo-zigbuild for glibc 2.30+,
+  so the server needs no Rust toolchain. The database owner login is not
+  a superuser: CREATEROLE and the admin option on `solacliq_app` are
+  enough for the row-level security migration (checked against a fresh
+  Postgres 17). Production uses the one Firebase project and its own R2
+  bucket, `solacliq-uploads`, with its own token and CORS. Correction to
+  2026-11-16: only `solacliq-uploads-dev` exists in Cloudflare; the
+  owner creates `solacliq-uploads` before the deploy. While the owner
+  tests on the VPS with the staging app, a separate
+  `solacliq-uploads-stg` is used; at go-live the test data is wiped and
+  the settings point at `solacliq-uploads`. Backups are daily dumps on
+  the same VPS for now; an off-site copy is still to decide.

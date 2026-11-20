@@ -37,8 +37,8 @@ Claude builds every part; the owner reviews.
   record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
   `.invalid` URLs, which the app treats as already uploaded.
 - Built 2026-11-16 (`src/storage.rs`, `routes/uploads.rs`). Buckets:
-  `solacliq-uploads-dev` (local) and `solacliq-uploads` (production),
-  private, each with its own API token limited to that bucket (Object
+  `solacliq-uploads-dev` (local) and `solacliq-uploads` (production;
+  to create before the first deploy), private, each with its own API token limited to that bucket (Object
   Read & Write). CORS allows GET and PUT from `solacliq.markcliq.com` and
   `localhost:5173` only.
 - The server signs URLs itself (AWS Signature V4, region `auto`); no
@@ -142,8 +142,8 @@ Claude builds every part; the owner reviews.
 - Why: every email shares the Workspace sender's cap (about 2,000 a
   day), so floods would stop real people's codes.
 - Counts are in memory (one API process). The IP is `X-Real-IP` only
-  on connections from this machine (nginx, which must set
-  `proxy_set_header X-Real-IP $remote_addr;`); from anywhere else the
+  on connections from this machine (Caddy, which must set
+  `header_up X-Real-IP {remote_host}`, `deploy/Caddyfile`); from anywhere else the
   header is ignored and the connection's address is used.
 
 ## API contract

@@ -1,0 +1,35 @@
+# The SolaCliq API. Copy to /etc/systemd/system/, then
+# `sudo systemctl daemon-reload && sudo systemctl enable --now solacliq-api`.
+# Migrations run at every start, before it answers.
+[Unit]
+Description=SolaCliq API
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=solacliq
+Group=solacliq
+EnvironmentFile=/etc/solacliq/solacliq.env
+WorkingDirectory=/opt/solacliq/current
+ExecStart=/opt/solacliq/current/backend
+Restart=on-failure
+RestartSec=3
+# Queued emails are sent before it stops.
+TimeoutStopSec=30
+
+# It needs the network and its own files, nothing else.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

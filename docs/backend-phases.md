@@ -81,9 +81,10 @@ Put it on the VPS early so the pilot can test on real phones.
   (DNS, service account and delegation set up in the markcliq.co
   Workspace). On the server: the key at
   `/etc/solacliq/gmail-sender.json`, mode 600.
-- **Build:** release build, a `systemd` service, nginx proxying
-  `solacliq.markcliq.com/api` (with `proxy_set_header X-Real-IP
-  $remote_addr;` for the rate limits), production `.env` on the server only
+- **Build (2026-11-19, `deploy/`, steps in `deploy/README.md`):** release
+  build, a `systemd` service, the VPS's Caddy proxying
+  `solacliq.markcliq.com/api` (with `header_up X-Real-IP {remote_host}`
+  for the rate limits), production `.env` on the server only
   (`CODE_SECRET`, `BANK_KEY`, `REVIEW_EMAIL=info@markcliq.com`,
   `COOKIE_SECURE=true`, `MAIL_FROM`, `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`),
   daily Postgres backup. Two database logins: the owner

@@ -12,7 +12,7 @@
     - counts live in memory: one API process (one VPS), and losing them
       on a restart only resets the windows. Old windows are dropped as
       the map grows, so memory stays bounded
-    - the client's IP is `X-Real-IP` when the request came through nginx
+    - the client's IP is `X-Real-IP` when the request came through Caddy
       on this machine, else the connection's address (see `ClientIp`)
 */
 
@@ -166,8 +166,8 @@ impl Default for Limiter {
     The caller's IP address, as text
     --------------------------------------------------------------------
     - `X-Real-IP` only when the connection comes from this machine: in
-      production that's nginx, which sets it to the real client address
-      (`proxy_set_header X-Real-IP $remote_addr;`). From anywhere else
+      production that's Caddy, which sets it to the real client address
+      (`header_up X-Real-IP {remote_host}`, deploy/Caddyfile). From anywhere else
       the header is ignored, so a client can't pick its own IP to dodge
       the limits
     - otherwise the connection's address
@@ -258,7 +258,7 @@ mod tests {
 
     #[tokio::test]
     async fn x_real_ip_is_trusted_only_from_this_machine() {
-        // Through nginx on this machine: the header is the client.
+        // Through Caddy on this machine: the header is the client.
         assert_eq!(
             ip(Some("127.0.0.1:5000"), Some("203.0.113.9")).await,
             "203.0.113.9"
@@ -268,7 +268,7 @@ mod tests {
             ip(Some("198.51.100.7:5000"), Some("1.2.3.4")).await,
             "198.51.100.7"
         );
-        // Local, without nginx: the connection itself.
+        // Local, without Caddy: the connection itself.
         assert_eq!(ip(Some("127.0.0.1:5000"), None).await, "127.0.0.1");
     }
 

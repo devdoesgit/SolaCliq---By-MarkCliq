@@ -48,3 +48,6 @@ build/
 # Remotion (marketing/remotion)
 marketing/remotion/node_modules/
 marketing/remotion/out/
+
+# Release archives (deploy/build.sh)
+deploy/out/

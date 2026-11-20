@@ -1,0 +1,30 @@
+# SolaCliq's site, for the VPS's Caddy. Add this block to /etc/caddy/Caddyfile
+# (or `import` this file from it), then `sudo systemctl reload caddy`.
+# Caddy gets and renews the HTTPS certificate itself.
+solacliq.markcliq.com {
+	encode zstd gzip
+
+	# The Rust API, which serves everything under /api/v1. X-Real-IP is the
+	# visitor's address for the API's rate limits; it is set here, so a
+	# visitor can't send their own.
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8080 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# The admin website: static files, and index.html for its own routes.
+	handle {
+		root * /opt/solacliq/current/admin
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
