@@ -136,6 +136,7 @@ has it (`lib/app/dev/quick_forms.dart`).
 | Sales | Earnings, payout bank (commission) or Alerts tab (salary) (built) | F8 |
 | Customer | Home, track install, payments (UPI or bank, claim), documents (built) | F9 |
 | Everyone | Profile, settings, help sheet, workspaces; Personal: Learn, notifications (built) | F1/F12 |
+| Everyone | Terms tick on sign-up and registration, "Before you start", legal links in Profile (built) | F16 |
 | Sales, Customer | Share referral link | F11 |
 
 Not settled (see `../questioner.md`): whether customers see their documents

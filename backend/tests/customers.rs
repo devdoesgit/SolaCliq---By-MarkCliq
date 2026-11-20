@@ -246,7 +246,7 @@ async fn links_existing_accounts_safely(db: PgPool) {
     let res = common::post(
         &db,
         "/api/v1/auth/signup",
-        json!({"name": "Someone", "email": "unverified@example.com", "password": "sunlight1"}),
+        json!({"name": "Someone", "email": "unverified@example.com", "password": "sunlight1", "terms_version": 1}),
     )
     .await;
     assert_eq!(res.status, StatusCode::ACCEPTED);
@@ -636,7 +636,7 @@ async fn whoever_signed_up_with_the_email_loses_the_account(db: PgPool) {
     common::post(
         &db,
         "/api/v1/auth/signup",
-        json!({"name": "Not Them", "email": "taken@example.com", "password": "squatter99"}),
+        json!({"name": "Not Them", "email": "taken@example.com", "password": "squatter99", "terms_version": 1}),
     )
     .await;
     let body = form(&db, a, &meena, "taken@example.com", "9814000117").await;
@@ -860,7 +860,7 @@ async fn a_customer_in_two_companies_sees_each_ones_documents(db: PgPool) {
     let self_signed = common::post(
         &db,
         "/api/v1/auth/signup",
-        json!({"name": "Walk In", "email": "walkin@example.com", "password": "sunlight1"}),
+        json!({"name": "Walk In", "email": "walkin@example.com", "password": "sunlight1", "terms_version": 1}),
     )
     .await;
     assert_eq!(self_signed.status, StatusCode::ACCEPTED);

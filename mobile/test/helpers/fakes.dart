@@ -84,6 +84,8 @@ Map<String, Object?> problem(int status, String code) => {
 Map<String, Object?> meJson({
   String name = 'Test Person',
   List<Map<String, Object?>> memberships = const [],
+  int? termsAccepted = 1,
+  int termsCurrent = 1,
 }) => {
   'id': '0192a000-0000-7000-8000-000000000001',
   'name': name,
@@ -91,6 +93,10 @@ Map<String, Object?> meJson({
   'email_verified': true,
   'is_platform_admin': false,
   'memberships': memberships,
+  'terms': {
+    'accepted_version': ?termsAccepted,
+    'current_version': termsCurrent,
+  },
 };
 
 Map<String, Object?> tokensJson({
@@ -137,10 +143,14 @@ Account testAccount({
   String id = '1',
   String name = 'Asha',
   List<AccountMembership> memberships = const [],
+  int? termsAccepted = 1,
+  int termsCurrent = 1,
 }) => Account(
   id: id,
   name: name,
   email: 'asha@example.com',
   isPlatformAdmin: false,
   memberships: memberships,
+  termsAcceptedVersion: termsAccepted,
+  termsCurrentVersion: termsCurrent,
 );

@@ -25,6 +25,7 @@ import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/install/view/payments_tab.dart';
 import 'package:solacliq/install/view/track_tab.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
+import 'package:solacliq/legal/view/terms_page.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
@@ -269,6 +270,7 @@ void main() {
   final pages = <String, (Widget, Workspace)>{
     'intro': (const IntroPage(), const PersonalWorkspace()),
     'request access': (const RequestAccessPage(), const PersonalWorkspace()),
+    'before you start': (const TermsPage(), const PersonalWorkspace()),
     'personal home': (const HomePage(), const PersonalWorkspace()),
     'worker home': (const HomePage(), worker),
     'quote': (

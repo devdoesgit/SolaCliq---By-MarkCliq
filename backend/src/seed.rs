@@ -178,6 +178,26 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
         .fetch_one(&mut *tx)
         .await?;
 
+        /*
+            People who can log in have agreed to the terms (F16), as if
+            they had signed up, so trying the app doesn't start on
+            "Before you start". Those without a password see it after
+            they set one up, like a real invited person
+        */
+        if person.has_password {
+            sqlx::query(
+                "INSERT INTO agreements (id, user_id, document, version, source)
+                 SELECT $1, $2, 'terms', $3, 'signup'
+                 WHERE NOT EXISTS (SELECT 1 FROM agreements
+                                   WHERE user_id = $2 AND document = 'terms' AND version = $3)",
+            )
+            .bind(Uuid::now_v7())
+            .bind(user_id)
+            .bind(crate::terms::TERMS_VERSION)
+            .execute(&mut *tx)
+            .await?;
+        }
+
         for &(org_id, role, pay_type) in person.memberships {
             sqlx::query(
                 "INSERT INTO memberships (id, user_id, org_id, role, pay_type)

@@ -3675,5 +3675,58 @@
     "docShortNameChange": "name change",
     "@docShortNameChange": {
         "description": "Short document name in a list."
+    },
+    "termsNotice": "We keep your name, email and phone to run your account, and the work your company records in SolaCliq.",
+    "@termsNotice": {
+        "description": "What SolaCliq stores and why, above the terms tick."
+    },
+    "termsAgree": "I agree to the Terms of Use and Privacy Policy",
+    "@termsAgree": {
+        "description": "Tick to agree to the terms."
+    },
+    "companyTermsAgree": "I agree to the Company Terms for my company",
+    "@companyTermsAgree": {
+        "description": "Tick for the Company Terms, on company registration."
+    },
+    "errorTerms": "Tick to agree to continue.",
+    "@errorTerms": {
+        "description": "Error when the terms aren't ticked."
+    },
+    "termsOfUse": "Terms of Use",
+    "@termsOfUse": {
+        "description": "The Terms of Use document."
+    },
+    "privacyPolicy": "Privacy Policy",
+    "@privacyPolicy": {
+        "description": "The Privacy Policy document."
+    },
+    "companyTerms": "Company Terms",
+    "@companyTerms": {
+        "description": "The Company Terms document."
+    },
+    "readDocument": "Read the {document}",
+    "@readDocument": {
+        "description": "Link that opens a legal document.",
+        "placeholders": {
+            "document": {
+                "type": "String"
+            }
+        }
+    },
+    "termsTitle": "Before you start",
+    "@termsTitle": {
+        "description": "Title of the screen asking to agree to the terms."
+    },
+    "termsBody": "Please read and agree to how SolaCliq works and handles your data.",
+    "@termsBody": {
+        "description": "Body of the terms screen."
+    },
+    "termsUpdatedBody": "We've updated our Terms of Use and Privacy Policy. Please read and agree to continue.",
+    "@termsUpdatedBody": {
+        "description": "Body of the terms screen after a new version."
+    },
+    "continueAction": "Continue",
+    "@continueAction": {
+        "description": "Button to go on."
     }
 }

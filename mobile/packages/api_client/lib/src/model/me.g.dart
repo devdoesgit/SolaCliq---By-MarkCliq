@@ -21,6 +21,8 @@ abstract class _$MeCWProxy {
 
   Me memberships(List<Membership> memberships);
 
+  Me terms(TermsStatus terms);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Me(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -35,6 +37,7 @@ abstract class _$MeCWProxy {
     bool emailVerified,
     bool isPlatformAdmin,
     List<Membership> memberships,
+    TermsStatus terms,
   });
 }
 
@@ -68,6 +71,9 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
       this(memberships: memberships);
 
   @override
+  Me terms(TermsStatus terms) => this(terms: terms);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Me(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -82,6 +88,7 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
     Object? emailVerified = const $CopyWithPlaceholder(),
     Object? isPlatformAdmin = const $CopyWithPlaceholder(),
     Object? memberships = const $CopyWithPlaceholder(),
+    Object? terms = const $CopyWithPlaceholder(),
   }) {
     return Me(
       id: id == const $CopyWithPlaceholder()
@@ -112,6 +119,10 @@ class _$MeCWProxyImpl implements _$MeCWProxy {
           ? _value.memberships
           // ignore: cast_nullable_to_non_nullable
           : memberships as List<Membership>,
+      terms: terms == const $CopyWithPlaceholder()
+          ? _value.terms
+          // ignore: cast_nullable_to_non_nullable
+          : terms as TermsStatus,
     );
   }
 }
@@ -139,6 +150,7 @@ Me _$MeFromJson(Map<String, dynamic> json) => $checkedCreate(
         'email_verified',
         'is_platform_admin',
         'memberships',
+        'terms',
       ],
     );
     final val = Me(
@@ -153,6 +165,10 @@ Me _$MeFromJson(Map<String, dynamic> json) => $checkedCreate(
         (v) => (v as List<dynamic>)
             .map((e) => Membership.fromJson(e as Map<String, dynamic>))
             .toList(),
+      ),
+      terms: $checkedConvert(
+        'terms',
+        (v) => TermsStatus.fromJson(v as Map<String, dynamic>),
       ),
     );
     return val;
@@ -171,4 +187,5 @@ Map<String, dynamic> _$MeToJson(Me instance) => <String, dynamic>{
   'email_verified': instance.emailVerified,
   'is_platform_admin': instance.isPlatformAdmin,
   'memberships': instance.memberships.map((e) => e.toJson()).toList(),
+  'terms': instance.terms.toJson(),
 };

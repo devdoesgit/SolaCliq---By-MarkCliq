@@ -26,6 +26,8 @@ class SignupRequest {
     this.phone,
 
     required this.password,
+
+    required this.termsVersion,
   });
 
   @JsonKey(name: r'name', required: true, includeIfNull: false)
@@ -42,19 +44,31 @@ class SignupRequest {
   @JsonKey(name: r'password', required: true, includeIfNull: false)
   final String password;
 
+  /// The version of the Terms of Use and Privacy Policy the person ticked to agree to (F16). Left out, or above the current version, is 422 `terms.required`. An older one is recorded as it is; the app then asks again after login (`Me.terms`).
+  // minimum: 1
+  @JsonKey(name: r'terms_version', required: true, includeIfNull: false)
+  final int termsVersion;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is SignupRequest &&
             runtimeType == other.runtimeType &&
             equals(
-              [name, email, phone, password],
-              [other.name, other.email, other.phone, other.password],
+              [name, email, phone, password, termsVersion],
+              [
+                other.name,
+                other.email,
+                other.phone,
+                other.password,
+                other.termsVersion,
+              ],
             );
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([name, email, phone, password]);
+      runtimeType.hashCode ^
+      mapPropsToHashCode([name, email, phone, password, termsVersion]);
 
   factory SignupRequest.fromJson(Map<String, dynamic> json) =>
       _$SignupRequestFromJson(json);

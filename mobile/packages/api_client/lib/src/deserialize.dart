@@ -1,3 +1,4 @@
+import 'package:api_client/src/model/accept_terms_request.dart';
 import 'package:api_client/src/model/add_member_request.dart';
 import 'package:api_client/src/model/checklist_create.dart';
 import 'package:api_client/src/model/checklist_item.dart';
@@ -96,6 +97,7 @@ import 'package:api_client/src/model/task_return.dart';
 import 'package:api_client/src/model/task_schedule.dart';
 import 'package:api_client/src/model/task_stage.dart';
 import 'package:api_client/src/model/task_summary.dart';
+import 'package:api_client/src/model/terms_status.dart';
 import 'package:api_client/src/model/token_pair.dart';
 import 'package:api_client/src/model/upload.dart';
 import 'package:api_client/src/model/upload_create.dart';
@@ -124,6 +126,9 @@ ReturnType deserialize<ReturnType, BaseType>(
       return (valueString == 'true' || valueString == '1') as ReturnType;
     case 'double':
       return (value is double ? value : double.parse('$value')) as ReturnType;
+    case 'AcceptTermsRequest':
+      return AcceptTermsRequest.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'AddMemberRequest':
       return AddMemberRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -387,6 +392,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'TaskStatus':
     case 'TaskSummary':
       return TaskSummary.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TermsStatus':
+      return TermsStatus.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TokenPair':
       return TokenPair.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Upload':

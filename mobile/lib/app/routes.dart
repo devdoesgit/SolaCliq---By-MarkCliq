@@ -29,6 +29,7 @@ abstract final class AppRoutes {
   static const documents = '/documents';
   static const learn = '/learn';
   static const profile = '/profile';
+  static const terms = '/terms';
 
   /// Reachable without signing in; signed-in people are sent home.
   static const Set<String> public = {

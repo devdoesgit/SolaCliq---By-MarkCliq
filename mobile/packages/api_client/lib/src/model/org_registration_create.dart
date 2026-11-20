@@ -20,6 +20,8 @@ part 'org_registration_create.g.dart';
 class OrgRegistrationCreate {
   /// Returns a new [OrgRegistrationCreate] instance.
   OrgRegistrationCreate({
+    required this.termsVersion,
+
     required this.legalName,
 
     this.tradeName,
@@ -42,6 +44,11 @@ class OrgRegistrationCreate {
 
     required this.phone,
   });
+
+  /// The owner agreed to the Terms of Use, the Privacy Policy and the Company Terms (two ticks in the form, both required before the app sends). Records two agreements: the owner's, and the company's with its id. Same rules as `TermsVersion`.
+  // minimum: 1
+  @JsonKey(name: r'terms_version', required: true, includeIfNull: false)
+  final int termsVersion;
 
   /// As on the GST certificate.
   @JsonKey(name: r'legal_name', required: true, includeIfNull: false)
@@ -86,6 +93,7 @@ class OrgRegistrationCreate {
             runtimeType == other.runtimeType &&
             equals(
               [
+                termsVersion,
                 legalName,
                 tradeName,
                 businessType,
@@ -99,6 +107,7 @@ class OrgRegistrationCreate {
                 phone,
               ],
               [
+                other.termsVersion,
                 other.legalName,
                 other.tradeName,
                 other.businessType,
@@ -118,6 +127,7 @@ class OrgRegistrationCreate {
   int get hashCode =>
       runtimeType.hashCode ^
       mapPropsToHashCode([
+        termsVersion,
         legalName,
         tradeName,
         businessType,

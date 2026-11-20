@@ -7,6 +7,8 @@ part of 'org_registration_create.dart';
 // **************************************************************************
 
 abstract class _$OrgRegistrationCreateCWProxy {
+  OrgRegistrationCreate termsVersion(int termsVersion);
+
   OrgRegistrationCreate legalName(String legalName);
 
   OrgRegistrationCreate tradeName(String? tradeName);
@@ -36,6 +38,7 @@ abstract class _$OrgRegistrationCreateCWProxy {
   /// OrgRegistrationCreate(...).copyWith(id: 12, name: "My name")
   /// ````
   OrgRegistrationCreate call({
+    int termsVersion,
     String legalName,
     String? tradeName,
     BusinessType businessType,
@@ -56,6 +59,10 @@ class _$OrgRegistrationCreateCWProxyImpl
   const _$OrgRegistrationCreateCWProxyImpl(this._value);
 
   final OrgRegistrationCreate _value;
+
+  @override
+  OrgRegistrationCreate termsVersion(int termsVersion) =>
+      this(termsVersion: termsVersion);
 
   @override
   OrgRegistrationCreate legalName(String legalName) =>
@@ -104,6 +111,7 @@ class _$OrgRegistrationCreateCWProxyImpl
   /// OrgRegistrationCreate(...).copyWith(id: 12, name: "My name")
   /// ````
   OrgRegistrationCreate call({
+    Object? termsVersion = const $CopyWithPlaceholder(),
     Object? legalName = const $CopyWithPlaceholder(),
     Object? tradeName = const $CopyWithPlaceholder(),
     Object? businessType = const $CopyWithPlaceholder(),
@@ -117,6 +125,10 @@ class _$OrgRegistrationCreateCWProxyImpl
     Object? phone = const $CopyWithPlaceholder(),
   }) {
     return OrgRegistrationCreate(
+      termsVersion: termsVersion == const $CopyWithPlaceholder()
+          ? _value.termsVersion
+          // ignore: cast_nullable_to_non_nullable
+          : termsVersion as int,
       legalName: legalName == const $CopyWithPlaceholder()
           ? _value.legalName
           // ignore: cast_nullable_to_non_nullable
@@ -185,6 +197,7 @@ OrgRegistrationCreate _$OrgRegistrationCreateFromJson(
     $checkKeys(
       json,
       requiredKeys: const [
+        'terms_version',
         'legal_name',
         'business_type',
         'gstin',
@@ -197,6 +210,7 @@ OrgRegistrationCreate _$OrgRegistrationCreateFromJson(
       ],
     );
     final val = OrgRegistrationCreate(
+      termsVersion: $checkedConvert('terms_version', (v) => (v as num).toInt()),
       legalName: $checkedConvert('legal_name', (v) => v as String),
       tradeName: $checkedConvert('trade_name', (v) => v as String?),
       businessType: $checkedConvert(
@@ -215,6 +229,7 @@ OrgRegistrationCreate _$OrgRegistrationCreateFromJson(
     return val;
   },
   fieldKeyMap: const {
+    'termsVersion': 'terms_version',
     'legalName': 'legal_name',
     'tradeName': 'trade_name',
     'businessType': 'business_type',
@@ -228,6 +243,7 @@ OrgRegistrationCreate _$OrgRegistrationCreateFromJson(
 Map<String, dynamic> _$OrgRegistrationCreateToJson(
   OrgRegistrationCreate instance,
 ) => <String, dynamic>{
+  'terms_version': instance.termsVersion,
   'legal_name': instance.legalName,
   'trade_name': ?instance.tradeName,
   'business_type': _$BusinessTypeEnumMap[instance.businessType]!,

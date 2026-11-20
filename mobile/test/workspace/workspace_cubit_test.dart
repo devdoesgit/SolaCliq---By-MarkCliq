@@ -64,6 +64,39 @@ void main() {
       );
     });
 
+    test('terms not agreed: "Before you start" before anything', () async {
+      for (final accepted in [null, 1]) {
+        final cubit = await build(
+          AuthAuthenticated(
+            testAccount(
+              memberships: [worker],
+              termsAccepted: accepted,
+              termsCurrent: 2,
+            ),
+          ),
+        );
+        expect(cubit.state, isA<WorkspaceNeedsTerms>(), reason: '$accepted');
+      }
+    });
+
+    test('agreeing opens the workspace', () async {
+      final cubit = await build(
+        AuthAuthenticated(
+          testAccount(memberships: [worker], termsAccepted: null),
+        ),
+      );
+      expect(cubit.state, isA<WorkspaceNeedsTerms>());
+      await emitAuth(signedIn([worker]));
+      expect(
+        cubit.state,
+        isA<WorkspaceReady>().having(
+          (s) => s.current,
+          'current',
+          MemberWorkspace(worker),
+        ),
+      );
+    });
+
     test('only org admin: the website notice', () async {
       final cubit = await build(signedIn([admin]));
       expect(cubit.state, isA<WorkspaceAdminOnly>());

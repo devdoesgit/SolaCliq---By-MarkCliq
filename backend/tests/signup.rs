@@ -19,7 +19,8 @@ fn asha() -> Value {
         "name": "Asha Example",
         "email": "  Asha@Example.com ",
         "phone": "9876511223",
-        "password": "sunlight1"
+        "password": "sunlight1",
+        "terms_version": 1
     })
 }
 

@@ -23,6 +23,7 @@ class CompanyRegistration {
     required this.ownerName,
     required this.email,
     required this.phone,
+    required this.termsVersion,
     this.tradeName,
     this.addressLine2,
   });
@@ -42,6 +43,10 @@ class CompanyRegistration {
 
   /// Ten digits.
   final String phone;
+
+  /// The version of the terms the owner ticked, with the Company Terms
+  /// (F16).
+  final int termsVersion;
 }
 
 /// Registers a solar company. The server saves it as pending; MarkCliq
@@ -65,6 +70,7 @@ class CompanyRegistrationRepository {
         ownerName: r.ownerName,
         email: r.email,
         phone: r.phone,
+        termsVersion: r.termsVersion,
       ),
     ),
   );

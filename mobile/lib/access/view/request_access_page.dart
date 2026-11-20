@@ -15,6 +15,8 @@ import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/legal/legal.dart';
+import 'package:solacliq/legal/view/terms_agreement.dart';
 
 /// A solar company registers with SolaCliq: the owner, then the company
 /// as on its GST certificate. The server saves it as pending; MarkCliq
@@ -50,6 +52,8 @@ class _RequestAccessViewState extends State<RequestAccessView> {
   final _city = TextEditingController();
   final _pin = TextEditingController();
   BusinessType? _businessType;
+  bool _agreed = false;
+  bool _companyAgreed = false;
   final _errors = <String, String?>{};
 
   static final _pinPattern = RegExp(r'^[1-9]\d{5}$');
@@ -96,7 +100,10 @@ class _RequestAccessViewState extends State<RequestAccessView> {
       ..fillBlank(_address1, 'Plot 4, MIDC')
       ..fillBlank(_city, 'Pune')
       ..fillBlank(_pin, '411001');
-    if (context.quickForms) _businessType ??= BusinessType.privateLimited;
+    if (context.quickForms) {
+      _businessType ??= BusinessType.privateLimited;
+      _agreed = _companyAgreed = true;
+    }
 
     final l10n = context.l10n;
     final gstin = Gstin.tryParse(_gstin.text);
@@ -122,7 +129,8 @@ class _RequestAccessViewState extends State<RequestAccessView> {
         ..['city'] = AuthValidators.required(_city.text, l10n.fieldCity, l10n)
         ..['pin'] = _pinPattern.hasMatch(_pin.text.trim())
             ? null
-            : l10n.errorPinCode;
+            : l10n.errorPinCode
+        ..['terms'] = _agreed && _companyAgreed ? null : l10n.errorTerms;
     });
     final businessType = _businessType;
     if (_errors.values.any((e) => e != null) ||
@@ -146,6 +154,7 @@ class _RequestAccessViewState extends State<RequestAccessView> {
           addressLine2: _optional(_address2),
           city: _city.text.trim(),
           pinCode: _pin.text.trim(),
+          termsVersion: termsVersion,
         ),
       ),
     );
@@ -357,6 +366,20 @@ class _RequestAccessViewState extends State<RequestAccessView> {
                   onChanged: (_) => _edited('pin'),
                 ),
               ],
+            ),
+            const SizedBox(height: SolaSpace.space24),
+            TermsAgreement(
+              value: _agreed,
+              companyValue: _companyAgreed,
+              error: _errors['terms'],
+              onChanged: (v) => setState(() {
+                _agreed = v;
+                _errors['terms'] = null;
+              }),
+              onCompanyChanged: (v) => setState(() {
+                _companyAgreed = v;
+                _errors['terms'] = null;
+              }),
             ),
           ],
         ),

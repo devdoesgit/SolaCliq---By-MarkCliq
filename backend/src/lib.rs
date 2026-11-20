@@ -23,6 +23,7 @@ pub mod scope;
 pub mod seed;
 pub mod session;
 pub mod storage;
+pub mod terms;
 pub mod validate;
 
 use std::{sync::Arc, time::Duration};

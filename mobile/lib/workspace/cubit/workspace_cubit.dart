@@ -11,6 +11,9 @@ export 'workspace_state.dart';
 /// Turns the sign-in status into the workspace the app shows, and
 /// remembers the person's choice on the phone.
 ///
+/// Someone who hasn't agreed to the terms in force gets "Before you
+/// start" first (F16).
+///
 /// Everyone has their Personal workspace, plus one per company role
 /// (worker, agent, customer). The app opens the one in use, else the
 /// remembered one, else their first company, else Personal. Someone who is
@@ -72,6 +75,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
   }
 
   static WorkspaceState _resolve(Account account, String? preferredId) {
+    if (account.needsTerms) return WorkspaceNeedsTerms(account);
     final companies = companyWorkspaces(account);
     final isAdmin = account.memberships.any((m) => m.role == OrgRole.orgAdmin);
     if (companies.isEmpty && isAdmin) return WorkspaceAdminOnly(account);

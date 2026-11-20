@@ -16,6 +16,7 @@ import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/legal/legal.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
@@ -318,6 +319,22 @@ class _ProfileTabState extends State<ProfileTab> {
                     orgPhone: workspace?.orgPhone,
                   ),
                 ),
+              ),
+            ],
+          ),
+          SolaGroup(
+            children: [
+              NavRow(
+                key: const Key('profile_terms'),
+                icon: SolaIcons.file,
+                title: l10n.termsOfUse,
+                onTap: () => openLegalPage(context, LegalPage.terms),
+              ),
+              NavRow(
+                key: const Key('profile_privacy'),
+                icon: SolaIcons.shield,
+                title: l10n.privacyPolicy,
+                onTap: () => openLegalPage(context, LegalPage.privacy),
               ),
             ],
           ),

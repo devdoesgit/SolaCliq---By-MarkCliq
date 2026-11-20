@@ -96,6 +96,7 @@ class _AppState extends State<App> {
     _api = ApiClient(dio: _dio, interceptors: []);
     _auth = AuthRepository(
       authApi: _api.getAuthApi(),
+      profileApi: _api.getProfileApi(),
       store: widget.tokenStore ?? SecureTokenStore(),
     );
     _dio.interceptors.add(AuthInterceptor(repository: _auth, dio: _dio));

@@ -1,8 +1,9 @@
 //! `GET /me`: who is logged in and which companies they belong to. The app
 //! calls it on start-up and builds every workspace from `memberships`.
+//! `POST /me/terms`: the person agrees to the current terms (F16).
 
-use axum::{Json, extract::State};
-use serde::Serialize;
+use axum::{Json, extract::State, http::StatusCode};
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -11,14 +12,18 @@ use uuid::Uuid;
 use crate::{
     AppState,
     error::ApiResult,
-    extract::AuthUser,
+    extract::{ApiJson, AuthUser},
     org::{OrgStatus, PayType, Role},
+    rate_limit::ClientIp,
     routes::uploads,
     storage::Storage,
+    terms::{self, Agreement, Document, Source, TermsStatus},
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
-    OpenApiRouter::new().routes(routes!(get_me))
+    OpenApiRouter::new()
+        .routes(routes!(get_me))
+        .routes(routes!(accept_terms))
 }
 
 /// The contract's `Me`. `Serialize` turns it into JSON; field names stay
@@ -34,6 +39,11 @@ pub struct Me {
     pub email_verified: bool,
     pub is_platform_admin: bool,
     pub memberships: Vec<Membership>,
+    /*
+        Which version of the terms the person agreed to, and which is in
+        force. The app shows "Before you start" while they differ
+    */
+    pub terms: TermsStatus,
 }
 
 /*
@@ -110,6 +120,7 @@ pub async fn load(db: &PgPool, storage: Option<&Storage>, user_id: Uuid) -> ApiR
     .bind(user_id)
     .fetch_one(db)
     .await?;
+    let terms = terms::status(&mut *db.acquire().await?, user_id).await?;
 
     Ok(Me {
         id: u.id,
@@ -119,7 +130,60 @@ pub async fn load(db: &PgPool, storage: Option<&Storage>, user_id: Uuid) -> ApiR
         email_verified: u.email_verified,
         is_platform_admin: u.is_platform_admin,
         memberships: memberships(db, storage, user_id).await?,
+        terms,
     })
+}
+
+/// The contract's `AcceptTermsRequest`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AcceptTermsRequest {
+    pub version: i32,
+}
+
+/*
+    Agree to the current Terms of Use and Privacy Policy (F16)
+    --------------------------------------------------------------------
+    - for accounts someone else made (team members, customers an agent
+      registered), and for everyone after TERMS_VERSION goes up
+    - only the version in force (422 `terms.required` otherwise)
+    - a new row each time, even agreeing to the same version twice: the
+      history is the proof, and a repeat does no harm
+*/
+#[utoipa::path(
+    post,
+    path = "/me/terms",
+    operation_id = "acceptTerms",
+    tag = "profile",
+    request_body = AcceptTermsRequest,
+    responses(
+        (status = 204, description = "Recorded."),
+        (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn accept_terms(
+    State(state): State<AppState>,
+    user: AuthUser,
+    ip: ClientIp,
+    ApiJson(req): ApiJson<AcceptTermsRequest>,
+) -> ApiResult<StatusCode> {
+    let version = terms::check_current(req.version)?;
+    terms::record(
+        &mut *state.db.acquire().await?,
+        Agreement {
+            user_id: user.user_id,
+            document: Document::Terms,
+            org_id: None,
+            version,
+            source: Source::App,
+            ip: &ip,
+        },
+    )
+    .await?;
+    tracing::info!(user_id = %user.user_id, version, "terms agreed");
+    Ok(StatusCode::NO_CONTENT)
 }
 
 // One row of the memberships query below.

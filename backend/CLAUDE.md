@@ -72,4 +72,5 @@ cargo run -- send-test-push <token>      # checks the Firebase (push) setup
 - `src/gstin.rs`, `src/validate.rs`, `src/page.rs`: shared checks and
   paging. `src/counter.rs`: per-company references (EXP-0001). `src/idempotency.rs`, `src/notify.rs` (notifications),
   `src/bank.rs` (encryption, bank names). `src/seed.rs`: the seed and platform-admin commands.
+  `src/terms.rs`: the terms version and agreements (F16).
 - `tests/`: one file per area; helpers in `tests/common/mod.rs`.

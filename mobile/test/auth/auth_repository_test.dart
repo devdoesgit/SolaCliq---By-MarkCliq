@@ -32,6 +32,7 @@ void main() {
     dio = Dio(BaseOptions(baseUrl: 'http://api'))..httpClientAdapter = adapter;
     repository = AuthRepository(
       authApi: ApiClient(dio: dio, interceptors: []).getAuthApi(),
+      profileApi: ApiClient(dio: dio, interceptors: []).getProfileApi(),
       store: store,
       clock: () => time,
     );
@@ -167,6 +168,71 @@ void main() {
       await repository.restore();
       expect(repository.status, const AuthUnauthenticated());
       expect(store.session, isNull);
+    });
+  });
+
+  group('terms', () {
+    test('sign-up sends the version the app shows', () async {
+      answer = (_) async => ResponseBody.fromString('', 202);
+      await repository.signUp(
+        name: 'Asha',
+        email: 'asha@example.com',
+        password: 'sunlight1',
+      );
+      final request = adapter.requests.single;
+      expect(request.path, '/auth/signup');
+      expect(request.data as String, contains('"terms_version":1'));
+    });
+
+    test('the account says when the terms need agreeing', () async {
+      store.session = session(account: meJson());
+      answer = (_) async =>
+          jsonBody(200, meJson(termsAccepted: null, termsCurrent: 2));
+      await repository.restore();
+      final account = (repository.status as AuthAuthenticated).account;
+      expect(account.termsAcceptedVersion, isNull);
+      expect(account.termsCurrentVersion, 2);
+      expect(account.needsTerms, isTrue);
+    });
+
+    test('agreeing sends the version in force, then re-reads', () async {
+      store.session = session(account: meJson());
+      var agreed = false;
+      answer = (o) async {
+        if (o.path == '/me/terms') {
+          agreed = true;
+          return ResponseBody.fromString('', 204);
+        }
+        return jsonBody(
+          200,
+          meJson(termsAccepted: agreed ? 2 : 1, termsCurrent: 2),
+        );
+      };
+      await repository.restore();
+      expect(
+        (repository.status as AuthAuthenticated).account.needsTerms,
+        isTrue,
+      );
+
+      await repository.acceptTerms();
+
+      final post = adapter.requests.singleWhere((r) => r.path == '/me/terms');
+      expect(post.data as String, contains('"version":2'));
+      expect(
+        (repository.status as AuthAuthenticated).account.needsTerms,
+        isFalse,
+      );
+    });
+
+    test('an account saved by an older app is read again', () async {
+      // Saved before `terms` existed in `/me`.
+      store.session = session(account: Map.of(meJson())..remove('terms'));
+      answer = (o) => Future.error(
+        DioException.connectionError(requestOptions: o, reason: 'offline'),
+      );
+      await repository.restore();
+      // Unreadable and offline: signed out rather than a crash.
+      expect(repository.status, const AuthUnauthenticated());
     });
   });
 

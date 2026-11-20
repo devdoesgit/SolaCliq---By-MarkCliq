@@ -19,7 +19,7 @@ async fn signup(db: &PgPool, email: &str) {
     let res = post(
         db,
         "/api/v1/auth/signup",
-        json!({ "name": "Asha Example", "email": email, "password": PASSWORD }),
+        json!({ "name": "Asha Example", "email": email, "password": PASSWORD, "terms_version": 1 }),
     )
     .await;
     assert_eq!(res.status, StatusCode::ACCEPTED);

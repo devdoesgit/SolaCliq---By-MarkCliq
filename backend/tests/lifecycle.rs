@@ -115,6 +115,7 @@ async fn one_install_from_start_to_handover(db: PgPool) {
             "business_type": "private_limited", "gstin": "27aapfu0939f1zv",
             "address_line_1": "Plot 4, MIDC", "city": "Pune", "pin_code": "411001",
             "owner_name": "Dev Owner", "email": "dev.owner@example.com", "phone": "98140 22671",
+            "terms_version": 1,
         }),
     )
     .await;

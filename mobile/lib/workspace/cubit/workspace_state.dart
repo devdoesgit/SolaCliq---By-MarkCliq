@@ -20,6 +20,17 @@ final class WorkspaceSignedOut extends WorkspaceState {
   const new();
 }
 
+/// Signed in, but hasn't agreed to the terms in force (F16): the app
+/// shows "Before you start" and nothing else until they do.
+final class WorkspaceNeedsTerms extends WorkspaceState {
+  const new(this.account);
+
+  final Account account;
+
+  @override
+  List<Object?> get props => [account];
+}
+
 /// Only org admin memberships: their tools are on the website.
 final class WorkspaceAdminOnly extends WorkspaceState {
   const new(this.account);

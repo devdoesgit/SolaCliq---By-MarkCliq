@@ -149,6 +149,7 @@ void main() {
       await tester.enterText(_input('signup_name'), ' Asha ');
       await tester.enterText(_input('signup_email'), 'asha@example.com');
       await tester.enterText(_input('signup_password'), 'longenough1');
+      await tester.tapKey('terms_agree');
       await tester.tapKey('signup_submit');
       await tester.pumpAndSettle();
       verify(
@@ -162,6 +163,38 @@ void main() {
         find.text('route:/verify?email=asha%40example.com'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('$SignupPage terms', () {
+    testWidgets('not ticked: nothing is sent', (tester) async {
+      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.enterText(_input('signup_name'), 'Asha');
+      await tester.enterText(_input('signup_email'), 'asha@example.com');
+      await tester.enterText(_input('signup_password'), 'longenough1');
+      await tester.tapKey('signup_submit');
+      await tester.pump();
+      expect(find.text('Tick to agree to continue.'), findsOneWidget);
+      verifyNever(
+        () => auth.signUp(
+          name: any(named: 'name'),
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      );
+
+      // Ticking clears the message.
+      await tester.tapKey('terms_agree');
+      await tester.pump();
+      expect(find.text('Tick to agree to continue.'), findsNothing);
+    });
+
+    testWidgets('shows the notice and both documents', (tester) async {
+      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      expect(find.byKey(const Key('terms_read_terms')), findsOneWidget);
+      expect(find.byKey(const Key('terms_read_privacy')), findsOneWidget);
+      expect(find.byKey(const Key('terms_read_company')), findsNothing);
+      expect(find.textContaining('We keep your name'), findsOneWidget);
     });
   });
 

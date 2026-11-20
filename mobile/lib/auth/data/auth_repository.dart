@@ -6,6 +6,7 @@ import 'package:solacliq/auth/data/account.dart';
 import 'package:solacliq/auth/data/auth_failure.dart';
 import 'package:solacliq/auth/data/auth_status.dart';
 import 'package:solacliq/auth/data/token_store.dart';
+import 'package:solacliq/legal/legal.dart';
 
 /// Accounts and the app's login: the only place that knows about tokens.
 ///
@@ -15,12 +16,14 @@ import 'package:solacliq/auth/data/token_store.dart';
 class AuthRepository {
   new({
     required api.AuthApi authApi,
+    required this._profileApi,
     required this._store,
     DateTime Function()? clock,
   }) : _api = authApi,
        _now = clock ?? DateTime.now;
 
   final api.AuthApi _api;
+  final api.ProfileApi _profileApi;
   final TokenStore _store;
   final DateTime Function() _now;
   final _statusController = StreamController<AuthStatus>.broadcast();
@@ -46,10 +49,8 @@ class AuthRepository {
     final stored = await _store.read();
     if (stored == null) return _emit(const AuthUnauthenticated());
     _session = stored;
-    final cached = stored.accountJson;
-    if (cached != null) {
-      _emit(AuthAuthenticated(_toAccount(api.Me.fromJson(cached))));
-    }
+    final cached = _cachedMe(stored.accountJson);
+    if (cached != null) _emit(AuthAuthenticated(_toAccount(cached)));
     try {
       await _loadAccount();
     } on AuthFailure catch (failure) {
@@ -60,6 +61,8 @@ class AuthRepository {
     }
   }
 
+  /// Creates the account. The person has ticked to agree to the terms the
+  /// app shows ([termsVersion]); the server records it with the account.
   Future<void> signUp({
     required String name,
     required String email,
@@ -72,9 +75,28 @@ class AuthRepository {
         email: email,
         password: password,
         phone: phone,
+        termsVersion: termsVersion,
       ),
     ),
   );
+
+  /// Records that the signed-in person agreed to the version of the terms
+  /// in force, then re-reads the account so the app moves on.
+  Future<void> acceptTerms() async {
+    final account = switch (_status) {
+      AuthAuthenticated(:final account) => account,
+      _ => null,
+    };
+    if (account == null) return;
+    await _call(
+      () => _profileApi.acceptTerms(
+        acceptTermsRequest: api.AcceptTermsRequest(
+          version: account.termsCurrentVersion,
+        ),
+      ),
+    );
+    await _loadAccount();
+  }
 
   Future<void> verifyEmail({required String email, required String code}) =>
       _call(
@@ -238,12 +260,26 @@ class AuthRepository {
   static Map<String, Object?> _json(api.Me me) =>
       Map<String, Object?>.from(me.toJson());
 
+  /// The account saved on the phone, or null when there is none or it was
+  /// saved by an older app version in a shape this one can't read (the
+  /// server's copy replaces it straight after).
+  static api.Me? _cachedMe(Map<String, Object?>? json) {
+    if (json == null) return null;
+    try {
+      return api.Me.fromJson(json);
+    } on Object {
+      return null;
+    }
+  }
+
   static Account _toAccount(api.Me me) => Account(
     id: me.id,
     name: me.name,
     email: me.email,
     phone: me.phone,
     isPlatformAdmin: me.isPlatformAdmin,
+    termsCurrentVersion: me.terms.currentVersion,
+    termsAcceptedVersion: me.terms.acceptedVersion,
     memberships: [
       for (final m in me.memberships)
         AccountMembership(

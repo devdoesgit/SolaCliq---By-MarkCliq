@@ -24,6 +24,7 @@ export 'package:api_client/src/api/tasks_api.dart';
 export 'package:api_client/src/api/team_api.dart';
 export 'package:api_client/src/api/uploads_api.dart';
 
+export 'package:api_client/src/model/accept_terms_request.dart';
 export 'package:api_client/src/model/add_member_request.dart';
 export 'package:api_client/src/model/bill_band.dart';
 export 'package:api_client/src/model/business_type.dart';
@@ -141,6 +142,7 @@ export 'package:api_client/src/model/task_schedule.dart';
 export 'package:api_client/src/model/task_stage.dart';
 export 'package:api_client/src/model/task_status.dart';
 export 'package:api_client/src/model/task_summary.dart';
+export 'package:api_client/src/model/terms_status.dart';
 export 'package:api_client/src/model/token_pair.dart';
 export 'package:api_client/src/model/upload.dart';
 export 'package:api_client/src/model/upload_create.dart';

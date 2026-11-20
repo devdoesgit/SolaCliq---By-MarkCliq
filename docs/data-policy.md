@@ -8,8 +8,11 @@ client. Each rule is marked:
 - **Decided**: agreed, built with the feature that needs it.
 - **Open**: not decided yet.
 
-Keep this file current: when a rule changes, change it here and log the
-decision in `decisions.md`.
+The public Privacy Policy built from these rules is
+`../legal/privacy-policy.md`.
+
+Keep this file current: when a rule changes, change it here and in the
+Privacy Policy, and log the decision in `decisions.md`.
 
 ## Each company's data is kept apart
 
@@ -76,6 +79,19 @@ decision in `decisions.md`.
     handover** (covering the subsidy claim), then deleted.
 - **Open.** Whether a customer can ask for earlier deletion, and how
   (in the app, or through the company).
+
+## Agreeing to the terms
+
+- **Built 2026-11-20 (F16).** Everyone agrees to the Terms of Use and
+  Privacy Policy (`legal/`) with a tick: at sign-up, at company
+  registration (with the Company Terms), or on a "Before you start"
+  screen after login for accounts someone else made. The server keeps
+  each agreement as its own row: who, which version, when, where from
+  (sign-up, registration, app) and the IP address. Rows are never
+  changed (the database refuses the API an edit) and are deleted with
+  the account.
+- **Built.** When the terms change in a way that matters, the version
+  goes up and everyone is asked again after their next login.
 
 ## Passwords, logins and codes
 

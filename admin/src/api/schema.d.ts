@@ -1061,6 +1061,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agree to the current Terms of Use and Privacy Policy
+         * @description Records the agreement (who, which version, when, from which
+         *     address) as a new row; earlier ones are kept. For accounts someone
+         *     else made, and after the version goes up (F16).
+         */
+        post: operations["acceptTerms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/details": {
         parameters: {
             query?: never;
@@ -1978,6 +2000,37 @@ export interface components {
             email: components["schemas"]["Email"];
             phone?: components["schemas"]["Phone"];
             password: components["schemas"]["Password"];
+            terms_version: components["schemas"]["TermsVersion"];
+        };
+        /**
+         * @description The version of the Terms of Use and Privacy Policy the person
+         *     ticked to agree to (F16). Left out, or above the current version,
+         *     is 422 `terms.required`. An older one is recorded as it is; the app
+         *     then asks again after login (`Me.terms`).
+         * @example 1
+         */
+        TermsVersion: number;
+        TermsStatus: {
+            /**
+             * @description The latest version the person agreed to. Left out if they never
+             *     have (an account someone else made for them).
+             * @example 1
+             */
+            accepted_version?: number;
+            /**
+             * @description The version in force. When it differs from `accepted_version`,
+             *     the app shows the "Before you start" screen and nothing else
+             *     until the person agrees (`POST /me/terms`) or logs out.
+             * @example 1
+             */
+            current_version: number;
+        };
+        AcceptTermsRequest: {
+            /**
+             * @description Must be the current version; anything else is 422 `terms.required`.
+             * @example 1
+             */
+            version: number;
         };
         EmailRequest: {
             email: components["schemas"]["Email"];
@@ -2068,6 +2121,7 @@ export interface components {
              *     active (shown as a message). Removed memberships are left out.
              */
             memberships: components["schemas"]["Membership"][];
+            terms: components["schemas"]["TermsStatus"];
         };
         /**
          * @description `invited` until the person has set a password.
@@ -2104,6 +2158,13 @@ export interface components {
          */
         PayType: "commission" | "salary";
         OrgRegistrationCreate: {
+            /**
+             * @description The owner agreed to the Terms of Use, the Privacy Policy and the
+             *     Company Terms (two ticks in the form, both required before the
+             *     app sends). Records two agreements: the owner's, and the
+             *     company's with its id. Same rules as `TermsVersion`.
+             */
+            terms_version: components["schemas"]["TermsVersion"];
             /**
              * @description As on the GST certificate.
              * @example Example Solar Private Limited (illustrative)
@@ -4479,6 +4540,30 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+        };
+    };
+    acceptTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getMyDetails: {

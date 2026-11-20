@@ -23,6 +23,7 @@ void main() {
     ...AppRoutes.public,
     AppRoutes.splash,
     AppRoutes.useWebsite,
+    AppRoutes.terms,
     ...inApp,
   ];
 
@@ -54,6 +55,7 @@ void main() {
         ...AppRoutes.public,
         AppRoutes.splash,
         AppRoutes.useWebsite,
+        AppRoutes.terms,
       ]) {
         expect(result[path], AppRoutes.home, reason: path);
       }
@@ -66,6 +68,17 @@ void main() {
       final result = sends(WorkspaceAdminOnly(account));
       expect(result[AppRoutes.useWebsite], isNull);
       expect(result[AppRoutes.home], AppRoutes.useWebsite);
+    });
+
+    test('terms not agreed: only "Before you start", everywhere', () {
+      final result = sends(WorkspaceNeedsTerms(account));
+      for (final path in everywhere) {
+        expect(
+          result[path],
+          path == AppRoutes.terms ? isNull : AppRoutes.terms,
+          reason: path,
+        );
+      }
     });
 
     test('the gallery is open in development only', () {

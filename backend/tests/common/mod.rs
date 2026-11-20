@@ -153,7 +153,7 @@ pub async fn verified_user(db: &PgPool, email: &str, password: &str) {
     let res = post(
         db,
         "/api/v1/auth/signup",
-        json!({ "name": "Asha Example", "email": email, "password": password }),
+        json!({ "name": "Asha Example", "email": email, "password": password, "terms_version": 1 }),
     )
     .await;
     assert_eq!(res.status, StatusCode::ACCEPTED);

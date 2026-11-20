@@ -4,6 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/membership.dart';
+import 'package:api_client/src/model/terms_status.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
@@ -33,6 +34,8 @@ class Me {
     required this.isPlatformAdmin,
 
     required this.memberships,
+
+    required this.terms,
   });
 
   /// UUIDv7.
@@ -59,6 +62,9 @@ class Me {
   @JsonKey(name: r'memberships', required: true, includeIfNull: false)
   final List<Membership> memberships;
 
+  @JsonKey(name: r'terms', required: true, includeIfNull: false)
+  final TermsStatus terms;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is Me &&
@@ -72,6 +78,7 @@ class Me {
                 emailVerified,
                 isPlatformAdmin,
                 memberships,
+                terms,
               ],
               [
                 other.id,
@@ -81,6 +88,7 @@ class Me {
                 other.emailVerified,
                 other.isPlatformAdmin,
                 other.memberships,
+                other.terms,
               ],
             );
   }
@@ -96,6 +104,7 @@ class Me {
         emailVerified,
         isPlatformAdmin,
         memberships,
+        terms,
       ]);
 
   factory Me.fromJson(Map<String, dynamic> json) => _$MeFromJson(json);

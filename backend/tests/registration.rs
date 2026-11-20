@@ -24,6 +24,7 @@ fn registration(email: &str) -> Value {
         "owner_name": "Asha Owner",
         "email": email,
         "phone": "98140 22671",
+        "terms_version": 1,
     })
 }
 

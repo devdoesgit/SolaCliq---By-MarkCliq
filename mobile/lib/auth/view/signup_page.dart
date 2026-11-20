@@ -15,6 +15,7 @@ import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
 import 'package:solacliq/auth/widgets/password_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/legal/view/terms_agreement.dart';
 
 /// Creates a free personal account, then verifies the email.
 class SignupPage extends StatelessWidget {
@@ -45,6 +46,8 @@ class _SignupViewState extends State<SignupView> {
   String? _emailError;
   String? _mobileError;
   String? _passwordError;
+  bool _agreed = false;
+  String? _termsError;
 
   @override
   void dispose() {
@@ -62,6 +65,8 @@ class _SignupViewState extends State<SignupView> {
       ..fillBlank(_name, 'Asha Example')
       ..fillBlank(_email, 'asha@example.com')
       ..fillBlank(_password, 'solarpanel26');
+    // Quick forms (development only) fills every choice; never in a release.
+    if (context.quickForms) _agreed = true;
     final l10n = context.l10n;
     final email = _email.text.trim();
     setState(() {
@@ -73,12 +78,14 @@ class _SignupViewState extends State<SignupView> {
       _emailError = AuthValidators.email(email, l10n);
       _mobileError = AuthValidators.optionalMobile(_mobile.text, l10n);
       _passwordError = AuthValidators.newPassword(_password.text, l10n);
+      _termsError = _agreed ? null : l10n.errorTerms;
     });
     if ([
       _nameError,
       _emailError,
       _mobileError,
       _passwordError,
+      _termsError,
     ].any((e) => e != null)) {
       return;
     }
@@ -185,6 +192,15 @@ class _SignupViewState extends State<SignupView> {
                   style: SolaTextStyle.meta,
                   color: SolaColors.muted,
                 ),
+              ),
+              const SizedBox(height: SolaSpace.space24),
+              TermsAgreement(
+                value: _agreed,
+                error: _termsError,
+                onChanged: (v) => setState(() {
+                  _agreed = v;
+                  _termsError = null;
+                }),
               ),
             ],
           ),

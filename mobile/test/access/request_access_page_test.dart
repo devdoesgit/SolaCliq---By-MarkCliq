@@ -28,6 +28,7 @@ void main() {
         ownerName: '',
         email: '',
         phone: '',
+        termsVersion: 1,
       ),
     ),
   );
@@ -43,7 +44,11 @@ void main() {
     ],
   );
 
-  Future<void> fill(WidgetTester tester, String gstin) async {
+  Future<void> fill(
+    WidgetTester tester,
+    String gstin, {
+    bool agree = true,
+  }) async {
     await tester.enterText(_input('access_owner'), 'Asha Owner');
     await tester.enterText(_input('access_email'), 'asha@example.com');
     await tester.enterText(_input('access_phone'), '98140 22671');
@@ -59,6 +64,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tapKey('business_type_privateLimited');
     await tester.pumpAndSettle();
+    if (agree) {
+      await tester.tapKey('terms_agree');
+      await tester.tapKey('terms_agree_company');
+    }
   }
 
   group(RequestAccessPage, () {
@@ -82,7 +91,20 @@ void main() {
       expect(sent.businessType, BusinessType.privateLimited);
       expect(sent.tradeName, isNull);
       expect(sent.addressLine2, isNull);
+      expect(sent.termsVersion, 1);
       expect(find.textContaining('route:/request-access/sent'), findsOneWidget);
+    });
+
+    testWidgets('both ticks are needed before sending', (tester) async {
+      await pump(tester);
+      await fill(tester, '27AAPFU0939F1ZV', agree: false);
+      // Only the Terms of Use: the Company Terms are still needed.
+      await tester.tapKey('terms_agree');
+      await tester.tapKey('access_submit');
+      await tester.pump();
+      expect(find.text('Tick to agree to continue.'), findsOneWidget);
+      expect(find.byKey(const Key('terms_read_company')), findsOneWidget);
+      verifyNever(() => registrations.register(any()));
     });
 
     testWidgets('a mistyped GSTIN is caught before sending', (tester) async {

@@ -30,6 +30,7 @@ const orgAdmin: Me = {
   email: 'ravi@example.com',
   email_verified: true,
   is_platform_admin: false,
+  terms: { accepted_version: 1, current_version: 1 },
   memberships: [
     {
       org: { id: 'o1', name: 'Example Solar (illustrative)', status: 'pending' },

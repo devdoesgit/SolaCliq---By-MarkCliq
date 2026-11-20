@@ -69,7 +69,7 @@ async fn unverified_is_refused_only_after_the_right_password(db: PgPool) {
     common::post(
         &db,
         "/api/v1/auth/signup",
-        json!({ "name": "Asha", "email": "asha@example.com", "password": "sunlight1" }),
+        json!({ "name": "Asha", "email": "asha@example.com", "password": "sunlight1", "terms_version": 1 }),
     )
     .await;
 

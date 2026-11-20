@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:api_client/src/deserialize.dart';
 import 'package:dio/dio.dart';
 
+import 'package:api_client/src/model/accept_terms_request.dart';
 import 'package:api_client/src/model/my_document_list.dart';
 import 'package:api_client/src/model/personal_details.dart';
 import 'package:api_client/src/model/problem.dart';
@@ -19,6 +20,74 @@ class ProfileApi {
   final Dio _dio;
 
   const ProfileApi(this._dio);
+
+  /// Agree to the current Terms of Use and Privacy Policy
+  /// Records the agreement (who, which version, when, from which address) as a new row; earlier ones are kept. For accounts someone else made, and after the version goes up (F16).
+  ///
+  /// Parameters:
+  /// * [acceptTermsRequest]
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future]
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<void>> acceptTerms({
+    required AcceptTermsRequest acceptTermsRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/me/terms';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'cookie',
+            'keyName': 'solacliq_session',
+            'where': '',
+          },
+          {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      _bodyData = jsonEncode(acceptTermsRequest);
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _options.compose(_dio.options, _path),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    return _response;
+  }
 
   /// The caller&#39;s personal details and payout bank
   /// Shared by every company the person works with: their admins see them for salary, commission payouts and site passes. The bank account number comes back masked (&#x60;account_last4&#x60;).

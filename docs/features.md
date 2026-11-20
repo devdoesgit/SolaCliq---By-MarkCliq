@@ -33,6 +33,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F13 | Distribution and updates | planned |
 | F14 | Platform admin: suspend, support access | planned |
 | F15 | Company logo | building 2026-11-18: backend and app done, checked end to end with RY Enterprises' logo in the R2 dev bucket; website upload page to build (`features/F15-company-logo.md`) |
+| F16 | Agreeing to the terms | built 2026-11-20: backend, app, website pages; checked on the emulator (`features/F16-terms-consent.md`) |
 
 ## Which part each feature touches
 
@@ -54,6 +55,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F13 | — | Updater, Shorebird, signing | APK download page |
 | F14 | Suspension, support access, audit | Suspended-org message | Org list, suspend, support access |
 | F15 | Logo upload kind, set and remove, link in `/me` | Logo in the home header and workspace list | Logo upload in settings |
+| F16 | Agreements table, `terms_version`, `/me/terms` | Tick on sign-up and registration, "Before you start" screen | Public terms and privacy pages |
 
 ## Scope per feature
 
@@ -109,6 +111,10 @@ DLT registration is done.
 Shorebird patches, signing setup.
 
 **F14 Platform admin.** Suspend orgs; time-limited, logged support access.
+
+**F16 Agreeing to the terms.** Every account ticks to agree to the Terms of
+Use and Privacy Policy (`legal/`); the server records who, which version,
+when and where from.
 
 ## Per-feature spec
 

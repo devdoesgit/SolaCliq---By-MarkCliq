@@ -15,6 +15,8 @@ abstract class _$SignupRequestCWProxy {
 
   SignupRequest password(String password);
 
+  SignupRequest termsVersion(int termsVersion);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `SignupRequest(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -26,6 +28,7 @@ abstract class _$SignupRequestCWProxy {
     String email,
     String? phone,
     String password,
+    int termsVersion,
   });
 }
 
@@ -48,6 +51,10 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
   SignupRequest password(String password) => this(password: password);
 
   @override
+  SignupRequest termsVersion(int termsVersion) =>
+      this(termsVersion: termsVersion);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `SignupRequest(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -59,6 +66,7 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
     Object? email = const $CopyWithPlaceholder(),
     Object? phone = const $CopyWithPlaceholder(),
     Object? password = const $CopyWithPlaceholder(),
+    Object? termsVersion = const $CopyWithPlaceholder(),
   }) {
     return SignupRequest(
       name: name == const $CopyWithPlaceholder()
@@ -77,6 +85,10 @@ class _$SignupRequestCWProxyImpl implements _$SignupRequestCWProxy {
           ? _value.password
           // ignore: cast_nullable_to_non_nullable
           : password as String,
+      termsVersion: termsVersion == const $CopyWithPlaceholder()
+          ? _value.termsVersion
+          // ignore: cast_nullable_to_non_nullable
+          : termsVersion as int,
     );
   }
 }
@@ -93,15 +105,22 @@ extension $SignupRequestCopyWith on SignupRequest {
 
 SignupRequest _$SignupRequestFromJson(Map<String, dynamic> json) =>
     $checkedCreate('SignupRequest', json, ($checkedConvert) {
-      $checkKeys(json, requiredKeys: const ['name', 'email', 'password']);
+      $checkKeys(
+        json,
+        requiredKeys: const ['name', 'email', 'password', 'terms_version'],
+      );
       final val = SignupRequest(
         name: $checkedConvert('name', (v) => v as String),
         email: $checkedConvert('email', (v) => v as String),
         phone: $checkedConvert('phone', (v) => v as String?),
         password: $checkedConvert('password', (v) => v as String),
+        termsVersion: $checkedConvert(
+          'terms_version',
+          (v) => (v as num).toInt(),
+        ),
       );
       return val;
-    });
+    }, fieldKeyMap: const {'termsVersion': 'terms_version'});
 
 Map<String, dynamic> _$SignupRequestToJson(SignupRequest instance) =>
     <String, dynamic>{
@@ -109,4 +128,5 @@ Map<String, dynamic> _$SignupRequestToJson(SignupRequest instance) =>
       'email': instance.email,
       'phone': ?instance.phone,
       'password': instance.password,
+      'terms_version': instance.termsVersion,
     };

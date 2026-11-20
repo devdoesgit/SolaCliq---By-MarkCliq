@@ -753,3 +753,24 @@ Change a decision by adding a new line, not by editing an old one.
   `solacliq-uploads-stg` is used; at go-live the test data is wiped and
   the settings point at `solacliq-uploads`. Backups are daily dumps on
   the same VPS for now; an off-site copy is still to decide.
+
+## 2026-11-20
+
+- **Legal drafts (owner asked; pending owner and lawyer review).**
+  Privacy Policy, Terms of Use (with the app's end-user licence) and
+  Company Terms (with the data-processing terms) in `legal/`, written
+  from what the code does, against the DPDP Act 2023 and Rules 2025, the
+  IT Act's SPDI Rules and Google Play's user data policy. MarkCliq is the
+  Data Fiduciary for accounts and quote requests and each company's Data
+  Processor for its records. The blanks to fill and the product changes
+  they need (agree at sign-up, public pages, account deletion, customer
+  consent notice) are in `legal/README.md`.
+- **Agreements are stored, not just ticked (owner, 2026-11-20; F16).**
+  A tick only on the screen proves nothing (DPDP Act s. 6(10) puts the
+  proof on us), so each agreement is a row: version, time, source, IP;
+  add-only, deleted with the account. Only a new account gets one at
+  sign-up or registration (the request isn't logged in, so it can't
+  speak for an existing account, which is asked after login instead).
+  The tick follows the app's consent pattern (an error on submit, not a
+  disabled button). Whether agreements outlive account deletion is
+  decided with account deletion.

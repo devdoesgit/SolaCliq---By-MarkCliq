@@ -57,7 +57,9 @@ class Account extends Equatable {
     required this.email,
     required this.isPlatformAdmin,
     required this.memberships,
+    required this.termsCurrentVersion,
     this.phone,
+    this.termsAcceptedVersion,
   });
 
   final String id;
@@ -65,6 +67,16 @@ class Account extends Equatable {
   final String email;
   final bool isPlatformAdmin;
   final List<AccountMembership> memberships;
+
+  /// The version of the Terms of Use and Privacy Policy in force (F16).
+  final int termsCurrentVersion;
+
+  /// The latest version the person agreed to; null if they never have
+  /// (an account someone else made for them).
+  final int? termsAcceptedVersion;
+
+  /// Whether to ask them to agree before anything else.
+  bool get needsTerms => termsAcceptedVersion != termsCurrentVersion;
 
   /// Mobile number, 10 digits, if the person gave one.
   final String? phone;
@@ -86,5 +98,7 @@ class Account extends Equatable {
     isPlatformAdmin,
     memberships,
     phone,
+    termsCurrentVersion,
+    termsAcceptedVersion,
   ];
 }

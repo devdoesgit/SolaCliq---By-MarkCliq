@@ -28,6 +28,7 @@ import 'package:solacliq/gallery/view/gallery_page.dart';
 import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
+import 'package:solacliq/legal/view/terms_page.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
 import 'package:solacliq/profile/view/bank_page.dart';
 import 'package:solacliq/profile/view/details_page.dart';
@@ -61,12 +62,14 @@ String? appRedirect(WorkspaceState state, String location, AppConfig config) {
     WorkspaceLoading() => only(AppRoutes.splash),
     WorkspaceSignedOut() =>
       AppRoutes.public.contains(location) ? null : AppRoutes.welcome,
+    WorkspaceNeedsTerms() => only(AppRoutes.terms),
     WorkspaceAdminOnly() => only(AppRoutes.useWebsite),
     // Signed in: the entry screens lead home; in-app screens stay.
     WorkspaceReady() =>
       AppRoutes.public.contains(location) ||
               location == AppRoutes.splash ||
-              location == AppRoutes.useWebsite
+              location == AppRoutes.useWebsite ||
+              location == AppRoutes.terms
           ? AppRoutes.home
           : null,
   };
@@ -112,6 +115,10 @@ class AppRouter {
               },
             );
           },
+        ),
+        GoRoute(
+          path: AppRoutes.terms,
+          builder: (context, state) => const TermsPage(),
         ),
         GoRoute(
           path: AppRoutes.signup,

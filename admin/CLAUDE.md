@@ -2,7 +2,9 @@
 
 React + Vite + TypeScript website for **org admins** (and later the
 MarkCliq platform admin). Static files at `solacliq.markcliq.com`. Built
-last, by Claude. Built so far: log in, password reset, account page.
+last, by Claude. Built so far: log in, password reset, account page, and the public
+legal pages (`/terms`, `/privacy`, `/company-terms`, made from
+`../legal/*.md` at build time; F16).
 Workers, agents and customers use the mobile app.
 
 Stack and API conventions: `../docs/architecture.md`.

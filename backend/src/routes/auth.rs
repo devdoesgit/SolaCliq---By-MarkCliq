@@ -31,6 +31,7 @@ use crate::{
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
+    terms::{self, Agreement, Document, Source},
 };
 use crate::{
     rate_limit::{ClientIp, Rule},
@@ -58,12 +59,17 @@ pub struct SignupRequest {
     pub email: String,
     pub phone: Option<String>,
     pub password: String,
+    /// The version of the terms the person ticked (F16, `terms.rs`).
+    /// Optional here so a missing one gets its own error code.
+    #[schema(required = true, minimum = 1)]
+    pub terms_version: Option<i32>,
 }
 
 /*
     Create a customer account
     --------------------------------------------------------------------
-    - creates unverified account
+    - creates unverified account, with the person's agreement to the
+      terms (F16) in the same transaction
     - emails a 6 digit code
     - return 202 regardless
     - email already taken: unverified gets a new code, verified gets an
@@ -90,12 +96,15 @@ async fn signup(
     ApiJson(req): ApiJson<SignupRequest>,
 ) -> ApiResult<StatusCode> {
     state.limits.check(Rule::SignupByIp, &ip.0)?;
+    let sent_version = req.terms_version;
     /*
         Validate all the input fields
             - phone, email, name
             if any error return 422
+        then the terms: the app sends only once they're ticked
     */
     let input: ValidSignup = validate(req)?;
+    let terms_version = terms::check_sent(sent_version)?;
 
     let password_hash = password::hash(input.password).await?;
 
@@ -106,6 +115,7 @@ async fn signup(
         the SQL text, so there's no SQL injection.
     */
     let new_id = Uuid::now_v7();
+    let mut tx = state.db.begin().await?;
     let inserted = sqlx::query(
         "INSERT INTO users (id, email, name, phone, password_hash)
          VALUES ($1, $2, $3, $4, $5)
@@ -116,10 +126,30 @@ async fn signup(
     .bind(&input.name)
     .bind(&input.phone)
     .bind(&password_hash)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await? // a database error becomes a 500 HTTP Code Error
     .rows_affected()
         == 1;
+    /*
+        Only a new account gets the agreement: this request isn't logged
+        in, so it can't speak for an account that already exists. That
+        one is asked after its next login (`/me`)
+    */
+    if inserted {
+        terms::record(
+            &mut tx,
+            Agreement {
+                user_id: new_id,
+                document: Document::Terms,
+                org_id: None,
+                version: terms_version,
+                source: Source::Signup,
+                ip: &ip,
+            },
+        )
+        .await?;
+    }
+    tx.commit().await?;
 
     if inserted {
         tracing::info!(email = %input.email, "signup: new account");

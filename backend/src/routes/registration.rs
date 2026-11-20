@@ -3,10 +3,10 @@
     --------------------------------------------------------------------
     - POST /org-registrations, public (no login)
     - flow:
-        1. check every field; the GSTIN by format and checksum, with PAN
+        1. the owner ticked the terms (F16); check every field; the GSTIN by format and checksum, with PAN
            and state taken from it
         2. one transaction: the company (pending), the owner's account
-           (no password) and their org_admin membership
+           (no password), their org_admin membership and the agreements
         3. email MarkCliq (REVIEW_EMAIL) to review it, and the owner that
            it arrived
     - a platform admin then approves or rejects it (`platform.rs`)
@@ -29,7 +29,9 @@ use crate::{
     },
     org::BusinessType,
     rate_limit::{ClientIp, Rule},
-    scope, validate,
+    scope,
+    terms::{self, Agreement, Document, Source},
+    validate,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -51,6 +53,9 @@ pub struct OrgRegistrationCreate {
     pub owner_name: String,
     pub email: String,
     pub phone: String,
+    /// The owner ticked the terms and the Company Terms (F16).
+    #[schema(required = true, minimum = 1)]
+    pub terms_version: Option<i32>,
 }
 
 #[utoipa::path(
@@ -76,7 +81,9 @@ async fn register_org(
     ApiJson(req): ApiJson<OrgRegistrationCreate>,
 ) -> ApiResult<StatusCode> {
     state.limits.check(Rule::RegistrationByIp, &ip.0)?;
+    let sent_version = req.terms_version;
     let r = validate_registration(req)?;
+    let terms_version = terms::check_sent(sent_version)?;
     /*
         In the new company's scope: its row and its first membership are
         the only company rows this transaction can write
@@ -155,6 +162,39 @@ async fn register_org(
     .bind(org_id)
     .execute(&mut *tx)
     .await?;
+
+    /*
+        The agreements (F16): the Company Terms, for the company, always;
+        the owner's own Terms only for an account made just now. An
+        existing account isn't logged in here, so it is asked after its
+        next login instead (`/me`)
+    */
+    terms::record(
+        &mut tx,
+        Agreement {
+            user_id: owner_id,
+            document: Document::CompanyTerms,
+            org_id: Some(org_id),
+            version: terms_version,
+            source: Source::OrgRegistration,
+            ip: &ip,
+        },
+    )
+    .await?;
+    if created.is_some() {
+        terms::record(
+            &mut tx,
+            Agreement {
+                user_id: owner_id,
+                document: Document::Terms,
+                org_id: None,
+                version: terms_version,
+                source: Source::OrgRegistration,
+                ip: &ip,
+            },
+        )
+        .await?;
+    }
     tx.commit().await?;
 
     tracing::info!(%org_id, gstin = %r.gstin.number, "company registered; pending review");
