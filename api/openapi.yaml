@@ -52,6 +52,8 @@ tags:
     description: A customer's own install and payments.
   - name: admin
     description: The company's side of each flow, for the admin website.
+  - name: attendance
+    description: Installers and salaried sales marking their working day (F17).
 
 paths:
   /health:
@@ -703,13 +705,13 @@ paths:
               examples:
                 worker:
                   summary: A worker's day (illustrative)
-                  value: {"eyebrow": "Thursday, 23 Oct", "title": "Suresh's day", "headline": {"value": "3", "label": "tasks", "detail": "on site today"}, "week": [{"day": "Mon", "date": 20, "dots": ["done", "done"]}, {"day": "Tue", "date": 21, "dots": ["done"]}, {"day": "Wed", "date": 22, "dots": ["done", "done", "done"]}, {"day": "Thu", "date": 23, "today": true, "dots": ["live", "live", "planned"]}, {"day": "Fri", "date": 24, "dots": ["planned"]}, {"day": "Sat", "date": 25, "dots": ["planned"]}, {"day": "Sun", "date": 26, "dots": []}], "tiles": [{"label": "To submit", "value": "2", "icon": "camera", "footer": "today", "dark": true, "avatars": [{"image": "asset:thumb-install"}, {"image": "asset:thumb-inverter"}], "action": "to_submit"}, {"label": "Expenses", "value": "1", "icon": "receipt", "footer": "with admin", "avatars": [{"glyph": "rupee"}], "action": "expenses"}], "list": {"title": "Up next", "rows": [{"id": "01928f6e-0000-7000-8000-000000000a01", "image": "asset:thumb-install", "title": "Ramesh Sahoo (illustrative)", "detail": "Panel installation · 9:30", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a03", "image": "asset:thumb-inverter", "title": "Priya Nair (illustrative)", "detail": "Wiring · 13:00 · 7.8 km", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a04", "image": "asset:thumb-meter", "title": "Kiran Patel (illustrative)", "detail": "Net meter · awaiting admin", "status": {"label": "In review", "tone": "neutral"}, "action": "task"}]}, "unread_notifications": 3}
+                  value: {"eyebrow": "Thursday, 23 Oct", "title": "Suresh's day", "attendance": {"state": "not_started"}, "headline": {"value": "3", "label": "tasks", "detail": "on site today"}, "week": [{"day": "Mon", "date": 20, "dots": ["done", "done"]}, {"day": "Tue", "date": 21, "dots": ["done"]}, {"day": "Wed", "date": 22, "dots": ["done", "done", "done"]}, {"day": "Thu", "date": 23, "today": true, "dots": ["live", "live", "planned"]}, {"day": "Fri", "date": 24, "dots": ["planned"]}, {"day": "Sat", "date": 25, "dots": ["planned"]}, {"day": "Sun", "date": 26, "dots": []}], "tiles": [{"label": "To submit", "value": "2", "icon": "camera", "footer": "today", "dark": true, "avatars": [{"image": "asset:thumb-install"}, {"image": "asset:thumb-inverter"}], "action": "to_submit"}, {"label": "Expenses", "value": "1", "icon": "receipt", "footer": "with admin", "avatars": [{"glyph": "rupee"}], "action": "expenses"}], "list": {"title": "Up next", "rows": [{"id": "01928f6e-0000-7000-8000-000000000a01", "image": "asset:thumb-install", "title": "Ramesh Sahoo (illustrative)", "detail": "Panel installation · 9:30", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a03", "image": "asset:thumb-inverter", "title": "Priya Nair (illustrative)", "detail": "Wiring · 13:00 · 7.8 km", "status": {"label": "Assigned", "tone": "live"}, "action": "task"}, {"id": "01928f6e-0000-7000-8000-000000000a04", "image": "asset:thumb-meter", "title": "Kiran Patel (illustrative)", "detail": "Net meter · awaiting admin", "status": {"label": "In review", "tone": "neutral"}, "action": "task"}]}, "unread_notifications": 3}
                 agent:
                   summary: A commission agent's customers (illustrative)
                   value: {"eyebrow": "Good morning", "title": "Meena's customers", "headline": {"value": "5", "label": "customers", "detail": "added this month"}, "tiles": [{"label": "Needs fix", "value": "1", "icon": "alarm", "footer": "KYC", "dark": true, "avatars": [{"initials": "SR"}], "action": "fix"}, {"label": "Earnings", "value": "₹4k", "icon": "wallet", "footer": "payable", "avatars": [{"glyph": "rupee"}], "action": "earnings"}], "progress": {"label": "KYC this month", "trailing": "5 total", "segments": [{"weight": 3, "tone": "success", "label": "3 approved"}, {"weight": 1, "tone": "neutral", "label": "1 review"}, {"weight": 1, "tone": "danger", "label": "1 fix"}], "legend": true}, "list": {"title": "Recent customers", "rows": [{"id": "01928f6e-0000-7000-8000-0000000000c1", "initials": "SR", "title": "Sunita Rao (illustrative)", "detail": "Bill photo blurry", "status": {"label": "Fix KYC", "tone": "danger"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c2", "initials": "AM", "title": "Arjun Mehra (illustrative)", "detail": "Sent today", "status": {"label": "In review", "tone": "neutral"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c3", "initials": "RK", "title": "Rajinder Kaur (illustrative)", "detail": "Stage 1 · ₹5,000", "status": {"label": "Approved", "tone": "success"}, "action": "customer"}]}}
                 sales:
                   summary: A salaried sales employee's customers (illustrative)
-                  value: {"eyebrow": "Good morning", "title": "Aman's customers", "headline": {"value": "3", "label": "customers", "detail": "added this month"}, "tiles": [{"label": "Needs fix", "value": "1", "icon": "alarm", "footer": "KYC", "dark": true, "avatars": [{"initials": "VK"}], "action": "fix"}, {"label": "In review", "value": "1", "icon": "hourglass", "footer": "with admin", "avatars": [{"initials": "RB"}], "action": "review"}], "progress": {"label": "Installs", "trailing": "your customers", "segments": [{"weight": 1, "tone": "live", "label": "1 installing"}, {"weight": 2, "tone": "neutral", "label": "2 not started"}], "legend": true}, "list": {"title": "Recent customers", "rows": [{"id": "01928f6e-0000-7000-8000-0000000000c6", "initials": "VK", "title": "Vikas Kumar (illustrative)", "detail": "PAN photo cut off", "status": {"label": "Fix KYC", "tone": "danger"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c8", "initials": "NG", "title": "Neha Gupta (illustrative)", "detail": "Stage 2 · structure", "status": {"label": "Approved", "tone": "success"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c7", "initials": "RB", "title": "Rohit Bansal (illustrative)", "detail": "Sent yesterday", "status": {"label": "In review", "tone": "neutral"}, "action": "customer"}]}}
+                  value: {"eyebrow": "Good morning", "title": "Aman's customers", "attendance": {"state": "not_started"}, "headline": {"value": "3", "label": "customers", "detail": "added this month"}, "tiles": [{"label": "Needs fix", "value": "1", "icon": "alarm", "footer": "KYC", "dark": true, "avatars": [{"initials": "VK"}], "action": "fix"}, {"label": "In review", "value": "1", "icon": "hourglass", "footer": "with admin", "avatars": [{"initials": "RB"}], "action": "review"}], "progress": {"label": "Installs", "trailing": "your customers", "segments": [{"weight": 1, "tone": "live", "label": "1 installing"}, {"weight": 2, "tone": "neutral", "label": "2 not started"}], "legend": true}, "list": {"title": "Recent customers", "rows": [{"id": "01928f6e-0000-7000-8000-0000000000c6", "initials": "VK", "title": "Vikas Kumar (illustrative)", "detail": "PAN photo cut off", "status": {"label": "Fix KYC", "tone": "danger"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c8", "initials": "NG", "title": "Neha Gupta (illustrative)", "detail": "Stage 2 · structure", "status": {"label": "Approved", "tone": "success"}, "action": "customer"}, {"id": "01928f6e-0000-7000-8000-0000000000c7", "initials": "RB", "title": "Rohit Bansal (illustrative)", "detail": "Sent yesterday", "status": {"label": "In review", "tone": "neutral"}, "action": "customer"}]}}
                 customer:
                   summary: A customer before handover (illustrative)
                   value: {"eyebrow": "Your solar", "title": "5 kW · Mohali", "headline": {"value": "1", "label": "of 7 stages", "detail": "Site survey is next"}, "tiles": [{"label": "Next visit", "value": "Thu", "icon": "alarm", "footer": "survey", "dark": true, "avatars": [{"image": "asset:thumb-survey"}], "action": "track"}, {"label": "Advance", "value": "₹85k", "icon": "wallet", "footer": "due 31 Oct", "avatars": [{"glyph": "rupee"}], "action": "payments"}], "progress": {"label": "Install progress", "trailing": "Example Solar (illustrative)", "segments": [{"weight": 1, "tone": "live"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}, {"weight": 1, "tone": "empty"}], "stages": ["Survey", "Install", "Handover"]}, "list": {"rows": [{"id": "i1", "glyph": "card", "title": "Documents", "detail": "Aadhaar, PAN, bill, bank", "status": {"label": "Verified", "tone": "success"}, "action": "documents"}, {"id": "i2", "image": "asset:thumb-survey", "title": "Site survey", "detail": "Thu 23 Oct, 11:00 · Vikram", "status": {"label": "Next", "tone": "warning"}, "action": "track"}]}}
@@ -1441,6 +1443,89 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
 
+
+  /orgs/{org_id}/me/attendance/start:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    post:
+      operationId: startAttendanceDay
+      summary: Start the caller's working day
+      description: |
+        Installers and salaried sales (`attendance.not_tracked`, 403, for a
+        commission agent). The day is the India date of the tap. Its time
+        is the server's clock less how long the tap waited on the phone
+        (`sent_at` minus `phone_at`, both by the phone's clock, so a wrong
+        phone clock moves nothing). A tap that waited over 5 minutes (sent
+        from offline) is marked `sent_late`; a negative wait counts as
+        none; over 7 days is refused (`attendance.too_old`, 422). A date
+        that already has a start gives `attendance.already_started` (409),
+        unless it is this request's own retry, which gets the first answer.
+      tags: [attendance]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceTapCreate"
+      responses:
+        "201":
+          description: Started.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceDay"
+              examples:
+                started:
+                  $ref: "#/components/examples/AttendanceDay_working"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/me/attendance/end:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    post:
+      operationId: endAttendanceDay
+      summary: End the caller's working day
+      description: |
+        Same callers and time rules as start. Ends the day of the tap's
+        India date; a day doesn't cross midnight. No start on that date,
+        or one after the tap: `attendance.not_started` (409). Already
+        ended: `attendance.already_ended` (409). An end can't be undone.
+      tags: [attendance]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceTapCreate"
+      responses:
+        "200":
+          description: Ended.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceDay"
+              examples:
+                ended:
+                  $ref: "#/components/examples/AttendanceDay_ended"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
 
   /me/terms:
     post:
@@ -2379,6 +2464,105 @@ paths:
         '422':
           $ref: '#/components/responses/Problem'
 
+
+  /orgs/{org_id}/attendance/day:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: getAttendanceDay
+      summary: Everyone's attendance on one date
+      description: |
+        Company admins only (the website); read only. Every installer and
+        salaried sales member, by name, with their day on that date when
+        they have one; removed members only if they have a day on it.
+      tags: [admin, attendance]
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: India date; today in India when absent.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: The date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceDayView"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/attendance/month:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: getAttendanceMonth
+      summary: Everyone's attendance in one month
+      description: |
+        Company admins only (the website); read only. The same people as
+        the day view (removed members if they have a day in the month),
+        each with their days, oldest first, and totals.
+      tags: [admin, attendance]
+      parameters:
+        - $ref: "#/components/parameters/AttendanceMonth"
+      responses:
+        "200":
+          description: The month.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceMonthView"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/attendance/month.csv:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: exportAttendanceMonth
+      summary: One month's attendance as CSV
+      description: |
+        Company admins only. One row per person per day worked, by name
+        then date, UTF-8 with a header row. Times are India times
+        (`HH:MM`); `minutes` is empty without an end; `flags` lists
+        `start_sent_late`, `end_sent_late` and `no_check_out`, separated
+        by spaces. Sent as `attendance-YYYY-MM.csv`.
+      tags: [admin, attendance]
+      parameters:
+        - $ref: "#/components/parameters/AttendanceMonth"
+      responses:
+        "200":
+          description: The month.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                examples: ['attachment; filename="attendance-2026-12.csv"']
+          content:
+            text/csv:
+              schema:
+                type: string
+              example: |
+                name,role,date,start,end,minutes,flags
+                Ravi Example (illustrative),worker,2026-12-01,09:12,18:40,568,
+                Ravi Example (illustrative),worker,2026-12-02,09:05,,,no_check_out
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
 components:
   securitySchemes:
     bearer:
@@ -2441,6 +2625,15 @@ components:
         minimum: 1
         maximum: 100
         default: 25
+    AttendanceMonth:
+      name: month
+      in: query
+      required: false
+      description: "`YYYY-MM`; this month in India when absent."
+      schema:
+        type: string
+        pattern: "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        examples: ["2026-12"]
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -2453,6 +2646,12 @@ components:
         format: uuid
 
   examples:
+    AttendanceDay_working:
+      summary: Working since 9:12 India time (illustrative)
+      value: {"date": "2026-12-01", "status": "working", "start": {"at": "2026-12-01T03:42:00Z", "sent_late": false}}
+    AttendanceDay_ended:
+      summary: Ended, start sent late from offline (illustrative)
+      value: {"date": "2026-12-01", "status": "ended", "start": {"at": "2026-12-01T03:42:00Z", "sent_late": true}, "end": {"at": "2026-12-01T13:10:00Z", "sent_late": false}, "minutes": 568}
     Task_assigned:
       summary: To do, 2 of 4 photos (illustrative)
       value: {"id": "01928f6e-0000-7000-8000-000000000a01", "reference": "TSK-0418", "title": "Panel installation", "due_at": "2026-10-23T04:00:00Z", "stage": {"index": 3, "count": 7}, "assigned_by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "customer": {"name": "Ramesh Sahoo (illustrative)", "system_kw": 5, "address": "Sector 70, Mohali", "phone": "9814022671", "lat": 30.7046, "lng": 76.7179}, "status": "assigned", "admin_note": {"text": "Use the new clamps from batch B.", "by": {"name": "Rajeeb Kumar (illustrative)", "role": "Admin"}, "at": "2026-10-22T12:35:00Z"}, "photos": [{"id": "rails", "label": "Rails", "hint": "Rails fixed to the structure", "photo": {"url": "asset:thumb-install", "taken_at": "2026-10-23T05:05:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "row", "label": "Panel row", "hint": "The full row, from the front", "photo": {"url": "asset:hero-install", "taken_at": "2026-10-23T05:25:00Z", "lat": 30.7047, "lng": 76.718, "accuracy_m": 8}}, {"id": "clamp", "label": "Clamp close-up", "hint": "Fit one clamp in the frame, bolt visible"}, {"id": "clean", "label": "Clean site", "hint": "Roof cleared of packaging"}], "checklist": [{"id": "rails", "text": "Mount rails on structure", "done": true}, {"id": "panels", "text": "Fix 10 panels, 550 W each", "done": true}, {"id": "torque", "text": "Check clamp torque", "done": false}, {"id": "clear", "text": "Clear site and remove packaging", "done": false}]}
@@ -3248,6 +3447,8 @@ components:
             $ref: "#/components/schemas/HomeDay"
         energy:
           $ref: "#/components/schemas/HomeEnergy"
+        attendance:
+          $ref: "#/components/schemas/HomeAttendance"
         tiles:
           type: array
           maxItems: 2
@@ -3265,6 +3466,23 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/HomeRow"
+
+    HomeAttendance:
+      type: object
+      description: |
+        The attendance card (F17). Present for installers and salaried
+        sales only.
+      required: [state]
+      properties:
+        state:
+          type: string
+          description: |
+            Today in India. `not_started`: no day today (yesterday's,
+            even without an end, doesn't count); `working`: today's `day`
+            has no end yet; `ended`: today's `day` has ended.
+          enum: [not_started, working, ended]
+        day:
+          $ref: "#/components/schemas/AttendanceDay"
 
     UploadCreate:
       type: object
@@ -4348,3 +4566,127 @@ components:
         due_at:
           type: string
           format: date-time
+
+    AttendanceTapCreate:
+      type: object
+      required: [phone_at, sent_at]
+      properties:
+        phone_at:
+          $ref: "#/components/schemas/Timestamp"
+          description: The phone's clock when the person tapped.
+        sent_at:
+          $ref: "#/components/schemas/Timestamp"
+          description: |
+            The phone's clock when the app sent this request: equal to
+            `phone_at` when sent at once, later when it waited offline.
+            Set again on each retry.
+
+    AttendanceTap:
+      type: object
+      required: [at, sent_late]
+      properties:
+        at:
+          $ref: "#/components/schemas/Timestamp"
+        sent_late:
+          type: boolean
+          description: Waited over 5 minutes on the phone (sent from offline); how long it waited is the phone's word.
+
+    AttendanceStatus:
+      type: string
+      description: |
+        `working`: started today in India, no end yet. `ended`: has an
+        end. `no_check_out`: no end and its date has passed (a late end
+        sent from offline can still end it).
+      enum: [working, ended, no_check_out]
+
+    AttendanceDay:
+      type: object
+      required: [date, status, start]
+      properties:
+        date:
+          type: string
+          format: date
+          description: The India date the day started.
+        status:
+          $ref: "#/components/schemas/AttendanceStatus"
+        start:
+          $ref: "#/components/schemas/AttendanceTap"
+        end:
+          $ref: "#/components/schemas/AttendanceTap"
+        minutes:
+          type: integer
+          minimum: 0
+          description: Worked time, end minus start; present once ended.
+
+    AttendancePerson:
+      type: object
+      required: [user_id, name, role, removed]
+      properties:
+        user_id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+          description: Their role now; `worker` or `agent` unless it changed after the days shown.
+        removed:
+          type: boolean
+          description: No longer a member; shown for the days they worked.
+
+    AttendanceDayView:
+      type: object
+      required: [date, people]
+      properties:
+        date:
+          type: string
+          format: date
+        people:
+          type: array
+          description: By name.
+          items:
+            type: object
+            required: [person]
+            properties:
+              person:
+                $ref: "#/components/schemas/AttendancePerson"
+              day:
+                $ref: "#/components/schemas/AttendanceDay"
+                description: Absent when they haven't started on this date.
+      examples:
+        - date: "2026-12-01"
+          people:
+            - person: {user_id: 01928f6e-0000-7000-8000-0000000000b1, name: Ravi Example (illustrative), role: worker, removed: false}
+              day: {date: "2026-12-01", status: working, start: {at: "2026-12-01T03:42:00Z", sent_late: false}}
+            - person: {user_id: 01928f6e-0000-7000-8000-0000000000b2, name: Suresh Example (illustrative), role: worker, removed: false}
+            - person: {user_id: 01928f6e-0000-7000-8000-0000000000b3, name: Aman Example (illustrative), role: agent, removed: false}
+              day: {date: "2026-12-01", status: ended, start: {at: "2026-12-01T04:00:00Z", sent_late: true}, end: {at: "2026-12-01T12:30:00Z", sent_late: false}, minutes: 510}
+
+    AttendanceMonthView:
+      type: object
+      required: [month, people]
+      properties:
+        month:
+          type: string
+          examples: ["2026-12"]
+        people:
+          type: array
+          description: By name.
+          items:
+            type: object
+            required: [person, days, days_worked, minutes]
+            properties:
+              person:
+                $ref: "#/components/schemas/AttendancePerson"
+              days:
+                type: array
+                description: Only dates with a start, oldest first.
+                items:
+                  $ref: "#/components/schemas/AttendanceDay"
+              days_worked:
+                type: integer
+                minimum: 0
+                description: Days with a start.
+              minutes:
+                type: integer
+                minimum: 0
+                description: Total worked time of the ended days.

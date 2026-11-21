@@ -34,6 +34,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F14 | Platform admin: suspend, support access | planned |
 | F15 | Company logo | building 2026-11-18: backend and app done, checked end to end with RY Enterprises' logo in the R2 dev bucket; website upload page to build (`features/F15-company-logo.md`) |
 | F16 | Agreeing to the terms | built 2026-11-20: backend, app, website pages; checked on the emulator (`features/F16-terms-consent.md`) |
+| F17 | Attendance | building: backend and app done 2026-11-22 (offline tap checked on the emulator against the real API); website pages to build (`features/F17-attendance.md`) |
 
 ## Which part each feature touches
 
@@ -56,6 +57,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F14 | Suspension, support access, audit | Suspended-org message | Org list, suspend, support access |
 | F15 | Logo upload kind, set and remove, link in `/me` | Logo in the home header and workspace list | Logo upload in settings |
 | F16 | Agreements table, `terms_version`, `/me/terms` | Tick on sign-up and registration, "Before you start" screen | Public terms and privacy pages |
+| F17 | Attendance days, start and end of day | "Start day" and "End day" on Home | Today and month views, CSV |
 
 ## Scope per feature
 
@@ -115,6 +117,15 @@ Shorebird patches, signing setup.
 **F16 Agreeing to the terms.** Every account ticks to agree to the Terms of
 Use and Privacy Policy (`legal/`); the server records who, which version,
 when and where from.
+
+**F17 Attendance.** Every EPC Installer and Sales Agent marks their own
+day in the app: "Start day" and "End day", timed by the server's clock.
+No location, no photo. Offline taps are sent later with the phone's
+time and flagged if it is far from when they arrived; a day never ended
+shows "no check-out". The org admin only monitors: today (who's in,
+since when, who hasn't started) and a month grid with a CSV export, on
+the website. The admin doesn't mark or correct anyone. Out of scope:
+location, selfies, leave, holidays, payroll.
 
 ## Per-feature spec
 

@@ -93,6 +93,16 @@ Privacy Policy, and log the decision in `decisions.md`.
 - **Built.** When the terms change in a way that matters, the version
   goes up and everyone is asked again after their next login.
 
+## Attendance
+
+- **Decided 2026-11-20 (F17, after go-live).** Installers and salaried
+  sales staff mark the start and end of their working day in the app.
+  Each day keeps only the start and end times (the server's, or the
+  phone's when the tap was sent late from offline) and whether each was
+  sent late. No location, no photo. The person and their company's admin
+  see it; the admin only reads it and can't change it. A removed
+  member's days stay with the company like their other records.
+
 ## Passwords, logins and codes
 
 - **Built.** Passwords are stored only as an Argon2 hash; nobody can

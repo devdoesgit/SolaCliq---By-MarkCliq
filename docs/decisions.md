@@ -780,3 +780,31 @@ Change a decision by adding a new line, not by editing an old one.
   an Account API token `solacliq-prod` with Object Read & Write on this
   bucket only. The keys are in the owner's password manager and go only
   into the server's settings file.
+- **Attendance is self-marked, without location (owner, 2026-11-20;
+  F17, after go-live).** Every EPC Installer and Sales Agent taps
+  "Start day" and "End day"; the server's clock sets the time. No
+  location is read, so the data policy's promise that only the proof
+  camera reads it stays. The org admin only monitors (today, month,
+  CSV) and doesn't mark or correct attendance: the admin isn't there to
+  take a register. A tap shows the person opened the app, not where
+  they were; one location reading per tap can be added later if a
+  vendor needs it.
+- **Commission agents don't mark attendance (owner, 2026-11-20; F17).**
+  They aren't bound to the company or the hours they put in; they're
+  paid per customer. Installers and salaried sales mark it.
+
+## 2026-11-22
+
+- **A tap's time is the server's clock less the phone's wait (F17).**
+  The first rule (the server's time unless the tap arrived over 5
+  minutes after the phone's time, then the phone's) recorded a wrong
+  time for anyone whose phone clock runs slow: an online tap looked
+  late and took the phone's time. The app now sends when it tapped and
+  when it sent, both by the phone's clock; their gap is right whatever
+  the clock says, so the server counts the tap that long before it
+  arrived. Over 5 minutes' wait is still marked sent late.
+- **A retry that races its first request gets the first answer (F17).**
+  It used to meet the first request's row and answer "already started".
+- **The admin's attendance lists keep anyone with a day in the range,
+  whatever their role is now (F17)**, so a month's record never loses
+  days when someone is re-added with another role.
