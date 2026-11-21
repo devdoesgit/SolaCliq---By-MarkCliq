@@ -38,7 +38,7 @@ Claude builds every part; the owner reviews.
   `.invalid` URLs, which the app treats as already uploaded.
 - Built 2026-11-16 (`src/storage.rs`, `routes/uploads.rs`). Buckets:
   `solacliq-uploads-dev` (local) and `solacliq-uploads` (production;
-  to create before the first deploy), private, each with its own API token limited to that bucket (Object
+  created 2026-11-20, APAC, CORS for the website only), private, each with its own API token limited to that bucket (Object
   Read & Write). CORS allows GET and PUT from `solacliq.markcliq.com` and
   `localhost:5173` only.
 - The server signs URLs itself (AWS Signature V4, region `auto`); no

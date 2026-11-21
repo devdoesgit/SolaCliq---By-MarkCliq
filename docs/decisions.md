@@ -774,3 +774,9 @@ Change a decision by adding a new line, not by editing an old one.
   The tick follows the app's consent pattern (an error on submit, not a
   disabled button). Whether agreements outlive account deletion is
   decided with account deletion.
+- **Production bucket created (owner, 2026-11-20).** `solacliq-uploads`
+  in Cloudflare R2: location hint Asia-Pacific, public access off, CORS
+  GET and PUT from `https://solacliq.markcliq.com` only (no localhost),
+  an Account API token `solacliq-prod` with Object Read & Write on this
+  bucket only. The keys are in the owner's password manager and go only
+  into the server's settings file.
