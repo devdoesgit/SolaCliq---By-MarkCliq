@@ -16,7 +16,7 @@
 use std::collections::BTreeSet;
 
 use axum::{Json, extract::State, http::StatusCode};
-use chrono::{DateTime, Duration, FixedOffset, NaiveDate, Utc};
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
 use utoipa::ToSchema;
@@ -27,6 +27,7 @@ use crate::{
     AppState, counter,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath},
+    india,
     notify::{self, Kind, Links},
     org::{Admins, OrgMember},
     routes::{
@@ -61,17 +62,13 @@ const MAX_NOTE: usize = 500;
 // Up to ₹10 crore, in paise.
 const MAX_TOTAL: i64 = 10_000_000_000;
 
-fn india() -> FixedOffset {
-    FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset")
-}
-
 fn today() -> NaiveDate {
-    Utc::now().with_timezone(&india()).date_naive()
+    india::date(Utc::now())
 }
 
 // "Thu 23 Oct, 10:00", in India.
 fn when(at: DateTime<Utc>) -> String {
-    at.with_timezone(&india())
+    at.with_timezone(&india::offset())
         .format("%a %-d %b, %H:%M")
         .to_string()
 }

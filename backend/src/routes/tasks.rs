@@ -25,7 +25,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Datelike, Duration, FixedOffset, NaiveTime, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
 use utoipa::{IntoParams, ToSchema};
@@ -37,6 +37,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
     idempotency::{self, IdempotencyKey},
+    india,
     org::{OrgMember, Workers},
     page::{Cursor, Page, PageInfo},
     routes::uploads::{self, UploadPurpose},
@@ -372,32 +373,17 @@ fn required_text(field: &str, value: &str) -> ApiResult<String> {
     Dates: "today" in India
 */
 
-fn india() -> FixedOffset {
-    FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset")
-}
-
 // When today ends in India (midnight starting tomorrow), in UTC.
 fn end_of_today(now: DateTime<Utc>) -> DateTime<Utc> {
-    let tomorrow = now.with_timezone(&india()).date_naive() + Duration::days(1);
-    india()
-        .from_local_datetime(&tomorrow.and_time(NaiveTime::MIN))
-        .single()
-        .expect("India has no clock changes")
-        .with_timezone(&Utc)
+    india::midnight(india::date(now) + Duration::days(1))
 }
 
 // When this month began in India, in UTC.
 fn start_of_month(now: DateTime<Utc>) -> DateTime<Utc> {
-    let first = now
-        .with_timezone(&india())
-        .date_naive()
+    let first = india::date(now)
         .with_day(1)
         .expect("every month has a first");
-    india()
-        .from_local_datetime(&first.and_time(NaiveTime::MIN))
-        .single()
-        .expect("India has no clock changes")
-        .with_timezone(&Utc)
+    india::midnight(first)
 }
 
 // Metres between two points on the earth (haversine).
@@ -1434,6 +1420,7 @@ async fn get_my_stats(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
 
     #[test]
     fn today_ends_at_midnight_in_india() {

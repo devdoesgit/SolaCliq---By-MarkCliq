@@ -25,9 +25,10 @@ use uuid::Uuid;
 use crate::{
     AppState,
     error::ApiResult,
-    notify,
+    india, notify,
     org::{OrgMember, PayType, Role},
     routes::{
+        attendance::{self, HomeAttendance},
         customers::{CommissionStatus, KycKind, KycStatus, STAGES},
         install::{self, Install, PaymentStatus, StageStatus},
         quotes::rupees,
@@ -53,6 +54,9 @@ pub struct HomeSummary {
     // A customer's live output after handover, instead of the headline.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub energy: Option<HomeEnergy>,
+    // The attendance card (F17): installers and salaried sales only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attendance: Option<HomeAttendance>,
     pub tiles: Vec<HomeTile>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub progress: Option<HomeProgress>,
@@ -230,7 +234,8 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
             .fetch_one(&mut *tx)
             .await?;
     let unread = notify::unread(&mut tx, member.user_id, Some(member.org_id)).await?;
-    let now = india_now(Utc::now());
+    let utc = Utc::now();
+    let now = india::now(utc);
     let tasks = match member.role {
         Role::Worker => week_tasks(&mut tx, member.user_id, &now).await?,
         _ => Vec::new(),
@@ -250,6 +255,11 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
     let customers = match member.role {
         Role::Agent => agent_customers(&mut tx, member.user_id).await?,
         _ => Vec::new(),
+    };
+    let attendance = if attendance::tracked(member.role, member.pay_type) {
+        Some(attendance::home_card(&mut tx, member.user_id, utc).await?)
+    } else {
+        None
     };
     let (my_install, my_documents) = match member.role {
         Role::Customer => (
@@ -273,6 +283,7 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         (Role::OrgAdmin, _) => admin(&who),
     };
     summary.unread_notifications = unread;
+    summary.attendance = attendance;
     Ok(Json(summary))
 }
 
@@ -282,12 +293,6 @@ struct Who {
     org_name: String,
     // Now, in Indian time.
     now: DateTime<FixedOffset>,
-}
-
-// India is UTC+5:30 all year (no daylight saving).
-fn india_now(utc: DateTime<Utc>) -> DateTime<FixedOffset> {
-    let ist = FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
-    utc.with_timezone(&ist)
 }
 
 fn greeting(now: &DateTime<FixedOffset>) -> &'static str {
@@ -477,6 +482,7 @@ fn worker(who: &Who, tasks: &[WeekTask], expenses_in_review: i64) -> HomeSummary
         headline: headline(&due_today.to_string(), "tasks", "on site today"),
         week: week(&who.now, tasks),
         energy: None,
+        attendance: None,
         tiles: vec![
             tile(
                 "To submit",
@@ -714,6 +720,7 @@ fn agent(who: &Who, commission: bool, customers: &[AgentCustomer]) -> HomeSummar
         ),
         week: Vec::new(),
         energy: None,
+        attendance: None,
         tiles: vec![
             tile(
                 "Needs fix",
@@ -883,6 +890,7 @@ fn customer(who: &Who, install: Option<&Install>, documents: (i64, i64)) -> Home
         headline: headline(&i.stage_index.to_string(), "of 7 stages", &headline_detail),
         week: Vec::new(),
         energy: None,
+        attendance: None,
         tiles: vec![visit_tile, payment_tile],
         progress: Some(HomeProgress {
             label: "Install progress".into(),
@@ -915,6 +923,7 @@ fn customer_waiting(who: &Who) -> HomeSummary {
         headline: headline("0", "of 7 stages", "Your install is being set up"),
         week: Vec::new(),
         energy: None,
+        attendance: None,
         tiles: vec![
             tile(
                 "Next visit",
@@ -960,6 +969,7 @@ fn admin(who: &Who) -> HomeSummary {
         headline: None,
         week: Vec::new(),
         energy: None,
+        attendance: None,
         tiles: Vec::new(),
         progress: None,
         list: HomeList {
@@ -982,7 +992,7 @@ mod tests {
         Who {
             first_name: "Ravi".into(),
             org_name: "Example Solar".into(),
-            now: india_now(utc),
+            now: india::now(utc),
         }
     }
 
@@ -1002,7 +1012,7 @@ mod tests {
     #[test]
     fn greetings_follow_indian_time() {
         let at = |h| {
-            greeting(&india_now(
+            greeting(&india::now(
                 Utc.with_ymd_and_hms(2026, 11, 16, h, 0, 0).unwrap(),
             ))
         };

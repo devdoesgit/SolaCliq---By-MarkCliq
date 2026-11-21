@@ -23,7 +23,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
 use utoipa::ToSchema;
@@ -35,6 +35,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath},
     idempotency::{self, IdempotencyKey},
+    india,
     mail::{
         Email,
         template::{self as t, Badge, EmailPage, Step, Tone},
@@ -488,10 +489,6 @@ fn check(req: &CustomerRegistrationCreate, pay_type: Option<PayType>) -> ApiResu
     Reading customers
 */
 
-fn india() -> FixedOffset {
-    FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset")
-}
-
 macro_rules! select_customer {
     ($rest:literal) => {
         concat!(
@@ -557,8 +554,8 @@ impl Row {
     fn detail(&self, now: DateTime<Utc>) -> String {
         match self.kyc_status {
             KycStatus::InReview => {
-                let sent = self.created_at.with_timezone(&india()).date_naive();
-                if sent == now.with_timezone(&india()).date_naive() {
+                let sent = self.created_at.with_timezone(&india::offset()).date_naive();
+                if sent == now.with_timezone(&india::offset()).date_naive() {
                     "Sent today".into()
                 } else {
                     format!("Sent {}", sent.format("%-d %b"))
@@ -743,7 +740,7 @@ async fn submit_customer_registration(
     .await?;
     if let Some((reference, by, at)) = existing {
         let by = by.unwrap_or_else(|| "The company".into());
-        let on = at.with_timezone(&india()).format("%-d %b %Y");
+        let on = at.with_timezone(&india::offset()).format("%-d %b %Y");
         return Err(duplicate(format!(
             "{by} registered this customer on {on} ({reference})."
         )));
@@ -1171,7 +1168,9 @@ async fn list_my_documents(
                 (DocumentStatus::NeedsFix, Some(note)) => note,
                 _ => format!(
                     "Sent {}",
-                    d.updated_at.with_timezone(&india()).format("%-d %b %Y")
+                    d.updated_at
+                        .with_timezone(&india::offset())
+                        .format("%-d %b %Y")
                 ),
             }),
             status: d.status,

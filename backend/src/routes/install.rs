@@ -18,7 +18,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
 use utoipa::ToSchema;
@@ -30,6 +30,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath},
     idempotency::{self, IdempotencyKey},
+    india,
     org::{Customers, OrgMember},
     routes::customers::STAGES,
 };
@@ -194,10 +195,6 @@ fn not_due() -> ApiError {
     )
 }
 
-fn india() -> FixedOffset {
-    FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset")
-}
-
 // "31 Oct".
 fn day(d: NaiveDate) -> String {
     d.format("%-d %b").to_string()
@@ -314,7 +311,7 @@ pub async fn load(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Option<In
         i.stage_index.unwrap_or(1).clamp(1, count)
     };
     let visit_line = visit.as_ref().map(|v| {
-        let at = v.due_at.with_timezone(&india());
+        let at = v.due_at.with_timezone(&india::offset());
         let first = v.worker.split_whitespace().next().unwrap_or(&v.worker);
         format!("{} · {first}", at.format("%a %-d %b, %H:%M"))
     });
@@ -351,7 +348,7 @@ pub async fn load(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Option<In
                 PaymentStatus::Claimed => p.claimed_at.map(|at| {
                     format!(
                         "Sent {}, the company confirms",
-                        day(at.with_timezone(&india()).date_naive())
+                        day(at.with_timezone(&india::offset()).date_naive())
                     )
                 }),
                 PaymentStatus::Paid => p.paid_on.map(|d| format!("Paid {}", day(d))),

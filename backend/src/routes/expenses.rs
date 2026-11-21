@@ -33,6 +33,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
     idempotency::{self, IdempotencyKey},
+    india,
     org::{OrgMember, WorkersAndAgents},
     page::{Cursor, Page, PageInfo},
     routes::uploads::{self, UploadPurpose},
@@ -165,12 +166,6 @@ fn note(field: &str, value: &str) -> ApiResult<String> {
         );
     }
     Ok(value.to_owned())
-}
-
-// Today in India, where the expense was spent.
-fn india_today(now: DateTime<Utc>) -> NaiveDate {
-    let ist = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
-    now.with_timezone(&ist).date_naive()
 }
 
 // The request's own checks, before any database work.
@@ -369,7 +364,7 @@ async fn create_expense(
     if let Some(done) = idempotency::replay(&state.db, member.user_id, key, &request).await? {
         return Ok(done);
     }
-    let note = check(&req, india_today(Utc::now()))?;
+    let note = check(&req, india::date(Utc::now()))?;
 
     let mut tx = member.begin(&state.db).await?;
     if let Some(task_id) = req.task_id {
@@ -567,7 +562,7 @@ mod tests {
     #[test]
     fn the_day_is_indian_and_not_in_the_future() {
         // 20:00 UTC on 16 Nov is already 17 Nov in India.
-        let today = india_today(Utc.with_ymd_and_hms(2026, 11, 16, 20, 0, 0).unwrap());
+        let today = india::date(Utc.with_ymd_and_hms(2026, 11, 16, 20, 0, 0).unwrap());
         assert_eq!(today, NaiveDate::from_ymd_opt(2026, 11, 17).unwrap());
         assert!(check(&create(100, today), today).is_ok());
         assert!(check(&create(100, today + Duration::days(1)), today).is_err());

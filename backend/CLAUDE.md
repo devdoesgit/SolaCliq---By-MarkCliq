@@ -59,7 +59,7 @@ cargo run -- send-test-push <token>      # checks the Firebase (push) setup
   `home`, `notifications` and `uploads` (phase 7), `tasks` and
   `expenses` (phase 8), `customers` (phase 9: registration, my
   customers, documents), `install` (phase 10), `admin` (the
-  company's actions for the website);
+  company's actions for the website), `attendance` (F17);
   merged in `routes/mod.rs`.
 - `src/scope.rs`: the row-level security scopes and the startup check.
 - `src/storage.rs`: signed R2 URLs (uploads and reads), and the
@@ -73,4 +73,6 @@ cargo run -- send-test-push <token>      # checks the Firebase (push) setup
   paging. `src/counter.rs`: per-company references (EXP-0001). `src/idempotency.rs`, `src/notify.rs` (notifications),
   `src/bank.rs` (encryption, bank names). `src/seed.rs`: the seed and platform-admin commands.
   `src/terms.rs`: the terms version and agreements (F16).
+  `src/india.rs`: Indian time (today's date, midnight in UTC); use it
+  for every date a person sees.
 - `tests/`: one file per area; helpers in `tests/common/mod.rs`.

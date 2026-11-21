@@ -3,8 +3,8 @@
     --------------------------------------------------------------------
     - `cargo run -- seed`: an illustrative company with one person per
       role, Ravi's tasks and expenses (phase 8), the agents' customers
-      (phase 9) and installs (phase 10), for trying the app and the
-      website locally. Development only
+      (phase 9), installs (phase 10) and attendance (F17), for trying the
+      app and the website locally. Development only
     - `cargo run -- make-platform-admin <email>`: gives an account the
       MarkCliq platform admin role. Works in production; that's its job
 */
@@ -220,6 +220,7 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
     expenses(&mut tx).await?;
     registrations(&mut tx).await?;
     installs(&mut tx).await?;
+    attendance(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -460,8 +461,8 @@ async fn tasks(tx: &mut PgConnection) -> Result<(), SeedError> {
     )
     .fetch_one(&mut *tx)
     .await?;
-    let india = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
-    let today = Utc::now().with_timezone(&india).date_naive();
+    let india = crate::india::offset();
+    let today = crate::india::date(Utc::now());
 
     for t in TASKS {
         let due_at = india
@@ -642,8 +643,7 @@ async fn expenses(tx: &mut PgConnection) -> Result<(), SeedError> {
         .bind(&ids)
         .execute(&mut *tx)
         .await?;
-    let india = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
-    let today = Utc::now().with_timezone(&india).date_naive();
+    let today = crate::india::date(Utc::now());
 
     for e in EXPENSES {
         sqlx::query(
@@ -979,8 +979,8 @@ async fn installs(tx: &mut PgConnection) -> Result<(), SeedError> {
         .execute(&mut *tx)
         .await?;
 
-    let india = chrono::FixedOffset::east_opt(5 * 3600 + 30 * 60).expect("a valid offset");
-    let today = Utc::now().with_timezone(&india).date_naive();
+    let india = crate::india::offset();
+    let today = crate::india::date(Utc::now());
     // (customer n, statuses of the three payments)
     for (n, statuses) in [(1, ["paid", "due", "later"]), (6, ["paid", "paid", "due"])] {
         let c = REGISTRATIONS
@@ -1071,6 +1071,57 @@ async fn installs(tx: &mut PgConnection) -> Result<(), SeedError> {
     Makes the account with this email a platform admin. false when no
     account has it (the caller says so and exits with an error)
 */
+// One seeded day: who, days ago, start and end in India (hour, minute).
+type SeedDay = (&'static str, i64, (u32, u32), Option<(u32, u32)>);
+
+/*
+    Attendance (F17)
+    --------------------------------------------------------------------
+    - the company's days are cleared, so today always starts fresh for
+      trying the card (and for the app's flow test)
+    - then illustrative past days for the admin's views: Ravi and Aman
+      worked yesterday; Ravi didn't end the day before (no check-out)
+*/
+async fn attendance(tx: &mut PgConnection) -> Result<(), SeedError> {
+    sqlx::query("DELETE FROM attendance_days WHERE org_id = $1")
+        .bind(EXAMPLE_SOLAR)
+        .execute(&mut *tx)
+        .await?;
+    let today = crate::india::date(Utc::now());
+    // (who, days ago, start, end) in India's hours and minutes.
+    let days: [SeedDay; 3] = [
+        ("ravi@example.com", 1, (9, 5), Some((18, 20))),
+        ("aman@example.com", 1, (9, 40), Some((17, 55))),
+        ("ravi@example.com", 2, (8, 50), None),
+    ];
+    let at = |date, (h, m)| {
+        crate::india::midnight(date)
+            + (NaiveTime::from_hms_opt(h, m, 0).expect("a time") - NaiveTime::MIN)
+    };
+    for (email, ago, start, end) in days {
+        let date = today - Duration::days(ago);
+        let started = at(date, start);
+        let ended = end.map(|e| at(date, e));
+        sqlx::query(
+            "INSERT INTO attendance_days (id, org_id, user_id, work_date, started_at,
+                                          start_phone_at, start_sent_late,
+                                          ended_at, end_phone_at, end_sent_late)
+             SELECT $1, $2, id, $3, $4, $4, false, $5, $5,
+                    CASE WHEN $5::timestamptz IS NULL THEN NULL ELSE false END
+             FROM users WHERE email = $6",
+        )
+        .bind(Uuid::now_v7())
+        .bind(EXAMPLE_SOLAR)
+        .bind(date)
+        .bind(started)
+        .bind(ended)
+        .bind(email)
+        .execute(&mut *tx)
+        .await?;
+    }
+    Ok(())
+}
+
 pub async fn make_platform_admin(db: &PgPool, email: &str) -> Result<bool, sqlx::Error> {
     let updated = sqlx::query(
         "UPDATE users SET is_platform_admin = true, updated_at = now() WHERE email = $1",

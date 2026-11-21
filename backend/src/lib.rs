@@ -10,6 +10,7 @@ pub mod extract;
 pub mod google;
 pub mod gstin;
 pub mod idempotency;
+pub mod india;
 pub mod mail;
 pub mod notify;
 pub mod openapi;

@@ -107,11 +107,13 @@ pub fn last_code(to: &str) -> String {
         .to_owned()
 }
 
-/// A finished response: status, headers and the body as JSON (Null if none).
+/// A finished response: status, headers and the body as JSON (Null if
+/// none or not JSON), and as text for the rest (a CSV, say).
 pub struct Res {
     pub status: StatusCode,
     pub headers: HeaderMap,
     pub body: Value,
+    pub text: String,
 }
 
 pub async fn send(db: &PgPool, req: Request<Body>) -> Res {
@@ -127,6 +129,7 @@ pub async fn send(db: &PgPool, req: Request<Body>) -> Res {
         status,
         headers,
         body: serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+        text: String::from_utf8_lossy(&bytes).into_owned(),
     }
 }
 
