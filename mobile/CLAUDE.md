@@ -137,6 +137,7 @@ has it (`lib/app/dev/quick_forms.dart`).
 | Customer | Home, track install, payments (UPI or bank, claim), documents (built) | F9 |
 | Everyone | Profile, settings, help sheet, workspaces; Personal: Learn, notifications (built) | F1/F12 |
 | Everyone | Terms tick on sign-up and registration, "Before you start", legal links in Profile (built) | F16 |
+| Worker, Sales (salary) | Attendance card on Home: Start day, End day (asks first), taps kept offline and sent in order (built) | F17 |
 | Sales, Customer | Share referral link | F11 |
 
 Not settled (see `../questioner.md`): whether customers see their documents

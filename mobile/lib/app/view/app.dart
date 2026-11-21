@@ -10,6 +10,7 @@ import 'package:solacliq/app/config/app_config.dart';
 import 'package:solacliq/app/dev/mock_persona.dart';
 import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/router.dart';
+import 'package:solacliq/attendance/data/attendance_repository.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
@@ -33,6 +34,7 @@ class App extends StatefulWidget {
     this.dio,
     this.tokenStore,
     this.workspaceStore,
+    this.attendanceStore,
     this.push = const NoPushMessaging(),
     super.key,
   });
@@ -48,6 +50,9 @@ class App extends StatefulWidget {
 
   /// For tests. Otherwise the phone's secure storage.
   final WorkspaceStore? workspaceStore;
+
+  /// For tests. Otherwise the phone's secure storage.
+  final AttendanceStore? attendanceStore;
 
   /// Push notifications (F12): Firebase in the real app (the `main_*`
   /// files), none in tests.
@@ -163,6 +168,12 @@ class _AppState extends State<App> {
           create: (_) => RegistrationRepository(_api.getCustomersApi()),
         ),
         RepositoryProvider(create: (_) => TaskRepository(_api.getTasksApi())),
+        RepositoryProvider(
+          create: (_) => AttendanceRepository(
+            _api.getAttendanceApi(),
+            widget.attendanceStore ?? SecureAttendanceStore(),
+          ),
+        ),
         RepositoryProvider(
           create: (_) => CustomerRepository(_api.getCustomersApi()),
         ),

@@ -129,6 +129,39 @@ void main() {
     await logOut(tester);
   });
 
+  testWidgets('an installer starts and ends the day', (tester) async {
+    await start(tester);
+    await logIn(tester, 'ravi@example.com');
+    // The seed clears today's attendance.
+    await waitFor(tester, find.text('Not started'));
+    await tapKey(tester, 'attendance_start');
+    await waitFor(tester, find.textContaining('Working since'));
+    expect(find.byKey(const ValueKey('attendance_waiting')), findsNothing);
+
+    // The server has it: after a refresh it's still started.
+    await logOut(tester);
+    await logIn(tester, 'ravi@example.com');
+    await waitFor(tester, find.textContaining('Working since'));
+
+    // Ending asks first.
+    await tapKey(tester, 'attendance_end');
+    await tapText(tester, 'Keep working');
+    expect(find.textContaining('Working since'), findsOneWidget);
+    await tapKey(tester, 'attendance_end');
+    await tapKey(tester, 'attendance_end_confirm');
+    await waitFor(tester, find.text('Day ended'));
+    expect(find.byKey(const ValueKey('attendance_start')), findsNothing);
+    await logOut(tester);
+  });
+
+  testWidgets('salaried sales mark attendance too', (tester) async {
+    await start(tester);
+    await logIn(tester, 'aman@example.com');
+    await waitFor(tester, find.text('Not started'));
+    expect(find.byKey(const ValueKey('attendance_start')), findsOneWidget);
+    await logOut(tester);
+  });
+
   testWidgets('an agent follows customers and sees a returned document', (
     tester,
   ) async {
@@ -136,6 +169,8 @@ void main() {
     await logIn(tester, 'meena@example.com');
     await waitFor(tester, find.textContaining("'s customers"));
     expect(find.text('₹5,000'), findsOneWidget, reason: 'earnings: payable');
+    // Commission agents don't mark attendance (F17).
+    expect(find.byKey(const ValueKey('attendance_card')), findsNothing);
 
     await tapKey(tester, 'tab_customers');
     await tapText(tester, 'Sunita Rao (illustrative)');

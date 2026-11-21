@@ -45,6 +45,15 @@ enum AuthFailureCode {
   /// A payment claimed that isn't due (already claimed or paid).
   paymentNotDue('payment.not_due'),
 
+  /// Attendance (F17): a start on a date that has one, an end with no
+  /// start or a second end, a tap over 7 days old, a role that doesn't
+  /// mark attendance.
+  attendanceAlreadyStarted('attendance.already_started'),
+  attendanceAlreadyEnded('attendance.already_ended'),
+  attendanceNotStarted('attendance.not_started'),
+  attendanceTooOld('attendance.too_old'),
+  attendanceNotTracked('attendance.not_tracked'),
+
   /// A file didn't reach storage whole (the server's field error on an
   /// upload id): send it again.
   uploadIncomplete(null),

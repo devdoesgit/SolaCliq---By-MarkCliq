@@ -19,6 +19,8 @@ abstract class _$HomeSummaryCWProxy {
 
   HomeSummary energy(HomeEnergy? energy);
 
+  HomeSummary attendance(HomeAttendance? attendance);
+
   HomeSummary tiles(List<HomeTile> tiles);
 
   HomeSummary progress(HomeProgress? progress);
@@ -38,6 +40,7 @@ abstract class _$HomeSummaryCWProxy {
     HomeSummaryHeadline? headline,
     List<HomeDay>? week,
     HomeEnergy? energy,
+    HomeAttendance? attendance,
     List<HomeTile> tiles,
     HomeProgress? progress,
     HomeSummaryList list,
@@ -71,6 +74,10 @@ class _$HomeSummaryCWProxyImpl implements _$HomeSummaryCWProxy {
   HomeSummary energy(HomeEnergy? energy) => this(energy: energy);
 
   @override
+  HomeSummary attendance(HomeAttendance? attendance) =>
+      this(attendance: attendance);
+
+  @override
   HomeSummary tiles(List<HomeTile> tiles) => this(tiles: tiles);
 
   @override
@@ -93,6 +100,7 @@ class _$HomeSummaryCWProxyImpl implements _$HomeSummaryCWProxy {
     Object? headline = const $CopyWithPlaceholder(),
     Object? week = const $CopyWithPlaceholder(),
     Object? energy = const $CopyWithPlaceholder(),
+    Object? attendance = const $CopyWithPlaceholder(),
     Object? tiles = const $CopyWithPlaceholder(),
     Object? progress = const $CopyWithPlaceholder(),
     Object? list = const $CopyWithPlaceholder(),
@@ -122,6 +130,10 @@ class _$HomeSummaryCWProxyImpl implements _$HomeSummaryCWProxy {
           ? _value.energy
           // ignore: cast_nullable_to_non_nullable
           : energy as HomeEnergy?,
+      attendance: attendance == const $CopyWithPlaceholder()
+          ? _value.attendance
+          // ignore: cast_nullable_to_non_nullable
+          : attendance as HomeAttendance?,
       tiles: tiles == const $CopyWithPlaceholder()
           ? _value.tiles
           // ignore: cast_nullable_to_non_nullable
@@ -148,55 +160,56 @@ extension $HomeSummaryCopyWith on HomeSummary {
 // JsonSerializableGenerator
 // **************************************************************************
 
-HomeSummary _$HomeSummaryFromJson(Map<String, dynamic> json) => $checkedCreate(
-  'HomeSummary',
-  json,
-  ($checkedConvert) {
-    $checkKeys(json, requiredKeys: const ['eyebrow', 'title', 'tiles', 'list']);
-    final val = HomeSummary(
-      unreadNotifications: $checkedConvert(
-        'unread_notifications',
-        (v) => (v as num?)?.toInt(),
-      ),
-      eyebrow: $checkedConvert('eyebrow', (v) => v as String),
-      title: $checkedConvert('title', (v) => v as String),
-      headline: $checkedConvert(
-        'headline',
-        (v) => v == null
-            ? null
-            : HomeSummaryHeadline.fromJson(v as Map<String, dynamic>),
-      ),
-      week: $checkedConvert(
-        'week',
-        (v) => (v as List<dynamic>?)
-            ?.map((e) => HomeDay.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      ),
-      energy: $checkedConvert(
-        'energy',
-        (v) =>
-            v == null ? null : HomeEnergy.fromJson(v as Map<String, dynamic>),
-      ),
-      tiles: $checkedConvert(
-        'tiles',
-        (v) => (v as List<dynamic>)
-            .map((e) => HomeTile.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      ),
-      progress: $checkedConvert(
-        'progress',
-        (v) =>
-            v == null ? null : HomeProgress.fromJson(v as Map<String, dynamic>),
-      ),
-      list: $checkedConvert(
-        'list',
-        (v) => HomeSummaryList.fromJson(v as Map<String, dynamic>),
-      ),
-    );
-    return val;
-  },
-  fieldKeyMap: const {'unreadNotifications': 'unread_notifications'},
-);
+HomeSummary _$HomeSummaryFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('HomeSummary', json, ($checkedConvert) {
+  $checkKeys(json, requiredKeys: const ['eyebrow', 'title', 'tiles', 'list']);
+  final val = HomeSummary(
+    unreadNotifications: $checkedConvert(
+      'unread_notifications',
+      (v) => (v as num?)?.toInt(),
+    ),
+    eyebrow: $checkedConvert('eyebrow', (v) => v as String),
+    title: $checkedConvert('title', (v) => v as String),
+    headline: $checkedConvert(
+      'headline',
+      (v) => v == null
+          ? null
+          : HomeSummaryHeadline.fromJson(v as Map<String, dynamic>),
+    ),
+    week: $checkedConvert(
+      'week',
+      (v) => (v as List<dynamic>?)
+          ?.map((e) => HomeDay.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    ),
+    energy: $checkedConvert(
+      'energy',
+      (v) => v == null ? null : HomeEnergy.fromJson(v as Map<String, dynamic>),
+    ),
+    attendance: $checkedConvert(
+      'attendance',
+      (v) =>
+          v == null ? null : HomeAttendance.fromJson(v as Map<String, dynamic>),
+    ),
+    tiles: $checkedConvert(
+      'tiles',
+      (v) => (v as List<dynamic>)
+          .map((e) => HomeTile.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    ),
+    progress: $checkedConvert(
+      'progress',
+      (v) =>
+          v == null ? null : HomeProgress.fromJson(v as Map<String, dynamic>),
+    ),
+    list: $checkedConvert(
+      'list',
+      (v) => HomeSummaryList.fromJson(v as Map<String, dynamic>),
+    ),
+  );
+  return val;
+}, fieldKeyMap: const {'unreadNotifications': 'unread_notifications'});
 
 Map<String, dynamic> _$HomeSummaryToJson(HomeSummary instance) =>
     <String, dynamic>{
@@ -206,6 +219,7 @@ Map<String, dynamic> _$HomeSummaryToJson(HomeSummary instance) =>
       'headline': ?instance.headline?.toJson(),
       'week': ?instance.week?.map((e) => e.toJson()).toList(),
       'energy': ?instance.energy?.toJson(),
+      'attendance': ?instance.attendance?.toJson(),
       'tiles': instance.tiles.map((e) => e.toJson()).toList(),
       'progress': ?instance.progress?.toJson(),
       'list': instance.list.toJson(),

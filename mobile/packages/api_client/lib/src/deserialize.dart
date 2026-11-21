@@ -1,5 +1,13 @@
 import 'package:api_client/src/model/accept_terms_request.dart';
 import 'package:api_client/src/model/add_member_request.dart';
+import 'package:api_client/src/model/attendance_day.dart';
+import 'package:api_client/src/model/attendance_day_view.dart';
+import 'package:api_client/src/model/attendance_day_view_people_inner.dart';
+import 'package:api_client/src/model/attendance_month_view.dart';
+import 'package:api_client/src/model/attendance_month_view_people_inner.dart';
+import 'package:api_client/src/model/attendance_person.dart';
+import 'package:api_client/src/model/attendance_tap.dart';
+import 'package:api_client/src/model/attendance_tap_create.dart';
 import 'package:api_client/src/model/checklist_create.dart';
 import 'package:api_client/src/model/checklist_item.dart';
 import 'package:api_client/src/model/claim_install_payment_request.dart';
@@ -23,6 +31,7 @@ import 'package:api_client/src/model/expense.dart';
 import 'package:api_client/src/model/expense_create.dart';
 import 'package:api_client/src/model/expense_page.dart';
 import 'package:api_client/src/model/health.dart';
+import 'package:api_client/src/model/home_attendance.dart';
 import 'package:api_client/src/model/home_day.dart';
 import 'package:api_client/src/model/home_energy.dart';
 import 'package:api_client/src/model/home_progress.dart';
@@ -132,6 +141,33 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'AddMemberRequest':
       return AddMemberRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'AttendanceDay':
+      return AttendanceDay.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AttendanceDayView':
+      return AttendanceDayView.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AttendanceDayViewPeopleInner':
+      return AttendanceDayViewPeopleInner.fromJson(
+        value as Map<String, dynamic>,
+      ) as ReturnType;
+    case 'AttendanceMonthView':
+      return AttendanceMonthView.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AttendanceMonthViewPeopleInner':
+      return AttendanceMonthViewPeopleInner.fromJson(
+        value as Map<String, dynamic>,
+      ) as ReturnType;
+    case 'AttendancePerson':
+      return AttendancePerson.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AttendanceStatus':
+    case 'AttendanceTap':
+      return AttendanceTap.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AttendanceTapCreate':
+      return AttendanceTapCreate.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'BillBand':
     case 'BusinessType':
     case 'ChecklistCreate':
@@ -202,6 +238,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ExpenseStatus':
     case 'Health':
       return Health.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'HomeAttendance':
+      return HomeAttendance.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'HomeDay':
       return HomeDay.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'HomeEnergy':

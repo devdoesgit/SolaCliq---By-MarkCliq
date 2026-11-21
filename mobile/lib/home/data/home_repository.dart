@@ -1,6 +1,7 @@
 import 'package:api_client/api_client.dart' as api;
 import 'package:equatable/equatable.dart';
 import 'package:solacliq/app/data/api_call.dart';
+import 'package:solacliq/attendance/data/attendance_repository.dart';
 import 'package:solacliq/auth/data/account.dart';
 
 /// What a status, a bar segment or a day dot means.
@@ -201,6 +202,7 @@ class HomeSummary extends Equatable {
     this.headline,
     this.week = const [],
     this.energy,
+    this.attendance,
     this.progress,
     this.listTitle,
     this.unreadNotifications = 0,
@@ -211,6 +213,9 @@ class HomeSummary extends Equatable {
   final HomeHeadline? headline;
   final List<HomeDay> week;
   final HomeEnergy? energy;
+
+  /// The attendance card (F17): installers and salaried sales only.
+  final HomeAttendance? attendance;
   final List<HomeTile> tiles;
   final HomeProgress? progress;
   final String? listTitle;
@@ -226,6 +231,7 @@ class HomeSummary extends Equatable {
     headline,
     week,
     energy,
+    attendance,
     tiles,
     progress,
     listTitle,
@@ -254,8 +260,10 @@ class HomeRepository {
   static HomeSummary _summary(api.HomeSummary s) {
     final headline = s.headline;
     final energy = s.energy;
+    final attendance = s.attendance;
     final progress = s.progress;
     return HomeSummary(
+      attendance: attendance == null ? null : homeAttendance(attendance),
       eyebrow: s.eyebrow,
       title: s.title,
       headline: headline == null

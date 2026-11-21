@@ -79,6 +79,9 @@ Class | Method | HTTP request | Description
 [*AdminApi*](doc/AdminApi.md) | [**cancelTask**](doc/AdminApi.md#canceltask) | **POST** /orgs/{org_id}/tasks/{task_id}/cancel | Cancel an open task
 [*AdminApi*](doc/AdminApi.md) | [**confirmPayment**](doc/AdminApi.md#confirmpayment) | **POST** /orgs/{org_id}/payments/{payment_id}/confirm | Confirm a payment was received
 [*AdminApi*](doc/AdminApi.md) | [**createTask**](doc/AdminApi.md#createtask) | **POST** /orgs/{org_id}/tasks | Create a task for an installer (TSK-0001)
+[*AdminApi*](doc/AdminApi.md) | [**exportAttendanceMonth**](doc/AdminApi.md#exportattendancemonth) | **GET** /orgs/{org_id}/attendance/month.csv | One month&#39;s attendance as CSV
+[*AdminApi*](doc/AdminApi.md) | [**getAttendanceDay**](doc/AdminApi.md#getattendanceday) | **GET** /orgs/{org_id}/attendance/day | Everyone&#39;s attendance on one date
+[*AdminApi*](doc/AdminApi.md) | [**getAttendanceMonth**](doc/AdminApi.md#getattendancemonth) | **GET** /orgs/{org_id}/attendance/month | Everyone&#39;s attendance in one month
 [*AdminApi*](doc/AdminApi.md) | [**getReviewQueue**](doc/AdminApi.md#getreviewqueue) | **GET** /orgs/{org_id}/review | Everything waiting for the admin, oldest first
 [*AdminApi*](doc/AdminApi.md) | [**handOver**](doc/AdminApi.md#handover) | **POST** /orgs/{org_id}/customers/{customer_id}/handover | Hand the system over to the customer
 [*AdminApi*](doc/AdminApi.md) | [**payCommission**](doc/AdminApi.md#paycommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission/paid | Mark a payable commission paid
@@ -92,6 +95,11 @@ Class | Method | HTTP request | Description
 [*AdminApi*](doc/AdminApi.md) | [**scheduleTask**](doc/AdminApi.md#scheduletask) | **PUT** /orgs/{org_id}/tasks/{task_id}/schedule | Reschedule or reassign an open task; closes a reported problem
 [*AdminApi*](doc/AdminApi.md) | [**setOrgLogo**](doc/AdminApi.md#setorglogo) | **PUT** /orgs/{org_id}/logo | Set the company&#39;s logo (F15)
 [*AdminApi*](doc/AdminApi.md) | [**verifyCustomer**](doc/AdminApi.md#verifycustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/verify | Verify a registration and set up the install
+[*AttendanceApi*](doc/AttendanceApi.md) | [**endAttendanceDay**](doc/AttendanceApi.md#endattendanceday) | **POST** /orgs/{org_id}/me/attendance/end | End the caller&#39;s working day
+[*AttendanceApi*](doc/AttendanceApi.md) | [**exportAttendanceMonth**](doc/AttendanceApi.md#exportattendancemonth) | **GET** /orgs/{org_id}/attendance/month.csv | One month&#39;s attendance as CSV
+[*AttendanceApi*](doc/AttendanceApi.md) | [**getAttendanceDay**](doc/AttendanceApi.md#getattendanceday) | **GET** /orgs/{org_id}/attendance/day | Everyone&#39;s attendance on one date
+[*AttendanceApi*](doc/AttendanceApi.md) | [**getAttendanceMonth**](doc/AttendanceApi.md#getattendancemonth) | **GET** /orgs/{org_id}/attendance/month | Everyone&#39;s attendance in one month
+[*AttendanceApi*](doc/AttendanceApi.md) | [**startAttendanceDay**](doc/AttendanceApi.md#startattendanceday) | **POST** /orgs/{org_id}/me/attendance/start | Start the caller&#39;s working day
 [*AuthApi*](doc/AuthApi.md) | [**forgotPassword**](doc/AuthApi.md#forgotpassword) | **POST** /auth/password/forgot | Email a password reset or set-up code
 [*AuthApi*](doc/AuthApi.md) | [**getMe**](doc/AuthApi.md#getme) | **GET** /me | The signed-in person and their memberships
 [*AuthApi*](doc/AuthApi.md) | [**login**](doc/AuthApi.md#login) | **POST** /auth/login | Log in
@@ -148,6 +156,15 @@ Class | Method | HTTP request | Description
 
  - [AcceptTermsRequest](doc/AcceptTermsRequest.md)
  - [AddMemberRequest](doc/AddMemberRequest.md)
+ - [AttendanceDay](doc/AttendanceDay.md)
+ - [AttendanceDayView](doc/AttendanceDayView.md)
+ - [AttendanceDayViewPeopleInner](doc/AttendanceDayViewPeopleInner.md)
+ - [AttendanceMonthView](doc/AttendanceMonthView.md)
+ - [AttendanceMonthViewPeopleInner](doc/AttendanceMonthViewPeopleInner.md)
+ - [AttendancePerson](doc/AttendancePerson.md)
+ - [AttendanceStatus](doc/AttendanceStatus.md)
+ - [AttendanceTap](doc/AttendanceTap.md)
+ - [AttendanceTapCreate](doc/AttendanceTapCreate.md)
  - [BillBand](doc/BillBand.md)
  - [BusinessType](doc/BusinessType.md)
  - [ChecklistCreate](doc/ChecklistCreate.md)
@@ -178,6 +195,7 @@ Class | Method | HTTP request | Description
  - [ExpensePage](doc/ExpensePage.md)
  - [ExpenseStatus](doc/ExpenseStatus.md)
  - [Health](doc/Health.md)
+ - [HomeAttendance](doc/HomeAttendance.md)
  - [HomeDay](doc/HomeDay.md)
  - [HomeEnergy](doc/HomeEnergy.md)
  - [HomeProgress](doc/HomeProgress.md)

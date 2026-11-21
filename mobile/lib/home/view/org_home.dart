@@ -7,6 +7,7 @@ import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/app/config/app_config.dart';
 import 'package:solacliq/app/dev/mock_persona.dart';
 import 'package:solacliq/app/routes.dart';
+import 'package:solacliq/attendance/view/attendance_card.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/home/cubit/org_home_cubit.dart';
@@ -193,6 +194,19 @@ class _OrgHomeViewState extends State<OrgHomeView> {
                 OrgHomeLoaded(:final summary) => _Body(
                   summary: summary,
                   role: _role,
+                  attendance: summary.attendance == null
+                      ? null
+                      : AttendanceCard(
+                          // One card per person and company, kept across
+                          // home reloads.
+                          key: ValueKey((widget.account.id, workspace.orgId)),
+                          userId: widget.account.id,
+                          orgId: workspace.orgId,
+                          server: summary.attendance!,
+                          onSent: () {
+                            if (mounted) unawaited(_load());
+                          },
+                        ),
                   onTile: _onTile,
                   onRow: _onRow,
                   onSeeAll: () => _open('see_all'),
@@ -231,12 +245,16 @@ class _Body extends StatelessWidget {
     required this.summary,
     required this.role,
     required this.onTile,
+    this.attendance,
     this.onRow,
     this.onSeeAll,
   });
 
   final HomeSummary summary;
   final OrgRole role;
+
+  /// The attendance card, for people who mark it.
+  final Widget? attendance;
   final ValueChanged<HomeTile> onTile;
   final ValueChanged<HomeRow>? onRow;
   final VoidCallback? onSeeAll;
@@ -268,6 +286,7 @@ class _Body extends StatelessWidget {
                 style: worker ? SolaTextStyle.numberLg : SolaTextStyle.numberXl,
               ),
             ),
+          ?attendance,
           if (summary.tiles.isNotEmpty)
             HomeTiles(tiles: summary.tiles, onTap: onTile),
           if (progress != null)

@@ -5,6 +5,7 @@
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/home_summary_headline.dart';
 import 'package:api_client/src/model/home_energy.dart';
+import 'package:api_client/src/model/home_attendance.dart';
 import 'package:api_client/src/model/home_tile.dart';
 import 'package:api_client/src/model/home_day.dart';
 import 'package:api_client/src/model/home_summary_list.dart';
@@ -37,6 +38,8 @@ class HomeSummary {
 
     this.energy,
 
+    this.attendance,
+
     required this.tiles,
 
     this.progress,
@@ -64,6 +67,9 @@ class HomeSummary {
   @JsonKey(name: r'energy', required: false, includeIfNull: false)
   final HomeEnergy? energy;
 
+  @JsonKey(name: r'attendance', required: false, includeIfNull: false)
+  final HomeAttendance? attendance;
+
   @JsonKey(name: r'tiles', required: true, includeIfNull: false)
   final List<HomeTile> tiles;
 
@@ -85,6 +91,7 @@ class HomeSummary {
                 headline,
                 week,
                 energy,
+                attendance,
                 tiles,
                 progress,
                 list,
@@ -96,6 +103,7 @@ class HomeSummary {
                 other.headline,
                 other.week,
                 other.energy,
+                other.attendance,
                 other.tiles,
                 other.progress,
                 other.list,
@@ -113,6 +121,7 @@ class HomeSummary {
         headline,
         week,
         energy,
+        attendance,
         tiles,
         progress,
         list,

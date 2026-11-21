@@ -3728,5 +3728,75 @@
     "continueAction": "Continue",
     "@continueAction": {
         "description": "Button to go on."
+    },
+    "failAttendanceStarted": "Your day had already started.",
+    "@failAttendanceStarted": {
+        "description": "A start tap for a day that already has one."
+    },
+    "failAttendanceEnded": "Your day had already ended.",
+    "@failAttendanceEnded": {
+        "description": "An end tap for a day already ended."
+    },
+    "failAttendanceNotStarted": "Your day couldn't end: it hadn't started at that time.",
+    "@failAttendanceNotStarted": {
+        "description": "An end tap with no start before it that day."
+    },
+    "failAttendanceTooOld": "A tap over 7 days old couldn't be sent. Ask your admin to note that day.",
+    "@failAttendanceTooOld": {
+        "description": "An offline tap sent more than a week later."
+    },
+    "failAttendanceNotTracked": "Your role doesn't mark attendance.",
+    "@failAttendanceNotTracked": {
+        "description": "A commission agent tapping."
+    },
+    "attendanceTitle": "Attendance",
+    "@attendanceTitle": {
+        "description": "Eyebrow over the home's attendance card."
+    },
+    "attendanceNotStarted": "Not started",
+    "@attendanceNotStarted": {
+        "description": "The card before the day starts."
+    },
+    "attendanceNotStartedHint": "Tap Start day when you begin work.",
+    "@attendanceNotStartedHint": {
+        "description": "Hint on the card before the day starts."
+    },
+    "attendanceStart": "Start day",
+    "@attendanceStart": {
+        "description": "Button that starts the working day."
+    },
+    "attendanceEnd": "End day",
+    "@attendanceEnd": {
+        "description": "Button that ends the working day."
+    },
+    "attendanceEnded": "Day ended",
+    "@attendanceEnded": {
+        "description": "The card after the day ends."
+    },
+    "attendanceWaiting": "Saved on your phone. It sends when you're online.",
+    "@attendanceWaiting": {
+        "description": "A tap made offline, not sent yet."
+    },
+    "attendanceEndTitle": "End your day?",
+    "@attendanceEndTitle": {
+        "description": "Sheet title before ending the day."
+    },
+    "attendanceEndBody": "Your admin sees the time you end. This can't be undone.",
+    "@attendanceEndBody": {
+        "description": "Sheet body before ending the day."
+    },
+    "attendanceKeepWorking": "Keep working",
+    "@attendanceKeepWorking": {
+        "description": "Closes the end-day sheet without ending."
+    },
+    "attendanceWorkingSince": "Working since {time}",
+    "@attendanceWorkingSince": {
+        "description": "The card while the day is on. time: the start, e.g. 9:12 AM.",
+        "placeholders": {"time": {"type": "String"}}
+    },
+    "attendanceSpan": "{start} to {end} · {hours} h {minutes} m",
+    "@attendanceSpan": {
+        "description": "An ended day: its start, end and worked time.",
+        "placeholders": {"start": {"type": "String"}, "end": {"type": "String"}, "hours": {"type": "int"}, "minutes": {"type": "int"}}
     }
 }

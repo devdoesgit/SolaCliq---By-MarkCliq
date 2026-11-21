@@ -84,6 +84,11 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.uploadIncomplete => l10n.failUploadIncomplete,
     AuthFailureCode.installNotStarted => l10n.installSetUpTitle,
     AuthFailureCode.paymentNotDue => l10n.failPaymentNotDue,
+    AuthFailureCode.attendanceAlreadyStarted => l10n.failAttendanceStarted,
+    AuthFailureCode.attendanceAlreadyEnded => l10n.failAttendanceEnded,
+    AuthFailureCode.attendanceNotStarted => l10n.failAttendanceNotStarted,
+    AuthFailureCode.attendanceTooOld => l10n.failAttendanceTooOld,
+    AuthFailureCode.attendanceNotTracked => l10n.failAttendanceNotTracked,
     AuthFailureCode.network => l10n.failNetwork,
     AuthFailureCode.unknown => l10n.failUnknown,
   };

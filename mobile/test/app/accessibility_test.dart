@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:api_client/api_client.dart' show AttendanceApi;
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:solacliq/access/view/request_access_page.dart';
 import 'package:solacliq/app/view/splash_page.dart';
+import 'package:solacliq/attendance/data/attendance_repository.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/intro_page.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
@@ -217,6 +220,7 @@ void main() {
         eyebrow: 'Today',
         title: "Ravi's day",
         headline: HomeHeadline(value: '3', label: 'tasks'),
+        attendance: HomeAttendance(state: AttendanceState.notStarted),
         tiles: [
           HomeTile(label: 'Proof due', value: '2', dark: true),
           HomeTile(label: 'Expenses', value: '1'),
@@ -259,6 +263,13 @@ void main() {
         RepositoryProvider<CustomerRepository>.value(value: customers),
         RepositoryProvider<ProfileRepository>.value(value: profiles),
         RepositoryProvider<InstallRepository>.value(value: installs),
+        // Nothing saved to send, so it never calls the server.
+        RepositoryProvider<AttendanceRepository>.value(
+          value: AttendanceRepository(
+            AttendanceApi(Dio()),
+            MemoryAttendanceStore(),
+          ),
+        ),
       ],
     );
     await tester.pumpAndSettle();
