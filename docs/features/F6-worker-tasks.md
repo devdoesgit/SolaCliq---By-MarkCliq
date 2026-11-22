@@ -34,8 +34,8 @@ reassigns or cancels it.
 - `GET /orgs/{org_id}/tasks?view=today|upcoming|done`
 - `GET /orgs/{org_id}/tasks/{task_id}` and `.../history`
 - `POST .../photos` (one slot; replaces on retake; carries GPS, accuracy,
-  time and a mocked-location flag; server flags far, inaccurate or mocked
-  captures for the admin, never refuses)
+  time and a mocked-location flag; all stored as sent, nothing judged
+  since 2026-11-22)
 - `PUT .../checklist/{item_id}`, `POST .../submit` (needs all photos and
   checklist; locks photos), `POST .../problems`, `POST .../messages`
 - `GET /orgs/{org_id}/me/stats` for the profile.
@@ -51,7 +51,7 @@ reassigns or cancels it.
   slots, checklist; each status shows its banner (submitted, returned,
   problem sent, cancelled) or the approval with the next task.
 - Proof camera: live camera only, one slot at a time with its hint, GPS
-  and accuracy shown, distance from the site, thumbnails of the slots.
+  and accuracy shown, thumbnails of the slots.
 - Submit with an optional note; report a problem (reason, note, optional
   photo); reply to the admin on a returned task.
 - History: the task's timeline.

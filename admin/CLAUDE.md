@@ -28,7 +28,7 @@ Stack and API conventions: `../docs/architecture.md`.
 | Org admin | Team: create worker and agent accounts | F3 |
 | Org admin | Customers list and pipeline by stage | F4 |
 | Org admin | Customer detail: stage, cost breakdown, payments, documents, photos | F4–F6 |
-| Org admin | Assign workers to jobs; review flagged captures | F6 |
+| Org admin | Assign workers to jobs; review photos | F6 |
 | Org admin | Approvals queue: expenses and commission | F7/F8 |
 | Org admin | Referral settings: bonus or discount | F11 |
 | Org admin | Dashboard overview | after F8 |

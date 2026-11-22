@@ -134,7 +134,7 @@ its admin-side data seeded (see "Not in the contract yet" in the
 handoff): tasks for workers, approvals for sales, an install for
 customers.
 
-- **8 Worker (#25–37):** tasks, photos with location flags, checklist,
+- **8 Worker (#25–37):** tasks, photos with their location, checklist,
   submit, problems, history, stats, expenses.
 - **9 Sales (#38–42):** customer registration with KYC, my customers,
   fixing a returned document, and "my documents" (#38: a customer's KYC,

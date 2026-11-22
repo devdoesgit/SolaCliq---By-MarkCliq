@@ -1704,10 +1704,6 @@
     "@addPhotoOptional": {
         "description": "Problem sheet."
     },
-    "atSite": "At site",
-    "@atSite": {
-        "description": "Camera: within 200 m of the customer."
-    },
     "avgOnSite": "avg on site",
     "@avgOnSite": {
         "description": "Profile stat."
@@ -2287,15 +2283,6 @@
         "description": "Task line.",
         "placeholders": {
             "name": {
-                "type": "String"
-            }
-        }
-    },
-    "fromSiteKm": "{km} km from site",
-    "@fromSiteKm": {
-        "description": "Camera.",
-        "placeholders": {
-            "km": {
                 "type": "String"
             }
         }

@@ -115,7 +115,7 @@ milestone, top to bottom.
 |---|---|---|---|---|---|
 | 25 | `GET /orgs/{org_id}/tasks?view=today\|upcoming\|done` | worker | view | `TaskPage` | **Built (phase 8).** Only the caller's tasks. `done` = approved + cancelled |
 | 26 | `GET /orgs/{org_id}/tasks/{task_id}` | worker | — | `Task` | **Built (phase 8).** Photos as presigned URLs |
-| 27 | `POST .../tasks/{task_id}/photos` | worker | `ProofPhotoCreate` | `Task` | **Built**, with the upload checked in R2 (422 if it didn't finish). `slot_id`, `upload_id`, `taken_at`, `lat`, `lng`, `accuracy_m`, `mocked_location`. Flag (don't reject) a photo far from the site or with a mocked location; the admin sees the flag. 409 `task.locked` unless `assigned`/`returned` |
+| 27 | `POST .../tasks/{task_id}/photos` | worker | `ProofPhotoCreate` | `Task` | **Built**, with the upload checked in R2 (422 if it didn't finish). `slot_id`, `upload_id`, `taken_at`, `lat`, `lng`, `accuracy_m`, `mocked_location`. Stored as sent, nothing judged (2026-11-22). 409 `task.locked` unless `assigned`/`returned` |
 | 28 | `PUT .../tasks/{task_id}/checklist/{item_id}` | worker | `{done}` | `Task` | **Built (phase 8).** 409 when locked |
 | 29 | `POST .../tasks/{task_id}/submit` | worker, *idem* | `{note?}` | `Task` | **Built (phase 8).** 422 `task.incomplete` unless every slot has a photo (retakes retaken) and every item is ticked. → `submitted` |
 | 30 | `POST .../tasks/{task_id}/problems` | worker, *idem* | `TaskProblemCreate` | `Task` | **Built (phase 8).** `reason` + `note`; the admin sees it in the task's history (an admin feed comes with the website). Task stays `assigned`, shown "On hold" |

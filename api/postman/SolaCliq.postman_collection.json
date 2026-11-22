@@ -846,7 +846,7 @@
                 "photos"
               ]
             },
-            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken. The server flags photos far\nfrom the site (over 500 m), with poor accuracy (over 50 m) or a\nmocked location; flags go to the admin, nothing is refused.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
+            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken, and whether the phone said\nthe location was mocked. All of it is stored as sent: the server\ndoesn't compare it with the site or judge it.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1113,7 +1113,7 @@
                 "photos"
               ]
             },
-            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken. The server flags photos far\nfrom the site (over 500 m), with poor accuracy (over 50 m) or a\nmocked location; flags go to the admin, nothing is refused.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
+            "description": "**Attach a proof photo to one of the task's photo slots** (`addTaskPhoto`) · as Ravi, installer\n\nThe photo comes from the live camera only, never the gallery, and\ncarries where and when it was taken, and whether the phone said\nthe location was mocked. All of it is stored as sent: the server\ndoesn't compare it with the site or judge it.\nReplaces an earlier photo in the slot (a retake). 422 on\n`upload_id` when the file isn't in storage whole (the upload\ndidn't finish). 409 `task.locked` once submitted.",
             "auth": {
               "type": "bearer",
               "bearer": [

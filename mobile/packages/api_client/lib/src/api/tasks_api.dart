@@ -27,7 +27,7 @@ class TasksApi {
   const TasksApi(this._dio);
 
   /// Attach a proof photo to one of the task&#39;s photo slots
-  /// The photo comes from the live camera only, never the gallery, and carries where and when it was taken. The server flags photos far from the site (over 500 m), with poor accuracy (over 50 m) or a mocked location; flags go to the admin, nothing is refused. Replaces an earlier photo in the slot (a retake). 422 on &#x60;upload_id&#x60; when the file isn&#39;t in storage whole (the upload didn&#39;t finish). 409 &#x60;task.locked&#x60; once submitted.
+  /// The photo comes from the live camera only, never the gallery, and carries where and when it was taken, and whether the phone said the location was mocked. All of it is stored as sent: the server doesn&#39;t compare it with the site or judge it. Replaces an earlier photo in the slot (a retake). 422 on &#x60;upload_id&#x60; when the file isn&#39;t in storage whole (the upload didn&#39;t finish). 409 &#x60;task.locked&#x60; once submitted.
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.

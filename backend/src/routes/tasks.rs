@@ -42,6 +42,7 @@ use crate::{
     page::{Cursor, Page, PageInfo},
     routes::uploads::{self, UploadPurpose},
     storage::Storage,
+    validate,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -57,12 +58,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(get_my_stats))
 }
 
-/*
-    Location flags: a photo is never refused, but the admin sees one
-    taken this far from the customer's pin, or with a fix this rough
-*/
-const FAR_FROM_SITE_M: f64 = 500.0;
-const ROUGH_FIX_M: f64 = 50.0;
 const MAX_TEXT: usize = 500;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
@@ -384,16 +379,6 @@ fn start_of_month(now: DateTime<Utc>) -> DateTime<Utc> {
         .with_day(1)
         .expect("every month has a first");
     india::midnight(first)
-}
-
-// Metres between two points on the earth (haversine).
-fn distance_m(a: (f64, f64), b: (f64, f64)) -> f64 {
-    const EARTH_M: f64 = 6_371_000.0;
-    let (lat1, lat2) = (a.0.to_radians(), b.0.to_radians());
-    let dlat = lat2 - lat1;
-    let dlng = (b.1 - a.1).to_radians();
-    let h = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlng / 2.0).sin().powi(2);
-    2.0 * EARTH_M * h.sqrt().asin()
 }
 
 /*
@@ -763,8 +748,10 @@ async fn get_task(
     - the photo is already in R2 (`POST /uploads`, purpose `proof`);
       `uploads::attach` checks it arrived whole before the slot takes it
     - fills the slot, or replaces its photo (a retake clears `retake`)
-    - flags for the admin, never a refusal: far from the customer's pin,
-      a rough GPS fix, a mocked location
+    - where it was taken is stored as the phone sent it (position,
+      accuracy, whether it said mocked). Nothing is compared or judged
+      (owner, 2026-11-22), so `far`, `inaccurate` and `distance_m` in
+      the table aren't written
     - the history gets one "photos uploaded" line per round of photos,
       not one per photo
 */
@@ -800,11 +787,11 @@ async fn add_task_photo(
 ) -> ApiResult<Json<Task>> {
     let mut invalid = ApiError::validation(Vec::new());
     let mut bad = false;
-    if !(-90.0..=90.0).contains(&req.lat) {
+    if !validate::is_lat(req.lat) {
         invalid = invalid.field("lat", "-90 to 90.");
         bad = true;
     }
-    if !(-180.0..=180.0).contains(&req.lng) {
+    if !validate::is_lng(req.lng) {
         invalid = invalid.field("lng", "-180 to 180.");
         bad = true;
     }
@@ -820,20 +807,18 @@ async fn add_task_photo(
     let mut tx = member.begin(&state.db).await?;
     editable(&mut tx, member.user_id, task_id).await?;
 
-    let site: Option<(Option<f64>, Option<f64>)> = sqlx::query_as(
-        "SELECT c.lat, c.lng FROM task_photo_slots s
-         JOIN tasks t ON t.id = s.task_id JOIN customers c ON c.id = t.customer_id
-         WHERE s.task_id = $1 AND s.slot_id = $2",
+    let has_slot: bool = sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM task_photo_slots WHERE task_id = $1 AND slot_id = $2)",
     )
     .bind(task_id)
     .bind(&req.slot_id)
-    .fetch_optional(&mut *tx)
+    .fetch_one(&mut *tx)
     .await?;
-    let Some(site) = site else {
+    if !has_slot {
         return Err(
             ApiError::validation(Vec::new()).field("slot_id", "This task has no such photo.")
         );
-    };
+    }
 
     uploads::attach(
         &mut tx,
@@ -846,14 +831,10 @@ async fn add_task_photo(
     )
     .await?;
 
-    let distance = match site {
-        (Some(lat), Some(lng)) => Some(distance_m((lat, lng), (req.lat, req.lng))),
-        _ => None,
-    };
     sqlx::query(
         "UPDATE task_photo_slots
          SET upload_id = $3, taken_at = $4, lat = $5, lng = $6, accuracy_m = $7,
-             mocked = $8, distance_m = $9, far = $10, inaccurate = $11, retake = false
+             mocked = $8, retake = false
          WHERE task_id = $1 AND slot_id = $2",
     )
     .bind(task_id)
@@ -864,9 +845,6 @@ async fn add_task_photo(
     .bind(req.lng)
     .bind(req.accuracy_m)
     .bind(req.mocked_location)
-    .bind(distance)
-    .bind(distance.is_some_and(|d| d > FAR_FROM_SITE_M))
-    .bind(req.accuracy_m > ROUGH_FIX_M)
     .execute(&mut *tx)
     .await?;
 
@@ -1441,13 +1419,5 @@ mod tests {
             start_of_month(now),
             Utc.with_ymd_and_hms(2026, 10, 31, 18, 30, 0).unwrap()
         );
-    }
-
-    #[test]
-    fn distance_is_in_metres() {
-        // Two points in Mohali, about 1.1 km apart north to south.
-        let d = distance_m((30.7046, 76.7179), (30.7146, 76.7179));
-        assert!((1100.0..1125.0).contains(&d), "{d}");
-        assert_eq!(distance_m((30.7, 76.7), (30.7, 76.7)), 0.0);
     }
 }

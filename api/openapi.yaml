@@ -1037,9 +1037,9 @@ paths:
       summary: Attach a proof photo to one of the task's photo slots
       description: |
         The photo comes from the live camera only, never the gallery, and
-        carries where and when it was taken. The server flags photos far
-        from the site (over 500 m), with poor accuracy (over 50 m) or a
-        mocked location; flags go to the admin, nothing is refused.
+        carries where and when it was taken, and whether the phone said
+        the location was mocked. All of it is stored as sent: the server
+        doesn't compare it with the site or judge it.
         Replaces an earlier photo in the slot (a retake). 422 on
         `upload_id` when the file isn't in storage whole (the upload
         didn't finish). 409 `task.locked` once submitted.

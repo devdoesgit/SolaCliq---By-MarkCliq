@@ -563,7 +563,6 @@ class _Panel extends StatelessWidget {
 
   String _where(AppLocalizations l10n) {
     final p = position;
-    final site = task?.customer;
     if (p == null) {
       return switch (locationProblem) {
         CaptureProblem.locationDenied => l10n.locationDenied,
@@ -571,18 +570,7 @@ class _Panel extends StatelessWidget {
         _ => l10n.findingLocation,
       };
     }
-    final accuracy = l10n.accuracyM(p.accuracy.round());
-    if (site?.lat == null || site?.lng == null) return accuracy;
-    final metres = Geolocator.distanceBetween(
-      p.latitude,
-      p.longitude,
-      site!.lat!,
-      site.lng!,
-    );
-    final distance = metres < 200
-        ? l10n.atSite
-        : l10n.fromSiteKm((metres / 1000).toStringAsFixed(1));
-    return '$distance · $accuracy';
+    return l10n.accuracyM(p.accuracy.round());
   }
 
   @override

@@ -490,23 +490,24 @@ async fn another_companys_upload_cant_be_attached(db: PgPool) {
 }
 
 #[sqlx::test]
-async fn far_or_rough_photos_are_flagged_not_refused(db: PgPool) {
+async fn a_photo_keeps_where_it_was_taken_and_isnt_judged(db: PgPool) {
     let s = setup(&db).await;
     let id = task(&db, &s, "ravi@example.com", "assigned", Utc::now()).await;
     let up = upload(&db, s.org, &s.ravi).await;
     r2_put(&key(&s, &up), 1000);
-    // About 2 km north of the site.
-    let res = add_photo(&db, &s, id, "rails", &up, (SITE.0 + 0.018, SITE.1)).await;
+    // About 2 km north of the customer's pin: kept as it is, nothing worked out.
+    let at = (SITE.0 + 0.018, SITE.1);
+    let res = add_photo(&db, &s, id, "rails", &up, at).await;
     assert_eq!(res.status, StatusCode::OK, "{}", res.body);
-    let (far, distance): (bool, f64) = sqlx::query_as(
-        "SELECT far, distance_m FROM task_photo_slots WHERE task_id = $1 AND slot_id = 'rails'",
+    let stored: (f64, f64, bool, Option<f64>) = sqlx::query_as(
+        "SELECT lat, lng, far, distance_m FROM task_photo_slots
+         WHERE task_id = $1 AND slot_id = 'rails'",
     )
     .bind(id)
     .fetch_one(&db)
     .await
     .unwrap();
-    assert!(far);
-    assert!((1900.0..2100.0).contains(&distance), "{distance}");
+    assert_eq!(stored, (at.0, at.1, false, None));
 
     let res = add_photo(&db, &s, id, "nope", &up, SITE).await;
     assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);

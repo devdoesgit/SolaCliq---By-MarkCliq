@@ -37,6 +37,16 @@ pub fn is_pin_code(pin: &str) -> bool {
     pin.len() == 6 && !pin.starts_with('0') && pin.chars().all(|c| c.is_ascii_digit())
 }
 
+// A latitude, in degrees.
+pub fn is_lat(value: f64) -> bool {
+    (-90.0..=90.0).contains(&value)
+}
+
+// A longitude, in degrees.
+pub fn is_lng(value: f64) -> bool {
+    (-180.0..=180.0).contains(&value)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

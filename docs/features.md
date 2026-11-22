@@ -46,7 +46,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F3 | Memberships | Org switcher | Team accounts |
 | F4 | Customers, stages, costs, payments | Agent: my customers | Customers, pipeline, detail |
 | F5 | Uploads, documents | — (to confirm) | Documents on customer detail |
-| F6 | Jobs, captures, location flags | Worker jobs, camera capture | Assign jobs, review flags |
+| F6 | Jobs, captures | Worker jobs, camera capture | Assign jobs, review photos |
 | F7 | Expenses, approvals | Log expenses | Approvals queue |
 | F8 | Commission | Enter commission | Approve commission |
 | F9 | Customer read endpoints | Customer: stage, costs, payments | — |
@@ -88,8 +88,8 @@ rejected, decided by the org admin.
 URLs; document types; role-based access.
 
 **F6 Worker jobs.** Assign workers to customers; worker sees their jobs;
-live-camera capture with GPS, accuracy and time; server-side location
-flags.
+live-camera capture with GPS, accuracy and time; the server
+stores them as sent.
 
 **F7 Expenses.** Workers and agents log expenses with receipts; the shared
 approvals queue for the org admin. Spec: `features/F7-expenses.md`.
