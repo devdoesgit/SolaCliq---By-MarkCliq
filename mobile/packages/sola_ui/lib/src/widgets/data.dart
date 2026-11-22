@@ -216,6 +216,8 @@ class SolaSegmentBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      // One thing to a screen reader, not one per part.
+      container: semanticsLabel != null,
       label: semanticsLabel,
       child: Row(
         spacing: gap,
@@ -469,6 +471,7 @@ class SolaDay {
   const new({
     required this.name,
     required this.date,
+    required this.semanticsLabel,
     this.dots = const [],
     this.today = false,
   });
@@ -481,6 +484,9 @@ class SolaDay {
 
   /// One dot per task, coloured by its state.
   final List<Color> dots;
+
+  /// What a screen reader says: "Sat 21, 1 task".
+  final String semanticsLabel;
 
   /// Highlights the day.
   final bool today;
@@ -504,7 +510,7 @@ class SolaWeekStrip extends StatelessWidget {
           for (final day in days)
             Expanded(
               child: Semantics(
-                label: '${day.name} ${day.date}, ${day.dots.length} tasks',
+                label: day.semanticsLabel,
                 selected: day.today,
                 excludeSemantics: true,
                 child: Container(
@@ -817,6 +823,7 @@ class SolaNotice extends StatelessWidget {
           borderRadius: BorderRadius.circular(SolaRadius.radius16),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: SolaSpace.space2,
           children: [

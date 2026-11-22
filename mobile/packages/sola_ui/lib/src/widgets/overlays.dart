@@ -16,6 +16,9 @@ Future<T?> showSolaSheet<T>({
   required String doneLabel,
   required WidgetBuilder builder,
 }) {
+  // Else closing the sheet gives the last field its focus back, and the
+  // keyboard jumps up over what was just chosen.
+  FocusManager.instance.primaryFocus?.unfocus();
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,

@@ -147,10 +147,13 @@ class HomeProgressView extends StatelessWidget {
                   SolaLegendItem(label, _fill(s.tone)),
             ]
           : const [],
-      semanticsLabel: [
-        progress.label,
-        for (final s in segments) ?s.label,
-      ].join(', '),
+      semanticsLabel: progress.legend
+          ? [progress.label, for (final s in segments) ?s.label].join(', ')
+          : context.l10n.progressOf(
+              progress.label,
+              segments.where((s) => s.tone != HomeTone.empty).length,
+              segments.length,
+            ),
     );
   }
 }
@@ -169,6 +172,11 @@ class HomeWeek extends StatelessWidget {
           SolaDay(
             name: d.day,
             date: '${d.date}',
+            semanticsLabel: context.l10n.weekDayTasks(
+              d.day,
+              '${d.date}',
+              d.dots.length,
+            ),
             today: d.today,
             dots: [
               for (final dot in d.dots)

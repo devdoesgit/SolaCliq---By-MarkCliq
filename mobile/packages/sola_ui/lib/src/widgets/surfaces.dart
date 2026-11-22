@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/src/theme/sola_text.dart';
 import 'package:sola_ui/src/tokens/tokens.g.dart';
@@ -72,37 +73,111 @@ class SolaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final navBar = this.navBar;
     final bottom = this.bottom;
-    return Scaffold(
-      backgroundColor: background.top,
-      extendBody: bottomOverlaps,
-      body: DecoratedBox(
-        decoration: BoxDecoration(gradient: background.gradient),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (navBar != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: SolaSpace.space20,
+    // Every background is light, so the status bar's icons are dark,
+    // whatever the screen before left them as.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: background.top,
+        extendBody: bottomOverlaps,
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: background.gradient),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (navBar != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: SolaSpace.space20,
+                    ),
+                    child: navBar,
                   ),
-                  child: navBar,
-                ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: padding.copyWith(
-                    bottom: padding.bottom + (bottomOverlaps ? 120 : 24),
+                Expanded(
+                  child: _ScrollEdge(
+                    color: background.top,
+                    enabled: navBar != null,
+                    child: SingleChildScrollView(
+                      padding: padding.copyWith(
+                        bottom: padding.bottom + (bottomOverlaps ? 120 : 24),
+                      ),
+                      child: body,
+                    ),
                   ),
-                  child: body,
                 ),
-              ),
-              if (!bottomOverlaps) ?bottom,
-            ],
+                if (!bottomOverlaps) ?bottom,
+              ],
+            ),
           ),
         ),
+        bottomNavigationBar: bottomOverlaps ? bottom : null,
       ),
-      bottomNavigationBar: bottomOverlaps ? bottom : null,
+    );
+  }
+}
+
+/// Fades what has scrolled up into the header, so text isn't cut mid-letter
+/// under the back button.
+class _ScrollEdge extends StatefulWidget {
+  const new({required this.color, required this.enabled, required this.child});
+
+  final Color color;
+
+  /// Only under a header.
+  final bool enabled;
+  final Widget child;
+
+  @override
+  State<_ScrollEdge> createState() => _ScrollEdgeState();
+}
+
+class _ScrollEdgeState extends State<_ScrollEdge> {
+  bool _scrolled = false;
+
+  bool _update(ScrollMetrics metrics, int depth) {
+    // The page's own scrolling, not a field's or a row of chips'.
+    if (depth != 0 || metrics.axis != Axis.vertical) return false;
+    final scrolled = metrics.pixels > 0;
+    if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (n) => _update(n.metrics, n.depth),
+      child: NotificationListener<ScrollUpdateNotification>(
+        onNotification: (n) => _update(n.metrics, n.depth),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.child,
+            if (widget.enabled && _scrolled)
+              Positioned(
+                key: const Key('screen_scroll_edge'),
+                top: 0,
+                left: 0,
+                right: 0,
+                height: SolaSpace.space20,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          widget.color,
+                          widget.color.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

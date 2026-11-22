@@ -29,6 +29,8 @@ class SolaFieldRow extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.prefixText,
+    this.autofocus = false,
+    this.revealBelow = 0,
   });
 
   /// Above the value.
@@ -72,6 +74,13 @@ class SolaFieldRow extends StatefulWidget {
 
   /// Fixed text before the input: "+91 ".
   final String? prefixText;
+
+  /// Takes the keyboard as soon as it appears: a search just opened.
+  final bool autofocus;
+
+  /// How much under the field to keep above the keyboard too: a password's
+  /// checklist.
+  final double revealBelow;
 
   @override
   State<SolaFieldRow> createState() => _SolaFieldRowState();
@@ -145,6 +154,14 @@ class _SolaFieldRowState extends State<SolaFieldRow> {
                                 key: ValueKey('${key.value}_input'),
                                 controller: widget.controller,
                                 focusNode: _focus,
+                                autofocus: widget.autofocus,
+                                // Flutter's default 20, and what's under it.
+                                scrollPadding: EdgeInsets.fromLTRB(
+                                  20,
+                                  20,
+                                  20,
+                                  20 + widget.revealBelow,
+                                ),
                                 obscureText: widget.obscureText,
                                 keyboardType: widget.keyboardType,
                                 textInputAction: widget.textInputAction,
@@ -289,7 +306,10 @@ class SolaValueRow extends StatelessWidget {
     if (onTap == null) return content;
     return SolaTappable(
       identifier: semanticsIdentifier(key),
-      semanticsLabel: '$label: $value',
+      semanticsLabel: [
+        '$label: ${value ?? placeholder ?? ''}',
+        ?error,
+      ].join('. '),
       onTap: onTap,
       builder: (context, state) =>
           Opacity(opacity: state.pressed ? 0.6 : 1, child: content),
@@ -303,6 +323,7 @@ class SolaListRow extends StatelessWidget {
   /// Creates the row.
   const new({
     required this.title,
+    this.titleLines = 1,
     this.subtitle,
     this.subtitleLines = 1,
     this.leading,
@@ -315,6 +336,9 @@ class SolaListRow extends StatelessWidget {
 
   /// The first line.
   final String title;
+
+  /// How many lines the title may take before it is cut.
+  final int titleLines;
 
   /// The semantics identifier tools find the row by. Defaults to the
   /// row's own `ValueKey<String>`; a widget that wraps the row passes
@@ -358,7 +382,7 @@ class SolaListRow extends StatelessWidget {
                 SolaText(
                   title,
                   style: SolaTextStyle.rowTitle,
-                  maxLines: 1,
+                  maxLines: titleLines,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (subtitle != null)

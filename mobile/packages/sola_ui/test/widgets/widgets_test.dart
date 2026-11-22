@@ -118,4 +118,22 @@ void main() {
   test('formatDayMonth leaves out the year', () {
     expect(formatDayMonth(DateTime(2026, 10, 23)), '23 Oct');
   });
+
+  testWidgets('SolaValueRow without a value reads its placeholder and error', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pump(
+      tester,
+      SolaValueRow(
+        key: const Key('state'),
+        label: 'State',
+        placeholder: 'Choose',
+        error: 'Choose one.',
+        onTap: () {},
+      ),
+    );
+    expect(find.bySemanticsLabel('State: Choose. Choose one.'), findsOne);
+    handle.dispose();
+  });
 }
