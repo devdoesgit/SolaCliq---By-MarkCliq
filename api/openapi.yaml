@@ -3667,6 +3667,18 @@ components:
           minimum: 0
         roof:
           $ref: "#/components/schemas/RoofType"
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: |
+            The site's position, read from the agent's phone when they tap
+            for it. Optional, sent with `lng` or not at all. Stored as
+            sent, and used for the installer's directions.
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
         subsidy:
           type: boolean
           description: Apply for PM Surya Ghar.

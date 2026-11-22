@@ -10,9 +10,11 @@ import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/mobile_formatter.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/customers/cubit/add_customer_cubit.dart';
+import 'package:solacliq/customers/cubit/site_location_cubit.dart';
 import 'package:solacliq/customers/data/india.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/customers/view/add_customer_sent_page.dart';
+import 'package:solacliq/customers/view/site_location_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
@@ -27,12 +29,17 @@ class AddCustomerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AddCustomerCubit(
-        context.read<UploadRepository>(),
-        context.read<RegistrationRepository>(),
-        orgId: workspace.orgId,
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AddCustomerCubit(
+            context.read<UploadRepository>(),
+            context.read<RegistrationRepository>(),
+            orgId: workspace.orgId,
+          ),
+        ),
+        BlocProvider(create: (_) => SiteLocationCubit()),
+      ],
       child: AddCustomerFlow(workspace: workspace),
     );
   }
@@ -221,6 +228,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
     final state = context.read<AddCustomerCubit>().state;
     if (state.reference != null) return false;
     return state.docs.isNotEmpty ||
+        context.read<SiteLocationCubit>().state.point != null ||
         _controllers.any((c) => c.text.trim().isNotEmpty);
   }
 
@@ -285,6 +293,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
       connectionType: _connection,
       proposedKw: _kw(_proposed.text)!,
       roof: _roof!,
+      site: context.read<SiteLocationCubit>().state.point,
       subsidy: _subsidy,
       documents: documents,
       consent: _consent,
@@ -663,6 +672,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             ),
           ],
         ),
+        const SiteLocationField(),
       ],
     );
   }
@@ -800,6 +810,13 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
               _roof == Roof.rcc ? l10n.roofRcc2 : _roofLabel(l10n, _roof!),
             ),
           ),
+          SolaKeyValueRow(l10n.kvLocation, switch (context
+              .watch<SiteLocationCubit>()
+              .state) {
+            SiteLocationState(locating: true) => l10n.findingLocation,
+            SiteLocationState(:final point?) => point.label,
+            _ => l10n.siteLocationNone,
+          }),
           SolaKeyValueRow(
             l10n.kvSubsidy,
             _subsidy ? l10n.pmSuryaGhar : l10n.subsidyNone,

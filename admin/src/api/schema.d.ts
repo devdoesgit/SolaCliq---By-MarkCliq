@@ -2740,6 +2740,13 @@ export interface components {
             connection_type: components["schemas"]["ConnectionType"];
             proposed_kw: number;
             roof: components["schemas"]["RoofType"];
+            /**
+             * @description The site's position, read from the agent's phone when they tap
+             *     for it. Optional, sent with `lng` or not at all. Stored as
+             *     sent, and used for the installer's directions.
+             */
+            lat?: number;
+            lng?: number;
             /** @description Apply for PM Surya Ghar. */
             subsidy: boolean;
             documents: {

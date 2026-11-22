@@ -45,6 +45,8 @@ covers `in_review` and `needs_fix`.
    city, PIN code (6 digits), state, DISCOM, consumer number, sanctioned
    load and proposed size in kW (more than 0, up to 1000), connection
    type, roof type, subsidy, `consent` true (else 422 on `consent`).
+   The site's `lat` and `lng` are optional (2026-11-22): both or
+   neither, stored as sent. See "Site location".
 2. Documents: each kind at most once. Required: Aadhaar, PAN,
    electricity bill, land document, signature
    (`registration.document_required`, 422, naming the kind); bank proof
@@ -87,6 +89,19 @@ covers `in_review` and `needs_fix`.
 (the company and the agent), what was registered (size, address), and
 how to set up the app ("Set up your account": the emailed code sets a
 password and verifies the email).
+
+## Site location (owner, 2026-11-22)
+
+"Just get lat, long, no checks on our end for now."
+
+- Step 2 has "Site location (optional)". A tap asks for permission and
+  reads the phone's position once. It's never read without a tap.
+- Location off, not allowed or not found: says so (with Open settings
+  for the first two) and never blocks "Next" or submitting. A failed
+  retake keeps the position it had.
+- Saved as `customers.lat` and `lng`, which the installer's Directions
+  already use. Not in scope: accuracy, distance or mock checks, a map,
+  changing it after submitting.
 
 ## My customers (#40, #41)
 

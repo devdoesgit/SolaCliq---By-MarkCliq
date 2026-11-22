@@ -132,7 +132,7 @@ has it (`lib/app/dev/quick_forms.dart`).
 | Worker | My expenses, expense detail, log expense with receipt and task (built) | F7 |
 | Worker | Notifications, profile, personal details, ID documents, bank (built) | F12 |
 | Sales | Home, customers (filter, search), customer, fix a returned document (built) | F4 |
-| Sales | Add customer with commission (commission pay type) (built) | F4/F8 |
+| Sales | Add customer with commission (commission pay type), optional site location (built) | F4/F8 |
 | Sales | Earnings, payout bank (commission) or Alerts tab (salary) (built) | F8 |
 | Customer | Home, track install, payments (UPI or bank, claim), documents (built) | F9 |
 | Everyone | Profile, settings, help sheet, workspaces; Personal: Learn, notifications (built) | F1/F12 |

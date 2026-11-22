@@ -33,6 +33,10 @@ abstract class _$CustomerRegistrationCreateCWProxy {
 
   CustomerRegistrationCreate roof(RoofType roof);
 
+  CustomerRegistrationCreate lat(num? lat);
+
+  CustomerRegistrationCreate lng(num? lng);
+
   CustomerRegistrationCreate subsidy(bool subsidy);
 
   CustomerRegistrationCreate documents(
@@ -65,6 +69,8 @@ abstract class _$CustomerRegistrationCreateCWProxy {
     ConnectionType connectionType,
     num proposedKw,
     RoofType roof,
+    num? lat,
+    num? lng,
     bool subsidy,
     List<CustomerRegistrationCreateDocumentsInner> documents,
     bool consent,
@@ -124,6 +130,12 @@ class _$CustomerRegistrationCreateCWProxyImpl
   CustomerRegistrationCreate roof(RoofType roof) => this(roof: roof);
 
   @override
+  CustomerRegistrationCreate lat(num? lat) => this(lat: lat);
+
+  @override
+  CustomerRegistrationCreate lng(num? lng) => this(lng: lng);
+
+  @override
   CustomerRegistrationCreate subsidy(bool subsidy) => this(subsidy: subsidy);
 
   @override
@@ -163,6 +175,8 @@ class _$CustomerRegistrationCreateCWProxyImpl
     Object? connectionType = const $CopyWithPlaceholder(),
     Object? proposedKw = const $CopyWithPlaceholder(),
     Object? roof = const $CopyWithPlaceholder(),
+    Object? lat = const $CopyWithPlaceholder(),
+    Object? lng = const $CopyWithPlaceholder(),
     Object? subsidy = const $CopyWithPlaceholder(),
     Object? documents = const $CopyWithPlaceholder(),
     Object? consent = const $CopyWithPlaceholder(),
@@ -222,6 +236,14 @@ class _$CustomerRegistrationCreateCWProxyImpl
           ? _value.roof
           // ignore: cast_nullable_to_non_nullable
           : roof as RoofType,
+      lat: lat == const $CopyWithPlaceholder()
+          ? _value.lat
+          // ignore: cast_nullable_to_non_nullable
+          : lat as num?,
+      lng: lng == const $CopyWithPlaceholder()
+          ? _value.lng
+          // ignore: cast_nullable_to_non_nullable
+          : lng as num?,
       subsidy: subsidy == const $CopyWithPlaceholder()
           ? _value.subsidy
           // ignore: cast_nullable_to_non_nullable
@@ -301,6 +323,8 @@ CustomerRegistrationCreate _$CustomerRegistrationCreateFromJson(
       ),
       proposedKw: $checkedConvert('proposed_kw', (v) => v as num),
       roof: $checkedConvert('roof', (v) => $enumDecode(_$RoofTypeEnumMap, v)),
+      lat: $checkedConvert('lat', (v) => v as num?),
+      lng: $checkedConvert('lng', (v) => v as num?),
       subsidy: $checkedConvert('subsidy', (v) => v as bool),
       documents: $checkedConvert(
         'documents',
@@ -344,6 +368,8 @@ Map<String, dynamic> _$CustomerRegistrationCreateToJson(
   'connection_type': _$ConnectionTypeEnumMap[instance.connectionType]!,
   'proposed_kw': instance.proposedKw,
   'roof': _$RoofTypeEnumMap[instance.roof]!,
+  'lat': ?instance.lat,
+  'lng': ?instance.lng,
   'subsidy': instance.subsidy,
   'documents': instance.documents.map((e) => e.toJson()).toList(),
   'consent': instance.consent,

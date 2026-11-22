@@ -1,5 +1,6 @@
 import 'package:api_client/api_client.dart' as api;
 import 'package:solacliq/app/data/api_call.dart';
+import 'package:solacliq/customers/data/site_point.dart';
 
 enum ConnectionType { residential, commercial, industrial }
 
@@ -40,6 +41,7 @@ class CustomerDraft {
     required this.subsidy,
     required this.documents,
     required this.consent,
+    this.site,
     this.commissionPaise,
     this.commissionNote,
   });
@@ -60,6 +62,9 @@ class CustomerDraft {
   final num proposedKw;
   final Roof roof;
   final bool subsidy;
+
+  /// Where the site is, if the agent took it.
+  final SitePoint? site;
 
   /// Upload ids by document.
   final Map<KycKind, String> documents;
@@ -104,6 +109,8 @@ class RegistrationRepository {
           ),
           proposedKw: d.proposedKw,
           roof: api.RoofType.values.byName(d.roof.name),
+          lat: d.site?.lat,
+          lng: d.site?.lng,
           subsidy: d.subsidy,
           documents: [
             for (final MapEntry(:key, :value) in d.documents.entries)

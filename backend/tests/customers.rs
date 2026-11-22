@@ -1034,3 +1034,53 @@ async fn an_agent_with_no_customers_gets_a_plain_home(db: PgPool) {
     assert!(res.body.get("progress").is_none());
     assert_eq!(res.body["list"]["rows"][0]["id"], "no_customers");
 }
+
+async fn site_of(db: &PgPool, email: &str) -> (Option<f64>, Option<f64>) {
+    sqlx::query_as("SELECT lat, lng FROM customers WHERE email = $1")
+        .bind(email)
+        .fetch_one(db)
+        .await
+        .unwrap()
+}
+
+#[sqlx::test]
+async fn the_sites_location_is_saved_when_sent(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let email = "site.with@example.com";
+    let mut body = form(&db, a, &meena, email, "9814000901").await;
+    body["lat"] = json!(30.7046);
+    body["lng"] = json!(76.7179);
+    let res = register(&db, a, &meena, body).await;
+    assert_eq!(res.status, StatusCode::CREATED, "{}", res.body);
+    assert_eq!(site_of(&db, email).await, (Some(30.7046), Some(76.7179)));
+}
+
+// No GPS, or permission refused: registering works all the same.
+#[sqlx::test]
+async fn the_sites_location_is_optional(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let email = "site.without@example.com";
+    let body = form(&db, a, &meena, email, "9814000902").await;
+    let res = register(&db, a, &meena, body).await;
+    assert_eq!(res.status, StatusCode::CREATED, "{}", res.body);
+    assert_eq!(site_of(&db, email).await, (None, None));
+}
+
+#[sqlx::test]
+async fn half_a_location_or_an_impossible_one_is_refused(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let body = form(&db, a, &meena, "site.bad@example.com", "9814000903").await;
+    for (lat, lng, field) in [
+        (json!(30.7), json!(null), "lng"),
+        (json!(null), json!(76.7), "lat"),
+        (json!(90.1), json!(76.7), "lat"),
+        (json!(30.7), json!(-180.1), "lng"),
+    ] {
+        let mut bad = body.clone();
+        bad["lat"] = lat;
+        bad["lng"] = lng;
+        let res = register(&db, a, &meena, bad).await;
+        assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(res.body["errors"][0]["field"], field);
+    }
+}

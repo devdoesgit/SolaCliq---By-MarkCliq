@@ -1481,6 +1481,38 @@
     "@kvSystem": {
         "description": "Review row."
     },
+    "siteLocation": "Site location (optional)",
+    "@siteLocation": {
+        "description": "Sales: the customer's site position."
+    },
+    "siteLocationTap": "Use this phone's location",
+    "@siteLocationTap": {
+        "description": "Placeholder: tap to read the phone's position."
+    },
+    "siteLocationWhy": "Tap while you're at the site. SolaCliq reads your location only then, and saves it for the installer's directions.",
+    "@siteLocationWhy": {
+        "description": "Why the site's location is read; shown before Android asks."
+    },
+    "siteLocationOff": "Location is off. Turn it on, or carry on without it.",
+    "@siteLocationOff": {
+        "description": "Site location failed: switched off."
+    },
+    "siteLocationDenied": "Location isn't allowed. Allow it, or carry on without it.",
+    "@siteLocationDenied": {
+        "description": "Site location failed: no permission."
+    },
+    "siteLocationNotFound": "Couldn't find the location. Tap to try again, or carry on without it.",
+    "@siteLocationNotFound": {
+        "description": "Site location failed: no fix."
+    },
+    "kvLocation": "Location",
+    "@kvLocation": {
+        "description": "Review row: the site's position."
+    },
+    "siteLocationNone": "Not added",
+    "@siteLocationNone": {
+        "description": "Review: no site position."
+    },
     "kvSubsidy": "Subsidy",
     "@kvSubsidy": {
         "description": "Review row."

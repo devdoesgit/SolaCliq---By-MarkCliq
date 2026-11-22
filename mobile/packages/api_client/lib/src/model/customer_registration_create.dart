@@ -48,6 +48,10 @@ class CustomerRegistrationCreate {
 
     required this.roof,
 
+    this.lat,
+
+    this.lng,
+
     required this.subsidy,
 
     required this.documents,
@@ -101,6 +105,17 @@ class CustomerRegistrationCreate {
   @JsonKey(name: r'roof', required: true, includeIfNull: false)
   final RoofType roof;
 
+  /// The site's position, read from the agent's phone when they tap for it. Optional, sent with `lng` or not at all. Stored as sent, and used for the installer's directions.
+  // minimum: -90
+  // maximum: 90
+  @JsonKey(name: r'lat', required: false, includeIfNull: false)
+  final num? lat;
+
+  // minimum: -180
+  // maximum: 180
+  @JsonKey(name: r'lng', required: false, includeIfNull: false)
+  final num? lng;
+
   /// Apply for PM Surya Ghar.
   @JsonKey(name: r'subsidy', required: true, includeIfNull: false)
   final bool subsidy;
@@ -139,6 +154,8 @@ class CustomerRegistrationCreate {
                 connectionType,
                 proposedKw,
                 roof,
+                lat,
+                lng,
                 subsidy,
                 documents,
                 consent,
@@ -159,6 +176,8 @@ class CustomerRegistrationCreate {
                 other.connectionType,
                 other.proposedKw,
                 other.roof,
+                other.lat,
+                other.lng,
                 other.subsidy,
                 other.documents,
                 other.consent,
@@ -185,6 +204,8 @@ class CustomerRegistrationCreate {
         connectionType,
         proposedKw,
         roof,
+        lat,
+        lng,
         subsidy,
         documents,
         consent,

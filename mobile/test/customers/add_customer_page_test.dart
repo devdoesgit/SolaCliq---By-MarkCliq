@@ -1,14 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
+import 'package:solacliq/customers/data/site_point.dart';
 import 'package:solacliq/customers/view/add_customer_page.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
+import '../helpers/fake_location.dart';
 import '../helpers/helpers.dart';
 
 Finder _input(String key) => find.descendant(
@@ -101,6 +104,7 @@ void main() {
         PayType payType, {
         String commission = '',
         String note = '',
+        bool takeLocation = false,
       }) async {
         final registrations = MockRegistrationRepository();
         when(
@@ -129,10 +133,14 @@ void main() {
             ),
           ],
         );
-        for (final key in ['add_customer_next', 'add_customer_next']) {
-          await tester.tapKey(key);
+        await tester.tapKey('add_customer_next');
+        await tester.pumpAndSettle();
+        if (takeLocation) {
+          await tester.tapKey('customer_location');
           await tester.pumpAndSettle();
         }
+        await tester.tapKey('add_customer_next');
+        await tester.pumpAndSettle();
         await tester.tapKey('add_customer_review');
         await tester.pumpAndSettle();
         final fields = find.byKey(const ValueKey('add_customer_commission'));
@@ -151,6 +159,38 @@ void main() {
             ).captured.single
             as CustomerDraft;
       }
+
+      testWidgets("the site's location is sent when taken", (tester) async {
+        GeolocatorPlatform.instance = FakeLocation();
+        final draft = await submitAs(
+          tester,
+          PayType.salary,
+          takeLocation: true,
+        );
+        expect(draft.site, const SitePoint(30.7046, 76.7179));
+      });
+
+      testWidgets('location not allowed: the customer still goes', (
+        tester,
+      ) async {
+        GeolocatorPlatform.instance = FakeLocation(
+          permission: LocationPermission.deniedForever,
+        );
+        final draft = await submitAs(
+          tester,
+          PayType.salary,
+          takeLocation: true,
+        );
+        expect(draft.site, isNull);
+      });
+
+      testWidgets('not tapped: location is never read', (tester) async {
+        final phone = FakeLocation();
+        GeolocatorPlatform.instance = phone;
+        final draft = await submitAs(tester, PayType.salary);
+        expect(draft.site, isNull);
+        expect(phone.reads + phone.asks, 0);
+      });
 
       testWidgets('commission agents send their commission in paise', (
         tester,

@@ -186,6 +186,12 @@ pub struct CustomerRegistrationCreate {
     pub connection_type: ConnectionType,
     pub proposed_kw: f64,
     pub roof: RoofType,
+    /*
+        The site's position from the agent's phone, if they took it: both
+        or neither. Stored as sent, never compared with anything
+    */
+    pub lat: Option<f64>,
+    pub lng: Option<f64>,
     // Apply for PM Surya Ghar.
     pub subsidy: bool,
     pub documents: Vec<RegistrationDocument>,
@@ -410,6 +416,19 @@ fn check(req: &CustomerRegistrationCreate, pay_type: Option<PayType>) -> ApiResu
     ] {
         if !(kw > 0.0 && kw <= MAX_KW) {
             errors.push((name, format!("More than 0, up to {MAX_KW} kW.")));
+        }
+    }
+    match (req.lat, req.lng) {
+        (None, None) => {}
+        (Some(_), None) => errors.push(("lng", "Send it with lat.".into())),
+        (None, Some(_)) => errors.push(("lat", "Send it with lng.".into())),
+        (Some(lat), Some(lng)) => {
+            if !validate::is_lat(lat) {
+                errors.push(("lat", "-90 to 90.".into()));
+            }
+            if !validate::is_lng(lng) {
+                errors.push(("lng", "-180 to 180.".into()));
+            }
         }
     }
     if !req.consent {
@@ -830,10 +849,11 @@ async fn submit_customer_registration(
                                 registered_by, user_id, email, city, pin_code, state, discom,
                                 consumer_number, sanctioned_load_kw, connection_type, roof,
                                 subsidy, consent_at, kyc_status,
-                                commission, commission_note, commission_status)
+                                commission, commission_note, commission_status, lat, lng)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
                  $18, $19, now(), 'in_review', $20, $21,
-                 CASE WHEN $20::bigint IS NULL THEN NULL ELSE 'in_review'::commission_status END)",
+                 CASE WHEN $20::bigint IS NULL THEN NULL ELSE 'in_review'::commission_status END,
+                 $22, $23)",
     )
     .bind(id)
     .bind(agent.org_id)
@@ -856,6 +876,8 @@ async fn submit_customer_registration(
     .bind(req.subsidy)
     .bind(req.commission)
     .bind(&v.commission_note)
+    .bind(req.lat)
+    .bind(req.lng)
     .execute(&mut *tx)
     .await
     .map_err(|e| {
