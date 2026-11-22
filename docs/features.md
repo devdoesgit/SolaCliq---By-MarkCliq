@@ -11,6 +11,7 @@ directly or the seed.
 
 Admin order: F3 → F4 → F5 → F6 → F7 → F8 → F11 → F12 → F13 → F14 (F2
 review page if needed).
+The proposed phases, waiting for review: `features/admin-website.md`.
 
 Status: `planned` → `spec` (spec written, under review) → `building` →
 `done`.
