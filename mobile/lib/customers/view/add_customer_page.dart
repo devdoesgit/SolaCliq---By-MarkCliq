@@ -123,6 +123,15 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
     return value == null || value <= 0 ? null : value;
   }
 
+  // The server's limit (`customers.rs`, MAX_KW).
+  static const _maxKw = 1000;
+
+  static String? _kwError(String text, AppLocalizations l10n) {
+    final kw = _kw(text);
+    if (kw == null) return l10n.errorKw;
+    return kw > _maxKw ? l10n.errorKwMax : null;
+  }
+
   /// Quick forms (development): fills this step's blanks with samples.
   void _fillStep() {
     switch (_step) {
@@ -166,15 +175,13 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
           _errors
             ..['name'] = AuthValidators.required(
               _name.text,
-              l10n.fieldFullName,
-              l10n,
+              l10n.errorNameRequired,
             )
             ..['mobile'] = AuthValidators.mobile(_mobile.text, l10n)
             ..['email'] = AuthValidators.email(_email.text.trim(), l10n)
             ..['address'] = AuthValidators.required(
               _address.text,
-              l10n.fieldHouse,
-              l10n,
+              l10n.errorAddressRequired,
             )
             ..['cityPin'] = _cityPinPattern.hasMatch(_cityPin.text.trim())
                 ? null
@@ -185,13 +192,10 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             ..['discom'] = _provider.isEmpty ? l10n.errorChoose : null
             ..['consumer'] = AuthValidators.required(
               _consumer.text,
-              l10n.fieldConsumerNo,
-              l10n,
+              l10n.errorConsumerRequired,
             )
-            ..['sanctioned'] = _kw(_sanctioned.text) == null
-                ? l10n.errorKw
-                : null
-            ..['proposed'] = _kw(_proposed.text) == null ? l10n.errorKw : null
+            ..['sanctioned'] = _kwError(_sanctioned.text, l10n)
+            ..['proposed'] = _kwError(_proposed.text, l10n)
             ..['roof'] = _roof == null ? l10n.errorChoose : null;
         case _Step.docs:
           _errors['consent'] = _consent ? null : l10n.errorCustomerConsent;

@@ -33,8 +33,8 @@ void main() {
       await tester.pumpApp(const LoginPage(), authRepository: auth);
       await tester.tapKey('login_submit');
       await tester.pump();
-      expect(find.text('Enter Email.'), findsOneWidget);
-      expect(find.text('Enter Password.'), findsOneWidget);
+      expect(find.text('Enter an email address.'), findsOneWidget);
+      expect(find.text('Enter a password.'), findsOneWidget);
       verifyNever(
         () => auth.logIn(
           email: any(named: 'email'),

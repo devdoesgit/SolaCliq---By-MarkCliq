@@ -9,23 +9,23 @@ abstract final class AuthValidators {
   static final _code = RegExp(r'^\d{6}$');
 
   static String? name(String value, AppLocalizations l10n) =>
-      value.trim().isEmpty ? l10n.errorRequired(l10n.fieldName) : null;
+      value.trim().isEmpty ? l10n.errorNameRequired : null;
 
   static String? email(String value, AppLocalizations l10n) {
     final v = value.trim();
-    if (v.isEmpty) return l10n.errorRequired(l10n.fieldEmail);
+    if (v.isEmpty) return l10n.errorEmailRequired;
     return _email.hasMatch(v) ? null : l10n.errorEmail;
   }
 
   /// For log in: anything non-empty, since old passwords may predate rules.
   static String? existingPassword(String value, AppLocalizations l10n) =>
-      value.isEmpty ? l10n.errorRequired(l10n.fieldPassword) : null;
+      value.isEmpty ? l10n.errorPasswordRequired : null;
 
   static final _digit = RegExp(r'\d');
   static final _mobile = RegExp(r'^[6-9]\d{9}$');
 
   static String? newPassword(String value, AppLocalizations l10n) {
-    if (value.isEmpty) return l10n.errorRequired(l10n.fieldPassword);
+    if (value.isEmpty) return l10n.errorPasswordRequired;
     if (value.length < 8) return l10n.errorPasswordShort;
     return _digit.hasMatch(value) ? null : l10n.errorPasswordNumber;
   }
@@ -52,8 +52,8 @@ abstract final class AuthValidators {
     return _mobile.hasMatch(digits) ? null : l10n.errorPhone;
   }
 
-  static String? required(String value, String field, AppLocalizations l10n) =>
-      value.trim().isEmpty ? l10n.errorRequired(field) : null;
+  static String? required(String value, String error) =>
+      value.trim().isEmpty ? error : null;
 
   /// A mobile number's 10 digits, without spaces.
   static String digits(String value) => value.replaceAll(RegExp(r'\s'), '');

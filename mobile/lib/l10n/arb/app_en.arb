@@ -125,15 +125,6 @@
     "@orgSuspended": {
         "description": "Org status."
     },
-    "errorRequired": "Enter {field}.",
-    "@errorRequired": {
-        "description": "Field left empty.",
-        "placeholders": {
-            "field": {
-                "type": "String"
-            }
-        }
-    },
     "errorEmail": "Enter an email like name@example.com.",
     "@errorEmail": {
         "description": "Email in the wrong form."
@@ -2663,6 +2654,81 @@
     "customersFooter": "You see the customers you added and how far their install has got.",
     "@customersFooter": {
         "description": "Footer under the customers list."
+    },
+    "errorNameRequired": "Enter a name.",
+    "@errorNameRequired": {
+        "description": "A name field is empty."
+    },
+    "errorEmailRequired": "Enter an email address.",
+    "@errorEmailRequired": {
+        "description": "An email field is empty."
+    },
+    "errorPasswordRequired": "Enter a password.",
+    "@errorPasswordRequired": {
+        "description": "A password field is empty."
+    },
+    "errorLegalNameRequired": "Enter the legal name.",
+    "@errorLegalNameRequired": {
+        "description": "Registration: legal name is empty."
+    },
+    "errorAddressRequired": "Enter the address.",
+    "@errorAddressRequired": {
+        "description": "An address field is empty."
+    },
+    "errorCityRequired": "Enter the city.",
+    "@errorCityRequired": {
+        "description": "A city field is empty."
+    },
+    "errorConsumerRequired": "Enter the consumer number.",
+    "@errorConsumerRequired": {
+        "description": "Add customer: consumer number is empty."
+    },
+    "errorBusinessTypeRequired": "Choose a business type.",
+    "@errorBusinessTypeRequired": {
+        "description": "Registration: no business type."
+    },
+    "errorKwMax": "Up to 1,000 kW.",
+    "@errorKwMax": {
+        "description": "A kW figure over the server's limit."
+    },
+    "noSearchMatch": "No customers match \"{query}\".",
+    "@noSearchMatch": {
+        "description": "Customers: the search found nobody.",
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "weekDayTasks": "{day} {date}, {n, plural, =0{no tasks} =1{1 task} other{{n} tasks}}",
+    "@weekDayTasks": {
+        "description": "A day of the week strip, read out.",
+        "placeholders": {
+            "day": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            },
+            "n": {
+                "type": "int"
+            }
+        }
+    },
+    "progressOf": "{label}, {done} of {total}",
+    "@progressOf": {
+        "description": "An install bar, read out.",
+        "placeholders": {
+            "label": {
+                "type": "String"
+            },
+            "done": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
     },
     "noCustomersMatch": "No customers here yet.",
     "@noCustomersMatch": {

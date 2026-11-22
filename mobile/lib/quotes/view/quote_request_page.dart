@@ -85,7 +85,7 @@ class _QuoteRequestViewState extends State<QuoteRequestView> {
         ..['pin'] = RegExp(r'^[1-9]\d{5}$').hasMatch(_pin.text.trim())
             ? null
             : l10n.errorPinCode
-        ..['city'] = AuthValidators.required(_city.text, l10n.fieldCity, l10n)
+        ..['city'] = AuthValidators.required(_city.text, l10n.errorCityRequired)
         ..['bill'] = _bill == null ? l10n.errorChoose : null
         ..['when'] = _when == null ? l10n.errorChoose : null
         ..['phone'] = _needsPhone

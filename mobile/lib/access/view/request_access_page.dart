@@ -109,24 +109,25 @@ class _RequestAccessViewState extends State<RequestAccessView> {
     final gstin = Gstin.tryParse(_gstin.text);
     setState(() {
       _errors
-        ..['owner'] = AuthValidators.required(_owner.text, l10n.fieldName, l10n)
+        ..['owner'] = AuthValidators.required(
+          _owner.text,
+          l10n.errorNameRequired,
+        )
         ..['email'] = AuthValidators.email(_email.text.trim(), l10n)
         ..['phone'] = AuthValidators.mobile(_phone.text, l10n)
         ..['gstin'] = gstin == null ? l10n.errorGstin : null
         ..['legalName'] = AuthValidators.required(
           _legalName.text,
-          l10n.fieldLegalName,
-          l10n,
+          l10n.errorLegalNameRequired,
         )
         ..['businessType'] = _businessType == null
-            ? l10n.errorRequired(l10n.fieldBusinessType)
+            ? l10n.errorBusinessTypeRequired
             : null
         ..['address1'] = AuthValidators.required(
           _address1.text,
-          l10n.fieldAddress,
-          l10n,
+          l10n.errorAddressRequired,
         )
-        ..['city'] = AuthValidators.required(_city.text, l10n.fieldCity, l10n)
+        ..['city'] = AuthValidators.required(_city.text, l10n.errorCityRequired)
         ..['pin'] = _pinPattern.hasMatch(_pin.text.trim())
             ? null
             : l10n.errorPinCode

@@ -70,11 +70,7 @@ class _SignupViewState extends State<SignupView> {
     final l10n = context.l10n;
     final email = _email.text.trim();
     setState(() {
-      _nameError = AuthValidators.required(
-        _name.text,
-        l10n.fieldFullName,
-        l10n,
-      );
+      _nameError = AuthValidators.required(_name.text, l10n.errorNameRequired);
       _emailError = AuthValidators.email(email, l10n);
       _mobileError = AuthValidators.optionalMobile(_mobile.text, l10n);
       _passwordError = AuthValidators.newPassword(_password.text, l10n);
