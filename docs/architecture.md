@@ -205,8 +205,9 @@ One OpenAPI spec is the contract between backend and frontends.
   rejected; active ⇄ suspended. Set by a platform admin.
 - **Geotagged capture:** photos only from the live camera, never the gallery.
   The device records GPS coordinates, accuracy and time at the moment of
-  capture. The server flags captures far from the customer's site, with poor
-  accuracy, or with a mocked location. Flags go to review; nothing is blocked.
+  capture. The server stores them as sent and judges nothing (owner, 2026-11-22).
+- **Crash reporting:** Firebase Crashlytics in release builds
+  (`mobile/lib/crash/`): error type and stack only.
 - **Photos** are compressed on the device before upload.
 - **Server-side rules:** pricing, approvals and stage rules live in the
   backend, so most fixes need no app update.
@@ -268,7 +269,6 @@ generated client, and `packages/sola_ui` for every visual. Features live in
 
 ## Proposed, not confirmed
 
-- Sentry for crash reporting (free tier, or self-hosted).
 - Offline-first storage with `drift` (SQLite): captures, expenses and job
   updates saved locally and synced when there is signal.
 - Feature flags from the API, to switch off a broken feature without an

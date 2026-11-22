@@ -74,6 +74,13 @@ The Android build needs `android/app/google-services.json` (git-ignored):
 The `main_*` files pass `FirebasePushMessaging`; tests get none
 (`lib/push/`).
 
+## Crash reporting
+
+Crashlytics, in release builds only (`lib/crash/`). Pass it an error's
+type, never the error or its message, and never set a user id, key or
+log: `docs/data-policy.md` promises that. A release build uploads R8's
+mapping file to Firebase.
+
 ## App icons
 
 The launcher, round, themed (monochrome) and status-bar icons, for every

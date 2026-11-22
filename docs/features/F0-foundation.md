@@ -93,7 +93,8 @@ None directly. Builders only: the owner (backend) and Claude (mobile, admin).
 - Backend code (built later, phase by phase).
 - Shorebird, release signing, the updater, the download page (F13).
 - iOS builds, dark theme, icons, logo, translations.
-- Sentry, `drift`, feature flags (still undecided).
+- `drift`, feature flags (still undecided). Crash reporting became
+  Crashlytics on 2026-11-22 (`decisions.md`).
 
 ## API
 

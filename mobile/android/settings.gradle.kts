@@ -22,6 +22,8 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.2.21" apply false
     // Reads app/google-services.json (push notifications, F12).
     id("com.google.gms.google-services") version "4.6.0" apply false
+    // Crash reports; release builds also upload R8's mapping file.
+    id("com.google.firebase.crashlytics") version "3.0.8" apply false
 }
 
 include(":app")
