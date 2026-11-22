@@ -154,7 +154,7 @@
     "@failEmailUnverified": {
         "description": "Login with an unverified email."
     },
-    "failCodeInvalid": "That code is wrong. Check the email and try again.",
+    "failCodeInvalid": "That code is wrong or has expired. Check the email, or send a new one.",
     "@failCodeInvalid": {
         "description": "Wrong code."
     },

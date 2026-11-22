@@ -26,7 +26,7 @@ const API_CODES: Record<string, AuthErrorCode> = {
 export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   invalid_credentials: 'Email or password is wrong.',
   email_unverified: "Your email isn't verified yet. Use the code we emailed you.",
-  code_invalid: 'That code is wrong. Check the email and try again.',
+  code_invalid: 'That code is wrong or has expired. Check the email, or request a new one.',
   code_expired: 'That code has expired. Request a new one.',
   too_many_attempts: 'Too many tries. Wait a few minutes and try again.',
   password_too_weak: 'Choose a stronger password.',

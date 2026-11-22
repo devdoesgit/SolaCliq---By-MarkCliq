@@ -157,12 +157,12 @@ impl Checked {
 /*
     Count one try and compare the code
     --------------------------------------------------------------------
-    - user_id None: the email has no account. Answers the same as an
-      account with no live code, so the reply doesn't reveal which
-    - not 6 digits -> 400 auth.code_invalid (not counted as a try)
-    - no live code (none sent, expired, already used) -> 400 auth.code_expired
-    - tries used up -> 429 auth.too_many_attempts
-    - wrong -> 400 auth.code_invalid
+    - not 6 digits, wrong, no live code (none sent, expired, already
+      used, tries used up), or no account for the email -> 400
+      auth.code_invalid. One answer for all, so guesses can't tell an
+      email with an account from one without: only some emails ever have
+      a code, so "expired" or "tries used up" would give those away
+      (QA-08, 2026-11-22). The app's wording covers every case
     - right -> Checked
 */
 pub async fn check(
@@ -176,7 +176,7 @@ pub async fn check(
         return Err(code_invalid());
     }
     let Some(user_id) = user_id else {
-        return Err(code_expired());
+        return Err(code_invalid());
     };
 
     /*
@@ -197,24 +197,9 @@ pub async fn check(
     .fetch_optional(db)
     .await?;
 
+    // No row: no live code, or its tries are used up. Not told apart.
     let Some((hash,)) = row else {
-        /*
-            no row updated: either there's no live code, or its tries are
-            used up. One more read tells them apart
-        */
-        let used_up: Option<(bool,)> = sqlx::query_as(
-            "SELECT attempts >= $3 FROM email_codes
-             WHERE user_id = $1 AND purpose = $2 AND expires_at > now()",
-        )
-        .bind(user_id)
-        .bind(purpose.as_str())
-        .bind(MAX_ATTEMPTS)
-        .fetch_optional(db)
-        .await?;
-        return Err(match used_up {
-            Some((true,)) => too_many_attempts(),
-            _ => code_expired(),
-        });
+        return Err(code_invalid());
     };
 
     /*
@@ -347,8 +332,12 @@ fn is_six_digits(code: &str) -> bool {
 }
 
 pub fn code_invalid() -> ApiError {
-    ApiError::new(StatusCode::BAD_REQUEST, "auth.code_invalid", "Wrong code")
-        .detail("Check the code and try again.")
+    ApiError::new(
+        StatusCode::BAD_REQUEST,
+        "auth.code_invalid",
+        "Wrong or expired code",
+    )
+    .detail("Check the code, or request a new one.")
 }
 
 pub fn code_expired() -> ApiError {

@@ -557,7 +557,7 @@ class AuthApi {
   }
 
   /// Verify an email with its code
-  /// Marks the email verified so the account can log in. Codes last 5 minutes and allow 5 tries; after that, request a new one.
+  /// Marks the email verified so the account can log in. Codes last 5 minutes and allow 5 tries. A wrong, expired, used-up or never sent code all answer 400 &#x60;auth.code_invalid&#x60;, so the reply can&#39;t show which emails have accounts; 429 is only the per-IP limit.
   ///
   /// Parameters:
   /// * [verifyEmailRequest]

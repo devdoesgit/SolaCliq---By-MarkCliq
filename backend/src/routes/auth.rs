@@ -197,7 +197,8 @@ pub struct VerifyEmailRequest {
     Verify an email with its code
     --------------------------------------------------------------------
     - right code -> email verified, the account can log in (204)
-    - codes last 5 minutes and allow 5 tries (see codes.rs for the errors)
+    - codes last 5 minutes and allow 5 tries; past either, the answer is
+      the same as a wrong code (see codes.rs)
 */
 #[utoipa::path(
     post,

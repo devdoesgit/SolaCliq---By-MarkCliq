@@ -4089,7 +4089,7 @@
                 "verify"
               ]
             },
-            "description": "**Verify an email with its code** (`verifyEmail`) · as no login\n\nMarks the email verified so the account can log in. Codes last 5\nminutes and allow 5 tries; after that, request a new one.",
+            "description": "**Verify an email with its code** (`verifyEmail`) · as no login\n\nMarks the email verified so the account can log in. Codes last 5\nminutes and allow 5 tries. A wrong, expired, used-up or never\nsent code all answer 400 `auth.code_invalid`, so the reply can't\nshow which emails have accounts; 429 is only the per-IP limit.",
             "auth": {
               "type": "noauth"
             },

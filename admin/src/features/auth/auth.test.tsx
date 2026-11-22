@@ -242,7 +242,9 @@ describe('password reset', () => {
     await userEvent.type(await screen.findByLabelText('6-digit code'), '111111');
     await userEvent.type(screen.getByLabelText('New password'), 'new password');
     await userEvent.click(screen.getByRole('button', { name: 'Save password' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('That code is wrong.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'That code is wrong or has expired.',
+    );
   });
 
   it('the reset page needs an email', async () => {

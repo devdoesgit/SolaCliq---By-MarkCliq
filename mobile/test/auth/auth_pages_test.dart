@@ -287,7 +287,9 @@ void main() {
       await tester.enterText(_input('verify_code'), '111111');
       await tester.tapKey('verify_submit');
       await tester.pump();
-      const wrong = 'That code is wrong. Check the email and try again.';
+      const wrong =
+          'That code is wrong or has expired. '
+          'Check the email, or send a new one.';
       expect(find.text(wrong), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 61));

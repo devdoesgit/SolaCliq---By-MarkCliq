@@ -107,7 +107,7 @@ async fn a_code_works_once(db: PgPool) {
 
     let again = verify(&db, email, &code).await;
     assert_eq!(again.status, StatusCode::BAD_REQUEST);
-    assert_eq!(code_of(&again), "auth.code_expired");
+    assert_eq!(code_of(&again), "auth.code_invalid");
 }
 
 #[sqlx::test]
@@ -121,8 +121,8 @@ async fn the_sixth_try_is_refused_even_with_the_right_code(db: PgPool) {
         assert_eq!(code_of(&res), "auth.code_invalid");
     }
     let res = verify(&db, email, &code).await;
-    assert_eq!(res.status, StatusCode::TOO_MANY_REQUESTS);
-    assert_eq!(code_of(&res), "auth.too_many_attempts");
+    assert_eq!(res.status, StatusCode::BAD_REQUEST);
+    assert_eq!(code_of(&res), "auth.code_invalid");
 }
 
 #[sqlx::test]
@@ -136,7 +136,7 @@ async fn an_expired_code_is_refused(db: PgPool) {
 
     let res = verify(&db, email, &last_code(email)).await;
     assert_eq!(res.status, StatusCode::BAD_REQUEST);
-    assert_eq!(code_of(&res), "auth.code_expired");
+    assert_eq!(code_of(&res), "auth.code_invalid");
 }
 
 #[sqlx::test]
@@ -156,10 +156,10 @@ async fn a_malformed_code_is_refused_without_using_a_try(db: PgPool) {
 }
 
 #[sqlx::test]
-async fn an_unknown_email_looks_like_no_code(db: PgPool) {
+async fn an_unknown_email_looks_like_a_wrong_code(db: PgPool) {
     let res = verify(&db, "nobody.verify@example.com", "123456").await;
     assert_eq!(res.status, StatusCode::BAD_REQUEST);
-    assert_eq!(code_of(&res), "auth.code_expired");
+    assert_eq!(code_of(&res), "auth.code_invalid");
 
     for path in ["/api/v1/auth/email/resend", "/api/v1/auth/password/forgot"] {
         let res = post(&db, path, json!({ "email": "nobody.verify@example.com" })).await;
@@ -321,5 +321,63 @@ async fn a_verify_code_cannot_reset_a_password(db: PgPool) {
     )
     .await;
     assert_eq!(res.status, StatusCode::BAD_REQUEST);
-    assert_eq!(code_of(&res), "auth.code_expired");
+    assert_eq!(code_of(&res), "auth.code_invalid");
+}
+
+/*
+    QA-08: signing up with an email that already has an account sends no
+    code, so any code then must get the same answer as a wrong code for a
+    new account, or the two could be told apart
+*/
+#[sqlx::test]
+async fn an_existing_account_answers_like_a_new_one(db: PgPool) {
+    let taken = "verify.taken@example.com";
+    let fresh = "verify.fresh@example.com";
+    signup(&db, taken).await;
+    verify(&db, taken, &last_code(taken)).await;
+    signup(&db, taken).await;
+    signup(&db, fresh).await;
+
+    let on_taken = verify(&db, taken, "123456").await;
+    let on_fresh = verify(&db, fresh, &other_code(&last_code(fresh))).await;
+    assert_eq!(on_taken.status, on_fresh.status);
+    assert_eq!(on_taken.body, on_fresh.body);
+}
+
+/*
+    QA-08: using up a code's tries mustn't show that there was a code
+    --------------------------------------------------------------------
+    - verify: a verified account, a new one and no account
+    - reset: an account with a live code and no account
+*/
+#[sqlx::test]
+async fn used_up_tries_answer_like_no_account(db: PgPool) {
+    let taken = "tries.taken@example.com";
+    let fresh = "tries.fresh@example.com";
+    let nobody = "tries.nobody@example.com";
+    signup(&db, taken).await;
+    verify(&db, taken, &last_code(taken)).await;
+    signup(&db, fresh).await;
+    let wrong = other_code(&last_code(fresh));
+    for n in 1..=7 {
+        let expected = verify(&db, nobody, &wrong).await;
+        for email in [taken, fresh] {
+            let res = verify(&db, email, &wrong).await;
+            assert_eq!(res.status, expected.status, "{email}, try {n}");
+            assert_eq!(res.body, expected.body, "{email}, try {n}");
+        }
+    }
+
+    let forgot = json!({ "email": taken });
+    post(&db, "/api/v1/auth/password/forgot", forgot).await;
+    let wrong = other_code(&last_code(taken));
+    let reset =
+        |email: &str| json!({ "email": email, "code": wrong, "new_password": "sunlight44" });
+    for n in 1..=7 {
+        let path = "/api/v1/auth/password/reset";
+        let expected = post(&db, path, reset(nobody)).await;
+        let res = post(&db, path, reset(taken)).await;
+        assert_eq!(res.status, expected.status, "reset, try {n}");
+        assert_eq!(res.body, expected.body, "reset, try {n}");
+    }
 }

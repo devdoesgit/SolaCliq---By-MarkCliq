@@ -73,6 +73,8 @@ feature knows who is using it and in which orgs.
   account gets `account.email_unverified` only after the right password.
 - Codes: 6 digits, valid **5 minutes**, 5 tries, stored hashed (PostgreSQL),
   single use.
+- A wrong, expired, used-up or unsent code all answer
+  `auth.code_invalid` (2026-11-22, QA-08).
 - Rate limits: login 5 tries per 15 minutes per email and per IP; code
   emails 3 per hour per email.
 - Emails go through the Gmail API (Google Workspace) from
