@@ -30,12 +30,12 @@ String groupIndian(String digits) {
   return '${groups.join(',')},$tail';
 }
 
-/// Formats paise as whole rupees, for estimates and headline figures where
-/// paise would be noise: `₹78,000`. Rounds to the nearest rupee.
+/// Formats paise as rupees without empty decimals: `₹78,000`, and
+/// `₹4.55` when there are paise. Never rounds: an amount someone logged
+/// or owes shows exactly as stored.
 String formatRupees(int paise) {
-  final rupees = (paise / 100).round();
-  final sign = rupees < 0 ? minusSign : '';
-  return '$sign₹${groupIndian(rupees.abs().toString())}';
+  final exact = formatPaise(paise);
+  return paise % 100 == 0 ? exact.substring(0, exact.length - 3) : exact;
 }
 
 /// Paise in lakh of rupees with at most two decimals and no trailing

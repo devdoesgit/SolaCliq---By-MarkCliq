@@ -64,6 +64,14 @@ void main() {
       expect(formatRupees(28500000), '₹2,85,000');
       expect(formatRupees(-50000), '$minusSign₹500');
     });
+
+    test('shows paise when there are any, never rounding', () {
+      expect(formatRupees(455), '₹4.55');
+      expect(formatRupees(124050), '₹1,240.50');
+      expect(formatRupees(5), '₹0.05');
+      expect(formatRupees(-455), '$minusSign₹4.55');
+      expect(formatRupees(0), '₹0');
+    });
   });
 
   group('formatLakh', () {
