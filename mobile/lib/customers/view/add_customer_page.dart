@@ -18,6 +18,7 @@ import 'package:solacliq/customers/view/site_location_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
+import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// An agent registers a customer in three steps (who, site, KYC), checks
@@ -720,7 +721,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
                 key: ValueKey('doc_${kind.name}'),
                 title: title,
                 detail: switch (state.docs[kind]) {
-                  DocFailed(tooLarge: true) => l10n.fileTooBig,
+                  DocFailed(:final problem?) => problem.message(l10n),
                   DocFailed() => l10n.uploadFailed,
                   _ => detail,
                 },

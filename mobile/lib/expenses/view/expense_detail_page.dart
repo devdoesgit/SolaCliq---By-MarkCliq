@@ -13,7 +13,9 @@ import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
+import 'package:solacliq/uploads/view/file_preview.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
+import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// One expense: its amount and status, what the admin said, the details
@@ -66,8 +68,8 @@ class _ExpenseDetailPageState extends State<ExpenseDetailPage> {
           extra: ExpenseSentArgs(workspace: widget.workspace, expense: expense),
         ),
       );
-    } on UploadTooLarge {
-      if (mounted) setState(() => _error = l10n.fileTooBig);
+    } on UploadRefused catch (refused) {
+      if (mounted) setState(() => _error = refused.problem.message(l10n));
     } on AuthFailure catch (failure) {
       if (mounted) setState(() => _error = failure.code.message(l10n));
     } finally {
@@ -211,11 +213,10 @@ class _Details extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(SolaRadius.radius12),
-                  child: Image(
+                  child: FilePreview(
                     image: receipt,
                     width: 84,
                     height: 84,
-                    fit: BoxFit.cover,
                     semanticLabel: l10n.currentReceipt,
                   ),
                 ),

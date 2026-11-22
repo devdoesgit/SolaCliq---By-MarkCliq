@@ -38,7 +38,11 @@ void main() {
       });
   });
 
-  final photo = UploadFile(name: 'receipt.jpg', bytes: Uint8List(10));
+  // A JPEG's first bytes, then padding.
+  final photo = UploadFile(
+    name: 'receipt.jpg',
+    bytes: Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0, 0, 0, 0, 0, 0, 0]),
+  );
 
   group(UploadRepository, () {
     test('puts the bytes to the presigned URL, returns the id', () async {
@@ -62,20 +66,41 @@ void main() {
     test('over 10 MB is refused before asking the server', () async {
       final big = UploadFile(
         name: 'big.jpg',
-        bytes: Uint8List(UploadRepository.maxBytes + 1),
+        bytes: Uint8List(UploadRepository.maxBytes + 1)
+          ..setAll(0, [0xFF, 0xD8, 0xFF]),
       );
       await expectLater(
         repository('https://x').upload('o1', big, UploadPurpose.kyc),
-        throwsA(isA<UploadTooLarge>()),
+        throwsA(
+          isA<UploadRefused>().having(
+            (e) => e.problem,
+            'problem',
+            UploadProblem.tooLarge,
+          ),
+        ),
       );
+      expect(apiCalls, isEmpty);
     });
 
-    test('content type comes from the file name', () {
+    test('the type comes from the name, else the bytes; nothing refused', () {
+      UploadFile file(String name, List<int> head) =>
+          UploadFile(name: name, bytes: Uint8List.fromList([...head, 0, 0]));
       expect(
-        UploadFile(name: 'a.PDF', bytes: Uint8List(1)).contentType,
+        file('a.PDF', []).contentType,
         UploadCreateContentTypeEnum.applicationSlashPdf,
       );
-      expect(UploadFile(name: 'a.heic', bytes: Uint8List(1)).contentType, null);
+      expect(
+        file('scan', '%PDF'.codeUnits).contentType,
+        UploadCreateContentTypeEnum.applicationSlashPdf,
+      );
+      // A renamed or unknown file still goes; the admin judges it.
+      final odd = file('fake-receipt.jpg', 'not an image'.codeUnits);
+      expect(odd.contentType, UploadCreateContentTypeEnum.imageSlashJpeg);
+      expect(odd.problem, isNull);
+      expect(
+        file('photo.heic', []).contentType,
+        UploadCreateContentTypeEnum.imageSlashJpeg,
+      );
     });
   });
 }

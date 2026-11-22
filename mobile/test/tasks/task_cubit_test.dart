@@ -14,7 +14,10 @@ import 'task_fixtures.dart';
 void main() {
   late MockTaskRepository tasks;
   late MockUploadRepository uploads;
-  final file = UploadFile(name: 'p.jpg', bytes: Uint8List(3));
+  final file = UploadFile(
+    name: 'p.jpg',
+    bytes: Uint8List.fromList([0xFF, 0xD8, 0xFF]),
+  );
   final fix = CaptureFix(
     lat: 30.7,
     lng: 76.7,

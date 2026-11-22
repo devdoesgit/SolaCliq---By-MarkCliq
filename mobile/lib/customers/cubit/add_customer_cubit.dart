@@ -27,12 +27,13 @@ final class DocUploaded extends DocState {
 }
 
 final class DocFailed extends DocState {
-  const new({this.tooLarge = false});
+  const new({this.problem});
 
-  final bool tooLarge;
+  /// Refused on the phone (too big); null when the upload itself failed.
+  final UploadProblem? problem;
 
   @override
-  List<Object?> get props => [tooLarge];
+  List<Object?> get props => [problem];
 }
 
 class AddCustomerState extends Equatable {
@@ -117,8 +118,8 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
     try {
       final id = await _uploads.upload(orgId, file, UploadPurpose.kyc);
       _setDoc(kind, DocUploaded(id));
-    } on UploadTooLarge {
-      _setDoc(kind, const DocFailed(tooLarge: true));
+    } on UploadRefused catch (refused) {
+      _setDoc(kind, DocFailed(problem: refused.problem));
     } on AuthFailure {
       _setDoc(kind, const DocFailed());
     }

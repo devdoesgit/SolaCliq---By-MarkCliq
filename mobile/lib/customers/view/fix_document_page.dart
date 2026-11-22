@@ -15,6 +15,7 @@ import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
+import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// Sends a clearer copy of the customer document the admin returned:
@@ -77,10 +78,10 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
           _sent = true;
         });
       }
-    } on UploadTooLarge {
+    } on UploadRefused catch (refused) {
       if (mounted) {
         setState(() {
-          _error = l10n.fileTooBig;
+          _error = refused.problem.message(l10n);
         });
       }
     } on AuthFailure catch (failure) {

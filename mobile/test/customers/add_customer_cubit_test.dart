@@ -13,7 +13,10 @@ import '../helpers/helpers.dart';
 void main() {
   late MockUploadRepository uploads;
   late MockRegistrationRepository registrations;
-  final file = UploadFile(name: 'a.jpg', bytes: Uint8List(4));
+  final file = UploadFile(
+    name: 'a.jpg',
+    bytes: Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0]),
+  );
 
   CustomerDraft draft(Map<KycKind, String> documents) => CustomerDraft(
     name: 'Test',
@@ -86,12 +89,14 @@ void main() {
       'a failed or oversized upload can be retried',
       setUp: () =>
           when(() => uploads.upload(any(), any(), any()))
-              .thenThrow(const UploadTooLarge()),
+              .thenThrow(const UploadRefused(UploadProblem.tooLarge)),
       build: build,
       act: (c) => c.addDocument(KycKind.pan, file),
       skip: 1,
       expect: () => [
-        const AddCustomerState(docs: {KycKind.pan: DocFailed(tooLarge: true)}),
+        const AddCustomerState(
+          docs: {KycKind.pan: DocFailed(problem: UploadProblem.tooLarge)},
+        ),
       ],
     );
 

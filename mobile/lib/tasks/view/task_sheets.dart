@@ -10,6 +10,7 @@ import 'package:solacliq/tasks/cubit/task_cubit.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
+import 'package:solacliq/uploads/view/file_preview.dart';
 
 /// "Report a problem": a reason, what happened, an optional photo from the
 /// camera. The admin decides what happens next.
@@ -146,7 +147,7 @@ class _ProblemFormState extends State<_ProblemForm> {
                           color: SolaColors.muted,
                         ),
                       )
-                    : Image.memory(photo.bytes, fit: BoxFit.cover),
+                    : FilePreview(image: MemoryImage(photo.bytes)),
               ),
               Expanded(
                 child: SolaText(

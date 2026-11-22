@@ -16,6 +16,7 @@ import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
+import 'package:solacliq/uploads/view/file_preview.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 import 'package:uuid/uuid.dart';
@@ -471,7 +472,7 @@ class _ReceiptTile extends StatelessWidget {
             : Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.memory(receipt.bytes, fit: BoxFit.cover),
+                  FilePreview(image: MemoryImage(receipt.bytes)),
                   const PositionedDirectional(
                     end: 6,
                     bottom: 6,

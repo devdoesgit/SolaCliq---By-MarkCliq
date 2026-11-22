@@ -157,7 +157,7 @@ class TaskCubit extends Cubit<TaskState> {
       emit(state.copyWith(loading: false, busy: false, failure: () => null));
       _show(task);
       return true;
-    } on UploadTooLarge {
+    } on UploadRefused {
       onError?.call();
       _fail(AuthFailureCode.validation);
       return false;
