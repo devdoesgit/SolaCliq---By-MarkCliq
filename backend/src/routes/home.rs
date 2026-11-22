@@ -434,6 +434,11 @@ fn note(id: &str, title: &str, detail: &str) -> HomeRow {
     }
 }
 
+// The word beside a count: "1 task", "2 tasks".
+fn noun(count: usize, one: &'static str, many: &'static str) -> &'static str {
+    if count == 1 { one } else { many }
+}
+
 fn headline(value: &str, label: &str, detail: &str) -> Option<HomeHeadline> {
     Some(HomeHeadline {
         value: value.to_owned(),
@@ -479,7 +484,11 @@ fn worker(who: &Who, tasks: &[WeekTask], expenses_in_review: i64) -> HomeSummary
         unread_notifications: 0,
         eyebrow: who.now.format("%A, %-d %b").to_string(),
         title: format!("{}'s day", who.first_name),
-        headline: headline(&due_today.to_string(), "tasks", "on site today"),
+        headline: headline(
+            &due_today.to_string(),
+            noun(due_today, "task", "tasks"),
+            "on site today",
+        ),
         week: week(&who.now, tasks),
         energy: None,
         attendance: None,
@@ -715,7 +724,7 @@ fn agent(who: &Who, commission: bool, customers: &[AgentCustomer]) -> HomeSummar
         title: format!("{}'s customers", who.first_name),
         headline: headline(
             &this_month.len().to_string(),
-            "customers",
+            noun(this_month.len(), "customer", "customers"),
             "added this month",
         ),
         week: Vec::new(),
@@ -994,6 +1003,13 @@ mod tests {
             org_name: "Example Solar".into(),
             now: india::now(utc),
         }
+    }
+
+    #[test]
+    fn a_count_of_one_is_singular() {
+        assert_eq!(noun(0, "task", "tasks"), "tasks");
+        assert_eq!(noun(1, "task", "tasks"), "task");
+        assert_eq!(noun(2, "task", "tasks"), "tasks");
     }
 
     #[test]
