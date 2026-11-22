@@ -9,6 +9,7 @@ import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/app/widgets/mobile_formatter.dart';
+import 'package:solacliq/app/widgets/reveal_error.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
@@ -58,7 +59,11 @@ class _SignupViewState extends State<SignupView> {
     super.dispose();
   }
 
-  void _edited(String _) => context.read<SubmitCubit>().reset();
+  // An edit clears that field's error, and the banner.
+  void _edited(String? error, VoidCallback clear) {
+    context.read<SubmitCubit>().reset();
+    if (error != null) setState(clear);
+  }
 
   Future<void> _submit() async {
     context
@@ -83,6 +88,13 @@ class _SignupViewState extends State<SignupView> {
       _passwordError,
       _termsError,
     ].any((e) => e != null)) {
+      revealFirstError(context, [
+        (_nameError != null, const ValueKey('signup_name')),
+        (_emailError != null, const ValueKey('signup_email')),
+        (_mobileError != null, const ValueKey('signup_mobile')),
+        (_passwordError != null, const ValueKey('signup_password')),
+        (_termsError != null, const ValueKey('signup_terms')),
+      ]);
       return;
     }
     TextInput.finishAutofillContext();
@@ -139,7 +151,8 @@ class _SignupViewState extends State<SignupView> {
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.name],
-                    onChanged: _edited,
+                    onChanged: (_) =>
+                        _edited(_nameError, () => _nameError = null),
                   ),
                   SolaFieldRow(
                     key: const ValueKey('signup_email'),
@@ -150,7 +163,8 @@ class _SignupViewState extends State<SignupView> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
-                    onChanged: _edited,
+                    onChanged: (_) =>
+                        _edited(_emailError, () => _emailError = null),
                   ),
                   SolaFieldRow(
                     key: const ValueKey('signup_mobile'),
@@ -165,7 +179,8 @@ class _SignupViewState extends State<SignupView> {
                       AutofillHints.telephoneNumberNational,
                     ],
                     inputFormatters: const [MobileNumberFormatter()],
-                    onChanged: _edited,
+                    onChanged: (_) =>
+                        _edited(_mobileError, () => _mobileError = null),
                   ),
                   PasswordField(
                     key: const ValueKey('signup_password'),
@@ -173,7 +188,8 @@ class _SignupViewState extends State<SignupView> {
                     controller: _password,
                     error: _passwordError,
                     isNew: true,
-                    onChanged: _edited,
+                    onChanged: (_) =>
+                        _edited(_passwordError, () => _passwordError = null),
                     onSubmitted: (_) => unawaited(_submit()),
                   ),
                 ],
@@ -191,6 +207,7 @@ class _SignupViewState extends State<SignupView> {
               ),
               const SizedBox(height: SolaSpace.space24),
               TermsAgreement(
+                key: const ValueKey('signup_terms'),
                 value: _agreed,
                 error: _termsError,
                 onChanged: (v) => setState(() {

@@ -70,6 +70,9 @@ class ExpenseRepository {
 
   final api.ExpensesApi _api;
 
+  /// The longest note the server takes (`expenses.rs`, MAX_NOTE).
+  static const maxNote = 200;
+
   /// All of them, the latest first: the month's totals need every one.
   Future<List<Expense>> mine(String orgId) => allPages((cursor) async {
     final response = await apiCall(

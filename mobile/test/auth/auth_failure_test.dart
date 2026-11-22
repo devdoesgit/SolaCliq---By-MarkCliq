@@ -56,6 +56,8 @@ void main() {
         }),
       );
       expect(other.code, AuthFailureCode.validation);
+      expect(other.fields, {'amount': 'Too big.'});
+      expect(AuthFailure.fromDio(problem(409, {'code': 'x'})).fields, isEmpty);
     });
 
     test('an unknown code falls back on the status', () {

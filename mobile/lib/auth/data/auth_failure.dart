@@ -68,7 +68,7 @@ enum AuthFailureCode {
 
 /// An auth request failed. Screens map [code] to a message.
 class AuthFailure implements Exception {
-  const new(this.code, [this.cause, this.detail]);
+  const new(this.code, [this.cause, this.detail, this.fields = const {}]);
 
   /// Reads the problem+json body of a failed request, or classifies a
   /// network failure.
@@ -90,7 +90,12 @@ class AuthFailure implements Exception {
       },
     );
     final detail = body?['detail'];
-    return AuthFailure(code, error, detail is String ? detail : null);
+    return AuthFailure(
+      code,
+      error,
+      detail is String ? detail : null,
+      _fields(body),
+    );
   }
 
   final AuthFailureCode code;
@@ -99,6 +104,19 @@ class AuthFailure implements Exception {
   /// The server's explanation, safe to show (problem+json `detail`), e.g.
   /// who registered a customer first.
   final String? detail;
+
+  /// The server's message for each field it refused (problem+json
+  /// `errors`), by the API's field name: `note` → "Up to 200 characters."
+  final Map<String, String> fields;
+
+  static Map<String, String> _fields(Map<String, dynamic>? body) {
+    final errors = body?['errors'];
+    if (errors is! List) return const {};
+    return {
+      for (final e in errors)
+        if (e case {'field': final String f, 'message': final String m}) f: m,
+    };
+  }
 
   /// The fields that carry an upload id: a field error there means the
   /// file itself didn't arrive.

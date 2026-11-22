@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -18,6 +19,7 @@ import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/file_preview.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
+import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 import 'package:uuid/uuid.dart';
 
@@ -115,7 +117,9 @@ class _ExpenseViewState extends State<ExpenseView> {
         ],
       ),
     );
-    if (picked != null) setState(() => _task = picked.$1);
+    if (picked == null || !mounted) return;
+    setState(() => _task = picked.$1);
+    _edited('task_id');
   }
 
   UploadFile? _receipt;
@@ -128,24 +132,51 @@ class _ExpenseViewState extends State<ExpenseView> {
     super.dispose();
   }
 
-  void _key(String key) => setState(() {
-    _amount = _amount.add(key);
-    _errors['amount'] = null;
-  });
+  // The errors that came from the server: sending again asks it afresh.
+  final _refused = <String>{};
 
-  void _delete() => setState(() => _amount = _amount.delete());
+  void _key(String key) {
+    setState(() => _amount = _amount.add(key));
+    _edited('amount');
+  }
+
+  void _delete() {
+    setState(() => _amount = _amount.delete());
+    _edited('amount');
+  }
+
+  // An edit: its field's error and the banner may no longer hold.
+  void _edited(String field) {
+    context.read<SubmitCubit>().reset();
+    if (_errors[field] != null) setState(() => _errors[field] = null);
+  }
+
+  /*
+    The server's reasons, under the fields they're about. Its field names
+    are the API's: a receipt that didn't arrive is `receipt_upload_id`
+  */
+  void _showServerErrors(SubmitState state) {
+    if (state.status != SubmitStatus.failure || state.fields.isEmpty) return;
+    setState(() {
+      for (final MapEntry(:key, :value) in state.fields.entries) {
+        final field = key == 'receipt_upload_id' ? 'receipt' : key;
+        _errors[field] = value;
+        _refused.add(field);
+      }
+    });
+  }
 
   Future<void> _pickReceipt() async {
     final file = await pickDocument(context, context.l10n.addReceipt);
     if (file == null || !mounted) return;
-    if (file.bytes.length > UploadRepository.maxBytes) {
-      setState(() => _errors['receipt'] = context.l10n.fileTooBig);
+    if (file.problem case final problem?) {
+      // The phone's refusal now, not the server's: sending doesn't clear it.
+      _refused.remove('receipt');
+      setState(() => _errors['receipt'] = problem.message(context.l10n));
       return;
     }
-    setState(() {
-      _receipt = file;
-      _errors['receipt'] = null;
-    });
+    setState(() => _receipt = file);
+    _edited('receipt');
   }
 
   Future<void> _pickDay() async {
@@ -156,7 +187,9 @@ class _ExpenseViewState extends State<ExpenseView> {
       firstDate: today.subtract(const Duration(days: 60)),
       lastDate: today,
     );
-    if (day != null) setState(() => _day = day);
+    if (day == null || !mounted) return;
+    setState(() => _day = day);
+    _edited('spent_on');
   }
 
   Future<void> _submit() async {
@@ -167,6 +200,9 @@ class _ExpenseViewState extends State<ExpenseView> {
     }
     final l10n = context.l10n;
     setState(() {
+      _refused
+        ..forEach(_errors.remove)
+        ..clear();
       _errors
         ..['amount'] = _amount.paise == 0 ? l10n.errorAmount : null
         ..['category'] = _category == null ? l10n.errorChoose : null
@@ -267,6 +303,10 @@ class _ExpenseViewState extends State<ExpenseView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: SolaSpace.space10),
+            BlocListener<SubmitCubit, SubmitState>(
+              listener: (_, state) => _showServerErrors(state),
+              child: const SizedBox.shrink(),
+            ),
             if (state.status == SubmitStatus.failure) ...[
               FailureNotice(state: state),
               const SizedBox(height: SolaSpace.space12),
@@ -338,15 +378,17 @@ class _ExpenseViewState extends State<ExpenseView> {
                 ),
               ),
             ],
+            if (_errors['task_id'] case final error?)
+              Center(child: _Error(error)),
             const SizedBox(height: SolaSpace.space14),
             SolaChips<ExpenseCategory>(
               key: const ValueKey('expense_category'),
               label: l10n.category,
               selected: _category,
-              onChanged: (v) => setState(() {
-                _category = v;
-                _errors['category'] = null;
-              }),
+              onChanged: (v) {
+                setState(() => _category = v);
+                _edited('category');
+              },
               choices: [
                 SolaChoice(ExpenseCategory.fuel, l10n.categoryFuel),
                 SolaChoice(ExpenseCategory.material, l10n.categoryMaterial),
@@ -374,7 +416,13 @@ class _ExpenseViewState extends State<ExpenseView> {
                         controller: _note,
                         error: _errors['note'],
                         textCapitalization: TextCapitalization.sentences,
-                        onChanged: (_) => _errors['note'] = null,
+                        // The server's limit (`expenses.rs`, MAX_NOTE).
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(
+                            ExpenseRepository.maxNote,
+                          ),
+                        ],
+                        onChanged: (_) => _edited('note'),
                       ),
                       SolaValueRow(
                         key: const Key('expense_date'),
@@ -382,6 +430,7 @@ class _ExpenseViewState extends State<ExpenseView> {
                         value: today
                             ? l10n.today2(formatDayMonth(_day))
                             : formatDayMonth(_day),
+                        error: _errors['spent_on'],
                         onTap: () => unawaited(_pickDay()),
                       ),
                     ],

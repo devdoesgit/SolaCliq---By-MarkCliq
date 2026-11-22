@@ -11,6 +11,7 @@ import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/back_to.dart';
 import 'package:solacliq/app/widgets/mobile_formatter.dart';
+import 'package:solacliq/app/widgets/reveal_error.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/auth/widgets/failure_notice.dart';
@@ -137,6 +138,22 @@ class _RequestAccessViewState extends State<RequestAccessView> {
     if (_errors.values.any((e) => e != null) ||
         gstin == null ||
         businessType == null) {
+      // In the order they appear: the first with an error is shown.
+      revealFirstError(context, [
+        for (final (field, key) in const [
+          ('owner', ValueKey('access_owner')),
+          ('email', ValueKey('access_email')),
+          ('phone', ValueKey('access_phone')),
+          ('gstin', ValueKey('access_gstin')),
+          ('legalName', ValueKey('access_legal_name')),
+          ('businessType', Key('access_business_type')),
+          ('address1', ValueKey('access_address1')),
+          ('city', ValueKey('access_city')),
+          ('pin', ValueKey('access_pin')),
+          ('terms', ValueKey('access_terms')),
+        ])
+          (_errors[field] != null, key),
+      ]);
       return;
     }
 
@@ -370,6 +387,7 @@ class _RequestAccessViewState extends State<RequestAccessView> {
             ),
             const SizedBox(height: SolaSpace.space24),
             TermsAgreement(
+              key: const ValueKey('access_terms'),
               value: _agreed,
               companyValue: _companyAgreed,
               error: _errors['terms'],

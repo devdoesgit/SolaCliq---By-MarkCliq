@@ -137,6 +137,42 @@ void main() {
       expect(find.text('Use at least 8 characters.'), findsOneWidget);
     });
 
+    for (final (field, error) in [
+      ('signup_name', 'Enter a name.'),
+      ('signup_email', 'Enter an email address.'),
+      ('signup_mobile', 'Enter a 10-digit mobile number.'),
+      ('signup_password', 'Use at least 8 characters.'),
+    ]) {
+      testWidgets('$field: its error is scrolled into view', (tester) async {
+        tester.view.physicalSize = const Size(360, 480);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpApp(const SignupPage(), authRepository: auth);
+        // Every field right but the one under test.
+        for (final (key, good, bad) in [
+          ('signup_name', 'Asha', ''),
+          ('signup_email', 'asha@example.com', ''),
+          ('signup_mobile', '9814022671', '98140'),
+          ('signup_password', 'longenough1', 'short1'),
+        ]) {
+          await tester.enterText(_input(key), key == field ? bad : good);
+        }
+        // Scrolled away from the field, with the keyboard closed.
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        final page = tester.state<ScrollableState>(
+          find.byType(Scrollable).first,
+        );
+        page.position.jumpTo(
+          field == 'signup_password' ? 0 : page.position.maxScrollExtent,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('signup_submit')));
+        await tester.pumpAndSettle();
+        expect(find.text(error).hitTestable(), findsOne);
+      });
+    }
+
     testWidgets('success goes to verify email', (tester) async {
       when(
         () => auth.signUp(
@@ -167,6 +203,22 @@ void main() {
   });
 
   group('$SignupPage terms', () {
+    testWidgets('on a small phone the error is scrolled into view', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.enterText(_input('signup_name'), 'Asha');
+      await tester.enterText(_input('signup_email'), 'asha@example.com');
+      await tester.enterText(_input('signup_password'), 'longenough1');
+      await tester.tap(find.byKey(const Key('signup_submit')));
+      await tester.pumpAndSettle();
+      // Visible and not under the bottom button: it can take a tap.
+      expect(find.text('Tick to agree to continue.').hitTestable(), findsOne);
+    });
+
     testWidgets('not ticked: nothing is sent', (tester) async {
       await tester.pumpApp(const SignupPage(), authRepository: auth);
       await tester.enterText(_input('signup_name'), 'Asha');

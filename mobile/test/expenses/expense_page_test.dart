@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/expenses/data/expense_repository.dart';
 import 'package:solacliq/expenses/view/expense_page.dart';
@@ -9,6 +13,19 @@ import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 import '../helpers/helpers.dart';
+
+/// A gallery whose pick is a text file named like a photo.
+class _PicksUnreadableFile extends ImagePickerPlatform
+    with MockPlatformInterfaceMixin {
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => XFile.fromData(
+    Uint8List.fromList('not a picture'.codeUnits),
+    path: 'receipt.jpg',
+  );
+}
 
 void main() {
   late MockExpenseRepository expenses;
@@ -161,6 +178,151 @@ void main() {
       await tester.tapKey('expense_submit');
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('failure_notice')), findsOneWidget);
+    });
+
+    testWidgets("the server's reason shows under its field, and goes on edit", (
+      tester,
+    ) async {
+      when(
+        () => expenses.create(
+          orgId: any(named: 'orgId'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          amountPaise: any(named: 'amountPaise'),
+          category: any(named: 'category'),
+          note: any(named: 'note'),
+          spentOn: any(named: 'spentOn'),
+        ),
+      ).thenThrow(
+        const AuthFailure(AuthFailureCode.validation, null, null, {
+          'note': 'Up to 200 characters.',
+        }),
+      );
+      await pump(tester);
+      await type(tester, '5');
+      await tester.tapKey('expense_category_1');
+      final note = find.descendant(
+        of: find.byKey(const ValueKey('expense_note')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(note, 'Cable');
+      await tester.tapKey('expense_submit');
+      await tester.pumpAndSettle();
+      expect(find.text('Up to 200 characters.'), findsOneWidget);
+      expect(find.byKey(const Key('failure_notice')), findsOneWidget);
+
+      await tester.enterText(note, 'Cable ties');
+      await tester.pumpAndSettle();
+      expect(find.text('Up to 200 characters.'), findsNothing);
+      expect(find.byKey(const Key('failure_notice')), findsNothing);
+    });
+
+    Future<void> refusedWith(
+      WidgetTester tester,
+      Map<String, String> fields,
+    ) async {
+      when(
+        () => expenses.create(
+          orgId: any(named: 'orgId'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          amountPaise: any(named: 'amountPaise'),
+          category: any(named: 'category'),
+          note: any(named: 'note'),
+          spentOn: any(named: 'spentOn'),
+        ),
+      ).thenThrow(AuthFailure(AuthFailureCode.validation, null, null, fields));
+      await pump(tester);
+      await type(tester, '5');
+      await tester.tapKey('expense_category_1');
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('expense_note')),
+          matching: find.byType(TextField),
+        ),
+        'Cable',
+      );
+      await tester.tapKey('expense_submit');
+      await tester.pumpAndSettle();
+    }
+
+    for (final (field, message) in [
+      ('amount', '₹0.01 to ₹10,00,000.'),
+      ('category', 'Not a category.'),
+      ('spent_on', 'Within the last year.'),
+      ('receipt_upload_id', "The file didn't arrive."),
+      ('task_id', 'Not one of your tasks.'),
+    ]) {
+      testWidgets("the server's $field error is shown", (tester) async {
+        await refusedWith(tester, {field: message});
+        expect(find.text(message), findsOneWidget);
+      });
+    }
+
+    testWidgets('a refusal never blocks sending again', (tester) async {
+      await refusedWith(tester, {'spent_on': 'Within the last year.'});
+      await tester.tapKey('expense_submit');
+      await tester.pumpAndSettle();
+      verify(
+        () => expenses.create(
+          orgId: any(named: 'orgId'),
+          idempotencyKey: any(named: 'idempotencyKey'),
+          amountPaise: any(named: 'amountPaise'),
+          category: any(named: 'category'),
+          note: any(named: 'note'),
+          spentOn: any(named: 'spentOn'),
+        ),
+      ).called(2);
+    });
+
+    testWidgets('changing the category clears the banner', (tester) async {
+      await refusedWith(tester, {'category': 'Not a category.'});
+      await tester.tapKey('expense_category_2');
+      await tester.pumpAndSettle();
+      expect(find.text('Not a category.'), findsNothing);
+      expect(find.byKey(const Key('failure_notice')), findsNothing);
+    });
+
+    testWidgets('changing the date clears its error and the banner', (
+      tester,
+    ) async {
+      await refusedWith(tester, {'spent_on': 'Within the last year.'});
+      await tester.tapKey('expense_date');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text('Within the last year.'), findsNothing);
+      expect(find.byKey(const Key('failure_notice')), findsNothing);
+    });
+
+    testWidgets("a receipt that can't be previewed shows as a file", (
+      tester,
+    ) async {
+      ImagePickerPlatform.instance = _PicksUnreadableFile();
+      await pump(tester);
+      await tester.tapKey('expense_receipt');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('pick_gallery')));
+      await tester.pumpAndSettle();
+      // Decoding runs outside the test's fake clock.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 300)),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('preview_unreadable')), findsOneWidget);
+    });
+
+    testWidgets('the note stops at the server limit', (tester) async {
+      await pump(tester);
+      final note = find.descendant(
+        of: find.byKey(const ValueKey('expense_note')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(note, 'x' * 250);
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(note).controller!.text,
+        hasLength(ExpenseRepository.maxNote),
+      );
     });
   });
 }

@@ -5,17 +5,24 @@ import 'package:solacliq/auth/data/auth_failure.dart';
 enum SubmitStatus { idle, submitting, success, failure }
 
 class SubmitState extends Equatable {
-  const new({this.status = SubmitStatus.idle, this.failure});
+  const new({
+    this.status = SubmitStatus.idle,
+    this.failure,
+    this.fields = const {},
+  });
 
   final SubmitStatus status;
 
   /// Why the last submit failed; set only with [SubmitStatus.failure].
   final AuthFailureCode? failure;
 
+  /// The server's message per field it refused, by API field name.
+  final Map<String, String> fields;
+
   bool get isSubmitting => status == SubmitStatus.submitting;
 
   @override
-  List<Object?> get props => [status, failure];
+  List<Object?> get props => [status, failure, fields];
 }
 
 /// Runs one form's request and reports its progress. Every auth form uses
@@ -33,13 +40,22 @@ class SubmitCubit extends Cubit<SubmitState> {
       if (!isClosed) emit(const SubmitState(status: SubmitStatus.success));
     } on AuthFailure catch (failure) {
       if (!isClosed) {
-        emit(SubmitState(status: SubmitStatus.failure, failure: failure.code));
+        emit(
+          SubmitState(
+            status: SubmitStatus.failure,
+            failure: failure.code,
+            fields: failure.fields,
+          ),
+        );
       }
     }
   }
 
-  /// Back to idle, e.g. when the person edits a field after an error.
+  /// Back to idle, e.g. when the person edits a field after an error. Not
+  /// while a request runs: the button would come back to life and send
+  /// it twice.
   void reset() {
+    if (state.isSubmitting) return;
     if (state.status != SubmitStatus.idle) emit(const SubmitState());
   }
 }

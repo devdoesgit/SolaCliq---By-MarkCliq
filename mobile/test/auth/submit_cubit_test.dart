@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solacliq/auth/auth.dart';
@@ -38,6 +40,29 @@ void main() {
         final first = cubit.submit(() async => calls++);
         await cubit.submit(() async => calls++);
         await first;
+        expect(calls, 1);
+      },
+      expect: () => const [
+        SubmitState(status: SubmitStatus.submitting),
+        SubmitState(status: SubmitStatus.success),
+      ],
+    );
+
+    blocTest<SubmitCubit, SubmitState>(
+      "an edit while sending doesn't let a second send start",
+      build: SubmitCubit.new,
+      act: (cubit) async {
+        final sending = Completer<void>();
+        var calls = 0;
+        final first = cubit.submit(() {
+          calls++;
+          return sending.future;
+        });
+        cubit.reset();
+        final second = cubit.submit(() async => calls++);
+        sending.complete();
+        await first;
+        await second;
         expect(calls, 1);
       },
       expect: () => const [

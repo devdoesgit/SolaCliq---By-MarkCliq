@@ -71,6 +71,41 @@ void main() {
   }
 
   group(RequestAccessPage, () {
+    for (final (key, bad) in [
+      ('access_owner', ''),
+      ('access_email', ''),
+      ('access_gstin', '27'),
+      ('access_legal_name', ''),
+      ('access_city', ''),
+      ('access_pin', '4'),
+    ]) {
+      testWidgets('$key: its error is scrolled into view', (tester) async {
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await pump(tester);
+        await fill(tester, '27AAPFU0939F1ZV');
+        await tester.enterText(_input(key), bad);
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        final page = tester.state<ScrollableState>(
+          find.byType(Scrollable).first,
+        );
+        page.position.jumpTo(
+          key == 'access_city' || key == 'access_pin'
+              ? 0
+              : page.position.maxScrollExtent,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('access_submit')));
+        await tester.pumpAndSettle();
+        final row = tester.getRect(find.byKey(ValueKey(key)));
+        final button = tester.getRect(find.byKey(const Key('access_submit')));
+        expect(row.top, greaterThanOrEqualTo(0));
+        expect(row.bottom, lessThanOrEqualTo(button.top));
+      });
+    }
+
     testWidgets('sends the registration, with the GSTIN tidied', (
       tester,
     ) async {

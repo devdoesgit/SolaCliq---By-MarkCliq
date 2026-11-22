@@ -43,6 +43,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   geolocator_platform_interface: ^4.4.1
+  image_picker_platform_interface: ^2.11.2
   integration_test:
     sdk: flutter
   mocktail: ^1.0.5
