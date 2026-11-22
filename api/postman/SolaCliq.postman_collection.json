@@ -790,7 +790,7 @@
                 "uploads"
               ]
             },
-            "description": "Returns a signed R2 URL for 15 minutes. The requests that need a file do this, then PUT a small file to that URL, in their pre-request script.\n\n**Get a presigned URL to upload one file for this company** (`createUpload`) · as Ravi, installer\n\nThe app PUTs the file to `url` with `headers`, then sends\n`upload_id` with the record it belongs to, in the same company.\nEvery file belongs to one company: an upload made here can only\nbe attached to this company's records, and is stored under the\ncompany's own prefix. URLs expire after 15 minutes. Sample data\nuses a `.invalid` host, which the development app treats as\nuploaded.",
+            "description": "Returns a signed R2 URL for 15 minutes. The requests that need a file do this, then PUT a small file to that URL, in their pre-request script.\n\n**Get a presigned URL to upload one file for this company** (`createUpload`) · as Ravi, installer\n\nThe app PUTs the file to `url` with `headers`, then sends\n`upload_id` with the record it belongs to, in the same company.\nEvery file belongs to one company: an upload made here can only\nbe attached to this company's records, and is stored under the\ncompany's own prefix. URLs expire after 15 minutes. Sample data\nuses a `.invalid` host, which the development app treats as\nuploaded. Each kind is for the roles that use it: `proof` for\nworkers, `receipt` for workers and agents, `kyc` for agents; the\norg admin may upload any, and only the org admin uploads `logo`.\nOtherwise 403 `org.role_not_allowed`. A `logo` is PNG or JPEG, up\nto 1 MB (422 on `content_type` or `size_bytes` otherwise).",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -4258,6 +4258,402 @@
         }
       ],
       "description": "These send real emails and need the code from them: set `email` to an inbox you read, then `code`. Not part of the automatic run."
+    },
+    {
+      "name": "Not arranged yet",
+      "item": [
+        {
+          "name": "setOrgLogo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/logo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "logo"
+              ]
+            },
+            "description": "**Set the company's logo (F15)** (`setOrgLogo`) · as Dev, the company's admin\n\nThe org admin only. `upload_id` is an upload of purpose `logo` by\nthe caller, in this company, not used yet, and present in storage\n(422 on `upload_id` otherwise). Replaces the current logo; the old\nfile is deleted. Members see it through `/me`\n(`memberships[].org.logo_url`).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upload_id\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "removeOrgLogo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/logo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "logo"
+              ]
+            },
+            "description": "**Remove the company's logo (F15)** (`removeOrgLogo`) · as Dev, the company's admin\n\nThe org admin only. The app shows the company's initials again.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "startAttendanceDay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/me/attendance/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "me",
+                "attendance",
+                "start"
+              ]
+            },
+            "description": "**Start the caller's working day** (`startAttendanceDay`) · as Dev, the company's admin\n\nInstallers and salaried sales (`attendance.not_tracked`, 403, for a\ncommission agent). The day is the India date of the tap. Its time\nis the server's clock less how long the tap waited on the phone\n(`sent_at` minus `phone_at`, both by the phone's clock, so a wrong\nphone clock moves nothing). A tap that waited over 5 minutes (sent\nfrom offline) is marked `sent_late`; a negative wait counts as\nnone; over 7 days is refused (`attendance.too_old`, 422). A date\nthat already has a start gives `attendance.already_started` (409),\nunless it is this request's own retry, which gets the first answer.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_at\": \"{{tomorrow}}\",\n  \"sent_at\": \"{{tomorrow}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "endAttendanceDay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/me/attendance/end",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "me",
+                "attendance",
+                "end"
+              ]
+            },
+            "description": "**End the caller's working day** (`endAttendanceDay`) · as Dev, the company's admin\n\nSame callers and time rules as start. Ends the day of the tap's\nIndia date; a day doesn't cross midnight. No start on that date,\nor one after the tap: `attendance.not_started` (409). Already\nended: `attendance.already_ended` (409). An end can't be undone.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_at\": \"{{tomorrow}}\",\n  \"sent_at\": \"{{tomorrow}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "acceptTerms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/terms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "terms"
+              ]
+            },
+            "description": "**Agree to the current Terms of Use and Privacy Policy** (`acceptTerms`) · as Dev, the company's admin\n\nRecords the agreement (who, which version, when, from which\naddress) as a new row; earlier ones are kept. For accounts someone\nelse made, and after the version goes up (F16).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "getAttendanceDay",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/attendance/day",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "attendance",
+                "day"
+              ]
+            },
+            "description": "**Everyone's attendance on one date** (`getAttendanceDay`) · as Dev, the company's admin\n\nCompany admins only (the website); read only. Every installer and\nsalaried sales member, by name, with their day on that date when\nthey have one; removed members only if they have a day on it.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "getAttendanceMonth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/attendance/month",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "attendance",
+                "month"
+              ]
+            },
+            "description": "**Everyone's attendance in one month** (`getAttendanceMonth`) · as Dev, the company's admin\n\nCompany admins only (the website); read only. The same people as\nthe day view (removed members if they have a day in the month),\neach with their days, oldest first, and totals.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "exportAttendanceMonth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/attendance/month.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "attendance",
+                "month.csv"
+              ]
+            },
+            "description": "**One month's attendance as CSV** (`exportAttendanceMonth`) · as Dev, the company's admin\n\nCompany admins only. One row per person per day worked, by name\nthen date, UTF-8 with a header row. Times are India times\n(`HH:MM`); `minutes` is empty without an end; `flags` lists\n`start_sent_late`, `end_sent_late` and `no_check_out`, separated\nby spaces. Sent as `attendance-YYYY-MM.csv`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "New in the contract; check the role and body."
     }
   ]
 }

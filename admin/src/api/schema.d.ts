@@ -1061,6 +1061,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/orgs/{org_id}/me/attendance/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the caller's working day
+         * @description Installers and salaried sales (`attendance.not_tracked`, 403, for a
+         *     commission agent). The day is the India date of the tap. Its time
+         *     is the server's clock less how long the tap waited on the phone
+         *     (`sent_at` minus `phone_at`, both by the phone's clock, so a wrong
+         *     phone clock moves nothing). A tap that waited over 5 minutes (sent
+         *     from offline) is marked `sent_late`; a negative wait counts as
+         *     none; over 7 days is refused (`attendance.too_old`, 422). A date
+         *     that already has a start gives `attendance.already_started` (409),
+         *     unless it is this request's own retry, which gets the first answer.
+         */
+        post: operations["startAttendanceDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/me/attendance/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End the caller's working day
+         * @description Same callers and time rules as start. Ends the day of the tap's
+         *     India date; a day doesn't cross midnight. No start on that date,
+         *     or one after the tap: `attendance.not_started` (409). Already
+         *     ended: `attendance.already_ended` (409). An end can't be undone.
+         */
+        post: operations["endAttendanceDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/terms": {
         parameters: {
             query?: never;
@@ -1914,6 +1987,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/orgs/{org_id}/attendance/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Everyone's attendance on one date
+         * @description Company admins only (the website); read only. Every installer and
+         *     salaried sales member, by name, with their day on that date when
+         *     they have one; removed members only if they have a day on it.
+         */
+        get: operations["getAttendanceDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/attendance/month": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Everyone's attendance in one month
+         * @description Company admins only (the website); read only. The same people as
+         *     the day view (removed members if they have a day in the month),
+         *     each with their days, oldest first, and totals.
+         */
+        get: operations["getAttendanceMonth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org_id}/attendance/month.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * One month's attendance as CSV
+         * @description Company admins only. One row per person per day worked, by name
+         *     then date, UTF-8 with a header row. Times are India times
+         *     (`HH:MM`); `minutes` is empty without an end; `flags` lists
+         *     `start_sent_late`, `end_sent_late` and `no_check_out`, separated
+         *     by spaces. Sent as `attendance-YYYY-MM.csv`.
+         */
+        get: operations["exportAttendanceMonth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2380,12 +2554,27 @@ export interface components {
             };
             week?: components["schemas"]["HomeDay"][];
             energy?: components["schemas"]["HomeEnergy"];
+            attendance?: components["schemas"]["HomeAttendance"];
             tiles: components["schemas"]["HomeTile"][];
             progress?: components["schemas"]["HomeProgress"];
             list: {
                 title?: string;
                 rows: components["schemas"]["HomeRow"][];
             };
+        };
+        /**
+         * @description The attendance card (F17). Present for installers and salaried
+         *     sales only.
+         */
+        HomeAttendance: {
+            /**
+             * @description Today in India. `not_started`: no day today (yesterday's,
+             *     even without an end, doesn't count); `working`: today's `day`
+             *     has no end yet; `ended`: today's `day` has ended.
+             * @enum {string}
+             */
+            state: "not_started" | "working" | "ended";
+            day?: components["schemas"]["AttendanceDay"];
         };
         UploadCreate: {
             /** @enum {string} */
@@ -3160,6 +3349,124 @@ export interface components {
             /** Format: date-time */
             due_at: string;
         };
+        AttendanceTapCreate: {
+            /** @description The phone's clock when the person tapped. */
+            phone_at: components["schemas"]["Timestamp"];
+            /**
+             * @description The phone's clock when the app sent this request: equal to
+             *     `phone_at` when sent at once, later when it waited offline.
+             *     Set again on each retry.
+             */
+            sent_at: components["schemas"]["Timestamp"];
+        };
+        AttendanceTap: {
+            at: components["schemas"]["Timestamp"];
+            /** @description Waited over 5 minutes on the phone (sent from offline); how long it waited is the phone's word. */
+            sent_late: boolean;
+        };
+        /**
+         * @description `working`: started today in India, no end yet. `ended`: has an
+         *     end. `no_check_out`: no end and its date has passed (a late end
+         *     sent from offline can still end it).
+         * @enum {string}
+         */
+        AttendanceStatus: "working" | "ended" | "no_check_out";
+        AttendanceDay: {
+            /**
+             * Format: date
+             * @description The India date the day started.
+             */
+            date: string;
+            status: components["schemas"]["AttendanceStatus"];
+            start: components["schemas"]["AttendanceTap"];
+            end?: components["schemas"]["AttendanceTap"];
+            /** @description Worked time, end minus start; present once ended. */
+            minutes?: number;
+        };
+        AttendancePerson: {
+            user_id: components["schemas"]["Id"];
+            name: string;
+            /** @description Their role now; `worker` or `agent` unless it changed after the days shown. */
+            role: components["schemas"]["Role"];
+            /** @description No longer a member; shown for the days they worked. */
+            removed: boolean;
+        };
+        /**
+         * @example {
+         *       "date": "2026-12-01",
+         *       "people": [
+         *         {
+         *           "person": {
+         *             "user_id": "01928f6e-0000-7000-8000-0000000000b1",
+         *             "name": "Ravi Example (illustrative)",
+         *             "role": "worker",
+         *             "removed": false
+         *           },
+         *           "day": {
+         *             "date": "2026-12-01",
+         *             "status": "working",
+         *             "start": {
+         *               "at": "2026-12-01T03:42:00Z",
+         *               "sent_late": false
+         *             }
+         *           }
+         *         },
+         *         {
+         *           "person": {
+         *             "user_id": "01928f6e-0000-7000-8000-0000000000b2",
+         *             "name": "Suresh Example (illustrative)",
+         *             "role": "worker",
+         *             "removed": false
+         *           }
+         *         },
+         *         {
+         *           "person": {
+         *             "user_id": "01928f6e-0000-7000-8000-0000000000b3",
+         *             "name": "Aman Example (illustrative)",
+         *             "role": "agent",
+         *             "removed": false
+         *           },
+         *           "day": {
+         *             "date": "2026-12-01",
+         *             "status": "ended",
+         *             "start": {
+         *               "at": "2026-12-01T04:00:00Z",
+         *               "sent_late": true
+         *             },
+         *             "end": {
+         *               "at": "2026-12-01T12:30:00Z",
+         *               "sent_late": false
+         *             },
+         *             "minutes": 510
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        AttendanceDayView: {
+            /** Format: date */
+            date: string;
+            /** @description By name. */
+            people: {
+                person: components["schemas"]["AttendancePerson"];
+                /** @description Absent when they haven't started on this date. */
+                day?: components["schemas"]["AttendanceDay"];
+            }[];
+        };
+        AttendanceMonthView: {
+            /** @example 2026-12 */
+            month: string;
+            /** @description By name. */
+            people: {
+                person: components["schemas"]["AttendancePerson"];
+                /** @description Only dates with a start, oldest first. */
+                days: components["schemas"]["AttendanceDay"][];
+                /** @description Days with a start. */
+                days_worked: number;
+                /** @description Total worked time of the ended days. */
+                minutes: number;
+            }[];
+        };
     };
     responses: {
         /** @description Error, as RFC 9457 problem details. */
@@ -3190,6 +3497,8 @@ export interface components {
         Cursor: string;
         /** @description Page size. */
         Limit: number;
+        /** @description `YYYY-MM`; this month in India when absent. */
+        AttendanceMonth: string;
         /**
          * @description Unique per logical write (UUID). Sent on writes from the mobile app
          *     so a retry after a lost response never creates a duplicate.
@@ -4542,6 +4851,96 @@ export interface operations {
             403: components["responses"]["Problem"];
         };
     };
+    startAttendanceDay: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttendanceTapCreate"];
+            };
+        };
+        responses: {
+            /** @description Started. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceDay"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    endAttendanceDay: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description Unique per logical write (UUID). Sent on writes from the mobile app
+                 *     so a retry after a lost response never creates a duplicate.
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttendanceTapCreate"];
+            };
+        };
+        responses: {
+            /** @description Ended. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceDay"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     acceptTerms: {
         parameters: {
             query?: never;
@@ -5578,6 +5977,123 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getAttendanceDay: {
+        parameters: {
+            query?: {
+                /** @description India date; today in India when absent. */
+                date?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The date. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceDayView"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getAttendanceMonth: {
+        parameters: {
+            query?: {
+                /** @description `YYYY-MM`; this month in India when absent. */
+                month?: components["parameters"]["AttendanceMonth"];
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The month. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceMonthView"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    exportAttendanceMonth: {
+        parameters: {
+            query?: {
+                /** @description `YYYY-MM`; this month in India when absent. */
+                month?: components["parameters"]["AttendanceMonth"];
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The month. */
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example name,role,date,start,end,minutes,flags
+                     *     Ravi Example (illustrative),worker,2026-12-01,09:12,18:40,568,
+                     *     Ravi Example (illustrative),worker,2026-12-02,09:05,,,no_check_out
+                     */
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
