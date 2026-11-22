@@ -52,6 +52,8 @@ Privacy Policy, and log the decision in `decisions.md`.
   and long only). It is optional, read only on that tap, not checked,
   and used for the installer's directions. The assigned installer and
   the company see it.
+- **Built.** Size limits: a KYC document 50 MB (since 2026-11-22), a
+  receipt or proof photo 10 MB, a logo 1 MB.
 - **Built.** Each kind of file is for the people who use it: proof
   photos for installers, receipts for installers and sales agents, KYC
   documents for sales agents, any of them for the company's admin.

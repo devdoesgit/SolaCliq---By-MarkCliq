@@ -1,8 +1,9 @@
-# F5 Documents: several files, any size
+# F5 Documents: several files, up to 50 MB
 
-Status: `spec`, waiting for the owner's review (2026-11-22). No code yet.
-The contract below moves into `api/openapi.yaml` when approved: put
-there earlier, the generated clients would no longer match the code.
+Status: the 50 MB limit is built (2026-11-22). Several files per document
+is `spec`, waiting for the owner's review, with no code yet. Its contract
+below moves into `api/openapi.yaml` when approved: put there earlier, the
+generated clients would no longer match the code.
 
 ## Goal
 
@@ -10,7 +11,8 @@ What the owner asked on 2026-11-22:
 
 - "yeah upto 5 files": each KYC document holds up to 5 files, with
   Aadhaar's front and back as two labelled slots.
-- "dont put a limit on documents that might be big": no 10 MB cap.
+- "dont put a limit on documents that might be big", then later that
+  day "for now lets limit docs to 50mb": 50 MB a file.
 - From the same day: nothing about a file blocks a flow. The admin
   judges what it shows.
 
@@ -19,14 +21,13 @@ What the owner asked on 2026-11-22:
 - One file per document: `documents.upload_id`, one row per
   `(customer_id, kind)`. An agent photographing an Aadhaar card can send
   one side; a land deed, one page.
-- 10 MB, in four places: the app (`UploadRepository.maxBytes`), the
-  server (`uploads.rs`, MAX_BYTES), the database (`uploads.size_bytes`
-  CHECK) and the contract (`maximum: 10485760`).
-- Removing those alone isn't enough:
-  - the app reads the whole file into memory (`UploadFile.bytes`), so a
-    big PDF can crash a cheap phone;
-  - the transfer stops after 2 minutes (`sendTimeout`), about 15 MB on
-    a 1 Mbps connection.
+- 50 MB for a KYC document, in four places: the app
+  (`UploadRepository.maxKycBytes`), the server (`uploads.rs`,
+  MAX_KYC_MB), the database (`uploads.size_bytes` CHECK) and the contract.
+- An upload gets 2 minutes plus a second per 64 KB, so 50 MB works from
+  about 0.5 Mbps.
+- The app reads the whole file into memory (`UploadFile.bytes`): fine
+  for one 50 MB file, not for five picked together.
 
 ## In scope
 
@@ -44,17 +45,14 @@ What the owner asked on 2026-11-22:
 - The admin returns a whole document. The agent's replacement is a new
   set of 1 to 5 files; the old files stay in R2 as the record, as now.
 
-### No size limit
+### Size (the limit is built)
 
-- KYC and receipts: no limit of ours. Storage's own is 5 GB for one
-  PUT; past it the app says so.
-- Logos stay at 1 MB. Proof photos stay at 10 MB (the live camera's
-  JPEGs are far under it).
-- The app streams from the file's path and never holds it in memory.
-  Previews decode at thumbnail size.
-- No total timeout. An upload fails only after 60 seconds with no bytes
-  moving, and can be cancelled or retried (with a new URL).
-- The 15-minute URL only has to be valid when the upload starts.
+- KYC: 50 MB a file. Receipts and proof photos 10 MB, logos 1 MB.
+- With several files, the app streams from each file's path and never
+  holds them in memory. Previews decode at thumbnail size.
+- The time limit on an upload becomes an idle one: it fails after 60
+  seconds with no bytes moving, and can be cancelled or retried (with a
+  new URL).
 
 ## Data (a new migration; none edited)
 
@@ -73,8 +71,6 @@ CREATE TABLE document_files (
 - Composite foreign keys on `org_id` to `documents` and `uploads`; row
   level security with the company policy.
 - Each `documents.upload_id` is copied in as position 1, then dropped.
-- `uploads.size_bytes`: at least 1; up to 5 GB for `kyc` and `receipt`,
-  10 MB for `proof`, 1 MB for `logo`.
 
 ## Contract
 
@@ -99,11 +95,6 @@ properties:
 # DocumentReplace: was {upload_id}
 required: [files]
 
-# UploadCreate.size_bytes: no 10 MB maximum
-type: integer
-format: int64
-minimum: 1
-maximum: 5368709120
 ```
 
 Errors: 422 on `documents` (or `files`) for none, over five, or the same
@@ -114,11 +105,10 @@ nothing attached, as now.
 
 - Backend: 1 and 5 files accepted; 0, 6 and a repeat refused; another
   agent's or company's file refused with nothing kept; a replacement
-  swaps the whole set; existing rows survive the migration; a 200 MB
-  upload is signed.
+  swaps the whole set; existing rows survive the migration.
 - App: front only, back only, and both; remove and retry one file;
   review waits for uploads; a big file is never read into memory.
-- Emulator, against R2's dev bucket: a 100 MB PDF, a throttled
+- Emulator, against R2's dev bucket: five 50 MB PDFs, a throttled
   connection past 2 minutes, a dropped connection then retry.
 
 ## Not in scope
@@ -130,8 +120,8 @@ PDFs, the admin's document viewer (with the website).
 
 1. **Old staging builds** send `upload_id` and would fail to register a
    customer. Recommended: break it now, before go-live, and update them.
-2. **Storage abuse.** With no cap, one member could send up to 200
-   files of 5 GB in an hour (the rate limit). Recommended: accept it for
-   the pilot and set a billing alert in Cloudflare.
-3. **Receipts** lose the cap too, but stay one file each. Recommended:
-   yes, as they share the upload code.
+2. ~~Storage abuse with no cap.~~ **Answered 2026-11-22: 50 MB for
+   now.** One member can still send 200 files an hour (the rate limit),
+   10 GB at most, so a billing alert in Cloudflare is still worth setting.
+3. **Receipts** stay at 10 MB, as "docs" was read as KYC documents.
+   Recommended: keep it so, as a photographed bill is far under it.

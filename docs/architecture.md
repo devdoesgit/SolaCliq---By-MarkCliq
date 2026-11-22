@@ -34,7 +34,7 @@ Claude builds every part; the owner reviews.
   through the VPS: `POST /orgs/{org_id}/uploads` returns a short-lived URL, method and
   headers; the app sends the bytes there (with a separate HTTP client that
   never carries the API token) and attaches the returned `upload_id` to the
-  record. 10 MB at most; JPEG, PNG or PDF. The development mock hands out
+  record. 10 MB at most (a KYC document 50 MB); JPEG, PNG or PDF. The development mock hands out
   `.invalid` URLs, which the app treats as already uploaded.
 - Built 2026-11-16 (`src/storage.rs`, `routes/uploads.rs`). Buckets:
   `solacliq-uploads-dev` (local) and `solacliq-uploads` (production;

@@ -169,7 +169,7 @@ class _ExpenseViewState extends State<ExpenseView> {
   Future<void> _pickReceipt() async {
     final file = await pickDocument(context, context.l10n.addReceipt);
     if (file == null || !mounted) return;
-    if (file.problem case final problem?) {
+    if (file.problemFor(UploadPurpose.receipt) case final problem?) {
       // The phone's refusal now, not the server's: sending doesn't clear it.
       _refused.remove('receipt');
       setState(() => _errors['receipt'] = problem.message(context.l10n));

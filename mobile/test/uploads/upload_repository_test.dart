@@ -63,23 +63,36 @@ void main() {
       expect(transfers, isEmpty);
     });
 
-    test('over 10 MB is refused before asking the server', () async {
-      final big = UploadFile(
-        name: 'big.jpg',
-        bytes: Uint8List(UploadRepository.maxBytes + 1)
-          ..setAll(0, [0xFF, 0xD8, 0xFF]),
-      );
-      await expectLater(
-        repository('https://x').upload('o1', big, UploadPurpose.kyc),
-        throwsA(
-          isA<UploadRefused>().having(
-            (e) => e.problem,
-            'problem',
-            UploadProblem.tooLarge,
+    const mb = 1024 * 1024;
+    for (final (purpose, limit, problem) in [
+      (UploadPurpose.kyc, 50 * mb, UploadProblem.documentTooLarge),
+      (UploadPurpose.receipt, 10 * mb, UploadProblem.tooLarge),
+      (UploadPurpose.proof, 10 * mb, UploadProblem.tooLarge),
+    ]) {
+      test('${purpose.name}: up to ${limit ~/ mb} MB goes', () async {
+        final file = UploadFile(name: 'a.pdf', bytes: Uint8List(limit));
+        await repository('https://x').upload('o1', file, purpose);
+        expect(transfers, hasLength(1));
+      });
+
+      test('${purpose.name}: over it is refused unsent', () async {
+        final big = UploadFile(name: 'a.pdf', bytes: Uint8List(limit + 1));
+        await expectLater(
+          repository('https://x').upload('o1', big, purpose),
+          throwsA(
+            isA<UploadRefused>().having((e) => e.problem, 'problem', problem),
           ),
-        ),
-      );
-      expect(apiCalls, isEmpty);
+        );
+        expect(apiCalls, isEmpty);
+      });
+    }
+
+    test('a 50 MB document has time to send at 0.5 Mbps', () async {
+      final file = UploadFile(name: 'a.pdf', bytes: Uint8List(50 * mb));
+      await repository('https://x').upload('o1', file, UploadPurpose.kyc);
+      // dio's send timeout is for the whole transfer, not between bytes.
+      const needed = Duration(seconds: 50 * mb * 8 ~/ 500000);
+      expect(transfers.single.sendTimeout, greaterThan(needed));
     });
 
     test('the type comes from the name, else the bytes; nothing refused', () {
@@ -96,7 +109,7 @@ void main() {
       // A renamed or unknown file still goes; the admin judges it.
       final odd = file('fake-receipt.jpg', 'not an image'.codeUnits);
       expect(odd.contentType, UploadCreateContentTypeEnum.imageSlashJpeg);
-      expect(odd.problem, isNull);
+      expect(odd.problemFor(UploadPurpose.kyc), isNull);
       expect(
         file('photo.heic', []).contentType,
         UploadCreateContentTypeEnum.imageSlashJpeg,

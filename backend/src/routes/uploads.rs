@@ -9,8 +9,9 @@
     - a file belongs to the company in the path: it's named
       `orgs/<org_id>/<purpose>/<id>`, its row is company-scoped, and only
       that company's records can take it
-    - jpeg, png or pdf, up to 10 MB; the type and size are signed into
-      the URL, so R2 refuses anything else (`storage.rs`)
+    - jpeg, png or pdf, up to 10 MB (a KYC document 50 MB); the type and
+      size are signed into the URL, so R2 refuses anything else
+      (`storage.rs`)
     - each kind of file is for the roles that use it (`may_upload`):
       a customer can't ask for a KYC slot just to fill storage
     - `attach`: how a record takes an upload. It checks with R2 that the
@@ -60,11 +61,16 @@ fn may_upload(role: Role, purpose: UploadPurpose) -> bool {
     }
 }
 
-// Up to 10 MB: a phone photo, a scanned document.
-const MAX_BYTES: i64 = 10 * 1024 * 1024;
+const MB: i64 = 1024 * 1024;
+
+// Up to 10 MB: a phone photo, a receipt.
+const MAX_MB: i64 = 10;
+
+// A KYC document can be a long scan (owner, 2026-11-22).
+const MAX_KYC_MB: i64 = 50;
 
 // A logo is shown small and fetched by every member: up to 1 MB.
-const MAX_LOGO_BYTES: i64 = 1024 * 1024;
+const MAX_LOGO_BYTES: i64 = MB;
 
 // The file types the app and website send.
 #[derive(Debug, Clone, Copy, Deserialize, ToSchema)]
@@ -115,7 +121,7 @@ impl UploadPurpose {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct UploadCreate {
     pub content_type: ContentType,
-    // The file's exact size in bytes, 1 to 10485760.
+    // The file's exact size in bytes: 1 to 10 MB, or 50 MB for `kyc`.
     pub size_bytes: i64,
     pub purpose: UploadPurpose,
 }
@@ -157,8 +163,14 @@ async fn create_upload(
     member: OrgMember,
     ApiJson(req): ApiJson<UploadCreate>,
 ) -> ApiResult<(StatusCode, Json<Upload>)> {
-    if !(1..=MAX_BYTES).contains(&req.size_bytes) {
-        return Err(ApiError::validation(Vec::new()).field("size_bytes", "Up to 10 MB."));
+    let max_mb = match req.purpose {
+        UploadPurpose::Kyc => MAX_KYC_MB,
+        _ => MAX_MB,
+    };
+    if !(1..=max_mb * MB).contains(&req.size_bytes) {
+        return Err(
+            ApiError::validation(Vec::new()).field("size_bytes", format!("Up to {max_mb} MB."))
+        );
     }
     if !may_upload(member.role, req.purpose) {
         return Err(role_not_allowed());

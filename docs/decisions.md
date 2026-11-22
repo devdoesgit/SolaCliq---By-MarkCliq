@@ -855,3 +855,8 @@ Change a decision by adding a new line, not by editing an old one.
   owner enters the code. The direction: email, then code, then details
   and password. The owner put the fix off. Until it's built the takeover
   is live (`features/F1-accounts-login.md`, "Known flaw").
+- **KYC documents up to 50 MB, for now (owner, 2026-11-22: "for now
+  lets limit docs to 50mb").** Replaces "don't put a limit" from the
+  same day. The app, API and database enforce it. Receipts and proof
+  photos stay at 10 MB and logos at 1 MB; whether receipts follow is
+  open (`features/F5-documents.md`).

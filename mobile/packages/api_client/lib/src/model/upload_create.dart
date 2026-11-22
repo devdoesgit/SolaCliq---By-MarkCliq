@@ -29,8 +29,9 @@ class UploadCreate {
   @JsonKey(name: r'content_type', required: true, includeIfNull: false)
   final UploadCreateContentTypeEnum contentType;
 
+  /// The file's exact size. Up to 50 MB for `kyc`, 10 MB for `receipt` and `proof`, 1 MB for `logo`.
   // minimum: 1
-  // maximum: 10485760
+  // maximum: 52428800
   @JsonKey(name: r'size_bytes', required: true, includeIfNull: false)
   final int sizeBytes;
 

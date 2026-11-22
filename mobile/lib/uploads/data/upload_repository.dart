@@ -9,8 +9,11 @@ enum UploadPurpose { receipt, kyc, proof }
 
 /// Why a picked file can't be uploaded, found before anything is sent.
 enum UploadProblem {
-  /// Over the 10 MB the server accepts.
+  /// Over the 10 MB the server takes for a receipt or photo.
   tooLarge,
+
+  /// Over the 50 MB the server takes for a KYC document.
+  documentTooLarge,
 }
 
 /// The file was refused on the phone; nothing was uploaded.
@@ -57,9 +60,13 @@ class UploadFile {
     return api.UploadCreateContentTypeEnum.imageSlashJpeg;
   }
 
-  /// Why it can't be uploaded (only over 10 MB), or null if it can.
-  UploadProblem? get problem =>
-      bytes.length > UploadRepository.maxBytes ? UploadProblem.tooLarge : null;
+  /// Why it can't be uploaded as [purpose] (only its size), or null.
+  UploadProblem? problemFor(UploadPurpose purpose) {
+    final (max, problem) = purpose == UploadPurpose.kyc
+        ? (UploadRepository.maxKycBytes, UploadProblem.documentTooLarge)
+        : (UploadRepository.maxBytes, UploadProblem.tooLarge);
+    return bytes.length > max ? problem : null;
+  }
 }
 
 /// Uploads files to private storage: the server hands out a short-lived
@@ -72,16 +79,27 @@ class UploadRepository {
   final Dio _transfer;
 
   static const int maxBytes = 10 * 1024 * 1024;
+  static const int maxKycBytes = 50 * 1024 * 1024;
+
+  /*
+    How long sending may take: 2 minutes, and a second for each 64 KB
+    (about 0.5 Mbps), as dio's send timeout is for the whole transfer.
+    The signed URL only has to be valid when it starts
+  */
+  static Duration _timeToSend(int bytes) =>
+      const Duration(minutes: 2) + Duration(seconds: bytes ~/ (64 * 1024));
 
   /// Uploads [file] for the company [orgId] and returns its upload id, to
   /// attach to one of that company's records. [UploadRefused] before
-  /// anything is sent when the file is over 10 MB.
+  /// anything is sent when the file is over [purpose]'s limit.
   Future<String> upload(
     String orgId,
     UploadFile file,
     UploadPurpose purpose,
   ) async {
-    if (file.problem case final problem?) throw UploadRefused(problem);
+    if (file.problemFor(purpose) case final problem?) {
+      throw UploadRefused(problem);
+    }
     final type = file.contentType;
     final response = await apiCall(
       () => _api.createUpload(
@@ -108,6 +126,7 @@ class UploadRepository {
           data: Stream.fromIterable([file.bytes]),
           options: Options(
             method: slot.method.value,
+            sendTimeout: _timeToSend(file.bytes.length),
             headers: {
               ...slot.headers,
               Headers.contentLengthHeader: file.bytes.length,

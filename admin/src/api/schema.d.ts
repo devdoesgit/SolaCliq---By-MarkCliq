@@ -499,7 +499,9 @@ export interface paths {
          *     workers, `receipt` for workers and agents, `kyc` for agents; the
          *     org admin may upload any, and only the org admin uploads `logo`.
          *     Otherwise 403 `org.role_not_allowed`. A `logo` is PNG or JPEG, up
-         *     to 1 MB (422 on `content_type` or `size_bytes` otherwise).
+         *     to 1 MB (422 on `content_type` or `size_bytes` otherwise). A
+         *     `kyc` file is up to 50 MB, `receipt` and `proof` up to 10 MB
+         *     (422 on `size_bytes` over it).
          */
         post: operations["createUpload"];
         delete?: never;
@@ -2581,6 +2583,7 @@ export interface components {
         UploadCreate: {
             /** @enum {string} */
             content_type: "image/jpeg" | "image/png" | "application/pdf";
+            /** @description The file's exact size. Up to 50 MB for `kyc`, 10 MB for `receipt` and `proof`, 1 MB for `logo`. */
             size_bytes: number;
             /**
              * @description `proof`: a task's photo from the live camera. `logo`: the company's logo (F15), org admin only, PNG or JPEG up to 1 MB.

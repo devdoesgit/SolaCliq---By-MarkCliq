@@ -67,10 +67,7 @@ class _AppState extends State<App> {
 
   /// Sends upload bytes to storage: no base URL, no auth header.
   final Dio _transfer = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      sendTimeout: const Duration(minutes: 2),
-    ),
+    BaseOptions(connectTimeout: const Duration(seconds: 10)),
   );
   late final ApiClient _api;
   late final AuthRepository _auth;

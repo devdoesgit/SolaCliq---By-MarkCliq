@@ -5,5 +5,6 @@ import 'package:solacliq/uploads/data/upload_repository.dart';
 extension UploadProblemText on UploadProblem {
   String message(AppLocalizations l10n) => switch (this) {
     UploadProblem.tooLarge => l10n.fileTooBig,
+    UploadProblem.documentTooLarge => l10n.documentTooBig,
   };
 }

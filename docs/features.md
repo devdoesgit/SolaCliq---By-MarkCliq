@@ -22,7 +22,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F2 | Company registration and MarkCliq review | done (app form, backend; review through the API, no website page; GST lookup API later) |
 | F3 | Team: org admin creates worker and agent accounts | building (app and backend done; website Team page to build) |
 | F4 | Customers and install stages | building (Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |
-| F5 | Documents | spec: several files per document, any size (`features/F5-documents.md`), waiting for review |
+| F5 | Documents | spec: several files per document (50 MB limit built) (`features/F5-documents.md`), waiting for review |
 | F6 | Worker jobs and geotagged installation photos | building (worker screens on the mock; spec and endpoints await owner review) |
 | F7 | Expenses and the approvals queue | building (worker: log, sent, list, detail, replace receipt; spec to write) |
 | F8 | Agent commission | building (mobile: commission on review, earnings, payout bank; endpoints await owner review) |

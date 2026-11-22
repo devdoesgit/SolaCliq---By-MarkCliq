@@ -79,6 +79,36 @@ async fn refuses_big_or_unknown_files(db: PgPool) {
     assert_eq!(rows, 0);
 }
 
+/*
+    A KYC document up to 50 MB (owner, 2026-11-22); every other file keeps
+    its own limit
+*/
+#[sqlx::test]
+async fn a_kyc_document_can_be_50_mb(db: PgPool) {
+    const MB: i64 = 1024 * 1024;
+    let a = org(&db, "Solar A", "active").await;
+    let admin = member(&db, a, "dev@example.com", "org_admin", None).await;
+    for (purpose, size, status) in [
+        ("kyc", 50 * MB, StatusCode::CREATED),
+        ("kyc", 50 * MB + 1, StatusCode::UNPROCESSABLE_ENTITY),
+        ("receipt", 10 * MB, StatusCode::CREATED),
+        ("receipt", 10 * MB + 1, StatusCode::UNPROCESSABLE_ENTITY),
+        ("proof", 10 * MB + 1, StatusCode::UNPROCESSABLE_ENTITY),
+    ] {
+        let res = call(
+            &db,
+            "POST",
+            &format!("/api/v1/orgs/{a}/uploads"),
+            &admin,
+            Some(
+                json!({"content_type": "application/pdf", "size_bytes": size, "purpose": purpose}),
+            ),
+        )
+        .await;
+        assert_eq!(res.status, status, "{purpose} {size}: {}", res.body);
+    }
+}
+
 #[sqlx::test]
 async fn needs_a_login(db: PgPool) {
     let a = org(&db, "Solar A", "active").await;

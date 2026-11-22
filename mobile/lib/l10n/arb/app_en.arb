@@ -1574,6 +1574,10 @@
     "@addAnother": {
         "description": "Button."
     },
+    "documentTooBig": "That file is over 50 MB. Choose a smaller one, or take a photo instead.",
+    "@documentTooBig": {
+        "description": "A KYC document over its size limit."
+    },
     "fileTooBig": "That file is over 10 MB. Take a photo instead.",
     "@fileTooBig": {
         "description": "Error."

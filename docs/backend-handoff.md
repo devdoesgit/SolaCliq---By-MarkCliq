@@ -105,7 +105,7 @@ milestone, top to bottom.
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
 | 21 | `GET /orgs/{org_id}/home` | any member | — | `HomeSummary` | **Built (phase 7).** Server-composed per role (see "Home" below); honest zeros and an explaining row until tasks, customers and installs exist (phases 8–10). Dates in Indian time |
-| 22 | `POST /orgs/{org_id}/uploads` | any member | `UploadCreate` | `Upload` | `content_type` jpeg/png/pdf, `size_bytes` ≤ 10 MB (422 over), `purpose` `receipt`/`kyc`/`proof`. Presigned PUT valid 15 min. **Built (phase 7; per company 2026-11-16).** The file belongs to that company (`orgs/<org_id>/...` in the bucket) and can only be attached to its records. An upload id can be used once, by its owner |
+| 22 | `POST /orgs/{org_id}/uploads` | any member | `UploadCreate` | `Upload` | `content_type` jpeg/png/pdf, `size_bytes` ≤ 10 MB, 50 MB for `kyc` (422 over), `purpose` `receipt`/`kyc`/`proof`. Presigned PUT valid 15 min. **Built (phase 7; per company 2026-11-16).** The file belongs to that company (`orgs/<org_id>/...` in the bucket) and can only be attached to its records. An upload id can be used once, by its owner |
 | 23 | `GET /orgs/{org_id}/notifications` | any member | cursor | `NotificationPage` | **Built (phase 7).** Newest first, `unread_count`. Each carries the id it opens: `task_id`, `expense_id` or `customer_id` |
 | 24 | `POST /orgs/{org_id}/notifications/read` | any member | — | 204 | **Built (phase 7).** Marks all read, in that company only |
 
