@@ -2,7 +2,7 @@
 
 **Effective:** 25 November 2026
 
-**Last updated:** 2026-11-20 (draft, pending legal review)
+**Last updated:** 2026-11-22 (draft, pending legal review)
 
 This policy explains what personal data the SolaCliq app and website
 collect, why, who it is shared with, how long it is kept, and the rights
@@ -47,9 +47,10 @@ with their staff and customers. That gives us two roles:
 | Email codes | Everyone | To verify your email and reset your password. Stored only as a keyed hash, valid 5 minutes |
 | Company registration details: GSTIN, legal and trade name, business type, address | Company owners | To review and approve the company on SolaCliq |
 | Address, emergency contact, bank account holder, IFSC, bank name and account number | Installers and sales agents, if they choose to add them | So their company can reach them and reimburse or pay them. The account number is encrypted; only its last 4 digits are ever shown |
-| Customer details: name, phone, email, address, electricity connection details (DISCOM, consumer number, sanctioned load, connection type), roof, planned system size, subsidy choice | Customers, entered by a sales agent with the customer's agreement | So the company can quote, install and claim the subsidy |
+| Customer details: name, phone, email, address, electricity connection details (DISCOM, consumer number, sanctioned load, connection type), roof, planned system size, subsidy choice, the site's GPS position if the agent adds it | Customers, entered by a sales agent with the customer's agreement | So the company can quote, install and claim the subsidy |
 | KYC document photos (for example Aadhaar card, PAN card, electricity bill) | Customers, photographed by a sales agent with the customer's agreement | For the government subsidy application and net metering. **We do not record Aadhaar or PAN numbers**, only the photos the agent takes |
 | Proof photos with GPS position, accuracy and time | Installers | To prove each installation step was done on site |
+| Crash reports: the error's type and where in the app it happened, phone model, Android version, app version, a random id for the install | Everyone who uses the app | To find and fix crashes. We don't add your name, email or what you typed |
 | Expenses and receipt photos, commission entries | Installers and sales agents | So the company can approve them |
 | Payments recorded ("I paid") | Customers | So the company can confirm what was paid. We never collect money or see bank or UPI logins |
 | Solar quote request: PIN code, city, bill range, roof type, timeline, phone | Anyone who asks for a quote | To give an estimate and have MarkCliq call you, only if you tick the box agreeing to be contacted |
@@ -61,14 +62,15 @@ with their staff and customers. That gives us two roles:
 **Phone permissions.** The app asks for:
 
 - **Camera**: to take proof photos, receipts and documents.
-- **Location**: only while the proof camera is open, to tag the photo
-  with where it was taken. The app does not track your location at any
-  other time, and never in the background.
+- **Location**: while the proof camera is open, to tag the photo with
+  where it was taken, and once when a sales agent taps to save a
+  customer's site, for the installer's directions. The app does not
+  track your location at any other time, and never in the background.
 - **Notifications**: to show task, approval and payment updates. You can
   turn them off in the app's settings or in Android settings.
 
 **What we don't collect:** contacts, call logs, SMS, other apps, your
-location outside the proof camera, or advertising identifiers. We do not
+location outside those two uses, or advertising identifiers. We do not
 use advertising or analytics tracking, and we do not sell personal data.
 
 ## 4. Consent and your choices
@@ -106,6 +108,7 @@ service and under their own security and confidentiality terms:
 | Cloudflare (R2) | Private storage for photos and documents | Cloudflare data centres, may be outside India |
 | Google (Gmail API, Google Workspace) | Sending account emails | Google data centres, may be outside India |
 | Google (Firebase Cloud Messaging) | Delivering push notifications (title and short text only, never codes, bank details or documents) | Google data centres, may be outside India |
+| Google (Firebase Crashlytics) | Receiving crash reports from the app | Google data centres, may be outside India |
 
 We may also disclose data when Indian law requires it, for example to a
 court or a government authority with a lawful order, or to protect
@@ -139,6 +142,7 @@ what it may mean for you and what you can do.
 | Login sessions | 30 days without use |
 | Database backups | 14 days |
 | Company records (tasks, photos, expenses, payments) | As long as the company uses SolaCliq, then as our agreement with it says |
+| Crash reports | 90 days |
 | Security logs | 1 year, as the DPDP Rules require |
 
 Where a law (for example tax or GST law) requires a record to be kept

@@ -73,7 +73,8 @@ Ordered by risk.
    it with a link.
 5. **Retention jobs**: delete KYC 30 days after rejection and 1 year
    after handover (decided, not yet built).
-6. **A location note** before the proof camera's first use: "Photos are
+6. **A location note** (the site-location tap has one since 2026-11-22;
+   the camera doesn't yet) before the proof camera's first use: "Photos are
    tagged with where they were taken. The app reads your location only
    while this camera is open." Google expects a clear disclosure.
 7. **A breach plan**: who decides, who tells whom (users, the Data

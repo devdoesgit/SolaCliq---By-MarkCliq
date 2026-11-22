@@ -44,10 +44,14 @@ Privacy Policy, and log the decision in `decisions.md`.
   file really arrived, whole. Files nobody used within 24 hours are
   deleted.
 - **Built.** Proof photos come from the live camera only (never the
-  gallery), with the GPS position, its accuracy and the time. Photos far
-  from the site (over 500 m), with poor GPS (over 50 m) or a faked
-  location are flagged to the admin. The photo's time is recorded as
-  the phone gives it; the admin judges an odd one.
+  gallery), with the GPS position, its accuracy, the time, and whether the
+  phone reported a faked location. These are stored as the phone gives
+  them; SolaCliq doesn't check or flag them.
+- **Built 2026-11-22: a customer's site location.** When registering a
+  customer, the sales agent can tap to save the phone's position (lat
+  and long only). It is optional, read only on that tap, not checked,
+  and used for the installer's directions. The assigned installer and
+  the company see it.
 - **Built.** Each kind of file is for the people who use it: proof
   photos for installers, receipts for installers and sales agents, KYC
   documents for sales agents, any of them for the company's admin.
@@ -139,11 +143,19 @@ Privacy Policy, and log the decision in `decisions.md`.
   token; logging out stops pushes to that phone, and a phone that
   changes hands only gets the newest login's. A person can turn pushes
   off in settings. Google Analytics is off in the Firebase project.
+- **Built 2026-11-22: crash reports** go to Google's Firebase
+  Crashlytics, from release builds only. A report has the error's type
+  and where in the code it happened, the phone's model and Android
+  version, the app's version, and a random id for the install. We add
+  no name, email, user id, error message, form content or location.
+  (A crash inside Android or a plugin is reported by Google's SDK with
+  that crash's own message.) Google keeps reports 90 days.
 - **Open, at the first deploy (phase 5).** Database backups: how often,
   where they're kept, how long, and a tested restore.
 
 ## Not collected
 
 - No location tracking: the app reads the phone's position only while
-  the proof camera is open.
+  the proof camera is open, or once when a sales agent taps to save a
+  customer's site.
 - No contacts, call logs or other phone data.
