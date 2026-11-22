@@ -83,6 +83,45 @@ feature knows who is using it and in which orgs.
   email for accounts created by an agent or org admin (sent in F3/F4). In development the backend prints
   codes to its log; the Prism mock returns example responses.
 
+## Known flaw: sign-up takeover (QA-27, QA-28), to fix later
+
+Found 2026-11-22; deferred by the owner the same day. **Open.**
+
+**The flaw.** Sign-up saves the password, name, phone and terms
+agreement before the code. A second sign-up with that unverified email
+keeps all of them, and entering the code activates them. Tested against
+the API:
+
+| Who makes the account first | Result |
+|---|---|
+| Admin adds the email | Safe: no password until set with an emailed code |
+| Attacker, then the person signs up | Taken over |
+| Attacker, admin adds them, they sign up | Taken over, as installer |
+| Attacker, owner registers the company, owner signs up | Taken over, as the company's admin |
+| Attacker, then the person uses Forgot password | Safe: the attacker's password is replaced |
+| An agent registers that unverified customer | Password cleared by that code; name and phone stay |
+
+**Until it's fixed:** someone taken over gets the account back with
+Forgot password, which ends the attacker's sessions.
+
+**The fix (the owner's order: code first, then password).**
+
+1. Email only: a code is sent.
+2. Code: the server returns a one-time setup token (15 minutes).
+3. Name, mobile, password and terms, with that token: the account is
+   completed and logged in. Nothing typed earlier is kept.
+
+- Invited accounts (no password) can finish through the same steps.
+  Today "Create account" verifies them, then says "password not set".
+- Login answers `auth.invalid_credentials` for an account with no
+  password (today 403 tells anyone that the email was invited) and for
+  an unverified one (403 today: QA-28). The login screen always shows
+  "Set up your account".
+- Passwords already saved on unverified accounts are cleared.
+- Forgot password stays as it is.
+- Contract change: apps built before it can't sign up. Spec and
+  `openapi.yaml` first; each row above becomes a test.
+
 ## API
 
 Added to `api/openapi.yaml` (tag `auth`). All under `/api/v1`.

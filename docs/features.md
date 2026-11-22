@@ -18,7 +18,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | # | Feature | Status |
 |---|---|---|
 | F0 | Foundation | done (CI with the first deploy) |
-| F1 | Accounts and login | done (app, website, backend; SMTP with the first deploy) |
+| F1 | Accounts and login | done (app, website, backend; SMTP with the first deploy); **open: sign-up takeover QA-27, fix deferred 2026-11-22** |
 | F2 | Company registration and MarkCliq review | done (app form, backend; review through the API, no website page; GST lookup API later) |
 | F3 | Team: org admin creates worker and agent accounts | building (app and backend done; website Team page to build) |
 | F4 | Customers and install stages | building (Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |

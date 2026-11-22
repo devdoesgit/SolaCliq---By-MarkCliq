@@ -111,6 +111,11 @@ Privacy Policy, and log the decision in `decisions.md`.
 
 - **Built.** Passwords are stored only as an Argon2 hash; nobody can
   read them, including us.
+- **Open (known flaw, 2026-11-22).** Sign-up saves a password before the
+  email is verified, so someone who signs up first with another
+  person's email can get into that account once its owner verifies.
+  Fix decided (code first, then password), not built yet
+  (`features/F1-accounts-login.md`).
 - **Built.** Email codes (sign-up, password reset) are 6 digits, last 5
   minutes, allow 5 tries, and are stored only as a keyed hash.
 - **Built.** Login tokens are random and stored only as hashes. A

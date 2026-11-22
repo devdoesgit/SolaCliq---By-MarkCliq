@@ -808,3 +808,50 @@ Change a decision by adding a new line, not by editing an old one.
 - **The admin's attendance lists keep anyone with a day in the range,
   whatever their role is now (F17)**, so a month's record never loses
   days when someone is re-added with another role.
+- **No camera button in the installer's tab bar (owner, 2026-11-22).**
+  It opened the camera on whichever task the app guessed was next, so a
+  worker standing at one site could shoot proof for another customer's
+  task; it was also the path behind the QA submit bug (QA-03). Proof is
+  taken from a task, after the worker has picked it. The installer's tab
+  bar is Home, Tasks, Expenses, Profile. Sales keep their "+" (adding a
+  customer has no "which one" to guess).
+- **Money shows exactly, never rounded (QA-05).** `formatRupees` drops
+  only empty decimals: ₹1,240 and ₹4.55. A rounded amount on an expense
+  or a payment is a wrong amount.
+- **Any file is taken; the admin judges what it shows (owner,
+  2026-11-22; QA-07).** A check of each file's bytes was built and
+  removed the same day: it could block a real upload. The declared type
+  comes from the name, else the first bytes, else JPEG, and is never a
+  reason to refuse. A file that can't be previewed shows as a file icon.
+- **One answer for a wrong, expired, used-up or unsent email code
+  (QA-08).** "Expired", or "too many tries" on the sixth guess, came
+  only for emails that had a code, which gave away who has an account.
+  All are `auth.code_invalid` now (so the sixth try is no longer 429);
+  the app and website say "wrong or has expired". 429 is only the per-IP
+  limit. Only a race on a correct code still answers `auth.code_expired`.
+- **Every app error reaches the device log (QA-02).** Flutter's, uncaught
+  async errors and bloc errors print to logcat in every build. Bloc
+  states print only in debug: they hold customers' details.
+- **Crash reporting is on, through Firebase Crashlytics (owner,
+  2026-11-22).** Replaces the proposed Sentry: Firebase is already in
+  the app. Release builds only. An error goes as its type and stack,
+  never its message, which can quote what someone typed. No user id,
+  logs or Analytics. A broken screen counts as fatal; an async or bloc
+  error doesn't.
+- **A site's location is only a lat and long (owner, 2026-11-22: "just
+  get lat, long, no checks on our end for now").** The agent taps to
+  save it from their phone while registering; it's optional. Nothing
+  compares or judges it, or a proof photo's position: the 500 m and
+  50 m flags and the camera's "At site" are gone. The columns `far`,
+  `inaccurate` and `distance_m` stay, unwritten, in case checks return.
+- **The Privacy Policy changed inside version 1.** It isn't in effect
+  until 25 November 2026, and F16 doesn't allow version 2 until the
+  website has its re-agree screen. Anyone who agreed while testing isn't
+  asked again (go-live wipes test data).
+- **Sign-up becomes code first; fixed later (owner, 2026-11-22; QA-27,
+  QA-28).** Today sign-up saves a password, name, phone and terms tick
+  before the inbox is proven, and a second sign-up keeps them, so whoever
+  signs up first with someone's email owns the account once its real
+  owner enters the code. The direction: email, then code, then details
+  and password. The owner put the fix off. Until it's built the takeover
+  is live (`features/F1-accounts-login.md`, "Known flaw").
