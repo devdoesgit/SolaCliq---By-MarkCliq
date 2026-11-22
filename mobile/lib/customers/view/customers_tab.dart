@@ -14,7 +14,7 @@ import 'package:solacliq/l10n/l10n.dart';
 enum CustomerFilter { all, fix, review, approved }
 
 /// The customers a Sales person added, filtered by where their KYC is,
-/// with a search by name or phone.
+/// with a search by name.
 class CustomersTab extends StatefulWidget {
   const new({required this.orgId, this.filter = CustomerFilter.all, super.key});
 
@@ -59,6 +59,8 @@ class CustomersTabState extends State<CustomersTab> {
   }
 
   Future<void> _open(CustomerSummary c) async {
+    // Else coming back brings the search's keyboard up again.
+    FocusManager.instance.primaryFocus?.unfocus();
     await context.push(AppRoutes.customer(c.id));
     if (mounted) reload();
   }
@@ -96,6 +98,7 @@ class CustomersTabState extends State<CustomersTab> {
                 children: [
                   SolaFieldRow(
                     key: const ValueKey('customers_query'),
+                    autofocus: true,
                     label: l10n.searchLabel,
                     placeholder: l10n.searchCustomers,
                     textInputAction: TextInputAction.search,
@@ -133,7 +136,9 @@ class CustomersTabState extends State<CustomersTab> {
                       Padding(
                         padding: const EdgeInsets.only(top: SolaSpace.space26),
                         child: SolaText(
-                          l10n.noCustomersMatch,
+                          _query.trim().isEmpty
+                              ? l10n.noCustomersMatch
+                              : l10n.noSearchMatch(_query.trim()),
                           color: SolaColors.muted,
                           textAlign: TextAlign.center,
                         ),

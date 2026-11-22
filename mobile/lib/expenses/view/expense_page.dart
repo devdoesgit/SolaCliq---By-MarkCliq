@@ -181,6 +181,7 @@ class _ExpenseViewState extends State<ExpenseView> {
 
   Future<void> _pickDay() async {
     final today = DateUtils.dateOnly(DateTime.now());
+    FocusManager.instance.primaryFocus?.unfocus();
     final day = await showDatePicker(
       context: context,
       initialDate: _day,
@@ -443,11 +444,13 @@ class _ExpenseViewState extends State<ExpenseView> {
         ),
         bottom: SolaBottomBar(
           children: [
-            SolaKeypad(
-              onKey: _key,
-              onDelete: _delete,
-              deleteLabel: l10n.deleteDigit,
-            ),
+            // The note's keyboard takes its place.
+            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+              SolaKeypad(
+                onKey: _key,
+                onDelete: _delete,
+                deleteLabel: l10n.deleteDigit,
+              ),
             SolaButton(
               key: const Key('expense_submit'),
               label: l10n.sendToAdmin,

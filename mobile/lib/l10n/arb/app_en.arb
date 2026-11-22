@@ -2115,9 +2115,14 @@
     "@tasksLoadFailed": {
         "description": "Error."
     },
-    "tasksThisMonth": "tasks this month",
+    "tasksThisMonth": "{n, plural, =1{task this month} other{tasks this month}}",
     "@tasksThisMonth": {
-        "description": "Profile stat."
+        "description": "Profile stat: the word under the count.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
     },
     "tasksToday": "Today",
     "@tasksToday": {
@@ -2635,9 +2640,9 @@
             }
         }
     },
-    "searchCustomers": "Search by name or phone",
+    "searchCustomers": "Search by name",
     "@searchCustomers": {
-        "description": "Search field placeholder."
+        "description": "Customers search placeholder. Names only: the list has no phones."
     },
     "searchLabel": "Search",
     "@searchLabel": {
@@ -2979,9 +2984,9 @@
     "@paidThisMonth": {
         "description": "Under the month's paid commission."
     },
-    "paidMonthLine": "{month} · {n} customers",
+    "paidMonthLine": "{month} · {n, plural, =1{1 customer} other{{n} customers}}",
     "@paidMonthLine": {
-        "description": "Month and how many customers were paid.",
+        "description": "Earnings: who was paid this month.",
         "placeholders": {
             "month": {
                 "type": "String"
@@ -3227,9 +3232,14 @@
     "@solacliqUser": {
         "description": "Pill for a person with no company."
     },
-    "statCustomers": "customers",
+    "statCustomers": "{n, plural, =1{customer} other{customers}}",
     "@statCustomers": {
-        "description": "Profile stat."
+        "description": "Profile stat: the word under the count.",
+        "placeholders": {
+            "n": {
+                "type": "int"
+            }
+        }
     },
     "statPaidIn": "paid in {month}",
     "@statPaidIn": {

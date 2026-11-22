@@ -73,7 +73,10 @@ class _ProfileTabState extends State<ProfileTab> {
       case OrgRole.worker:
         final s = await context.read<TaskRepository>().stats(workspace.orgId);
         return [
-          (value: '${s.tasksThisMonth}', label: l10n.tasksThisMonth),
+          (
+            value: '${s.tasksThisMonth}',
+            label: l10n.tasksThisMonth(s.tasksThisMonth),
+          ),
           (value: '${s.returnedThisMonth}', label: l10n.returnedLabel),
           (
             value: l10n.hoursValue(
@@ -86,7 +89,10 @@ class _ProfileTabState extends State<ProfileTab> {
         final all = await context.read<CustomerRepository>().mine(
           workspace.orgId,
         );
-        final count = (value: '${all.length}', label: l10n.statCustomers);
+        final count = (
+          value: '${all.length}',
+          label: l10n.statCustomers(all.length),
+        );
         if (!workspace.earnsCommission) {
           return [
             count,

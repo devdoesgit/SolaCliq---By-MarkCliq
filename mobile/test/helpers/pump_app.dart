@@ -43,6 +43,7 @@ const List<String> _otherRoutes = [
   AppRoutes.addCustomerSent,
   AppRoutes.useWebsite,
   AppRoutes.notifications,
+  '${AppRoutes.customers}/:id',
   '${AppRoutes.tasks}/:id',
   '${AppRoutes.tasks}/:id/camera',
   '${AppRoutes.tasks}/:id/history',

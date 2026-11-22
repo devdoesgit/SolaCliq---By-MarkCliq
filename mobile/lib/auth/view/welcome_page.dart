@@ -105,10 +105,12 @@ class _Content extends StatelessWidget {
         ),
         Positioned(
           left: SolaSpace.space20,
+          right: SolaSpace.space20,
           top: top + SolaSpace.space12,
           child: ExcludeSemantics(
-            child: Row(
+            child: Wrap(
               spacing: SolaSpace.space6,
+              runSpacing: SolaSpace.space6,
               children: [
                 SolaPill(
                   l10n.welcomeLive,
@@ -116,6 +118,7 @@ class _Content extends StatelessWidget {
                   icon: SolaIcons.bolt,
                 ),
                 SolaPill(l10n.welcomeStage, tone: SolaTone.light),
+                SolaPill(l10n.illustrative, tone: SolaTone.light),
               ],
             ),
           ),

@@ -58,6 +58,11 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     _confirm.addListener(_rebuild);
   }
 
+  // From each field to the end of the checklist under them, to keep it
+  // above the keyboard.
+  static const _confirmToChecklist = 130.0;
+  static const double _passwordToChecklist = _confirmToChecklist + 70;
+
   void _rebuild() => setState(() {});
 
   @override
@@ -160,6 +165,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               children: [
                 PasswordField(
                   key: const ValueKey('reset_password'),
+                  revealBelow: _passwordToChecklist,
                   label: l10n.fieldNewPassword,
                   controller: _password,
                   error: _passwordError,
@@ -169,6 +175,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 ),
                 PasswordField(
                   key: const ValueKey('reset_confirm'),
+                  revealBelow: _confirmToChecklist,
                   label: l10n.fieldConfirmPassword,
                   controller: _confirm,
                   error: _confirmError,

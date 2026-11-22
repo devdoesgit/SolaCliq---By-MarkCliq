@@ -257,6 +257,7 @@ class _ProofCameraPageState extends State<ProofCameraPage>
                     slot: slot,
                     position: _position,
                     locationProblem: _problems.location,
+                    onSettings: () => _restartOnResume = true,
                     failure: state.failure?.message(l10n),
                     busy: _shooting || state.busy,
                     onSlot: (id) => setState(() => _slotId = id),
@@ -531,6 +532,7 @@ class _Panel extends StatelessWidget {
     required this.slot,
     required this.position,
     required this.locationProblem,
+    required this.onSettings,
     required this.failure,
     required this.busy,
     required this.onSlot,
@@ -544,6 +546,9 @@ class _Panel extends StatelessWidget {
   /// Why there's no position, if location failed: shown instead of
   /// "Finding your location…", which would never end.
   final CaptureProblem? locationProblem;
+
+  /// Called before opening Settings from the location chip.
+  final VoidCallback onSettings;
   final String? failure;
   final bool busy;
   final ValueChanged<String> onSlot;
@@ -566,6 +571,31 @@ class _Panel extends StatelessWidget {
     final l10n = context.l10n;
     final task = this.task;
     final failure = this.failure;
+    final chip = Container(
+      height: SolaSize.pill + 6,
+      padding: const EdgeInsets.symmetric(horizontal: SolaSpace.space14),
+      decoration: BoxDecoration(
+        color: SolaColors.cameraGlass,
+        borderRadius: BorderRadius.circular(SolaRadius.radiusPill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: SolaSpace.space6,
+        children: [
+          const SolaIcon(SolaIcons.pin, size: 14, color: SolaColors.surface),
+          Flexible(
+            child: SolaText(
+              '${_where(l10n)} · ${formatDayMonth(DateTime.now())}, '
+              '${formatTime(DateTime.now())}',
+              style: SolaTextStyle.chip,
+              color: SolaColors.surface,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
     return Container(
       padding: EdgeInsets.fromLTRB(
         SolaSpace.space20,
@@ -583,40 +613,28 @@ class _Panel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: SolaSpace.space14,
         children: [
-          Semantics(
-            liveRegion: true,
-            child: Container(
-              height: SolaSize.pill + 6,
-              padding: const EdgeInsets.symmetric(
-                horizontal: SolaSpace.space14,
+          // With a location problem it opens the settings that fix it: the
+          // notice above may be showing the camera's.
+          if (locationProblem case final problem? when position == null)
+            SolaTappable(
+              key: const Key('camera_location_settings'),
+              identifier: 'camera_location_settings',
+              semanticsLabel: '${_where(l10n)}. ${l10n.openSettings}',
+              onTap: () {
+                onSettings();
+                unawaited(
+                  problem == CaptureProblem.locationOff
+                      ? Geolocator.openLocationSettings()
+                      : Geolocator.openAppSettings(),
+                );
+              },
+              builder: (context, state) => SizedBox(
+                height: SolaSize.tapMin,
+                child: Center(child: chip),
               ),
-              decoration: BoxDecoration(
-                color: SolaColors.cameraGlass,
-                borderRadius: BorderRadius.circular(SolaRadius.radiusPill),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: SolaSpace.space6,
-                children: [
-                  const SolaIcon(
-                    SolaIcons.pin,
-                    size: 14,
-                    color: SolaColors.surface,
-                  ),
-                  Flexible(
-                    child: SolaText(
-                      '${_where(l10n)} · ${formatDayMonth(DateTime.now())}, '
-                      '${formatTime(DateTime.now())}',
-                      style: SolaTextStyle.chip,
-                      color: SolaColors.surface,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            )
+          else
+            Semantics(liveRegion: true, child: chip),
           if (failure != null)
             SolaText(
               failure,

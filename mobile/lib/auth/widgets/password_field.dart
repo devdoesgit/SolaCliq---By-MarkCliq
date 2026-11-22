@@ -17,6 +17,7 @@ class PasswordField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.onChanged,
     this.onSubmitted,
+    this.revealBelow = 0,
   });
 
   final String label;
@@ -32,6 +33,9 @@ class PasswordField extends StatefulWidget {
   final TextInputAction textInputAction;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+
+  /// How much under the field to keep above the keyboard too.
+  final double revealBelow;
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -50,6 +54,7 @@ class _PasswordFieldState extends State<PasswordField> {
       controller: widget.controller,
       error: widget.error,
       placeholder: widget.placeholder,
+      revealBelow: widget.revealBelow,
       obscureText: !_visible,
       keyboardType: TextInputType.visiblePassword,
       textInputAction: widget.textInputAction,

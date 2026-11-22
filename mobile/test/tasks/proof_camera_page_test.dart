@@ -45,6 +45,7 @@ class _DeniedCamera extends CameraPlatform with MockPlatformInterfaceMixin {
 class _DeniedLocation extends GeolocatorPlatform
     with MockPlatformInterfaceMixin {
   int asks = 0;
+  int settingsOpened = 0;
 
   @override
   Future<bool> isLocationServiceEnabled() async => true;
@@ -60,7 +61,10 @@ class _DeniedLocation extends GeolocatorPlatform
   }
 
   @override
-  Future<bool> openAppSettings() async => true;
+  Future<bool> openAppSettings() async {
+    settingsOpened++;
+    return true;
+  }
 }
 
 void main() {
@@ -108,6 +112,16 @@ void main() {
       expect(location.asks, 1);
       expect(find.text('Camera not allowed'), findsOneWidget);
       expect(find.textContaining('Location not allowed'), findsOneWidget);
+    });
+
+    testWidgets('the location chip opens the settings that fix it', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.byKey(const Key('camera_location_settings')));
+      await dialogClosed(tester);
+      expect(location.settingsOpened, 1);
+      expect(location.asks, 2);
     });
 
     testWidgets('back from Settings, it tries again', (tester) async {

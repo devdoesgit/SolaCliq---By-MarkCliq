@@ -330,6 +330,7 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
             SolaListRow(
               key: ValueKey('option_$option'),
               title: option,
+              titleLines: 2,
               trailing: option == selected
                   ? const SolaIcon(SolaIcons.check)
                   : null,
@@ -914,6 +915,7 @@ class _DocRow extends StatelessWidget {
     return SolaListRow(
       title: title,
       subtitle: detail,
+      subtitleLines: failed ? 3 : 1,
       // The whole row adds the photo, not only its button.
       onTap: canAdd ? onAdd : null,
       leading: SolaThumb(

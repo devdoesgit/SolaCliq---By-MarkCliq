@@ -72,9 +72,14 @@ class _Shell extends StatelessWidget {
             ),
         ],
         selectedIndex: tabs.indexWhere((t) => t.key == selected),
-        onSelected: (i) => switch (tabs[i]) {
-          _Tab(:final onTap?) => onTap(),
-          final t => onSelect(t.key),
+        onSelected: (i) {
+          // A tab left behind keeps its field focused (the customers
+          // search), and the keyboard would come back over the next.
+          FocusManager.instance.primaryFocus?.unfocus();
+          return switch (tabs[i]) {
+            _Tab(:final onTap?) => onTap(),
+            final t => onSelect(t.key),
+          };
         },
       ),
     );
