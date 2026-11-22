@@ -7,7 +7,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
-import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/cubit/task_cubit.dart';
@@ -19,16 +18,12 @@ import 'package:solacliq/uploads/data/upload_repository.dart';
 /// Takes a task's proof photos, one slot at a time, from the live camera
 /// only, recording where (GPS and its accuracy) and when each was taken.
 ///
-/// Opened from a task, it returns there when the last photo is in; opened
-/// from the tab bar, it then shows the task.
+/// Opened from a task, it returns there when the last photo is in.
 class ProofCameraPage extends StatefulWidget {
-  const new({this.slotId, this.returnsToTask = true, super.key});
+  const new({this.slotId, super.key});
 
   /// The slot to start with; the first without a photo by default.
   final String? slotId;
-
-  /// Whether a task screen is underneath to go back to.
-  final bool returnsToTask;
 
   @override
   State<ProofCameraPage> createState() => _ProofCameraPageState();
@@ -203,14 +198,7 @@ class _ProofCameraPageState extends State<ProofCameraPage>
     }
   }
 
-  void _finish() {
-    if (widget.returnsToTask) {
-      context.pop();
-    } else {
-      final cubit = context.read<TaskCubit>();
-      context.pushReplacement(AppRoutes.task(cubit.taskId), extra: cubit);
-    }
-  }
+  void _finish() => context.pop();
 
   Future<void> _toggleFlash() async {
     final camera = _camera;

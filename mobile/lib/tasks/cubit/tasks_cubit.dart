@@ -44,15 +44,4 @@ class TasksCubit extends Cubit<TasksState> {
       );
     }
   }
-
-  /// The next task that still needs photos, for the camera tab.
-  TaskSummary? get nextForCamera {
-    for (final task in state.lists[TaskView.today] ?? const <TaskSummary>[]) {
-      final open =
-          task.status == TaskStatus.assigned ||
-          task.status == TaskStatus.returned;
-      if (open && !task.hasProblem) return task;
-    }
-    return null;
-  }
 }

@@ -1,10 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
-import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/expenses/view/expenses_tab.dart';
 import 'package:solacliq/home/view/org_home.dart';
@@ -15,11 +13,15 @@ import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/tasks/view/tasks_tab.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
-/// The worker's tabs, left to right; the camera in the middle is an action.
+/// The worker's tabs, left to right.
 enum WorkerTab { home, tasks, expenses, profile }
 
-/// A worker's app: home, tasks, the proof camera, expenses and profile,
-/// under one tab bar. Each tab keeps its place while another is shown.
+/*
+  A worker's app: home, tasks, expenses and profile, under one tab bar.
+  Each tab keeps its place while another is shown. Proof photos are taken
+  from a task, never from the tab bar: the worker picks the task (and so
+  the customer) first, so a photo can't land on the wrong job
+*/
 class WorkerShell extends StatelessWidget {
   const new({
     required this.account,
@@ -97,20 +99,6 @@ class _WorkerShellViewState extends State<WorkerShellView> {
     _ => null,
   };
 
-  /// The camera for the next task with photos to take, else the tasks.
-  Future<void> _camera() async {
-    final tasks = context.read<TasksCubit>();
-    if (tasks.state.loading) await tasks.load();
-    final next = tasks.nextForCamera;
-    if (!mounted) return;
-    if (next == null) {
-      _go(WorkerTab.tasks);
-      return;
-    }
-    await context.push(AppRoutes.taskCamera(next.id, fromTab: true));
-    if (mounted) unawaited(tasks.load());
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -124,12 +112,6 @@ class _WorkerShellViewState extends State<WorkerShellView> {
         key: const ValueKey('tab_tasks'),
         label: l10n.tabTasks,
         icon: SolaIcons.list,
-      ),
-      SolaTabItem(
-        key: const ValueKey('tab_upload_proof'),
-        label: l10n.tabUploadProof,
-        icon: SolaIcons.camera,
-        raised: true,
       ),
       SolaTabItem(
         key: const ValueKey('tab_expenses'),
@@ -164,13 +146,8 @@ class _WorkerShellViewState extends State<WorkerShellView> {
       ),
       bottomNavigationBar: SolaTabBar(
         items: items,
-        // The raised camera sits at index 2 and is never "selected".
-        selectedIndex: _tab.index < 2 ? _tab.index : _tab.index + 1,
-        onSelected: (i) => switch (i) {
-          2 => unawaited(_camera()),
-          < 2 => _go(WorkerTab.values[i]),
-          _ => _go(WorkerTab.values[i - 1]),
-        },
+        selectedIndex: _tab.index,
+        onSelected: (i) => _go(WorkerTab.values[i]),
       ),
     );
   }

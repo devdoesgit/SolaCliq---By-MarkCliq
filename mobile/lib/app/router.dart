@@ -210,21 +210,18 @@ class AppRouter {
           path: '${AppRoutes.tasks}/:id',
           builder: (context, state) => _member(
             workspace,
-            (current) => _withTask(context, state, current, const TaskPage()),
+            (current) => taskScope(context, state, current, const TaskPage()),
           ),
           routes: [
             GoRoute(
               path: 'camera',
               builder: (context, state) => _member(
                 workspace,
-                (current) => _withTask(
+                (current) => taskScope(
                   context,
                   state,
                   current,
-                  ProofCameraPage(
-                    slotId: state.uri.queryParameters['slot'],
-                    returnsToTask: state.uri.queryParameters['tab'] != '1',
-                  ),
+                  ProofCameraPage(slotId: state.uri.queryParameters['slot']),
                 ),
               ),
             ),
@@ -374,18 +371,32 @@ SolaBackground _background(MemberWorkspace w) => switch (w.role) {
   _ => SolaBackground.sand,
 };
 
-/// Gives [page] the task's cubit: the one passed in `extra` (the task and
-/// its camera share it), or a new one that loads the task.
-Widget _withTask(
+/*
+  Gives [page] the task's cubit: the one passed in `extra` (the task and
+  its camera share it), or a new one that loads the task (a link, a
+  notification, a rebuilt route that lost its `extra`)
+  ----------------------------------------------------------------------
+  - the two are different kinds of provider. Flutter updates a widget in
+    place when its type and key match, and a provider refuses to switch
+    between "given" and "created" that way (a red error screen, QA-01).
+    Their keys differ, so a switch builds the new one fresh instead
+*/
+@visibleForTesting
+Widget taskScope(
   BuildContext context,
   GoRouterState state,
   MemberWorkspace current,
   Widget page,
 ) {
   if (state.extra case final TaskCubit cubit) {
-    return BlocProvider.value(value: cubit, child: page);
+    return BlocProvider.value(
+      key: ValueKey(('shared_task', cubit)),
+      value: cubit,
+      child: page,
+    );
   }
   return BlocProvider(
+    key: ValueKey(('own_task', state.pathParameters['id'])),
     create: (context) {
       final cubit = TaskCubit(
         context.read<TaskRepository>(),

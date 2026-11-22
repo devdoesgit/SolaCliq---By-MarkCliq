@@ -83,12 +83,10 @@ abstract final class AppRoutes {
   static String task(String id) => '$tasks/$id';
 
   /// The proof camera for a task, at [slot] or the first missing photo.
-  /// [fromTab]: opened from the tab bar, it shows the task when done.
-  static String taskCamera(String id, {String? slot, bool fromTab = false}) =>
-      Uri(
-        path: '$tasks/$id/camera',
-        queryParameters: {'slot': ?slot, if (fromTab) 'tab': '1'},
-      ).toString();
+  static String taskCamera(String id, {String? slot}) => Uri(
+    path: '$tasks/$id/camera',
+    queryParameters: {'slot': ?slot},
+  ).toString();
 
   static String taskHistory(String id) => '$tasks/$id/history';
 

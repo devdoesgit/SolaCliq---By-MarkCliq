@@ -55,8 +55,8 @@ reassigns or cancels it.
 - Submit with an optional note; report a problem (reason, note, optional
   photo); reply to the admin on a returned task.
 - History: the task's timeline.
-- Raised tab "Upload proof": the camera for the next task with photos
-  missing, else the Tasks tab.
+- ~~Raised tab "Upload proof"~~: removed 2026-11-22 (`decisions.md`).
+  Proof is taken from a task, so the worker picks the customer first.
 - Profile tab: name, role, company, this month's stats; workspaces, help,
   log out. Personal details and ID documents are shown as coming soon.
 

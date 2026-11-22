@@ -462,10 +462,6 @@
     "@tabTasks": {
         "description": "Tab."
     },
-    "tabUploadProof": "Upload proof",
-    "@tabUploadProof": {
-        "description": "Tab, main action for workers."
-    },
     "tabExpenses": "Expenses",
     "@tabExpenses": {
         "description": "Tab."

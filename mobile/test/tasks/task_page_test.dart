@@ -201,13 +201,6 @@ void main() {
           .thenAnswer((_) async => [summary('t4', TaskStatus.approved)]);
     });
 
-    test('the camera goes to the next open task without a problem', () async {
-      final cubit = TasksCubit(tasks, orgId: 'o1');
-      addTearDown(cubit.close);
-      await cubit.load();
-      expect(cubit.nextForCamera!.id, 't2');
-    });
-
     testWidgets('lists today and opens a task', (tester) async {
       final cubit = TasksCubit(tasks, orgId: 'o1');
       addTearDown(cubit.close);

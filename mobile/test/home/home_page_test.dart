@@ -195,7 +195,8 @@ void main() {
       expect(find.text("Ravi's day"), findsOneWidget);
       expect(find.text('Up next'), findsOneWidget);
       expect(find.text('Sample task'), findsOneWidget);
-      expect(find.byKey(const ValueKey('tab_upload_proof')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tab_upload_proof')), findsNothing);
+      expect(find.byKey(const ValueKey('tab_tasks')), findsOneWidget);
       expect(find.byKey(const ValueKey('tab_expenses')), findsOneWidget);
     });
 
