@@ -139,7 +139,7 @@
                 "login"
               ]
             },
-            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. An unknown\nemail, a wrong password and an account with no password yet all\ngive the same `auth.invalid_credentials`, so log in can't show\nwhich emails have accounts or were invited. Someone invited sets\na password through /auth/password/forgot and /reset, or signs up.",
             "auth": {
               "type": "noauth"
             },
@@ -191,7 +191,7 @@
                 "login"
               ]
             },
-            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. An unknown\nemail, a wrong password and an account with no password yet all\ngive the same `auth.invalid_credentials`, so log in can't show\nwhich emails have accounts or were invited. Someone invited sets\na password through /auth/password/forgot and /reset, or signs up.",
             "auth": {
               "type": "noauth"
             },
@@ -243,7 +243,7 @@
                 "login"
               ]
             },
-            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. An unknown\nemail, a wrong password and an account with no password yet all\ngive the same `auth.invalid_credentials`, so log in can't show\nwhich emails have accounts or were invited. Someone invited sets\na password through /auth/password/forgot and /reset, or signs up.",
             "auth": {
               "type": "noauth"
             },
@@ -295,7 +295,7 @@
                 "login"
               ]
             },
-            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "description": "**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. An unknown\nemail, a wrong password and an account with no password yet all\ngive the same `auth.invalid_credentials`, so log in can't show\nwhich emails have accounts or were invited. Someone invited sets\na password through /auth/password/forgot and /reset, or signs up.",
             "auth": {
               "type": "noauth"
             },
@@ -379,6 +379,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
               }
             ],
             "url": {
@@ -392,7 +396,7 @@
                 "tasks"
               ]
             },
-            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the\nnotification the other person sees. Safe to retry with the same\n`Idempotency-Key`. See docs/features/admin-actions.md.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -437,6 +441,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
               }
             ],
             "url": {
@@ -450,7 +458,7 @@
                 "tasks"
               ]
             },
-            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "description": "**Create a task for an installer (TSK-0001)** (`createTask`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the\nnotification the other person sees. Safe to retry with the same\n`Idempotency-Key`. See docs/features/admin-actions.md.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1787,7 +1795,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Postman Customer {{run}} (illustrative)\",\n  \"phone\": \"9{{run}}1\",\n  \"email\": \"customer{{run}}@example.com\",\n  \"address\": \"House 9, Phase 7\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160062\",\n  \"state\": \"Punjab\",\n  \"discom\": \"PSPCL\",\n  \"consumer_number\": \"PM{{run}}\",\n  \"sanctioned_load_kw\": 5,\n  \"connection_type\": \"residential\",\n  \"proposed_kw\": 5,\n  \"roof\": \"rcc\",\n  \"subsidy\": true,\n  \"documents\": [\n    {\n      \"kind\": \"aadhaar\",\n      \"upload_id\": \"{{kyc_1}}\"\n    },\n    {\n      \"kind\": \"pan\",\n      \"upload_id\": \"{{kyc_2}}\"\n    },\n    {\n      \"kind\": \"electricity_bill\",\n      \"upload_id\": \"{{kyc_3}}\"\n    },\n    {\n      \"kind\": \"land_document\",\n      \"upload_id\": \"{{kyc_4}}\"\n    },\n    {\n      \"kind\": \"signature\",\n      \"upload_id\": \"{{kyc_5}}\"\n    },\n    {\n      \"kind\": \"bank_proof\",\n      \"upload_id\": \"{{kyc_6}}\"\n    }\n  ],\n  \"consent\": true,\n  \"commission\": 1500000\n}",
+              "raw": "{\n  \"name\": \"Postman Customer {{run}} (illustrative)\",\n  \"phone\": \"9{{run}}1\",\n  \"email\": \"customer{{run}}@example.com\",\n  \"address\": \"House 9, Phase 7\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160062\",\n  \"state\": \"Punjab\",\n  \"discom\": \"PSPCL\",\n  \"consumer_number\": \"PM{{run}}\",\n  \"sanctioned_load_kw\": 5,\n  \"connection_type\": \"residential\",\n  \"proposed_kw\": 5,\n  \"roof\": \"rcc\",\n  \"subsidy\": true,\n  \"documents\": [\n    {\n      \"kind\": \"aadhaar\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_1}}\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"pan\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_2}}\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"electricity_bill\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_3}}\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"land_document\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_4}}\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"signature\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_5}}\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"bank_proof\",\n      \"files\": [\n        {\n          \"upload_id\": \"{{kyc_6}}\"\n        }\n      ]\n    }\n  ],\n  \"consent\": true,\n  \"commission\": 1500000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1959,7 +1967,7 @@
                 "electricity_bill"
               ]
             },
-            "description": "**Send a clearer copy of a document the admin sent back** (`replaceCustomerDocument`) · as Meena, sales agent (commission)\n\nOnly the document the admin sent back (409 `registration.locked`\notherwise). The document and the customer go back to `in_review`.\nThe file is an upload of this company (purpose `kyc`), checked in\nstorage (422 on `upload_id` if it didn't finish).",
+            "description": "**Send a clearer copy of a document the admin sent back** (`replaceCustomerDocument`) · as Meena, sales agent (commission)\n\nOnly the document the admin sent back (409 `registration.locked`\notherwise). The document and the customer go back to `in_review`.\nThe 1 to 5 files replace the whole set. Each is an upload of this\ncompany (purpose `kyc`), checked in storage (422 on `files` if\none didn't finish).",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1972,7 +1980,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"upload_id\": \"{{kyc_1}}\"\n}",
+              "raw": "{\n  \"files\": [\n    {\n      \"upload_id\": \"{{kyc_1}}\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2199,7 +2207,7 @@
                 "review"
               ]
             },
-            "description": "**Everything waiting for the admin, oldest first** (`getReviewQueue`) · as Dev, the company's admin\n\nCompany admins only (the website). Writes the history and the notification the other person sees. See docs/features/admin-actions.md.",
+            "description": "**Everything waiting for the admin, oldest first** (`getReviewQueue`) · as Dev, the company's admin\n\nCompany admins only (the website). Tasks: `submitted`, `problem`,\nor `reply` (the installer's message is the latest thing that\nhappened on an open task). Expenses: `in_review`, or `approved`\nand still to pay. Commissions: `in_review` or `payable`.\nPayments: claimed. Registrations in review (one with the agent\nisn't waiting for the admin).",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -3629,7 +3637,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"legal_name\": \"Postman Solar {{run}} Private Limited (illustrative)\",\n  \"trade_name\": \"Postman Solar {{run}} (illustrative)\",\n  \"business_type\": \"proprietorship\",\n  \"gstin\": \"{{gstin}}\",\n  \"address_line_1\": \"Plot 7, Industrial Area\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160055\",\n  \"owner_name\": \"Postman Owner (illustrative)\",\n  \"email\": \"owner{{run}}@example.com\",\n  \"phone\": \"8{{run}}1\"\n}",
+              "raw": "{\n  \"legal_name\": \"Postman Solar {{run}} Private Limited (illustrative)\",\n  \"trade_name\": \"Postman Solar {{run}} (illustrative)\",\n  \"business_type\": \"proprietorship\",\n  \"gstin\": \"{{gstin}}\",\n  \"terms_version\": 1,\n  \"address_line_1\": \"Plot 7, Industrial Area\",\n  \"city\": \"Mohali\",\n  \"pin_code\": \"160055\",\n  \"owner_name\": \"Postman Owner (illustrative)\",\n  \"email\": \"owner{{run}}@example.com\",\n  \"phone\": \"8{{run}}1\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3888,7 +3896,7 @@
                 "login"
               ]
             },
-            "description": "The website's way: a session cookie instead of tokens. Postman keeps the cookie for localhost.\n\n**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. Wrong email and wrong\npassword give the same `auth.invalid_credentials`; an unverified\naccount gets `account.email_unverified` only after the right\npassword. An account created for someone (by an agent or org admin)\nthat has no password yet gets 403 `account.password_not_set`; the\nperson sets one through /auth/password/forgot and /reset.",
+            "description": "The website's way: a session cookie instead of tokens. Postman keeps the cookie for localhost.\n\n**Log in** (`login`) · as no login\n\n`client: app` returns a token pair in the body. `client: web` sets\nthe access and refresh cookies and returns no tokens. An unknown\nemail, a wrong password and an account with no password yet all\ngive the same `auth.invalid_credentials`, so log in can't show\nwhich emails have accounts or were invited. Someone invited sets\na password through /auth/password/forgot and /reset, or signs up.",
             "auth": {
               "type": "noauth"
             },
@@ -4023,7 +4031,7 @@
       "name": "12. By hand: sign up and passwords",
       "item": [
         {
-          "name": "Sign up",
+          "name": "Sign up: send the code",
           "request": {
             "method": "POST",
             "header": [
@@ -4042,101 +4050,7 @@
                 "signup"
               ]
             },
-            "description": "**Create a customer account** (`signup`) · as no login\n\nCreates an unverified account and emails a 6-digit code. Always 202,\nwhether or not the email already has an account (no enumeration);\nan existing account gets an \"you already have an account\" email.",
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Asha Example (illustrative)\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{new_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 202', () => pm.response.to.have.status(202));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Verify the email (code from the email)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/email/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "email",
-                "verify"
-              ]
-            },
-            "description": "**Verify an email with its code** (`verifyEmail`) · as no login\n\nMarks the email verified so the account can log in. Codes last 5\nminutes and allow 5 tries. A wrong, expired, used-up or never\nsent code all answer 400 `auth.code_invalid`, so the reply can't\nshow which emails have accounts; 429 is only the per-IP limit.",
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Send the code again",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/email/resend",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "email",
-                "resend"
-              ]
-            },
-            "description": "**Send a new verification code** (`resendVerification`) · as no login\n\nAlways 202 (no enumeration).",
+            "description": "**Start signing up (email a code)** (`signup`) · as no login\n\nStep 1 of 3, also how to ask for another code (one a minute).\nCreates no account. Always 202, whether or not the email has an\naccount (no enumeration): one with a password gets a \"you already\nhave an account\" email instead of a code. An account made for\nsomeone (invited, registered by an agent) gets a code and can\nfinish this way. 429 after 3 an hour for one email, whether or\nnot it has an account, or over the per-IP limit.",
             "auth": {
               "type": "noauth"
             },
@@ -4157,6 +4071,104 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign up: enter the code (from the email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup",
+                "verify"
+              ]
+            },
+            "description": "**Prove the inbox with the code** (`verifySignup`) · as no login\n\nStep 2 of 3. Returns a one-time setup token for step 3. Codes last\n5 minutes and allow 5 tries. A wrong, expired, used-up or never\nsent code all answer 400 `auth.code_invalid`, so the reply can't\nshow which emails have accounts; 429 is only the per-IP limit.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('signup_token', json.signup_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign up: the details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup",
+                "complete"
+              ]
+            },
+            "description": "**Create the account and log in** (`completeSignup`) · as no login\n\nStep 3 of 3, with the setup token. Only now is the account made\n(or, if someone made it for this person, completed): name, mobile,\npassword and the agreement to the terms are what was sent here,\nnothing from before. Answers as an app login. The token works once\nand for 15 minutes: after that, or if the account got a password\nmeanwhile, 400 `auth.signup_expired`.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signup_token\": \"{{signup_token}}\",\n  \"name\": \"Asha Example (illustrative)\",\n  \"password\": \"{{new_password}}\",\n  \"terms_version\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }
@@ -4262,6 +4274,59 @@
     {
       "name": "Not arranged yet",
       "item": [
+        {
+          "name": "deleteAccount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "delete"
+              ]
+            },
+            "description": "**Delete the caller's account** (`deleteAccount`) · as Dev, the company's admin\n\nCan't be undone. Erases the login and personal data and ends every\nmembership; a company's records of the person's work stay with it.\n400 `account.password_incorrect`; 409 `account.last_admin` or\n`account.platform_admin`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"illustrative\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "setOrgLogo",
           "request": {
@@ -4530,6 +4595,118 @@
           ]
         },
         {
+          "name": "rejectExpense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/expenses/{{expense_id}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "expenses",
+                "{{expense_id}}",
+                "reject"
+              ]
+            },
+            "description": "**Don't accept an expense** (`rejectExpense`) · as Dev, the company's admin\n\nCompany admins only. From `in_review` or `needs_fix`, with a reason\nthe person sees. Final (409 `expense.locked` after).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"illustrative\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "paymentNotReceived",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/payments/{{payment_id}}/not-received",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "payments",
+                "{{payment_id}}",
+                "not-received"
+              ]
+            },
+            "description": "**Say a claimed payment didn't arrive** (`paymentNotReceived`) · as Dev, the company's admin\n\nCompany admins only. A `claimed` payment goes back to `due`, and\nthe customer is told why and can pay or claim again. 409\n`payment.not_due` otherwise.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"illustrative\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "getAttendanceDay",
           "request": {
             "method": "GET",
@@ -4647,6 +4824,1036 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetOverview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "overview"
+              ]
+            },
+            "description": "**The website's overview totals** (`adminGetOverview`) · as Dev, the company's admin\n\nCompany admins only. Read only; months and weeks are India's.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminListCustomers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "customers"
+              ]
+            },
+            "description": "**The company's customers, newest first** (`adminListCustomers`) · as Dev, the company's admin\n\nCompany admins only. `q` looks in name, phone, email, reference and\nconsumer number, ignoring case.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetCustomer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/customers/{{customer_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "customers",
+                "{{customer_id}}"
+              ]
+            },
+            "description": "**One customer, whole** (`adminGetCustomer`) · as Dev, the company's admin\n\nCompany admins only. The registration, every KYC document with a\n15-minute link, the price, payments and commission.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminSetCustomerStage",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/customers/{{customer_id}}/stage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "customers",
+                "{{customer_id}}",
+                "stage"
+              ]
+            },
+            "description": "**Move a customer's install stage** (`adminSetCustomerStage`) · as Dev, the company's admin\n\nCompany admins only. Either way, for a verified customer until\nhandover (409 `registration.locked`).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage_index\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminSetCustomerPrice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/customers/{{customer_id}}/price",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "customers",
+                "{{customer_id}}",
+                "price"
+              ]
+            },
+            "description": "**Correct a customer's price** (`adminSetCustomerPrice`) · as Dev, the company's admin\n\nCompany admins only, until a payment is paid (409 `price.locked`).\nThe three parts are worked out again. A claimed payment goes back\nto `due`, as the claim was for another amount, and the customer is\ntold the new amount of anything due.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"total\": 18500000,\n  \"subsidy\": 18500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminListTasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "tasks"
+              ]
+            },
+            "description": "**The company's tasks, newest first** (`adminListTasks`) · as Dev, the company's admin\n\nCompany admins only. `open`: assigned or returned. `problem`: open\nwith a reported problem. `done`: approved or cancelled.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetTask",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/tasks/{{task_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "tasks",
+                "{{task_id}}"
+              ]
+            },
+            "description": "**One task, with its proof and history** (`adminGetTask`) · as Dev, the company's admin\n\nCompany admins only. Photo links work for 15 minutes.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminListExpenses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "expenses"
+              ]
+            },
+            "description": "**Everyone's expenses, newest first** (`adminListExpenses`) · as Dev, the company's admin\n\nCompany admins only.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetExpense",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/expenses/{{expense_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "expenses",
+                "{{expense_id}}"
+              ]
+            },
+            "description": "**One expense, with its receipt** (`adminGetExpense`) · as Dev, the company's admin\n\nCompany admins only. The receipt's link works for 15 minutes. Of\nthe payee's bank account, only the last 4 digits.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminListCommissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/commissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "commissions"
+              ]
+            },
+            "description": "**Agents' commissions, newest first** (`adminListCommissions`) · as Dev, the company's admin\n\nCompany admins only. Not those of rejected customers. Of the\nagent's bank account, only the last 4 digits.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminListPayments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "payments"
+              ]
+            },
+            "description": "**Customers' payments, newest first** (`adminListPayments`) · as Dev, the company's admin\n\nCompany admins only.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetSettings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "**The company's settings** (`adminGetSettings`) · as Dev, the company's admin\n\nCompany admins only.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminSetSettings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "**Change the company's settings** (`adminSetSettings`) · as Dev, the company's admin\n\nCompany admins only. An empty or null `upi_id` removes it, and\nwith it the \"Pay by UPI\" button of its customers.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upi_id\": \"examplesolar@okhdfc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "listStages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/stages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "stages"
+              ]
+            },
+            "description": "**The company's 7 install stages** (`listStages`) · as Dev, the company's admin\n\nAny member. In order, with each stage's template: what a new task\nat that stage asks for. A stage the company hasn't changed has the\nstandard name and an empty template.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminSetStage",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/stages/{{index}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "stages",
+                "{{index}}"
+              ]
+            },
+            "description": "**Change one stage's name and template** (`adminSetStage`) · as Dev, the company's admin\n\nCompany admins only. Replaces the name, checklist and photos.\nBlank items are dropped and repeats kept once. Tasks already made\nkeep what they were made with.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"illustrative\",\n  \"checklist\": [\n    \"illustrative\"\n  ],\n  \"photos\": [\n    \"illustrative\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "createLead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leads"
+              ]
+            },
+            "description": "**Send a lead to a company** (`createLead`) · as Dev, the company's admin\n\nFor a landing page's server, with the company's lead key as the\nbearer token (made in the website's Settings). Never call it from\na browser: the key would be public. 401 `lead.bad_key` for a\nmissing, wrong or replaced key. `consent` must be true (422\n`lead.consent_required`). With an `external_id` already sent, the\nfirst lead comes back with 200 and nothing changes. At most 300 an\nhour per company (429 `auth.too_many_attempts`).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"illustrative\",\n  \"phone\": \"illustrative\",\n  \"consent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "listLeads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "leads"
+              ]
+            },
+            "description": "**The company's leads, newest first** (`listLeads`) · as Dev, the company's admin\n\nCompany admins only. `q` matches the name, phone, email or city.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "listMyLeads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/leads/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "leads",
+                "mine"
+              ]
+            },
+            "description": "**The leads handed to the caller, newest first** (`listMyLeads`) · as Dev, the company's admin\n\nSales agents only.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "getLead",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/leads/{{lead_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "leads",
+                "{{lead_id}}"
+              ]
+            },
+            "description": "**One lead, with everything the form sent** (`getLead`) · as Dev, the company's admin\n\nCompany admins, or the agent it's with (404 for anyone else).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "updateLead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/leads/{{lead_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "leads",
+                "{{lead_id}}"
+              ]
+            },
+            "description": "**Change a lead's status, note or agent** (`updateLead`) · as Dev, the company's admin\n\nCompany admins: any field. `agent_id` hands it to a Sales Agent of\nthe company (422 `lead.not_an_agent` otherwise), who is notified;\nnull takes it back. The agent it's with: `status` and `note` only\n(403 `lead.admin_only` for `agent_id`). An empty note removes it.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"new\",\n  \"note\": \"illustrative\",\n  \"agent_id\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "deleteLead",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/leads/{{lead_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "leads",
+                "{{lead_id}}"
+              ]
+            },
+            "description": "**Delete a lead for good** (`deleteLead`) · as Dev, the company's admin\n\nCompany admins only. For a person asking to be forgotten.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminGetLeadKey",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/lead-key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "lead-key"
+              ]
+            },
+            "description": "**Whether the company has a lead key** (`adminGetLeadKey`) · as Dev, the company's admin\n\nCompany admins only. Never the key itself: it's shown once, when\nmade.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "adminMakeLeadKey",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/admin/lead-key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "admin",
+                "lead-key"
+              ]
+            },
+            "description": "**Make a new lead key** (`adminMakeLeadKey`) · as Dev, the company's admin\n\nCompany admins only. Returns the key once. Any earlier key stops\nworking at once.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
                 ]
               }
             }
