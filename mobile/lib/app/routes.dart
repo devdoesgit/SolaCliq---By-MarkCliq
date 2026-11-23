@@ -6,6 +6,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const signup = '/signup';
   static const verify = '/verify';
+  static const signupDetails = '/signup/details';
   static const forgot = '/forgot';
   static const reset = '/reset';
   static const requestAccess = '/request-access';
@@ -23,6 +24,7 @@ abstract final class AppRoutes {
   static const notifications = '/notifications';
   static const gallery = '/gallery';
   static const customers = '/customers';
+  static const leads = '/leads';
   static const settings = '/settings';
   static const details = '/details';
   static const bank = '/bank';
@@ -38,6 +40,7 @@ abstract final class AppRoutes {
     login,
     signup,
     verify,
+    signupDetails,
     forgot,
     reset,
     requestAccess,
@@ -46,11 +49,6 @@ abstract final class AppRoutes {
 
   static String verifyEmail(String email) =>
       Uri(path: verify, queryParameters: {'email': email}).toString();
-
-  static String loginAfterVerify(String email) => Uri(
-    path: login,
-    queryParameters: {'email': email, 'notice': 'verified'},
-  ).toString();
 
   static String loginAfterReset(String email, {bool setup = false}) => Uri(
     path: login,
@@ -93,6 +91,9 @@ abstract final class AppRoutes {
   static String expenseDetail(String id) => '$expenses/$id';
 
   static String customer(String id) => '$customers/$id';
+
+  /// A lead the admin handed to this Sales person (F20).
+  static String lead(String id) => '$leads/$id';
 
   /// Send a clearer copy of the document the admin returned.
   static String customerFix(String id) => '$customers/$id/fix';

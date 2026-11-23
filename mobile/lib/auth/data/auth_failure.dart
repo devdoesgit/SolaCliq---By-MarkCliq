@@ -5,10 +5,9 @@ import 'package:dio/dio.dart';
 /// Why an auth request failed, from the API's problem `code` or the network.
 enum AuthFailureCode {
   invalidCredentials('auth.invalid_credentials'),
-  emailUnverified('account.email_unverified'),
 
-  /// Created for the person by an agent or admin; no password chosen yet.
-  passwordNotSet('account.password_not_set'),
+  /// The setup token from the code no longer works.
+  signupExpired('auth.signup_expired'),
   codeInvalid('auth.code_invalid'),
   codeExpired('auth.code_expired'),
   tooManyAttempts('auth.too_many_attempts'),
@@ -57,6 +56,11 @@ enum AuthFailureCode {
   /// A file didn't reach storage whole (the server's field error on an
   /// upload id): send it again.
   uploadIncomplete(null),
+
+  /// Deleting the account (F18).
+  passwordIncorrect('account.password_incorrect'),
+  lastAdmin('account.last_admin'),
+  platformAdmin('account.platform_admin'),
   network(null),
   unknown(null);
 

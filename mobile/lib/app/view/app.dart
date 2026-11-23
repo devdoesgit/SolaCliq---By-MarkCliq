@@ -19,6 +19,7 @@ import 'package:solacliq/health/data/health_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/push/push_controller.dart';
@@ -78,7 +79,7 @@ class _AppState extends State<App> {
   late final AppLifecycleListener _lifecycle;
   late final NotificationRepository _notifications;
   late final PushController _push;
-  final _pendingLogin = PendingLogin();
+  final _pendingSignup = PendingSignup();
   late final QuickForms _quickForms = QuickForms(
     available: widget.config.showDevTools,
   );
@@ -148,7 +149,7 @@ class _AppState extends State<App> {
         RepositoryProvider.value(value: _auth),
         RepositoryProvider.value(value: _health),
         RepositoryProvider.value(value: _persona),
-        RepositoryProvider.value(value: _pendingLogin),
+        RepositoryProvider.value(value: _pendingSignup),
         RepositoryProvider.value(value: _quickForms),
         RepositoryProvider(
           create: (_) => CompanyRegistrationRepository(_api.getOnboardingApi()),
@@ -177,6 +178,7 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (_) => ProfileRepository(_api.getProfileApi()),
         ),
+        RepositoryProvider(create: (_) => LeadRepository(_api.getLeadsApi())),
         RepositoryProvider(
           create: (_) => InstallRepository(_api.getInstallApi()),
         ),

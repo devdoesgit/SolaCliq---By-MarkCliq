@@ -14,6 +14,7 @@ import 'package:solacliq/auth/view/forgot_password_page.dart';
 import 'package:solacliq/auth/view/intro_page.dart';
 import 'package:solacliq/auth/view/login_page.dart';
 import 'package:solacliq/auth/view/reset_password_page.dart';
+import 'package:solacliq/auth/view/signup_details_page.dart';
 import 'package:solacliq/auth/view/signup_page.dart';
 import 'package:solacliq/auth/view/verify_email_page.dart';
 import 'package:solacliq/auth/view/welcome_page.dart';
@@ -27,6 +28,7 @@ import 'package:solacliq/expenses/view/expense_sent_page.dart';
 import 'package:solacliq/gallery/view/gallery_page.dart';
 import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/leads/view/lead_page.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
 import 'package:solacliq/legal/view/terms_page.dart';
 import 'package:solacliq/notifications/view/notifications_page.dart';
@@ -103,12 +105,11 @@ class AppRouter {
             final params = state.uri.queryParameters;
             // Keyed by the full location: go_router reuses the page when
             // only the query changes, which would keep the last failure
-            // ("verify your email") after coming back from verifying.
+            // after coming back from resetting the password.
             return LoginPage(
               key: ValueKey(state.uri.toString()),
               initialEmail: params['email'],
               notice: switch (params['notice']) {
-                'verified' => LoginNotice.emailVerified,
                 'reset' => LoginNotice.passwordChanged,
                 'setup' => LoginNotice.passwordCreated,
                 _ => null,
@@ -128,6 +129,15 @@ class AppRouter {
           path: AppRoutes.verify,
           builder: (context, state) =>
               VerifyEmailPage(email: state.uri.queryParameters['email'] ?? ''),
+        ),
+        GoRoute(
+          path: AppRoutes.signupDetails,
+          // Only straight after the code: the token lives in memory.
+          redirect: (context, state) =>
+              context.read<PendingSignup>().token == null
+              ? AppRoutes.signup
+              : null,
+          builder: (context, state) => const SignupDetailsPage(),
         ),
         GoRoute(
           path: AppRoutes.forgot,
@@ -282,6 +292,16 @@ class AppRouter {
               ),
             ),
           ],
+        ),
+        GoRoute(
+          path: '${AppRoutes.leads}/:id',
+          builder: (context, state) => _member(
+            workspace,
+            (current) => LeadPage(
+              workspace: current,
+              leadId: state.pathParameters['id']!,
+            ),
+          ),
         ),
         GoRoute(
           path: AppRoutes.settings,

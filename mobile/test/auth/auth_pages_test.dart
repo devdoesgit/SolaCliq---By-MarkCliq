@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:sola_ui/sola_ui.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/forgot_password_page.dart';
 import 'package:solacliq/auth/view/login_page.dart';
 import 'package:solacliq/auth/view/reset_password_page.dart';
+import 'package:solacliq/auth/view/signup_details_page.dart';
 import 'package:solacliq/auth/view/signup_page.dart';
 import 'package:solacliq/auth/view/verify_email_page.dart';
 import 'package:solacliq/auth/view/welcome_page.dart';
@@ -74,41 +76,27 @@ void main() {
       expect(find.text('Email or password is wrong.'), findsOneWidget);
     });
 
-    testWidgets('an unverified email offers to verify', (tester) async {
-      when(
-        () => auth.logIn(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenThrow(const AuthFailure(AuthFailureCode.emailUnverified));
-      when(() => auth.resendVerification(email: any(named: 'email')))
-          .thenAnswer((_) async {});
+    testWidgets('set-up is always offered, whatever log in says', (
+      tester,
+    ) async {
       await tester.pumpApp(const LoginPage(), authRepository: auth);
       await tester.enterText(_input('login_email'), 'person@example.com');
-      await tester.enterText(_input('login_password'), 'secret');
-      await tester.tapKey('login_submit');
-      await tester.pump();
-      // Let the scroll that revealed the focused field finish first.
       await tester.pumpAndSettle();
-      await tester.tapKey('login_verify_now');
+      await tester.tapKey('login_set_up');
       await tester.pumpAndSettle();
-      verify(() => auth.resendVerification(email: 'person@example.com'))
-          .called(1);
-      expect(
-        find.text('route:/verify?email=person%40example.com'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('route:/forgot?'), findsOneWidget);
+      expect(find.textContaining('setup=1'), findsOneWidget);
     });
 
     testWidgets('shows where the person came from', (tester) async {
       await tester.pumpApp(
         const LoginPage(
           initialEmail: 'person@example.com',
-          notice: LoginNotice.emailVerified,
+          notice: LoginNotice.passwordCreated,
         ),
         authRepository: auth,
       );
-      expect(find.text('Email verified. Log in to continue.'), findsOneWidget);
+      expect(find.byType(SolaNotice), findsOneWidget);
       expect(find.text('person@example.com'), findsOneWidget);
     });
 
@@ -127,10 +115,34 @@ void main() {
   });
 
   group(SignupPage, () {
-    testWidgets('a short password is caught before sending', (tester) async {
+    testWidgets('asks for the email alone', (tester) async {
       await tester.pumpApp(const SignupPage(), authRepository: auth);
+      expect(find.byType(TextField), findsOneWidget);
+      await tester.tapKey('signup_submit');
+      await tester.pump();
+      expect(find.text('Enter an email address.'), findsOneWidget);
+      verifyNever(() => auth.startSignUp(email: any(named: 'email')));
+    });
+
+    testWidgets('success goes to the code', (tester) async {
+      when(() => auth.startSignUp(email: any(named: 'email')))
+          .thenAnswer((_) async {});
+      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.enterText(_input('signup_email'), ' asha@example.com ');
+      await tester.tapKey('signup_submit');
+      await tester.pumpAndSettle();
+      verify(() => auth.startSignUp(email: 'asha@example.com')).called(1);
+      expect(
+        find.text('route:/verify?email=asha%40example.com'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group(SignupDetailsPage, () {
+    testWidgets('a short password is caught before sending', (tester) async {
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
       await tester.enterText(_input('signup_name'), 'Asha');
-      await tester.enterText(_input('signup_email'), 'asha@example.com');
       await tester.enterText(_input('signup_password'), 'short1');
       await tester.tapKey('signup_submit');
       await tester.pump();
@@ -139,7 +151,6 @@ void main() {
 
     for (final (field, error) in [
       ('signup_name', 'Enter a name.'),
-      ('signup_email', 'Enter an email address.'),
       ('signup_mobile', 'Enter a 10-digit mobile number.'),
       ('signup_password', 'Use at least 8 characters.'),
     ]) {
@@ -147,11 +158,10 @@ void main() {
         tester.view.physicalSize = const Size(360, 480);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
-        await tester.pumpApp(const SignupPage(), authRepository: auth);
+        await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
         // Every field right but the one under test.
         for (final (key, good, bad) in [
           ('signup_name', 'Asha', ''),
-          ('signup_email', 'asha@example.com', ''),
           ('signup_mobile', '9814022671', '98140'),
           ('signup_password', 'longenough1', 'short1'),
         ]) {
@@ -173,45 +183,59 @@ void main() {
       });
     }
 
-    testWidgets('success goes to verify email', (tester) async {
+    testWidgets('sends the details with the token', (tester) async {
       when(
-        () => auth.signUp(
+        () => auth.completeSignUp(
+          token: any(named: 'token'),
           name: any(named: 'name'),
-          email: any(named: 'email'),
           password: any(named: 'password'),
         ),
       ).thenAnswer((_) async {});
-      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
+      expect(find.textContaining('asha@example.com'), findsOneWidget);
       await tester.enterText(_input('signup_name'), ' Asha ');
-      await tester.enterText(_input('signup_email'), 'asha@example.com');
       await tester.enterText(_input('signup_password'), 'longenough1');
       await tester.tapKey('terms_agree');
       await tester.tapKey('signup_submit');
       await tester.pumpAndSettle();
       verify(
-        () => auth.signUp(
+        () => auth.completeSignUp(
+          token: 'setup-token',
           name: 'Asha',
-          email: 'asha@example.com',
           password: 'longenough1',
         ),
       ).called(1);
-      expect(
-        find.text('route:/verify?email=asha%40example.com'),
-        findsOneWidget,
-      );
+    });
+
+    testWidgets('an expired sign-up starts again', (tester) async {
+      when(
+        () => auth.completeSignUp(
+          token: any(named: 'token'),
+          name: any(named: 'name'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthFailure(AuthFailureCode.signupExpired));
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
+      await tester.enterText(_input('signup_name'), 'Asha');
+      await tester.enterText(_input('signup_password'), 'longenough1');
+      await tester.tapKey('terms_agree');
+      await tester.tapKey('signup_submit');
+      await tester.pumpAndSettle();
+      await tester.tapKey('signup_start_again');
+      await tester.pumpAndSettle();
+      expect(find.text('route:/signup'), findsOneWidget);
     });
   });
 
-  group('$SignupPage terms', () {
+  group('$SignupDetailsPage terms', () {
     testWidgets('on a small phone the error is scrolled into view', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(360, 640);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
       await tester.enterText(_input('signup_name'), 'Asha');
-      await tester.enterText(_input('signup_email'), 'asha@example.com');
       await tester.enterText(_input('signup_password'), 'longenough1');
       await tester.tap(find.byKey(const Key('signup_submit')));
       await tester.pumpAndSettle();
@@ -220,17 +244,16 @@ void main() {
     });
 
     testWidgets('not ticked: nothing is sent', (tester) async {
-      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
       await tester.enterText(_input('signup_name'), 'Asha');
-      await tester.enterText(_input('signup_email'), 'asha@example.com');
       await tester.enterText(_input('signup_password'), 'longenough1');
       await tester.tapKey('signup_submit');
       await tester.pump();
       expect(find.text('Tick to agree to continue.'), findsOneWidget);
       verifyNever(
-        () => auth.signUp(
+        () => auth.completeSignUp(
+          token: any(named: 'token'),
           name: any(named: 'name'),
-          email: any(named: 'email'),
           password: any(named: 'password'),
         ),
       );
@@ -242,7 +265,7 @@ void main() {
     });
 
     testWidgets('shows the notice and both documents', (tester) async {
-      await tester.pumpApp(const SignupPage(), authRepository: auth);
+      await tester.pumpApp(const SignupDetailsPage(), authRepository: auth);
       expect(find.byKey(const Key('terms_read_terms')), findsOneWidget);
       expect(find.byKey(const Key('terms_read_privacy')), findsOneWidget);
       expect(find.byKey(const Key('terms_read_company')), findsNothing);
@@ -260,13 +283,13 @@ void main() {
       expect(find.text('123456'), findsOneWidget);
     });
 
-    testWidgets('success goes to log in with a message', (tester) async {
+    testWidgets('success goes to the details', (tester) async {
       when(
-        () => auth.verifyEmail(
+        () => auth.verifySignUp(
           email: any(named: 'email'),
           code: any(named: 'code'),
         ),
-      ).thenAnswer((_) async {});
+      ).thenAnswer((_) async => 'new-token');
       await tester.pumpApp(
         const VerifyEmailPage(email: 'asha@example.com'),
         authRepository: auth,
@@ -274,17 +297,14 @@ void main() {
       await tester.enterText(_input('verify_code'), '482913');
       await tester.tapKey('verify_submit');
       await tester.pumpAndSettle();
-      verify(() => auth.verifyEmail(email: 'asha@example.com', code: '482913'))
+      verify(() => auth.verifySignUp(email: 'asha@example.com', code: '482913'))
           .called(1);
-      expect(
-        find.text('route:/login?email=asha%40example.com&notice=verified'),
-        findsOneWidget,
-      );
+      expect(find.text('route:/signup/details'), findsOneWidget);
     });
 
     testWidgets('an expired code says so', (tester) async {
       when(
-        () => auth.verifyEmail(
+        () => auth.verifySignUp(
           email: any(named: 'email'),
           code: any(named: 'code'),
         ),
@@ -303,7 +323,7 @@ void main() {
     });
 
     testWidgets('sends a new code', (tester) async {
-      when(() => auth.resendVerification(email: any(named: 'email')))
+      when(() => auth.startSignUp(email: any(named: 'email')))
           .thenAnswer((_) async {});
       await tester.pumpApp(
         const VerifyEmailPage(email: 'asha@example.com'),
@@ -325,12 +345,12 @@ void main() {
       tester,
     ) async {
       when(
-        () => auth.verifyEmail(
+        () => auth.verifySignUp(
           email: any(named: 'email'),
           code: any(named: 'code'),
         ),
       ).thenThrow(const AuthFailure(AuthFailureCode.codeInvalid));
-      when(() => auth.resendVerification(email: any(named: 'email')))
+      when(() => auth.startSignUp(email: any(named: 'email')))
           .thenAnswer((_) async {});
       await tester.pumpApp(
         const VerifyEmailPage(email: 'asha@example.com'),
@@ -447,34 +467,6 @@ void main() {
   });
 
   group('first-time set-up', () {
-    testWidgets('logging in to an account with no password offers set-up', (
-      tester,
-    ) async {
-      when(
-        () => auth.logIn(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenThrow(const AuthFailure(AuthFailureCode.passwordNotSet));
-      await tester.pumpApp(const LoginPage(), authRepository: auth);
-      await tester.enterText(_input('login_email'), 'asha@example.com');
-      await tester.enterText(_input('login_password'), 'guess');
-      await tester.tapKey('login_submit');
-      await tester.pumpAndSettle();
-      expect(
-        find.text(
-          'Your account was set up for you. Create a password to log in.',
-        ),
-        findsOneWidget,
-      );
-      await tester.tapKey('login_set_up_now');
-      await tester.pumpAndSettle();
-      expect(
-        find.text('route:/forgot?email=asha%40example.com&setup=1'),
-        findsOneWidget,
-      );
-    });
-
     testWidgets('set-up wording, then back to log in with a message', (
       tester,
     ) async {

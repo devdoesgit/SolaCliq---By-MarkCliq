@@ -16,7 +16,7 @@ import 'package:solacliq/auth/widgets/password_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
 
 /// Why the person arrived here, shown as a success message.
-enum LoginNotice { emailVerified, passwordChanged, passwordCreated }
+enum LoginNotice { passwordChanged, passwordCreated }
 
 class LoginPage extends StatelessWidget {
   const new({this.initialEmail, this.notice, super.key});
@@ -82,43 +82,9 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  void _verifyInstead() {
-    final email = _email.text.trim();
-    // The server only says "unverified" after the right password, so keep
-    // it: verifying then logs straight in, as it does after signing up.
-    context.read<PendingLogin>().hold(email: email, password: _password.text);
-    unawaited(
-      context
-          .read<AuthRepository>()
-          .resendVerification(email: email)
-          .catchError((Object _) {}),
-    );
-    unawaited(context.push(AppRoutes.verifyEmail(email)));
-  }
-
   void _setUpAccount() => unawaited(
     context.push(AppRoutes.forgotPassword(_email.text.trim(), setup: true)),
   );
-
-  Widget? _failureAction(AuthFailureCode? failure) => switch (failure) {
-    AuthFailureCode.emailUnverified => SolaButton(
-      key: const Key('login_verify_now'),
-      label: context.l10n.verifyNow,
-      variant: SolaButtonVariant.white,
-      compact: true,
-      expand: false,
-      onPressed: _verifyInstead,
-    ),
-    AuthFailureCode.passwordNotSet => SolaButton(
-      key: const Key('login_set_up_now'),
-      label: context.l10n.setUpAccount,
-      variant: SolaButtonVariant.white,
-      compact: true,
-      expand: false,
-      onPressed: _setUpAccount,
-    ),
-    _ => null,
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -143,15 +109,11 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: SolaSpace.space26),
               if (state.status == SubmitStatus.failure) ...[
-                FailureNotice(
-                  state: state,
-                  action: _failureAction(state.failure),
-                ),
+                FailureNotice(state: state),
                 const SizedBox(height: SolaSpace.space14),
               ] else if (notice != null) ...[
                 SolaNotice(
                   title: switch (notice) {
-                    LoginNotice.emailVerified => l10n.emailVerified,
                     LoginNotice.passwordChanged => l10n.passwordChanged,
                     LoginNotice.passwordCreated => l10n.passwordCreated,
                   },
@@ -183,16 +145,30 @@ class _LoginViewState extends State<LoginView> {
                 ],
               ),
               const SizedBox(height: SolaSpace.space14),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: SolaTextLink(
-                  l10n.forgotPassword,
-                  key: const Key('login_forgot_password'),
-                  style: SolaTextStyle.body,
-                  onPressed: () => unawaited(
-                    context.push(AppRoutes.forgotPassword(_email.text.trim())),
+              // Always both: log in can't say an account is waiting to be
+              // set up without telling everyone who was invited (QA-28).
+              // Wraps under large text sizes instead of overflowing.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SolaTextLink(
+                    l10n.setUpAccount,
+                    key: const Key('login_set_up'),
+                    style: SolaTextStyle.body,
+                    onPressed: _setUpAccount,
                   ),
-                ),
+                  SolaTextLink(
+                    l10n.forgotPassword,
+                    key: const Key('login_forgot_password'),
+                    style: SolaTextStyle.body,
+                    onPressed: () => unawaited(
+                      context.push(
+                        AppRoutes.forgotPassword(_email.text.trim()),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

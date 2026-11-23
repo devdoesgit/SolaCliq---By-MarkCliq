@@ -17,8 +17,8 @@ import 'package:solacliq/l10n/l10n.dart';
 /// or reset the verify button.
 class ResendCubit extends SubmitCubit;
 
-/// Enters the emailed code. Just after sign-up it logs straight in; reached
-/// another way, it returns to log in.
+/// Sign-up step 2: the emailed code. It proves the inbox, and the details
+/// come next.
 class VerifyEmailPage extends StatelessWidget {
   const new({required this.email, super.key});
 
@@ -84,26 +84,17 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     setState(() => _codeError = error);
     if (error != null) return;
     final auth = context.read<AuthRepository>();
-    final pending = context.read<PendingLogin>();
+    final pending = context.read<PendingSignup>();
     final email = widget.email;
     final router = GoRouter.of(context);
     await context.read<SubmitCubit>().submit(() async {
-      await auth.verifyEmail(email: email, code: _code.text.trim());
-      final password = pending.take(email);
-      if (password != null) {
-        try {
-          // The router sends the signed-in person home.
-          return await auth.logIn(email: email, password: password);
-        } on AuthFailure {
-          /*
-            The email is verified either way, so never leave the person
-            here, where the used code can only fail. The held password can
-            be wrong: signing up again with a taken, unverified email keeps
-            the account's first password. Logging in by hand sorts it out.
-          */
-        }
-      }
-      router.go(AppRoutes.loginAfterVerify(email));
+      final token = await auth.verifySignUp(
+        email: email,
+        code: _code.text.trim(),
+      );
+      pending.hold(email: email, token: token);
+      // Replaced: the code is used up, so there's nothing to come back to.
+      router.pushReplacement(AppRoutes.signupDetails).ignore();
     });
   }
 
@@ -114,7 +105,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     _code.clear();
     context.read<SubmitCubit>().reset();
     await context.read<ResendCubit>().submit(
-      () => auth.resendVerification(email: widget.email),
+      () => auth.startSignUp(email: widget.email),
     );
     if (mounted) _startCountdown();
   }

@@ -69,9 +69,8 @@ void main() {
     test('maps problem codes to failures', () async {
       for (final (status, code, expected) in [
         (401, 'auth.invalid_credentials', AuthFailureCode.invalidCredentials),
-        (403, 'account.email_unverified', AuthFailureCode.emailUnverified),
         (429, 'auth.too_many_attempts', AuthFailureCode.tooManyAttempts),
-        (403, 'account.password_not_set', AuthFailureCode.passwordNotSet),
+        (400, 'auth.signup_expired', AuthFailureCode.signupExpired),
       ]) {
         answer = (_) async => jsonBody(status, problem(status, code));
         await expectLater(
@@ -172,16 +171,44 @@ void main() {
   });
 
   group('terms', () {
-    test('sign-up sends the version the app shows', () async {
+    test('sign-up sends the email alone first', () async {
       answer = (_) async => ResponseBody.fromString('', 202);
-      await repository.signUp(
+      await repository.startSignUp(email: 'asha@example.com');
+      final request = adapter.requests.single;
+      expect(request.path, '/auth/signup');
+      expect(request.data as String, '{"email":"asha@example.com"}');
+    });
+
+    test('completing sends the token and version, and signs in', () async {
+      answer = (_) async => jsonBody(200, {
+        'user': meJson(),
+        'tokens': {
+          'access_token': 'access',
+          'refresh_token': 'refresh',
+          'access_expires_in': 900,
+          'token_type': 'Bearer',
+        },
+      });
+      await repository.completeSignUp(
+        token: 'setup-token',
         name: 'Asha',
-        email: 'asha@example.com',
         password: 'sunlight1',
       );
       final request = adapter.requests.single;
-      expect(request.path, '/auth/signup');
+      expect(request.path, '/auth/signup/complete');
       expect(request.data as String, contains('"terms_version":1'));
+      expect(request.data as String, contains('"signup_token":"setup-token"'));
+      expect(repository.status, isA<AuthAuthenticated>());
+      expect(store.session, isNotNull);
+    });
+
+    test('deleting sends the password and signs out', () async {
+      answer = (_) async => jsonBody(204, null);
+      await repository.deleteAccount(password: 'sunlight12');
+      expect(adapter.requests.single.path, '/me/delete');
+      expect(adapter.requests.single.data as String, contains('sunlight12'));
+      expect(store.session, isNull);
+      expect(repository.status, isA<AuthUnauthenticated>());
     });
 
     test('the account says when the terms need agreeing', () async {
@@ -336,7 +363,7 @@ void main() {
     test('a wrong code is codeInvalid', () async {
       answer = (_) async => jsonBody(400, problem(400, 'auth.code_invalid'));
       await expectLater(
-        repository.verifyEmail(email: 'a@example.com', code: '123456'),
+        repository.verifySignUp(email: 'a@example.com', code: '123456'),
         throwsA(
           isA<AuthFailure>().having(
             (f) => f.code,

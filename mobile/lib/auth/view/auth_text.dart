@@ -65,9 +65,11 @@ abstract final class AuthValidators {
 extension AuthFailureText on AuthFailureCode {
   String message(AppLocalizations l10n) => switch (this) {
     AuthFailureCode.invalidCredentials => l10n.failInvalidCredentials,
-    AuthFailureCode.emailUnverified => l10n.failEmailUnverified,
     AuthFailureCode.codeInvalid => l10n.failCodeInvalid,
-    AuthFailureCode.passwordNotSet => l10n.failPasswordNotSet,
+    AuthFailureCode.signupExpired => l10n.failSignupExpired,
+    AuthFailureCode.passwordIncorrect => l10n.failPasswordIncorrect,
+    AuthFailureCode.lastAdmin ||
+    AuthFailureCode.platformAdmin => l10n.failAdminAccount,
     AuthFailureCode.codeExpired => l10n.failCodeExpired,
     AuthFailureCode.tooManyAttempts => l10n.failTooManyAttempts,
     AuthFailureCode.passwordTooWeak => l10n.failPasswordTooWeak,

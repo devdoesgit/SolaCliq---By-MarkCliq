@@ -61,24 +61,47 @@ class AuthRepository {
     }
   }
 
-  /// Creates the account. The person has ticked to agree to the terms the
-  /// app shows ([termsVersion]); the server records it with the account.
-  Future<void> signUp({
-    required String name,
+  /// Sign-up step 1: emails [email] a code. Asking again sends a new one.
+  Future<void> startSignUp({required String email}) =>
+      _call(() => _api.signup(emailRequest: api.EmailRequest(email: email)));
+
+  /// Step 2: the code proves the inbox. Returns the one-time setup token.
+  Future<String> verifySignUp({
     required String email,
+    required String code,
+  }) async {
+    final response = await _call(
+      () => _api.verifySignup(
+        verifySignupRequest: api.VerifySignupRequest(email: email, code: code),
+      ),
+    );
+    final token = response.data?.signupToken;
+    if (token == null) throw const AuthFailure(AuthFailureCode.unknown);
+    return token;
+  }
+
+  /// Step 3: creates the account with [token] and signs in. The person has
+  /// ticked to agree to the terms the app shows ([termsVersion]); the
+  /// server records it with the account.
+  Future<void> completeSignUp({
+    required String token,
+    required String name,
     required String password,
     String? phone,
-  }) => _call(
-    () => _api.signup(
-      signupRequest: api.SignupRequest(
-        name: name,
-        email: email,
-        password: password,
-        phone: phone,
-        termsVersion: termsVersion,
+  }) async {
+    final response = await _call(
+      () => _api.completeSignup(
+        completeSignupRequest: api.CompleteSignupRequest(
+          signupToken: token,
+          name: name,
+          password: password,
+          phone: phone,
+          termsVersion: termsVersion,
+        ),
       ),
-    ),
-  );
+    );
+    await _signedIn(response.data);
+  }
 
   /// Records that the signed-in person agreed to the version of the terms
   /// in force, then re-reads the account so the app moves on.
@@ -97,17 +120,6 @@ class AuthRepository {
     );
     await _loadAccount();
   }
-
-  Future<void> verifyEmail({required String email, required String code}) =>
-      _call(
-        () => _api.verifyEmail(
-          verifyEmailRequest: api.VerifyEmailRequest(email: email, code: code),
-        ),
-      );
-
-  Future<void> resendVerification({required String email}) => _call(
-    () => _api.resendVerification(emailRequest: api.EmailRequest(email: email)),
-  );
 
   Future<void> requestPasswordReset({required String email}) => _call(
     () => _api.forgotPassword(emailRequest: api.EmailRequest(email: email)),
@@ -137,7 +149,10 @@ class AuthRepository {
         ),
       ),
     );
-    final body = response.data;
+    await _signedIn(response.data);
+  }
+
+  Future<void> _signedIn(api.LoginResponse? body) async {
     final tokens = body?.tokens;
     if (body == null || tokens == null) {
       throw const AuthFailure(AuthFailureCode.unknown);
@@ -174,6 +189,16 @@ class AuthRepository {
     } on DioException {
       // The server forgets the session when it expires anyway.
     }
+    await _endSession();
+  }
+
+  /// Deletes the account for good, then signs out here.
+  Future<void> deleteAccount({required String password}) async {
+    await _call(
+      () => _api.deleteAccount(
+        accountDelete: api.AccountDelete(password: password),
+      ),
+    );
     await _endSession();
   }
 

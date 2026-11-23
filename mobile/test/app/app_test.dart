@@ -93,33 +93,28 @@ void main() {
     });
 
     /*
-      Logs in as an unverified account, taps "Verify now" and enters a
-      code. `afterVerify` answers the log in that follows the code.
+      The three steps of sign-up through the real router: the email, the
+      code, the details. `complete` answers the last.
     */
-    Future<List<String>> verifyFromLogIn(
+    Future<List<String>> signUp(
       WidgetTester tester, {
-      required ResponseBody Function() afterVerify,
+      required ResponseBody Function() complete,
     }) async {
       final calls = <String>[];
-      var verified = false;
       await tester.pumpWidget(
         App(
           config: testConfig,
           dio: _dio((o) async {
             calls.add('${o.path} ${o.data}');
-            switch (o.path) {
-              case '/auth/login':
-                return verified
-                    ? afterVerify()
-                    : jsonBody(403, problem(403, 'account.email_unverified'));
-              case '/auth/email/verify':
-                verified = true;
-                return jsonBody(204, null);
-              case '/me':
-                return jsonBody(200, meJson(name: 'Asha'));
-              default:
-                return jsonBody(202, null);
-            }
+            return switch (o.path) {
+              '/auth/signup/verify' => jsonBody(200, {
+                'signup_token': 'setup-token',
+                'expires_in': 900,
+              }),
+              '/auth/signup/complete' => complete(),
+              '/me' => jsonBody(200, meJson(name: 'Asha')),
+              _ => jsonBody(202, null),
+            };
           }),
           tokenStore: FakeTokenStore(),
           workspaceStore: FakeWorkspaceStore(),
@@ -130,55 +125,53 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('intro_skip')));
       await tester.pumpAndSettle();
+      await tester.tapKey('login_create_account');
+      await tester.pumpAndSettle();
       Finder input(String key) => find.descendant(
         of: find.byKey(Key(key)),
         matching: find.byType(TextField),
       );
-      await tester.enterText(input('login_email'), 'asha@example.com');
-      await tester.enterText(input('login_password'), 'secret');
-      await tester.tap(find.byKey(const Key('login_submit')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('login_verify_now')));
+      await tester.enterText(input('signup_email'), 'asha@example.com');
+      await tester.tapKey('signup_submit');
       await tester.pumpAndSettle();
       await tester.enterText(input('verify_code'), '123456');
-      await tester.tap(find.byKey(const Key('verify_submit')));
+      await tester.tapKey('verify_submit');
+      await tester.pumpAndSettle();
+      await tester.enterText(input('signup_name'), 'Asha');
+      await tester.enterText(input('signup_password'), 'sunlight12');
+      await tester.tapKey('terms_agree');
+      await tester.tapKey('signup_submit');
       await tester.pumpAndSettle();
       return calls;
     }
 
-    testWidgets('verifying from log in logs straight in', (tester) async {
-      final calls = await verifyFromLogIn(
+    testWidgets('signing up: email, code, details, then home', (tester) async {
+      final calls = await signUp(
         tester,
-        afterVerify: () => jsonBody(200, {
+        complete: () => jsonBody(200, {
           'user': meJson(name: 'Asha'),
           'tokens': tokensJson(),
         }),
       );
       expect(find.byType(HomePage), findsOneWidget);
-      // The password typed on the log in screen, sent again after the code.
-      final logins = calls.where((c) => c.startsWith('/auth/login')).toList();
-      expect(logins, hasLength(2));
-      expect(logins.last, contains('secret'));
+      // The password is sent once, only with the token the code gave.
+      final withPassword = calls.where((c) => c.contains('sunlight12'));
+      expect(withPassword, hasLength(1));
+      expect(withPassword.single, startsWith('/auth/signup/complete'));
+      expect(withPassword.single, contains('setup-token'));
     });
 
-    testWidgets(
-      'if that log in fails, a fresh log in with "email verified" opens',
-      (tester) async {
-        await verifyFromLogIn(
-          tester,
-          afterVerify: () =>
-              jsonBody(401, problem(401, 'auth.invalid_credentials')),
-        );
-        expect(find.byType(HomePage), findsNothing);
-        expect(
-          find.text('Email verified. Log in to continue.'),
-          findsOneWidget,
-        );
-        // Neither error from before comes back.
-        expect(find.byKey(const Key('login_verify_now')), findsNothing);
-        expect(find.byKey(const Key('verify_submit')), findsNothing);
-      },
-    );
+    testWidgets('an expired sign-up goes back to the email', (tester) async {
+      await signUp(
+        tester,
+        complete: () => jsonBody(400, problem(400, 'auth.signup_expired')),
+      );
+      expect(find.byType(HomePage), findsNothing);
+      await tester.tapKey('signup_start_again');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('signup_email')), findsOneWidget);
+      expect(find.byKey(const ValueKey('signup_password')), findsNothing);
+    });
 
     testWidgets('several companies: opens the first, then the last used', (
       tester,
