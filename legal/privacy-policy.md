@@ -48,7 +48,7 @@ with their staff and customers. That gives us two roles:
 | Company registration details: GSTIN, legal and trade name, business type, address | Company owners | To review and approve the company on SolaCliq |
 | Address, emergency contact, bank account holder, IFSC, bank name and account number | Installers and sales agents, if they choose to add them | So their company can reach them and reimburse or pay them. The account number is encrypted; only its last 4 digits are ever shown |
 | Customer details: name, phone, email, address, electricity connection details (DISCOM, consumer number, sanctioned load, connection type), roof, planned system size, subsidy choice, the site's GPS position if the agent adds it | Customers, entered by a sales agent with the customer's agreement | So the company can quote, install and claim the subsidy |
-| KYC document photos (for example Aadhaar card, PAN card, electricity bill) | Customers, photographed by a sales agent with the customer's agreement | For the government subsidy application and net metering. **We do not record Aadhaar or PAN numbers**, only the photos the agent takes |
+| KYC document photos and PDFs (for example Aadhaar card, PAN card, electricity bill) | Customers, photographed by a sales agent with the customer's agreement | For the government subsidy application and net metering. **We do not record Aadhaar or PAN numbers**, only the photos the agent takes |
 | Proof photos with GPS position, accuracy and time | Installers | To prove each installation step was done on site |
 | Crash reports: the error's type and where in the app it happened, phone model, Android version, app version, a random id for the install | Everyone who uses the app | To find and fix crashes. We don't add your name, email or what you typed |
 | Expenses and receipt photos, commission entries | Installers and sales agents | So the company can approve them |
@@ -134,8 +134,8 @@ what it may mean for you and what you can do.
 
 | Data | Kept until |
 |---|---|
-| Your account | You delete it, or we close it |
-| KYC documents of a rejected registration | 30 days after the rejection |
+| Your account | You delete it, or we close it. Your name stays only on a company's records of your work or install |
+| A rejected registration: the customer's details and KYC documents | 30 days after the rejection |
 | KYC documents of an installed customer | 1 year after handover (covers the subsidy claim) |
 | Uploaded files never attached to a record | 24 hours |
 | Email codes | 5 minutes, or used |
@@ -156,10 +156,12 @@ You have the right to:
   we use it.
 - **Correction and updating**: most details can be changed in the app;
   for others, ask us.
-- **Erasure**: to delete your account, email info@markcliq.com from
-  your account's email and we will delete it within 30 days. Records a company keeps about work you
-  did for it, or about your install, are the company's; we pass your
-  request to it.
+- **Erasure**: delete your account in the app (Profile → Delete
+  account), or email info@markcliq.com from your account's email and we
+  will delete it within 30 days (see solacliq.markcliq.com/delete-account).
+  Records a company keeps about work you did for it, or about your
+  install, are the company's and keep your name; we pass your request to
+  it.
 - **Withdraw consent** at any time (section 4).
 - **Grievance redressal** (section 11).
 - **Nominate** someone to exercise these rights if you die or can no

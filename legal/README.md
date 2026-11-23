@@ -62,24 +62,20 @@ Ordered by risk.
    (`docs/features/F16-terms-consent.md`).
 2. **Publish the pages: built 2026-11-20 (F16)** on the website, linked
    from the app's Profile. Live once the website is deployed.
-3. **Account deletion**, in the app and at
-   `solacliq.markcliq.com/delete-account`. Required by Google Play;
-   the DPDP right to erasure. Until it exists, deletion is by email
-   (the Privacy Policy says so).
-4. **Customer consent notice.** The agent's "agreed to share" toggle
-   should show the customer what they agree to (their company stores
-   their details and documents for the install and subsidy, linked to
-   the Privacy Policy), and the customer's welcome email should repeat
-   it with a link.
-5. **Retention jobs**: delete KYC 30 days after rejection and 1 year
-   after handover (decided, not yet built).
-6. **A location note** (the site-location tap has one since 2026-11-22;
-   the camera doesn't yet) before the proof camera's first use: "Photos are
-   tagged with where they were taken. The app reads your location only
-   while this camera is open." Google expects a clear disclosure.
-7. **A breach plan**: who decides, who tells whom (users, the Data
-   Protection Board within 72 hours, affected companies within 48
-   hours). A half-page in `docs/`.
+3. **Account deletion: built 2026-11-22 (F18)**, in the app, with
+   `/delete-account` on the website.
+4. **Customer consent notice: built 2026-11-22**, above the agent's
+   toggle and in the welcome email.
+5. **Retention jobs: built 2026-11-22, switched off.** Set
+   `KYC_RETENTION=true` on the server to make the Privacy Policy's
+   periods true.
+6. **Location note: built 2026-11-22**, before the proof camera asks for
+   location.
+7. **Breach plan: drafted 2026-11-22**, `docs/breach-plan.md`.
+8. **The website asks again when the terms change: built 2026-11-22.**
+
+For the lawyer, besides the list above: whether a deleted person's name
+may stay on a company's records (F18's default), and the breach plan.
 
 ## Decisions for the owner
 
