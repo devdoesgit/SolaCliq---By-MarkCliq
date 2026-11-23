@@ -10,16 +10,18 @@ import 'package:solacliq/app/widgets/load_view.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/auth_text.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
+import 'package:solacliq/customers/data/kyc_files.dart';
+import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/customers/view/customer_text.dart';
+import 'package:solacliq/customers/view/document_files.dart';
 import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
-import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// Sends a clearer copy of the customer document the admin returned:
-/// read the note, take the photo, send it.
+/// read the note, add the new files (up to five), send them.
 class FixDocumentPage extends StatefulWidget {
   const new({required this.workspace, required this.customerId, super.key});
 
@@ -32,56 +34,62 @@ class FixDocumentPage extends StatefulWidget {
 
 class _FixDocumentPageState extends State<FixDocumentPage> {
   late Future<CustomerDetail> _customer = _fetch();
-  UploadFile? _photo;
+  late final KycUploader _uploader;
+  List<KycFile> _files = const [];
   bool _sending = false;
   bool _sent = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _uploader = KycUploader(
+      context.read<UploadRepository>(),
+      orgId: widget.workspace.orgId,
+      changed: (files) => setState(() {
+        _files = [for (final list in files.values) ...list];
+      }),
+    );
+  }
+
+  @override
+  void dispose() {
+    _uploader.close();
+    super.dispose();
+  }
+
+  bool get _ready =>
+      uploadedOf(_files).isNotEmpty &&
+      !_files.any((f) => f.state is DocUploading);
 
   Future<CustomerDetail> _fetch() => context.read<CustomerRepository>().get(
     widget.workspace.orgId,
     widget.customerId,
   );
 
-  Future<void> _take(String title) async {
+  Future<void> _take(KycKind kind, String title, DocumentSide? side) async {
     final file = await pickDocument(context, title);
-    if (file != null && mounted) {
-      setState(() {
-        _photo = file;
-      });
-    }
+    if (file != null && mounted) await _uploader.add(kind, file, side: side);
   }
 
   Future<void> _send(ReturnedDocument returned) async {
-    final photo = _photo;
-    if (photo == null) return;
+    if (!_ready) return;
     final l10n = context.l10n;
-    final uploads = context.read<UploadRepository>();
     final customers = context.read<CustomerRepository>();
     setState(() {
       _sending = true;
       _error = null;
     });
     try {
-      final uploadId = await uploads.upload(
-        widget.workspace.orgId,
-        photo,
-        UploadPurpose.kyc,
-      );
       await customers.replaceDocument(
         orgId: widget.workspace.orgId,
         customerId: widget.customerId,
         kind: returned.kind,
-        uploadId: uploadId,
+        files: uploadedOf(_files),
       );
       if (mounted) {
         setState(() {
           _sent = true;
-        });
-      }
-    } on UploadRefused catch (refused) {
-      if (mounted) {
-        setState(() {
-          _error = refused.problem.message(l10n);
         });
       }
     } on AuthFailure catch (failure) {
@@ -132,9 +140,11 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
                         onPressed: () => context.pop(),
                       )
                     else ...[
-                      if (_photo == null)
+                      if (!_ready)
                         SolaText(
-                          l10n.addNewPhotoFirst,
+                          _files.any((f) => f.state is DocUploading)
+                              ? l10n.waitForUploads
+                              : l10n.addNewPhotoFirst,
                           style: SolaTextStyle.meta,
                           color: SolaColors.muted,
                           textAlign: TextAlign.center,
@@ -142,7 +152,7 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
                       SolaButton(
                         key: const Key('fix_send'),
                         label: l10n.sendToAdmin,
-                        onPressed: _photo == null || _sending
+                        onPressed: !_ready || _sending
                             ? null
                             : () => unawaited(_send(returned)),
                       ),
@@ -188,26 +198,28 @@ class _FixDocumentPageState extends State<FixDocumentPage> {
           personLabel: returned.note.by,
         ),
         SolaGroup(
-          children: [
-            SolaListRow(
-              title: doc,
-              subtitle: _photo == null ? returned.title : l10n.newPhotoAdded,
-              leading: const SolaAvatar(
-                icon: SolaIcons.file,
-                color: SolaColors.tan,
-              ),
-              trailing: _sent
-                  ? null
-                  : SolaButton(
-                      key: const Key('fix_take'),
-                      label: _photo == null ? l10n.takePhoto : l10n.retakePhoto,
-                      variant: SolaButtonVariant.white,
-                      compact: true,
-                      expand: false,
-                      onPressed: () => unawaited(_take(doc)),
+          children: _sent
+              ? [
+                  SolaListRow(
+                    title: doc,
+                    subtitle: l10n.newPhotoAdded,
+                    leading: const SolaAvatar(
+                      icon: SolaIcons.file,
+                      color: SolaColors.tan,
                     ),
-            ),
-          ],
+                  ),
+                ]
+              : documentRows(
+                  l10n: l10n,
+                  kind: returned.kind,
+                  title: doc,
+                  detail: returned.title,
+                  files: _files,
+                  onAdd: (side) => unawaited(_take(returned.kind, doc, side)),
+                  onRetry: (id) =>
+                      unawaited(_uploader.retry(returned.kind, id)),
+                  onRemove: (id) => _uploader.remove(returned.kind, id),
+                ),
         ),
         if (_sent)
           SolaBanner(

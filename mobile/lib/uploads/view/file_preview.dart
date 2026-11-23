@@ -1,5 +1,18 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
+import 'package:solacliq/uploads/data/upload_repository.dart';
+
+// A preview is small: decoding at full size would hold every pixel.
+const _previewPixels = 600;
+
+/// A picked file as a picture, decoded at thumbnail size.
+ImageProvider pickedImage(UploadFile file) => ResizeImage(switch (file.path) {
+  final path? => FileImage(File(path)),
+  null => MemoryImage(file.bytes ?? Uint8List(0)),
+}, width: _previewPixels);
 
 /*
   A picture of a file someone uploaded or is about to

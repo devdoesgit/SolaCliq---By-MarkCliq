@@ -53,7 +53,14 @@ Future<UploadFile?> pickDocument(BuildContext context, String title) async {
         allowedExtensions: const ['pdf'],
       );
       if (file == null) return null;
-      return UploadFile(name: file.name, bytes: await file.readAsBytes());
+      final length = await file.length();
+      if (length == null) return null;
+      return await UploadFile.read(
+        name: file.name,
+        length: length,
+        open: file.readAsByteStream,
+        path: file.path,
+      );
     case _Source.camera || _Source.gallery:
       final photo = await ImagePicker().pickImage(
         source: source == _Source.camera
@@ -64,6 +71,11 @@ Future<UploadFile?> pickDocument(BuildContext context, String title) async {
         imageQuality: 80,
       );
       if (photo == null) return null;
-      return UploadFile(name: photo.name, bytes: await photo.readAsBytes());
+      return await UploadFile.read(
+        name: photo.name,
+        length: await photo.length(),
+        open: photo.openRead,
+        path: photo.path,
+      );
   }
 }

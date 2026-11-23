@@ -1,4 +1,5 @@
 import 'package:api_client/api_client.dart' as api;
+import 'package:equatable/equatable.dart';
 import 'package:solacliq/app/data/api_call.dart';
 import 'package:solacliq/customers/data/site_point.dart';
 
@@ -20,6 +21,26 @@ enum KycKind {
 
   /// Why the electricity bill is in another person's name.
   nameChange,
+}
+
+/// Which side of an Aadhaar a file shows: a label, never required.
+enum DocumentSide { front, back }
+
+/// An uploaded file of one document.
+class DocumentUpload extends Equatable {
+  const new(this.uploadId, {this.side});
+
+  final String uploadId;
+  final DocumentSide? side;
+
+  /// As the API takes it.
+  api.DocumentFile toApi() => api.DocumentFile(
+    uploadId: uploadId,
+    side: side == null ? null : api.DocumentSide.values.byName(side!.name),
+  );
+
+  @override
+  List<Object?> get props => [uploadId, side];
 }
 
 /// A new customer as the agent entered them, for the admin to approve.
@@ -66,8 +87,8 @@ class CustomerDraft {
   /// Where the site is, if the agent took it.
   final SitePoint? site;
 
-  /// Upload ids by document.
-  final Map<KycKind, String> documents;
+  /// Each document's files, up to five.
+  final Map<KycKind, List<DocumentUpload>> documents;
   final bool consent;
 
   /// Commission agents only: what they ask for this customer.
@@ -116,7 +137,7 @@ class RegistrationRepository {
             for (final MapEntry(:key, :value) in d.documents.entries)
               api.CustomerRegistrationCreateDocumentsInner(
                 kind: api.KycKind.values.byName(key.name),
-                uploadId: value,
+                files: [for (final file in value) file.toApi()],
               ),
           ],
           consent: d.consent,

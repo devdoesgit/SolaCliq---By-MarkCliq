@@ -14,11 +14,12 @@ import 'package:solacliq/customers/cubit/site_location_cubit.dart';
 import 'package:solacliq/customers/data/india.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/customers/view/add_customer_sent_page.dart';
+import 'package:solacliq/customers/view/document_files.dart';
 import 'package:solacliq/customers/view/site_location_field.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/legal/legal.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/uploads/view/pick_document.dart';
-import 'package:solacliq/uploads/view/upload_problem_text.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
 /// An agent registers a customer in three steps (who, site, KYC), checks
@@ -272,14 +273,17 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
 
   /// The documents that go with the customer: the uploaded ones, plus with
   /// quick forms (development) a sample for each required one not picked.
-  Map<KycKind, String> _documents(Map<KycKind, String> uploaded) => {
+  Map<KycKind, List<DocumentUpload>> _documents(
+    Map<KycKind, List<DocumentUpload>> uploaded,
+  ) => {
     ...uploaded,
     if (context.quickForms)
       for (final kind in AddCustomerState.required(subsidy: _subsidy))
-        if (!uploaded.containsKey(kind)) kind: QuickForms.sampleUploadId,
+        if (!uploaded.containsKey(kind))
+          kind: const [DocumentUpload(QuickForms.sampleUploadId)],
   };
 
-  CustomerDraft _draft(Map<KycKind, String> uploaded) {
+  CustomerDraft _draft(Map<KycKind, List<DocumentUpload>> uploaded) {
     final documents = _documents(uploaded);
     final cityPin = _cityPinPattern.firstMatch(_cityPin.text.trim())!;
     final earns = widget.workspace.earnsCommission;
@@ -468,9 +472,13 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
           ),
           SolaButton(
             key: const Key('add_customer_review'),
-            label: missing == 0 ? l10n.reviewLabel : l10n.addMore('$missing'),
+            label: state.uploading
+                ? l10n.waitForUploads
+                : missing == 0
+                ? l10n.reviewLabel
+                : l10n.addMore('$missing'),
             variant: SolaButtonVariant.dark,
-            onPressed: missing == 0 ? _next : null,
+            onPressed: missing == 0 && !state.uploading ? _next : null,
           ),
         ];
       case _Step.review:
@@ -696,10 +704,14 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
     );
   }
 
-  Future<void> _addDocument(KycKind kind, String title) async {
+  Future<void> _addDocument(
+    KycKind kind,
+    String title,
+    DocumentSide? side,
+  ) async {
     final cubit = context.read<AddCustomerCubit>();
     final file = await pickDocument(context, title);
-    if (file != null) await cubit.addDocument(kind, file);
+    if (file != null) await cubit.addDocument(kind, file, side: side);
   }
 
   Widget _docs(AppLocalizations l10n, AddCustomerState state) {
@@ -722,20 +734,34 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
         SolaGroup(
           children: [
             for (final (kind, title, detail, glyph) in docs)
-              _DocRow(
-                key: ValueKey('doc_${kind.name}'),
+              ...documentRows(
+                l10n: l10n,
+                kind: kind,
                 title: title,
-                detail: switch (state.docs[kind]) {
-                  DocFailed(:final problem?) => problem.message(l10n),
-                  DocFailed() => l10n.uploadFailed,
-                  _ => detail,
-                },
-                failed: state.docs[kind] is DocFailed,
+                detail: detail,
                 glyph: glyph,
-                doc: state.docs[kind],
-                onAdd: () => unawaited(_addDocument(kind, title)),
+                files: state.docs[kind] ?? const [],
+                onAdd: (side) => unawaited(_addDocument(kind, title, side)),
+                onRetry: (id) => unawaited(
+                  context.read<AddCustomerCubit>().retryFile(kind, id),
+                ),
+                onRemove: (id) =>
+                    context.read<AddCustomerCubit>().removeFile(kind, id),
               ),
           ],
+        ),
+        SolaText(
+          l10n.consentNotice(company),
+          key: const Key('customer_consent_notice'),
+          style: SolaTextStyle.small,
+          color: SolaColors.muted,
+        ),
+        SolaLinkText(
+          key: const Key('customer_consent_privacy'),
+          link: l10n.readDocument(l10n.privacyPolicy),
+          textAlign: TextAlign.start,
+          style: SolaTextStyle.small,
+          onTap: () => openLegalPage(context, LegalPage.privacy),
         ),
         SolaGroup(
           children: [
@@ -885,70 +911,5 @@ class _AddCustomerFlowState extends State<AddCustomerFlow> {
       }
     }
     unawaited(context.read<AddCustomerCubit>().submit(_draft));
-  }
-}
-
-/// One KYC document: its picture, what it is, and "Add" or "Uploaded".
-class _DocRow extends StatelessWidget {
-  const new({
-    required super.key,
-    required this.title,
-    required this.detail,
-    required this.failed,
-    required this.glyph,
-    required this.doc,
-    required this.onAdd,
-  });
-
-  final String title;
-  final String detail;
-  final bool failed;
-  final SolaGlyph? glyph;
-  final DocState? doc;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final id = (key! as ValueKey<String>).value;
-    final canAdd = doc is! DocUploading && doc is! DocUploaded;
-    return SolaListRow(
-      title: title,
-      subtitle: detail,
-      subtitleLines: failed ? 3 : 1,
-      // The whole row adds the photo, not only its button.
-      onTap: canAdd ? onAdd : null,
-      leading: SolaThumb(
-        glyph: glyph,
-        icon: glyph == null ? SolaIcons.home : null,
-      ),
-      trailing: switch (doc) {
-        DocUploaded() => SolaPill(
-          l10n.uploaded,
-          tone: SolaTone.success,
-          icon: SolaIcons.check,
-        ),
-        DocUploading() => Semantics(
-          label: l10n.uploading,
-          child: const SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: SolaColors.ink,
-            ),
-          ),
-        ),
-        _ => SolaButton(
-          key: ValueKey('${id}_add'),
-          label: failed ? l10n.retry : l10n.add,
-          semanticsLabel: '${failed ? l10n.retry : l10n.add}: $title',
-          icon: SolaIcons.camera,
-          variant: SolaButtonVariant.dark,
-          small: true,
-          expand: false,
-          onPressed: onAdd,
-        ),
-      },
-    );
   }
 }

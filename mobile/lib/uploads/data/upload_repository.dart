@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:api_client/api_client.dart' as api;
@@ -26,12 +28,72 @@ class UploadRefused implements Exception {
   String toString() => 'UploadRefused($problem)';
 }
 
-/// A file picked on the phone, ready to upload.
+/*
+  A file ready to upload
+  ----------------------------------------------------------------------
+  - a picked file stays on disk and is streamed from there: five 50 MB
+    documents are never in memory (F5)
+  - a camera shot (10 MB at most) may be held as bytes
+*/
 class UploadFile {
-  const new({required this.name, required this.bytes});
+  new({required this.name, required Uint8List this.bytes})
+    : length = bytes.length,
+      head = Uint8List.sublistView(bytes, 0, min(bytes.length, _headBytes)),
+      path = null,
+      open = (() => _pieces(bytes));
+
+  /// [open] gives the content from the start, each time it's called.
+  const new streamed({
+    required this.name,
+    required this.length,
+    required this.head,
+    required this.open,
+    this.path,
+  }) : bytes = null;
 
   final String name;
-  final Uint8List bytes;
+  final int length;
+
+  /// The first bytes, enough to tell the type.
+  final Uint8List head;
+  final Stream<List<int>> Function() open;
+
+  /// Where it is, for a preview; null when it isn't a plain file.
+  final String? path;
+
+  /// The content, only for a file held in memory.
+  final Uint8List? bytes;
+
+  static const _headBytes = 8;
+  static const int _piece = 64 * 1024;
+
+  /// Reads just enough of [open] to know its type.
+  static Future<UploadFile> read({
+    required String name,
+    required int length,
+    required Stream<List<int>> Function() open,
+    String? path,
+  }) async {
+    final head = <int>[];
+    await for (final piece in open()) {
+      head.addAll(piece.take(_headBytes - head.length));
+      if (head.length >= _headBytes) break;
+    }
+    return UploadFile.streamed(
+      name: name,
+      length: length,
+      head: Uint8List.fromList(head),
+      open: open,
+      path: path,
+    );
+  }
+
+  // In pieces, so that progress (and a stall) can be seen.
+  static Stream<List<int>> _pieces(Uint8List bytes) async* {
+    for (var at = 0; at < bytes.length; at += _piece) {
+      yield Uint8List.sublistView(bytes, at, min(at + _piece, bytes.length));
+    }
+  }
 
   /*
     The type to declare: from the name, else from the first bytes, else
@@ -49,8 +111,8 @@ class UploadFile {
         return api.UploadCreateContentTypeEnum.applicationSlashPdf;
     }
     bool starts(List<int> magic) =>
-        bytes.length >= magic.length &&
-        Iterable<int>.generate(magic.length).every((i) => bytes[i] == magic[i]);
+        head.length >= magic.length &&
+        Iterable<int>.generate(magic.length).every((i) => head[i] == magic[i]);
     if (starts(const [0x89, 0x50, 0x4E, 0x47])) {
       return api.UploadCreateContentTypeEnum.imageSlashPng;
     }
@@ -65,7 +127,7 @@ class UploadFile {
     final (max, problem) = purpose == UploadPurpose.kyc
         ? (UploadRepository.maxKycBytes, UploadProblem.documentTooLarge)
         : (UploadRepository.maxBytes, UploadProblem.tooLarge);
-    return bytes.length > max ? problem : null;
+    return length > max ? problem : null;
   }
 }
 
@@ -81,22 +143,20 @@ class UploadRepository {
   static const int maxBytes = 10 * 1024 * 1024;
   static const int maxKycBytes = 50 * 1024 * 1024;
 
-  /*
-    How long sending may take: 2 minutes, and a second for each 64 KB
-    (about 0.5 Mbps), as dio's send timeout is for the whole transfer.
-    The signed URL only has to be valid when it starts
-  */
-  static Duration _timeToSend(int bytes) =>
-      const Duration(minutes: 2) + Duration(seconds: bytes ~/ (64 * 1024));
+  /// An upload with no bytes moving for this long has failed.
+  static const idleLimit = Duration(seconds: 60);
 
   /// Uploads [file] for the company [orgId] and returns its upload id, to
   /// attach to one of that company's records. [UploadRefused] before
-  /// anything is sent when the file is over [purpose]'s limit.
+  /// anything is sent when the file is over [purpose]'s limit. Completing
+  /// [cancelled] stops it.
   Future<String> upload(
     String orgId,
     UploadFile file,
-    UploadPurpose purpose,
-  ) async {
+    UploadPurpose purpose, {
+    void Function(int percent)? onProgress,
+    Future<void>? cancelled,
+  }) async {
     if (file.problemFor(purpose) case final problem?) {
       throw UploadRefused(problem);
     }
@@ -106,7 +166,7 @@ class UploadRepository {
         orgId: orgId,
         uploadCreate: api.UploadCreate(
           contentType: type,
-          sizeBytes: file.bytes.length,
+          sizeBytes: file.length,
           purpose: switch (purpose) {
             UploadPurpose.receipt => api.UploadCreatePurposeEnum.receipt,
             UploadPurpose.kyc => api.UploadCreatePurposeEnum.kyc,
@@ -120,22 +180,66 @@ class UploadRepository {
     // The development mock hands out `.invalid` URLs that nothing serves;
     // treat those as already uploaded.
     if (!url.host.endsWith('.invalid')) {
-      await apiCall(
-        () => _transfer.requestUri<void>(
-          url,
-          data: Stream.fromIterable([file.bytes]),
-          options: Options(
-            method: slot.method.value,
-            sendTimeout: _timeToSend(file.bytes.length),
-            headers: {
-              ...slot.headers,
-              Headers.contentLengthHeader: file.bytes.length,
-              Headers.contentTypeHeader: type.value,
-            },
-          ),
-        ),
+      await _put(
+        url,
+        file,
+        method: slot.method.value,
+        headers: {
+          ...slot.headers,
+          Headers.contentLengthHeader: file.length,
+          Headers.contentTypeHeader: type.value,
+        },
+        onProgress: onProgress,
+        cancelled: cancelled,
       );
     }
     return slot.uploadId;
+  }
+
+  /*
+    Sends the bytes
+    --------------------------------------------------------------------
+    - no limit on the whole transfer (dio's send timeout is one): it
+      fails after [idleLimit] with nothing moving, however big the file
+    - the signed URL only has to be valid when it starts
+  */
+  Future<void> _put(
+    Uri url,
+    UploadFile file, {
+    required String method,
+    required Map<String, dynamic> headers,
+    void Function(int percent)? onProgress,
+    Future<void>? cancelled,
+  }) async {
+    final token = CancelToken();
+    void stop() {
+      if (!token.isCancelled) token.cancel();
+    }
+
+    var idle = Timer(idleLimit, stop);
+    unawaited(cancelled?.then((_) => stop()));
+    try {
+      await apiCall(
+        () => _transfer.requestUri<void>(
+          url,
+          data: file.open(),
+          cancelToken: token,
+          onSendProgress: (sent, _) {
+            idle.cancel();
+            idle = Timer(idleLimit, stop);
+            if (file.length > 0) {
+              onProgress?.call(min(100, sent * 100 ~/ file.length));
+            }
+          },
+          options: Options(
+            method: method,
+            sendTimeout: Duration.zero,
+            headers: headers,
+          ),
+        ),
+      );
+    } finally {
+      idle.cancel();
+    }
   }
 }

@@ -1,40 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:solacliq/auth/auth.dart';
+import 'package:solacliq/customers/data/kyc_files.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:uuid/uuid.dart';
-
-/// Where one document is.
-sealed class DocState extends Equatable {
-  const new();
-
-  @override
-  List<Object?> get props => [];
-}
-
-final class DocUploading extends DocState {
-  const new();
-}
-
-final class DocUploaded extends DocState {
-  const new(this.uploadId);
-
-  final String uploadId;
-
-  @override
-  List<Object?> get props => [uploadId];
-}
-
-final class DocFailed extends DocState {
-  const new({this.problem});
-
-  /// Refused on the phone (too big); null when the upload itself failed.
-  final UploadProblem? problem;
-
-  @override
-  List<Object?> get props => [problem];
-}
 
 class AddCustomerState extends Equatable {
   const new({
@@ -45,7 +15,7 @@ class AddCustomerState extends Equatable {
     this.reference,
   });
 
-  final Map<KycKind, DocState> docs;
+  final Map<KycKind, List<KycFile>> docs;
   final bool submitting;
   final AuthFailureCode? failure;
 
@@ -67,17 +37,23 @@ class AddCustomerState extends Equatable {
     if (subsidy) KycKind.bankProof,
   ];
 
-  /// Upload ids of the documents that are up.
-  Map<KycKind, String> get uploaded => {
+  /// The files that are up, by document. One is enough for a document.
+  Map<KycKind, List<DocumentUpload>> get uploaded => {
     for (final MapEntry(:key, :value) in docs.entries)
-      if (value case DocUploaded(:final uploadId)) key: uploadId,
+      if (uploadedOf(value) case final files when files.isNotEmpty) key: files,
   };
 
-  int missing({required bool subsidy}) =>
-      required(subsidy: subsidy).where((k) => docs[k] is! DocUploaded).length;
+  /// Any file still on its way: review waits for it.
+  bool get uploading =>
+      docs.values.any((files) => files.any((f) => f.state is DocUploading));
+
+  int missing({required bool subsidy}) {
+    final up = uploaded;
+    return required(subsidy: subsidy).where((k) => !up.containsKey(k)).length;
+  }
 
   AddCustomerState copyWith({
-    Map<KycKind, DocState>? docs,
+    Map<KycKind, List<KycFile>>? docs,
     bool? submitting,
     AuthFailureCode? Function()? failure,
     String? Function()? failureDetail,
@@ -113,16 +89,28 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
   /// One per customer, so a retry can't register them twice.
   final String _idempotencyKey = const Uuid().v4();
 
-  Future<void> addDocument(KycKind kind, UploadFile file) async {
-    _setDoc(kind, const DocUploading());
-    try {
-      final id = await _uploads.upload(orgId, file, UploadPurpose.kyc);
-      _setDoc(kind, DocUploaded(id));
-    } on UploadRefused catch (refused) {
-      _setDoc(kind, DocFailed(problem: refused.problem));
-    } on AuthFailure {
-      _setDoc(kind, const DocFailed());
-    }
+  late final KycUploader _files = KycUploader(
+    _uploads,
+    orgId: orgId,
+    changed: (docs) {
+      if (!isClosed) emit(state.copyWith(docs: docs));
+    },
+  );
+
+  Future<void> addDocument(
+    KycKind kind,
+    UploadFile file, {
+    DocumentSide? side,
+  }) => _files.add(kind, file, side: side);
+
+  Future<void> retryFile(KycKind kind, int id) => _files.retry(kind, id);
+
+  void removeFile(KycKind kind, int id) => _files.remove(kind, id);
+
+  @override
+  Future<void> close() {
+    _files.close();
+    return super.close();
   }
 
   /// Forgets the last refusal, once the agent goes back to change things.
@@ -131,13 +119,8 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
     emit(state.copyWith(failure: () => null, failureDetail: () => null));
   }
 
-  void _setDoc(KycKind kind, DocState doc) {
-    if (isClosed) return;
-    emit(state.copyWith(docs: {...state.docs, kind: doc}));
-  }
-
   Future<void> submit(
-    CustomerDraft Function(Map<KycKind, String>) draft,
+    CustomerDraft Function(Map<KycKind, List<DocumentUpload>>) draft,
   ) async {
     if (state.submitting) return;
     emit(

@@ -177,15 +177,15 @@ class CustomerRepository {
     required String orgId,
     required String customerId,
     required KycKind kind,
-    required String uploadId,
+    required List<DocumentUpload> files,
   }) async {
     final response = await apiCall(
       () => _api.replaceCustomerDocument(
         orgId: orgId,
         customerId: customerId,
         kind: api.KycKind.values.byName(kind.name),
-        replaceCustomerDocumentRequest: api.ReplaceCustomerDocumentRequest(
-          uploadId: uploadId,
+        documentReplace: api.DocumentReplace(
+          files: [for (final file in files) file.toApi()],
         ),
       ),
     );

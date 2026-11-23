@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:api_client/api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 
 import '../helpers/helpers.dart';
@@ -87,12 +89,62 @@ void main() {
       });
     }
 
-    test('a 50 MB document has time to send at 0.5 Mbps', () async {
+    test('the whole transfer has no time limit, only idleness has', () async {
       final file = UploadFile(name: 'a.pdf', bytes: Uint8List(50 * mb));
       await repository('https://x').upload('o1', file, UploadPurpose.kyc);
-      // dio's send timeout is for the whole transfer, not between bytes.
-      const needed = Duration(seconds: 50 * mb * 8 ~/ 500000);
-      expect(transfers.single.sendTimeout, greaterThan(needed));
+      // dio's send timeout is for the whole transfer: zero turns it off.
+      expect(transfers.single.sendTimeout, Duration.zero);
+    });
+
+    test('a big file is sent from disk, never read into memory', () async {
+      var largest = 0;
+      var total = 0;
+      transfer.httpClientAdapter = _Server((stream, _) async {
+        await for (final piece in stream) {
+          total += piece.length;
+          if (piece.length > largest) largest = piece.length;
+        }
+      });
+      final piece = Uint8List(64 * 1024);
+      final file = await UploadFile.read(
+        name: 'deed.pdf',
+        length: 50 * mb,
+        open: () => Stream.fromIterable(
+          Iterable.generate(50 * mb ~/ piece.length, (_) => piece),
+        ),
+      );
+      expect(file.bytes, isNull);
+      final seen = <int>[];
+      await repository('https://x')
+          .upload('o1', file, UploadPurpose.kyc, onProgress: seen.add);
+      expect(total, 50 * mb);
+      expect(largest, lessThanOrEqualTo(64 * 1024));
+      expect(seen.last, 100);
+    });
+
+    testWidgets('nothing moving for 60 seconds fails', (tester) async {
+      transfer.httpClientAdapter = _Server((_, cancel) => cancel!);
+      Object? failed;
+      unawaited(
+        repository('https://x')
+            .upload('o1', photo, UploadPurpose.kyc)
+            .then<void>((_) {}, onError: (Object e) => failed = e),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 55));
+      expect(failed, isNull);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 1));
+      expect(failed, isA<AuthFailure>());
+    });
+
+    test('removing a file stops its upload', () async {
+      transfer.httpClientAdapter = _Server((_, cancel) => cancel!);
+      final cancelled = Completer<void>();
+      final sending = repository('https://x')
+          .upload('o1', photo, UploadPurpose.kyc, cancelled: cancelled.future);
+      cancelled.complete();
+      await expectLater(sending, throwsA(isA<AuthFailure>()));
     });
 
     test('the type comes from the name, else the bytes; nothing refused', () {
@@ -116,4 +168,31 @@ void main() {
       );
     });
   });
+}
+
+/// Storage that does what [handle] says with the bytes.
+class _Server implements HttpClientAdapter {
+  new(this.handle);
+
+  final Future<void> Function(Stream<Uint8List> body, Future<void>? cancel)
+  handle;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    await handle(requestStream!, cancelFuture);
+    if (options.cancelToken?.isCancelled ?? false) {
+      throw DioException.requestCancelled(
+        requestOptions: options,
+        reason: null,
+      );
+    }
+    return jsonBody(200, null);
+  }
+
+  @override
+  void close({bool force = false}) {}
 }
