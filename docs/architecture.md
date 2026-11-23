@@ -184,6 +184,9 @@ One OpenAPI spec is the contract between backend and frontends.
 - Org-scoped endpoints live under `/orgs/{org_id}/...`. The server checks
   membership, that the org is `active`, and the role (`OrgMember<Roles>`).
   MarkCliq's endpoints live under `/platform/...` (`PlatformAdmin`).
+- Cookie writes only from the website's own origin: `auth.cross_origin`,
+  403 otherwise (`backend/src/origin.rs`). Anything behind a proxy must
+  pass `Host` through.
 - Auth: `Authorization: Bearer` for mobile, cookies for the admin website,
   same endpoints.
 - Uploads: `POST /orgs/{org_id}/uploads` returns a presigned R2 URL.

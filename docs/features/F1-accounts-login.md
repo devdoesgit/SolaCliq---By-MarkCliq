@@ -23,16 +23,17 @@ feature knows who is using it and in which orgs.
 ## In scope
 
 - One global account per person: email, password, name.
-- Customer sign-up in the app, with a 6-digit code emailed to verify the
-  address. An account can't log in until its email is verified.
+- Customer sign-up in the app: email, then a 6-digit code, then the
+  details and password. No account exists until the code proves the
+  address.
 - Log in and log out, app and website. "Who am I": the user and their
   memberships `(org, role, org status)`.
 - Forgot password: a 6-digit code by email, then a new password. Resetting
   logs the person out everywhere.
 - **First-time set-up** (added 2026-10-18): accounts created for someone
   (customers registered by an agent in F4; workers and agents in F3) have
-  no password. Logging in to one returns `account.password_not_set`; the app
-  then offers "Set up your account", which is the forgot-password flow
+  no password. Log in doesn't say so (QA-28); the app always offers
+  "Set up your account", which is the forgot-password flow
   worded for a first visit (`POST /auth/password/forgot` then
   `/auth/password/reset` both work for an account without a password).
 - Sessions:
@@ -70,57 +71,49 @@ feature knows who is using it and in which orgs.
   already has an account sends that person an "you already have an account"
   email instead of a code.
 - Login failure always says "Email or password is wrong." An unverified
-  account gets `account.email_unverified` only after the right password.
+  account has no password, so it gets the same answer.
 - Codes: 6 digits, valid **5 minutes**, 5 tries, stored hashed (PostgreSQL),
   single use.
 - A wrong, expired, used-up or unsent code all answer
   `auth.code_invalid` (2026-11-22, QA-08).
-- Rate limits: login 5 tries per 15 minutes per email and per IP; code
-  emails 3 per hour per email.
+- Rate limits: login 10 tries per 15 minutes per email and 30 per IP;
+  code emails 3 an hour per email and kind (so at most 15 guesses an
+  hour at one person's code, from anywhere) and 30 an hour per IP
+  (mobile networks share addresses).
 - Emails go through the Gmail API (Google Workspace) from
   `support@solacliq.markcliq.com`, server only: verification code, reset code,
   set-up code, "you already have an account", and an activation/welcome
   email for accounts created by an agent or org admin (sent in F3/F4). In development the backend prints
   codes to its log; the Prism mock returns example responses.
 
-## Known flaw: sign-up takeover (QA-27, QA-28), to fix later
+## Code-first sign-up (QA-27, QA-28): fixed 2026-11-22
 
-Found 2026-11-22; deferred by the owner the same day. **Open.**
+**The flaw.** Sign-up saved the password, name, phone and terms
+agreement before the code, and a second sign-up kept them all. Whoever
+signed up first with someone's email owned the account once its real
+owner entered the code: as installer, or as the company's admin with
+every customer's KYC.
 
-**The flaw.** Sign-up saves the password, name, phone and terms
-agreement before the code. A second sign-up with that unverified email
-keeps all of them, and entering the code activates them. Tested against
-the API:
+**Now (the owner's order: code first, then password).**
 
-| Who makes the account first | Result |
-|---|---|
-| Admin adds the email | Safe: no password until set with an emailed code |
-| Attacker, then the person signs up | Taken over |
-| Attacker, admin adds them, they sign up | Taken over, as installer |
-| Attacker, owner registers the company, owner signs up | Taken over, as the company's admin |
-| Attacker, then the person uses Forgot password | Safe: the attacker's password is replaced |
-| An agent registers that unverified customer | Password cleared by that code; name and phone stay |
+1. `POST /auth/signup`: the email alone. A code is sent, no account made.
+2. `POST /auth/signup/verify`: the code returns a one-time setup token
+   (15 minutes, stored as a hash).
+3. `POST /auth/signup/complete`: name, mobile, password and terms, with
+   that token. The account is made and logged in. Nothing typed earlier
+   is kept.
 
-**Until it's fixed:** someone taken over gets the account back with
-Forgot password, which ends the attacker's sessions.
-
-**The fix (the owner's order: code first, then password).**
-
-1. Email only: a code is sent.
-2. Code: the server returns a one-time setup token (15 minutes).
-3. Name, mobile, password and terms, with that token: the account is
-   completed and logged in. Nothing typed earlier is kept.
-
-- Invited accounts (no password) can finish through the same steps.
-  Today "Create account" verifies them, then says "password not set".
-- Login answers `auth.invalid_credentials` for an account with no
-  password (today 403 tells anyone that the email was invited) and for
-  an unverified one (403 today: QA-28). The login screen always shows
-  "Set up your account".
-- Passwords already saved on unverified accounts are cleared.
-- Forgot password stays as it is.
-- Contract change: apps built before it can't sign up. Spec and
-  `openapi.yaml` first; each row above becomes a test.
+- Postgres refuses a password on an unverified account
+  (`users_password_needs_verified`), whatever code writes it.
+- An invited account (no password) can finish through the same steps or
+  through "Set up your account" (forgot password). A token never
+  replaces a password that already exists.
+- Log in gives one answer, `auth.invalid_credentials`, for no account, a
+  wrong password and no password yet. Both login screens always offer
+  set-up.
+- The migration clears what the old flow left on unverified accounts.
+- Tests: `backend/tests/signup.rs`, one per way the takeover worked.
+- Apps built before this can't sign up.
 
 ## API
 
@@ -128,9 +121,9 @@ Added to `api/openapi.yaml` (tag `auth`). All under `/api/v1`.
 
 | Method and path | Auth | What it does |
 |---|---|---|
-| `POST /auth/signup` | none | Create a customer account; emails a code. Always `202`. |
-| `POST /auth/email/verify` | none | Verify with the code. `204`. |
-| `POST /auth/email/resend` | none | Send a new code. Always `202`. |
+| `POST /auth/signup` | none | The email alone; emails a code (again, to resend). Always `202`. |
+| `POST /auth/signup/verify` | none | The code. Returns the setup token. |
+| `POST /auth/signup/complete` | none | Token and details: creates the account, logs in. |
 | `POST /auth/login` | none | `client: app` → tokens in the body; `client: web` → session cookie. Both return the user. |
 | `POST /auth/refresh` | none (refresh token in body) | App only: new token pair. |
 | `POST /auth/logout` | bearer or cookie | Ends this session. `204`. |
@@ -139,8 +132,8 @@ Added to `api/openapi.yaml` (tag `auth`). All under `/api/v1`.
 | `GET /me` | bearer or cookie | The user and their memberships. |
 
 Errors use problem+json codes: `auth.invalid_credentials`,
-`account.email_unverified`, `account.password_not_set`,
-`auth.code_invalid`, `auth.code_expired`,
+`auth.signup_expired`,
+`auth.code_invalid`,
 `auth.too_many_attempts`, `auth.password_too_weak`, `auth.session_expired`,
 `validation.failed`.
 
@@ -148,8 +141,8 @@ Errors use problem+json codes: `auth.invalid_credentials`,
 
 **Mobile app**
 1. Welcome: product name, "Log in" (primary) and "Create account".
-2. Create account: name, email, password.
-3. Verify email: the 6-digit code, "Send a new code".
+2. Create account: the email. Then the 6-digit code, "Send a new code".
+3. Finish your account: name, mobile, password, terms.
 4. Log in: email, password, "Forgot password?".
 5. Forgot password: email → Reset password: code and new password.
 6. Signed in (placeholder until F3/F9): name, memberships or the new-customer
@@ -178,8 +171,8 @@ Errors use problem+json codes: `auth.invalid_credentials`,
 
 ## Acceptance
 
-1. A new customer can create an account in the app, verify with the emailed
-   code, and land on the signed-in screen.
+1. A new customer enters their email, then the emailed code, then their
+   details, and lands on the signed-in screen.
 2. Logging in with a wrong password, or an email with no account, shows the
    same message.
 3. The app stays logged in after being closed and reopened, and refreshes

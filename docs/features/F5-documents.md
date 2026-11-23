@@ -1,9 +1,8 @@
 # F5 Documents: several files, up to 50 MB
 
-Status: the 50 MB limit is built (2026-11-22). Several files per document
-is `spec`, waiting for the owner's review, with no code yet. Its contract
-below moves into `api/openapi.yaml` when approved: put there earlier, the
-generated clients would no longer match the code.
+Status: built 2026-11-22: the 50 MB limit, and 1 to 5 files per document
+on the server, in the app and on the admin website. Not yet run on a
+phone or against real R2 (the emulator checks under Tests).
 
 ## Goal
 
@@ -116,12 +115,16 @@ nothing attached, as now.
 Resuming a half-sent file, uploading with the app closed, compressing
 PDFs, the admin's document viewer (with the website).
 
-## For the owner to decide
+## As built
 
-1. **Old staging builds** send `upload_id` and would fail to register a
-   customer. Recommended: break it now, before go-live, and update them.
-2. ~~Storage abuse with no cap.~~ **Answered 2026-11-22: 50 MB for
-   now.** One member can still send 200 files an hour (the rate limit),
-   10 GB at most, so a billing alert in Cloudflare is still worth setting.
-3. **Receipts** stay at 10 MB, as "docs" was read as KYC documents.
-   Recommended: keep it so, as a photographed bill is far under it.
+- **Decisions (taken as recommended, owner's "do whatever remains",
+  2026-11-22):** old builds break now (API and APK go out together);
+  receipts stay 10 MB.
+- **One change from the spec's table:** a replaced set keeps its rows,
+  marked `replaced_at`, instead of being unlinked. Otherwise deleting a
+  customer's KYC (retention) couldn't find the files they sent earlier.
+  Files replaced before this migration can't be traced to a customer
+  (staging data only).
+- Review waits while a file uploads; a failed file doesn't block once
+  another of that document is up.
+- A storage billing alert in Cloudflare is still worth setting (owner).

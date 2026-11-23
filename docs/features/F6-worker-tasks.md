@@ -58,7 +58,7 @@ reassigns or cancels it.
 - ~~Raised tab "Upload proof"~~: removed 2026-11-22 (`decisions.md`).
   Proof is taken from a task, so the worker picks the customer first.
 - Profile tab: name, role, company, this month's stats; workspaces, help,
-  log out. Personal details and ID documents are shown as coming soon.
+  log out. Personal details are built; ID documents (a worker's own) are not yet.
 
 ## Not in scope
 

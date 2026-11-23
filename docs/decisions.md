@@ -161,8 +161,9 @@ Change a decision by adding a new line, not by editing an old one.
   stand-in for SF Pro; OFL, bundled in `sola_ui`).
 - **Photos from the design are bundled** (`sola_ui/assets/images`: hero
   install, quote home, four thumbnails) for the welcome screen, the quote
-  card and sample data. Their origin and licence are unknown, and the hero
-  shows a "SOLAR GRID EPC" vest: confirm or replace before release.
+  card and sample data. The hero is AI-generated and stays, vest and all
+  (owner, 2026-11-23); it was upscaled 2x with Real-ESRGAN the same day
+  because it looked blurry on the log-in page.
 - **Home screens are composed by the server.** `GET /orgs/{org_id}/home`
   returns parts (headline, week, energy, two tiles, a progress bar, a
   list) and the app draws them, so each role's home can change without an
@@ -860,3 +861,68 @@ Change a decision by adding a new line, not by editing an old one.
   same day. The app, API and database enforce it. Receipts and proof
   photos stay at 10 MB and logos at 1 MB; whether receipts follow is
   open (`features/F5-documents.md`).
+- **The admin website is built as W0 to W4 now (owner, 2026-11-22: "go
+  ahead and build the admin site from w0-w4"), W5 and W6 later
+  (`features/admin-website.md`).** Approved with it: the app's iOS v2
+  tokens from the start (`tokens.web.json` goes); go-live moves to when
+  W0 to W4 are done; the admin can move a stage without a task; a price
+  is editable until the advance is paid; customers without an agent come
+  after launch; the admin sees only the last 4 digits of a payout account.
+- **Cross-origin writes are refused by the server (A8).** `SameSite=Lax`
+  treats every markcliq.com subdomain as the same site. The check is the
+  browser's `Sec-Fetch-Site`, else `Origin` against `Host`, not a token:
+  nothing for the app or the website to carry.
+- **A price change sets a claimed payment back to due.** The claim was
+  for another amount; confirming it would record money nobody sent.
+- **An admin screen is always read again when opened, and an open
+  decision closes if its record changes under it.** Found in the browser
+  test: cached screens hid "Approve", and "Ask for it" could turn into
+  "Yes, received".
+- **"Do whatever remains. Fix whatever needs fixing" (owner,
+  2026-11-22).** Builds what was specced, deferred or listed as a gap,
+  each with its recommendation. Not a go-ahead to commit, push, deploy
+  or ship.
+- **Sign-up is code first now (QA-27, QA-28 fixed).** Replaces the
+  deferral of the same day. An unproven email has no account row at
+  all, and Postgres refuses a password on an unverified account.
+- **Code emails are 3 an hour per email**, as F1's spec said and the
+  code didn't: guessing was limited only per IP. The per-IP limits on
+  sign-up and code emails go from 10 to 30 an hour, as Indian mobile
+  networks put many phones behind one address.
+- **Dead ends closed (2026-11-22).** A false payment claim goes back to
+  due, an expense can be rejected for good, and customers hear when a
+  visit moves or they aren't taken up. The rejection reason is shown to
+  the customer too.
+- **Admin notifications are never pushed**: written as already handled,
+  as decided on 2026-11-15.
+- **Several files per KYC document (F5, 2026-11-22), as specced.** A
+  breaking change to registration: no old-build compatibility. Replaced
+  files stay linked, so retention can delete them.
+- **F18 data rights (2026-11-22), defaults to confirm:** a deleted
+  person's name stays on a company's records; a company's admin closes
+  their account through MarkCliq; KYC retention ships switched off, so a
+  deploy can't be what first deletes real data.
+- **`auth.code_expired` is gone (2026-11-22).** The race that still gave
+  it answers `auth.code_invalid` like every other bad code.
+- **Go-live stays 25 November; the lawyer items are parked; the admin
+  site comes first (owner, 2026-11-22).**
+- **A release backs up first and rolls back by restoring (2026-11-23).**
+  An older API won't start on a newer schema, so moving `current` back
+  alone isn't a rollback. Restores go into a new database and keep the
+  one they replace.
+- **The admin website is rebuilt to its own artboards (2026-11-23,
+  owner).** Canvas page 5, missed on 2026-11-22 when only the tokens
+  were used. Copied to `design/ios-v2/5-admin/`; CLAUDE.md now points at
+  it. Designed features without a backend are listed, not faked.
+- **Stage templates per company (F19, 2026-11-23, owner).** Each company
+  renames its 7 stages and sets each stage's checklist and photos; the
+  number stays 7, so a project's stage never changes meaning. New tasks
+  fill from the template; tasks already made keep theirs.
+- **Landing-page leads (F20, 2026-11-23, owner).** Pushed by the landing
+  page's server with a per-company key (not pulled with a Sync button).
+  The admin tracks them (new, contacted, won, lost), notes them and hands
+  them to Sales Agents, who see theirs in the app. A won lead is
+  registered as a customer the normal way. The app's quote requests stay
+  MarkCliq's ("our app leads we will manage independently").
+- **Lead notices go with the app release.** An older app can't read the
+  new notification kinds, so the server with F20 ships with the new APK.

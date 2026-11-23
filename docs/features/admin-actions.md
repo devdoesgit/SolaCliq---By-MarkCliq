@@ -21,7 +21,8 @@ sees, in the same transaction. A wrong state is 409 with the area's
 
 ## Tasks (F6)
 
-- `POST /orgs/{org_id}/tasks`: create one for a worker: the customer,
+- `POST /orgs/{org_id}/tasks` (with an `Idempotency-Key`): create one
+  for a worker: the customer,
   title, stage, due time, a note, photo slots `[{id, label, hint?}]` and
   checklist `[{id, text}]`. Numbered `TSK-0001` per company. Notifies
   the worker (`task_assigned`) and the customer (`visit_booked`).
@@ -78,7 +79,6 @@ sees, in the same transaction. A wrong state is 409 with the area's
 
 ## Not here
 
-The website's lists and screens, team and settings pages (UPI id, a
-worker's ID documents), editing a payment plan, and the KYC deletion
-jobs (with the website's first deploy). Push notifications wait for the
-Firebase project.
+The website's lists, screens and UPI id are in `admin-website.md`
+(built 2026-11-22). Not yet: a worker's ID documents and editing a
+payment plan. The KYC deletion jobs are F18 (built, switched off).

@@ -27,9 +27,9 @@ From `architecture.md`, restated where the app depends on them:
   | Code | Status | When |
   |---|---|---|
   | `auth.invalid_credentials` | 401 | Wrong email or password |
-  | `account.email_unverified` | 403 | Login before verifying |
-  | `account.password_not_set` | 403 | Login on an account an admin or agent created |
-  | `auth.code_invalid` / `auth.code_expired` | 400 | Verify or reset code |
+  | `auth.cross_origin` | 403 | A browser write with cookies from another origin (website only; a bearer passes) |
+  | `auth.signup_expired` | 400 | The setup token is used, too old, or the account got a password meanwhile |
+  | `auth.code_invalid` | 400 | Verify or reset code |
   | `auth.too_many_attempts` | 429 | Any rate limit |
   | `auth.password_too_weak` | 422 | Under 8 characters or no number |
   | `auth.session_expired` | 401 | Refresh token dead: app logs out |
@@ -78,13 +78,13 @@ milestone, top to bottom.
 | # | Endpoint | Who | Request | Response | Notes |
 |---|---|---|---|---|---|
 | 1 | `GET /health` | public | — | `Health` | 503 when the DB is down; shows on the welcome screen in dev |
-| 2 | `POST /auth/signup` | public | `SignupRequest` | 202 | Creates the account unverified and emails a 6-digit code. 202 even if the email exists (no account probing) |
-| 3 | `POST /auth/email/verify` | public | `VerifyEmailRequest` | 204 | Codes last 5 minutes, 5 tries; past either, 400 `auth.code_invalid` |
-| 4 | `POST /auth/email/resend` | public | `EmailRequest` | 202 | One new code per minute per email; within it, 202 and nothing sent |
+| 2 | `POST /auth/signup` | public | `EmailRequest` | 202 | Step 1: emails a 6-digit code; no account yet. Again to resend (one a minute, 3 an hour per email). 202 even if the email exists |
+| 3 | `POST /auth/signup/verify` | public | `VerifySignupRequest` | `SignupSetup` | Step 2. Codes last 5 minutes, 5 tries; past either, 400 `auth.code_invalid` |
+| 4 | `POST /auth/signup/complete` | public | `CompleteSignupRequest` | `LoginResponse` | Step 3: makes the account with the token and logs in. 400 `auth.signup_expired` |
 | 5 | `POST /auth/login` | public | `LoginRequest` | `LoginResponse` | Tokens for the app (`access_expires_in` in seconds; lifetimes are yours to set). For the website, sets two HttpOnly, SameSite=Lax cookies: `solacliq_session` (access) and `solacliq_refresh` (refresh, `Path=/api/v1/auth/refresh`) |
 | 6 | `POST /auth/refresh` | public | `RefreshRequest` | `TokenPair` | OAuth 2.1 rotation, app and website alike: every refresh returns a new access **and** refresh token and the old refresh token dies; reusing an old one revokes the session → `auth.session_expired`. The website sends the refresh cookie instead of a body and gets new cookies |
 | 7 | `POST /auth/logout` | auth | — | 204 | Revokes the session; the website's cookies are cleared |
-| 8 | `POST /auth/password/forgot` | public | `EmailRequest` | 202 | Emails a 6-digit code (5 minutes). Same flow sets a first password (`account.password_not_set`) |
+| 8 | `POST /auth/password/forgot` | public | `EmailRequest` | 202 | Emails a 6-digit code (5 minutes). Same flow sets a first password (log in never says which accounts have none) |
 | 9 | `POST /auth/password/reset` | public | `ResetPasswordRequest` | 204 | Revokes all sessions; also verifies the email |
 | 10 | `GET /me` | auth | — | `Me` | **Drives the whole app.** `memberships[]` with `org {id, name, status, phone}`, `role`, and for agents `pay_type` (`commission`/`salary`) |
 
@@ -150,7 +150,7 @@ milestone, top to bottom.
   `DELETE /orgs/{org_id}/members/{user_id}`. A new email gets an account
   with no password and an email saying to set it up with "Forgot
   password?"; an existing account only gets the membership. Removing is a
-  soft delete. The website's Team page is still to build.
+  soft delete. The website's Team page is built (W1, 2026-11-22).
 - Review, platform admins only: `GET /platform/orgs?status=pending`,
   `GET /platform/orgs/{org_id}`, `POST /platform/orgs/{org_id}/status`
   (`active`, `rejected` with a note, `suspended`). No website page yet:

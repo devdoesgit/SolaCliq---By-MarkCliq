@@ -52,7 +52,9 @@ Privacy Policy, and log the decision in `decisions.md`.
   and long only). It is optional, read only on that tap, not checked,
   and used for the installer's directions. The assigned installer and
   the company see it.
-- **Built.** Size limits: a KYC document 50 MB (since 2026-11-22), a
+- **Built.** Size limits: a KYC document file 50 MB, up to 5 files a
+  document (since 2026-11-22; replaced files stay linked to their
+  customer, so deleting their KYC removes those too), a
   receipt or proof photo 10 MB, a logo 1 MB.
 - **Built.** Each kind of file is for the people who use it: proof
   photos for installers, receipts for installers and sales agents, KYC
@@ -78,13 +80,21 @@ Privacy Policy, and log the decision in `decisions.md`.
 - **Built 2026-11-17: who sees KYC.** The customer, the agent who
   registered them, and their company's admin. Not other agents or
   workers, and not MarkCliq's platform admins by default.
-- **Decided 2026-11-17: how long KYC is kept.**
+- **Built 2026-11-22 (F18), off until `KYC_RETENTION=true` on the
+  server: how long KYC is kept** (decided 2026-11-17).
   - A registration that's rejected: its KYC files and details are
     deleted 30 days after the rejection.
   - An installed customer: KYC files are kept until **1 year after
     handover** (covering the subsidy claim), then deleted.
 - **Open.** Whether a customer can ask for earlier deletion, and how
   (in the app, or through the company).
+
+## Deleting an account
+
+- **Built 2026-11-22 (F18).** In the app, with the password. The login
+  and personal data are erased and memberships end. A company's records
+  of the person's work or install stay with it, with the name (default,
+  to confirm with the lawyer). A company's admin writes to MarkCliq.
 
 ## Agreeing to the terms
 
@@ -109,15 +119,38 @@ Privacy Policy, and log the decision in `decisions.md`.
   see it; the admin only reads it and can't change it. A removed
   member's days stay with the company like their other records.
 
+## Leads
+
+- **Built 2026-11-23 (F20).** People who fill a company's landing page
+  (run by MarkCliq for that company) are sent to that company's Leads
+  in SolaCliq: name, phone, and what the form asked (email, city, bill,
+  roof, a message, where they came from). The form must say the company
+  may contact them; a lead without that agreement is refused.
+- **Whose data:** the company's. It decides who calls, and can delete a
+  lead at any time (someone asking to be forgotten). Only that
+  company's admin, and the Sales Agent the admin gives it to, see it.
+  MarkCliq's landing page only passes it on.
+- **The key** the landing page sends with is the company's, stored only
+  as a hash; making a new one stops the old one.
+- **Open:** how long a company keeps a lead nobody followed up (today:
+  until it deletes it); the landing page's own privacy notice, which
+  must name the company. The app's own quote requests are separate and
+  stay MarkCliq's.
+
 ## Passwords, logins and codes
 
+- **Built 2026-11-22.** The website takes changes only from its own
+  pages: another site, or another markcliq.com subdomain, can't act as a
+  logged-in admin.
+- **Built 2026-11-22.** A company's admin sees only the last 4 digits of
+  an installer's or agent's payout account, not the number, IFSC or
+  holder.
 - **Built.** Passwords are stored only as an Argon2 hash; nobody can
   read them, including us.
-- **Open (known flaw, 2026-11-22).** Sign-up saves a password before the
-  email is verified, so someone who signs up first with another
-  person's email can get into that account once its owner verifies.
-  Fix decided (code first, then password), not built yet
-  (`features/F1-accounts-login.md`).
+- **Built 2026-11-22.** Sign-up proves the inbox first: no account, and
+  no password, name or phone, exists until the emailed code is entered.
+  An email that never finishes is deleted from the sign-up list within
+  about a day. Log in doesn't reveal who has an account or was invited.
 - **Built.** Email codes (sign-up, password reset) are 6 digits, last 5
   minutes, allow 5 tries, and are stored only as a keyed hash.
 - **Built.** Login tokens are random and stored only as hashes. A

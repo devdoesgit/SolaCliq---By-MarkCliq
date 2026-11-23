@@ -34,7 +34,7 @@ the role phases (8–10) go in the order the pilot vendor needs them.
 | 8 | Worker | #25–37 | Done 2026-11-17: tasks, photos (checked in R2), checklist, submit, problems, replies, history, stats, the worker's home (#25–33) and expenses (#34–37), each run end to end in the app. #38 moved to phase 9 |
 | 9 | Sales | #38–42 | Built 2026-11-17: customer registration with KYC (#39), my customers (#40–41), fixing a returned document (#42), my documents (#38) and the agent's home, each run end to end in the app. Admin's side built with the admin actions |
 | 10 | Customer | #43–44 | Built 2026-11-17: my install (#43), claiming a payment (#44) and the customer's home, run end to end in the app (UPI without a UPI app, bank transfer claim, an install not set up yet). Confirming payments and handover built with the admin actions |
-| 11 | Admin actions (the website's API) | review, tasks, expenses, customers, commissions, payments, handover | Built 2026-11-17 (`features/admin-actions.md`): every app flow now completes; the whole lifecycle runs in `tests/lifecycle.rs`. The website's screens come later |
+| 11 | Admin actions (the website's API) | review, tasks, expenses, customers, commissions, payments, handover | Built 2026-11-17 (`features/admin-actions.md`): every app flow now completes; the whole lifecycle runs in `tests/lifecycle.rs`. The website's screens and admin reads: built 2026-11-22 (`features/admin-website.md`) |
 
 ## Done: what each phase left behind
 
@@ -99,7 +99,7 @@ Put it on the VPS early so the pilot can test on real phones.
 ## Phase 7. Push notifications, then shared company plumbing (#21–24)
 
 **First, push (decided 2026-11-15).** Firebase Cloud Messaging. Spec:
-`features/F12-notifications.md` (drafted, waiting for review). The app
+`features/F12-notifications.md` (built). The app
 sends its FCM token with `PUT /me/device`; a `devices` table ties it to
 the session, so log out stops pushes with no extra call, and a token
 moves to whoever logged in on the phone last. A push worker picks up new

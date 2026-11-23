@@ -11,7 +11,7 @@ directly or the seed.
 
 Admin order: F3 → F4 → F5 → F6 → F7 → F8 → F11 → F12 → F13 → F14 (F2
 review page if needed).
-The proposed phases, waiting for review: `features/admin-website.md`.
+The phases that replace it (W0 to W6, approved 2026-11-22): `features/admin-website.md`.
 
 Status: `planned` → `spec` (spec written, under review) → `building` →
 `done`.
@@ -19,15 +19,15 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | # | Feature | Status |
 |---|---|---|
 | F0 | Foundation | done (CI with the first deploy) |
-| F1 | Accounts and login | done (app, website, backend; SMTP with the first deploy); **open: sign-up takeover QA-27, fix deferred 2026-11-22** |
+| F1 | Accounts and login | done (app, website, backend; SMTP with the first deploy); sign-up takeover QA-27 fixed 2026-11-22 (code first) |
 | F2 | Company registration and MarkCliq review | done (app form, backend; review through the API, no website page; GST lookup API later) |
-| F3 | Team: org admin creates worker and agent accounts | building (app and backend done; website Team page to build) |
-| F4 | Customers and install stages | building (Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |
-| F5 | Documents | spec: several files per document (50 MB limit built) (`features/F5-documents.md`), waiting for review |
-| F6 | Worker jobs and geotagged installation photos | building (worker screens on the mock; spec and endpoints await owner review) |
-| F7 | Expenses and the approvals queue | building (worker: log, sent, list, detail, replace receipt; spec to write) |
-| F8 | Agent commission | building (mobile: commission on review, earnings, payout bank; endpoints await owner review) |
-| F9 | Customer app: stage, cost breakdown, payments | building (mobile: track, payments with UPI or bank claim, documents; endpoints await owner review) |
+| F3 | Team: org admin creates worker and agent accounts | done (app, backend, website Team page 2026-11-22) |
+| F4 | Customers and install stages | building (admin website built 2026-11-22; Sales: register, customers list and detail, fix a returned document; endpoints await owner review; spec to write) |
+| F5 | Documents | built: up to 5 files per document, 50 MB each (`features/F5-documents.md`); not yet run on a phone or real R2 |
+| F6 | Worker jobs and geotagged installation photos | building (admin website built 2026-11-22; worker screens on the mock; spec and endpoints await owner review) |
+| F7 | Expenses and the approvals queue | building (admin expenses built 2026-11-22, queue screen is W5; worker: log, sent, list, detail, replace receipt; spec to write) |
+| F8 | Agent commission | building (admin website built 2026-11-22; mobile: commission on review, earnings, payout bank; endpoints await owner review) |
+| F9 | Customer app: stage, cost breakdown, payments | building (admin payments and UPI id built 2026-11-22; mobile: track, payments with UPI or bank claim, documents; endpoints await owner review) |
 | F10 | Customer linking | planned |
 | F11 | Referrals | planned |
 | F12 | Notifications | built 2026-11-17: in-app lists for every role and Personal, settings, and push (`features/F12-notifications.md`), run end to end on a phone through the real FCM |
@@ -35,7 +35,10 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F14 | Platform admin: suspend, support access | planned |
 | F15 | Company logo | building 2026-11-18: backend and app done, checked end to end with RY Enterprises' logo in the R2 dev bucket; website upload page to build (`features/F15-company-logo.md`) |
 | F16 | Agreeing to the terms | built 2026-11-20: backend, app, website pages; checked on the emulator (`features/F16-terms-consent.md`) |
-| F17 | Attendance | building: backend and app done 2026-11-22 (offline tap checked on the emulator against the real API); website pages to build (`features/F17-attendance.md`) |
+| F17 | Attendance | built: backend and app done 2026-11-22 (offline tap checked on the emulator against the real API); website pages built 2026-11-22 (W6) (`features/F17-attendance.md`) |
+| F18 | Account deletion, KYC retention, notices | built 2026-11-22; retention off until switched on; defaults to confirm (`features/F18-data-rights.md`) |
+| F19 | Stage templates per company | built 2026-11-23: backend, website editor, New task fills from it, app shows the company's names (`features/F19-stage-templates.md`) |
+| F20 | Landing-page leads | built 2026-11-23: lead key and intake, website Leads, agents' leads in the app (`features/F20-leads.md`) |
 
 ## Which part each feature touches
 
@@ -59,6 +62,8 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F15 | Logo upload kind, set and remove, link in `/me` | Logo in the home header and workspace list | Logo upload in settings |
 | F16 | Agreements table, `terms_version`, `/me/terms` | Tick on sign-up and registration, "Before you start" screen | Public terms and privacy pages |
 | F17 | Attendance days, start and end of day | "Start day" and "End day" on Home | Today and month views, CSV |
+| F19 | `org_stages`, `/stages`, names everywhere | The company's stage names | Stage templates in Settings; New task fills from them |
+| F20 | `leads`, lead key, `POST /leads` | "Leads for you" on Customers, lead page | Leads, lead page, key in Settings |
 
 ## Scope per feature
 

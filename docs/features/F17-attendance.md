@@ -180,3 +180,7 @@ company's admin.
 - Secure storage takes a second or two to write on Android, so the card
   changes before the save, not after.
 
+## Notes (website, 2026-11-22)
+
+- Built in W6 (`admin/src/features/attendance/`): Today with a date
+  picker, Month as a grid, CSV.
