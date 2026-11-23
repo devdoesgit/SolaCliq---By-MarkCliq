@@ -1210,3 +1210,46 @@ describe('leads (F20)', () => {
     expect(screen.getByRole('link', { name: /^Leads 1$/ })).toBeInTheDocument();
   });
 });
+
+describe('editing a member (F21)', () => {
+  it('saves a role change only after confirming what changes', async () => {
+    open(`/c/${ORG}/team/w1`);
+    const save = await screen.findByRole('button', { name: 'Save changes' });
+    expect(save).toBeDisabled();
+    await userEvent.click(screen.getByLabelText('Sales Agent'));
+    // A Sales Agent needs a pay type first.
+    expect(save).toBeDisabled();
+    await userEvent.click(screen.getByLabelText('Salaried'));
+    await userEvent.click(save);
+    expect(
+      await screen.findByRole('heading', { name: 'Make Ravi a Sales Agent?' }),
+    ).toBeInTheDocument();
+    await confirm('Save changes');
+    expect(sent[0]).toMatchObject({
+      method: 'PATCH',
+      path: '/orgs/{org_id}/members/{user_id}',
+      body: { role: 'agent', pay_type: 'salary' },
+    });
+  });
+
+  it("changes an agent's pay from now on", async () => {
+    reads['/orgs/{org_id}/members'] = () => answer(200, page([agent]));
+    open(`/c/${ORG}/team/a1`);
+    await userEvent.click(await screen.findByLabelText('Salaried'));
+    await click('Save changes');
+    await confirm('Save changes');
+    expect(sent[0].body).toEqual({ pay_type: 'salary' });
+  });
+
+  it('sends an invite again while they are invited', async () => {
+    reads['/orgs/{org_id}/members'] = () =>
+      answer(200, page([{ ...installer, status: 'invited' }]));
+    open(`/c/${ORG}/team/w1`);
+    await click('Resend invite');
+    await confirm('Send');
+    expect(sent[0]).toMatchObject({
+      method: 'POST',
+      path: '/orgs/{org_id}/members/{user_id}/invite',
+    });
+  });
+});
