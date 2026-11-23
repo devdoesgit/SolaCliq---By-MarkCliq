@@ -2,9 +2,12 @@
 
 React + Vite + TypeScript website for **org admins** (and later the
 MarkCliq platform admin). Static files at `solacliq.markcliq.com`. Built
-last, by Claude. Built so far: log in, password reset, account page, and the public
-legal pages (`/terms`, `/privacy`, `/company-terms`, made from
-`../legal/*.md` at build time; F16).
+last, by Claude. Built: log in and password reset, team, customers and
+KYC, tasks and proof, expenses, commissions, payments, UPI id (W0 to W4,
+`../docs/features/admin-website.md`), and the public legal pages
+(`/terms`, `/privacy`, `/company-terms`, made from `../legal/*.md` at
+build time; F16). Also built: the overview and notifications (W5), logo and
+attendance (W6), stage templates (F19) and leads (F20).
 Workers, agents and customers use the mobile app.
 
 Stack and API conventions: `../docs/architecture.md`.
@@ -15,9 +18,20 @@ Stack and API conventions: `../docs/architecture.md`.
   `../api/openapi.yaml` (`openapi-typescript` + `openapi-fetch`).
 - Cookie-based sessions.
 - Money is integer paise; format only for display.
-- Brand: matches markcliq.com (see `../CLAUDE.md`). Use the components in
-  `src/components` and the CSS variables in `src/styles/tokens.css`
-  (generated); never hard-code a colour, size or font.
+- Brand: the admin design, canvas page "v2 · 5 Admin web", copied to
+  `../design/ios-v2/5-admin/`. **Open the screen's artboard before you
+  change it, and compare a 1280 x 800 screenshot with it after.** The
+  tokens alone are not the design. Use the components in `src/components`
+  and the CSS variables in `src/styles/tokens.css` (generated); never
+  hard-code a colour or font. Layout widths from the artboards live at
+  the top of `src/styles/screens.css`.
+- A screen is read again each time it opens: people act in the app while
+  the admin works. Don't add a `staleTime`.
+- Every decision goes through `ActionDialog`. A `DialogButton` whose
+  place another action can take gets a key of the state it acts on, so
+  an open dialog can't become a different one.
+- Times show and are typed in India time (`lib/format.ts`), never the
+  browser's. A company's screens live under `/c/:orgId`.
 - Desktop first; must still work on a phone browser.
 
 ## Screens by role
