@@ -2,7 +2,12 @@
 //! calls it on start-up and builds every workspace from `memberships`.
 //! `POST /me/terms`: the person agrees to the current terms (F16).
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{
+    Json,
+    extract::State,
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
@@ -24,6 +29,7 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(get_me))
         .routes(routes!(accept_terms))
+        .routes(routes!(delete_account))
 }
 
 /// The contract's `Me`. `Serialize` turns it into JSON; field names stay
@@ -244,4 +250,56 @@ async fn memberships(
             })
         })
         .collect()
+}
+
+// The contract's `AccountDelete`.
+#[derive(Deserialize, ToSchema)]
+pub struct AccountDelete {
+    pub password: String,
+}
+
+/*
+    The person deletes their account (F18)
+    --------------------------------------------------------------------
+    - the password again: a phone left unlocked mustn't be enough
+    - what goes and what stays: `account.rs`
+*/
+#[utoipa::path(
+    post,
+    path = "/me/delete",
+    operation_id = "deleteAccount",
+    tag = "auth",
+    request_body = AccountDelete,
+    responses(
+        (status = 204, description = "Deleted, and logged out everywhere."),
+        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 409, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn delete_account(
+    State(state): State<AppState>,
+    user: AuthUser,
+    ApiJson(req): ApiJson<AccountDelete>,
+) -> ApiResult<Response> {
+    crate::account::delete(&state, user.user_id, req.password).await?;
+    let mut res: Response = StatusCode::NO_CONTENT.into_response();
+    let headers = res.headers_mut();
+    use crate::{
+        extract::{REFRESH_COOKIE, SESSION_COOKIE},
+        routes::auth::{clear_cookie, refresh_path},
+    };
+    headers.append(header::SET_COOKIE, clear_cookie(SESSION_COOKIE, "/"));
+    headers.append(
+        header::SET_COOKIE,
+        clear_cookie(REFRESH_COOKIE, &refresh_path()),
+    );
+    Ok(res)
 }

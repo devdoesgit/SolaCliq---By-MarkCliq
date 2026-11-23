@@ -235,7 +235,8 @@ async fn serve(config: Config) -> Fallible {
     let db = connect_app(&config).await?;
     let (mailer, mail_task) = mailer(&config)?;
     if let Some(storage) = config.storage.clone() {
-        tokio::spawn(sweep_uploads(db.clone(), storage));
+        tokio::spawn(sweep_uploads(db.clone(), storage.clone()));
+        tokio::spawn(retire_kyc(db.clone(), storage, config.kyc_retention));
     }
     tokio::spawn(backend::push::run(db.clone(), pusher(&config)?));
 
@@ -277,6 +278,23 @@ async fn sweep_uploads(db: sqlx::PgPool, storage: backend::storage::Storage) {
             Ok(0) => {}
             Ok(n) => tracing::info!(deleted = n, "abandoned uploads swept"),
             Err(e) => tracing::error!(error = ?e, "sweeping abandoned uploads"),
+        }
+    }
+}
+
+/*
+    Every hour, KYC past its retention (`retention::run`): deleted with
+    `KYC_RETENTION=true`, otherwise only counted in the log
+*/
+async fn retire_kyc(db: sqlx::PgPool, storage: backend::storage::Storage, delete: bool) {
+    let mut every = tokio::time::interval(std::time::Duration::from_secs(60 * 60));
+    loop {
+        every.tick().await;
+        match backend::retention::run(&db, &storage, delete).await {
+            Ok(r) if r.due == 0 => {}
+            Ok(r) if delete => tracing::info!(due = r.due, deleted = r.deleted, "KYC retention"),
+            Ok(r) => tracing::warn!(due = r.due, "KYC past retention; KYC_RETENTION is off"),
+            Err(e) => tracing::error!(error = ?e, "KYC retention"),
         }
     }
 }

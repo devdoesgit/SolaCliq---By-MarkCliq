@@ -27,6 +27,8 @@ pub struct Config {
     pub log_json: bool,
     /// Mark the website's cookie `Secure` (HTTPS only). Off for local HTTP.
     pub cookie_secure: bool,
+    // Delete KYC past its retention (F18). Off: only count what is due.
+    pub kyc_retention: bool,
     /// How long access and refresh tokens last.
     pub session_lifetimes: Lifetimes,
     // Key for the email codes' HMAC. Required, at least 32 characters.
@@ -117,6 +119,7 @@ impl Config {
             db_max_connections: parsed("DB_MAX_CONNECTIONS", "10")?,
             log_json: parsed("LOG_JSON", "false")?,
             cookie_secure: parsed("COOKIE_SECURE", "true")?,
+            kyc_retention: parsed("KYC_RETENTION", "false")?,
             session_lifetimes: lifetimes_from_env()?,
             code_secret: code_secret_from_env()?,
             review_email: review_email_from_env()?,
