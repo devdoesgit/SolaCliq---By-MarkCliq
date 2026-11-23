@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
+import 'package:solacliq/account/widgets/delete_account.dart';
 import 'package:solacliq/account/widgets/log_out_bar.dart';
 import 'package:solacliq/app/routes.dart';
 import 'package:solacliq/app/widgets/app_version.dart';
@@ -345,6 +346,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ],
           ),
           const LogOutButton(variant: SolaButtonVariant.warn),
+          const DeleteAccountLink(),
           const AppVersionFooter(),
         ],
       ),

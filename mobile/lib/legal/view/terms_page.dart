@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sola_ui/sola_ui.dart';
+import 'package:solacliq/account/widgets/delete_account.dart';
 import 'package:solacliq/account/widgets/log_out_bar.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/cubit/submit_cubit.dart';
@@ -93,6 +94,8 @@ class _TermsViewState extends State<TermsView> {
                 : () => unawaited(_continue()),
           ),
           const LogOutButton(),
+          // Not agreeing is withdrawing consent: there must be a way out.
+          const DeleteAccountLink(),
         ],
       ),
     );
