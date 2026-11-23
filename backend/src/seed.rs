@@ -1138,13 +1138,24 @@ async fn attendance(tx: &mut PgConnection) -> Result<(), SeedError> {
     - three new, one with Meena and already called; all illustrative
     - no lead key: the admin makes one in Settings to try sending
 */
+// (name, phone, city, bill, roof, source, hours ago, with Meena)
+type SeedLead = (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    i32,
+    bool,
+);
+
 async fn leads(tx: &mut PgConnection) -> Result<(), SeedError> {
     sqlx::query("DELETE FROM leads WHERE org_id = $1 AND external_id LIKE 'seed-%'")
         .bind(EXAMPLE_SOLAR)
         .execute(&mut *tx)
         .await?;
-    // (name, phone, city, bill, roof, source, hours ago, with Meena)
-    let leads: [(&str, &str, &str, &str, &str, &str, i32, bool); 4] = [
+    let leads: [SeedLead; 4] = [
         (
             "Harpreet Example (illustrative)",
             "9814000901",
