@@ -30,6 +30,8 @@ class ReviewItem {
     required this.status,
 
     required this.title,
+
+    this.amount,
   });
 
   @JsonKey(name: r'at', required: true, includeIfNull: false)
@@ -50,12 +52,16 @@ class ReviewItem {
   @JsonKey(name: r'title', required: true, includeIfNull: false)
   final String title;
 
+  /// Amount in paise (₹1 = 100). Never a float.
+  @JsonKey(name: r'amount', required: false, includeIfNull: false)
+  final int? amount;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is ReviewItem &&
             runtimeType == other.runtimeType &&
             equals(
-              [at, id, person, reference, status, title],
+              [at, id, person, reference, status, title, amount],
               [
                 other.at,
                 other.id,
@@ -63,6 +69,7 @@ class ReviewItem {
                 other.reference,
                 other.status,
                 other.title,
+                other.amount,
               ],
             );
   }
@@ -70,7 +77,7 @@ class ReviewItem {
   @override
   int get hashCode =>
       runtimeType.hashCode ^
-      mapPropsToHashCode([at, id, person, reference, status, title]);
+      mapPropsToHashCode([at, id, person, reference, status, title, amount]);
 
   factory ReviewItem.fromJson(Map<String, dynamic> json) =>
       _$ReviewItemFromJson(json);

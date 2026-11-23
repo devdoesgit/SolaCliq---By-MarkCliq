@@ -21,6 +21,10 @@ abstract class _$MemberCWProxy {
 
   Member addedAt(DateTime addedAt);
 
+  Member customers(int? customers);
+
+  Member openTasks(int? openTasks);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Member(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -35,6 +39,8 @@ abstract class _$MemberCWProxy {
     PayType? payType,
     MemberStatus status,
     DateTime addedAt,
+    int? customers,
+    int? openTasks,
   });
 }
 
@@ -66,6 +72,12 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
   Member addedAt(DateTime addedAt) => this(addedAt: addedAt);
 
   @override
+  Member customers(int? customers) => this(customers: customers);
+
+  @override
+  Member openTasks(int? openTasks) => this(openTasks: openTasks);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Member(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -80,6 +92,8 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
     Object? payType = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? addedAt = const $CopyWithPlaceholder(),
+    Object? customers = const $CopyWithPlaceholder(),
+    Object? openTasks = const $CopyWithPlaceholder(),
   }) {
     return Member(
       userId: userId == const $CopyWithPlaceholder()
@@ -110,6 +124,14 @@ class _$MemberCWProxyImpl implements _$MemberCWProxy {
           ? _value.addedAt
           // ignore: cast_nullable_to_non_nullable
           : addedAt as DateTime,
+      customers: customers == const $CopyWithPlaceholder()
+          ? _value.customers
+          // ignore: cast_nullable_to_non_nullable
+          : customers as int?,
+      openTasks: openTasks == const $CopyWithPlaceholder()
+          ? _value.openTasks
+          // ignore: cast_nullable_to_non_nullable
+          : openTasks as int?,
     );
   }
 }
@@ -153,6 +175,8 @@ Member _$MemberFromJson(Map<String, dynamic> json) => $checkedCreate(
         (v) => $enumDecode(_$MemberStatusEnumMap, v),
       ),
       addedAt: $checkedConvert('added_at', (v) => DateTime.parse(v as String)),
+      customers: $checkedConvert('customers', (v) => (v as num?)?.toInt()),
+      openTasks: $checkedConvert('open_tasks', (v) => (v as num?)?.toInt()),
     );
     return val;
   },
@@ -160,6 +184,7 @@ Member _$MemberFromJson(Map<String, dynamic> json) => $checkedCreate(
     'userId': 'user_id',
     'payType': 'pay_type',
     'addedAt': 'added_at',
+    'openTasks': 'open_tasks',
   },
 );
 
@@ -171,6 +196,8 @@ Map<String, dynamic> _$MemberToJson(Member instance) => <String, dynamic>{
   'pay_type': ?_$PayTypeEnumMap[instance.payType],
   'status': _$MemberStatusEnumMap[instance.status]!,
   'added_at': instance.addedAt.toIso8601String(),
+  'customers': ?instance.customers,
+  'open_tasks': ?instance.openTasks,
 };
 
 const _$RoleEnumMap = {

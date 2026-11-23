@@ -4,6 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:api_client/src/model/kyc_kind.dart';
+import 'package:api_client/src/model/document_file.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
@@ -22,26 +23,24 @@ class CustomerRegistrationCreateDocumentsInner {
   CustomerRegistrationCreateDocumentsInner({
     required this.kind,
 
-    required this.uploadId,
+    required this.files,
   });
 
   @JsonKey(name: r'kind', required: true, includeIfNull: false)
   final KycKind kind;
 
-  /// UUIDv7.
-  @JsonKey(name: r'upload_id', required: true, includeIfNull: false)
-  final String uploadId;
+  @JsonKey(name: r'files', required: true, includeIfNull: false)
+  final List<DocumentFile> files;
 
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is CustomerRegistrationCreateDocumentsInner &&
             runtimeType == other.runtimeType &&
-            equals([kind, uploadId], [other.kind, other.uploadId]);
+            equals([kind, files], [other.kind, other.files]);
   }
 
   @override
-  int get hashCode =>
-      runtimeType.hashCode ^ mapPropsToHashCode([kind, uploadId]);
+  int get hashCode => runtimeType.hashCode ^ mapPropsToHashCode([kind, files]);
 
   factory CustomerRegistrationCreateDocumentsInner.fromJson(
     Map<String, dynamic> json,

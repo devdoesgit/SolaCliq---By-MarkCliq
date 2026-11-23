@@ -25,6 +25,8 @@ abstract class _$NotificationCWProxy {
 
   Notification customerId(String? customerId);
 
+  Notification leadId(String? leadId);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Notification(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -41,6 +43,7 @@ abstract class _$NotificationCWProxy {
     String? taskId,
     String? expenseId,
     String? customerId,
+    String? leadId,
   });
 }
 
@@ -78,6 +81,9 @@ class _$NotificationCWProxyImpl implements _$NotificationCWProxy {
   Notification customerId(String? customerId) => this(customerId: customerId);
 
   @override
+  Notification leadId(String? leadId) => this(leadId: leadId);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Notification(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -94,6 +100,7 @@ class _$NotificationCWProxyImpl implements _$NotificationCWProxy {
     Object? taskId = const $CopyWithPlaceholder(),
     Object? expenseId = const $CopyWithPlaceholder(),
     Object? customerId = const $CopyWithPlaceholder(),
+    Object? leadId = const $CopyWithPlaceholder(),
   }) {
     return Notification(
       id: id == const $CopyWithPlaceholder()
@@ -132,6 +139,10 @@ class _$NotificationCWProxyImpl implements _$NotificationCWProxy {
           ? _value.customerId
           // ignore: cast_nullable_to_non_nullable
           : customerId as String?,
+      leadId: leadId == const $CopyWithPlaceholder()
+          ? _value.leadId
+          // ignore: cast_nullable_to_non_nullable
+          : leadId as String?,
     );
   }
 }
@@ -168,6 +179,7 @@ Notification _$NotificationFromJson(Map<String, dynamic> json) =>
           taskId: $checkedConvert('task_id', (v) => v as String?),
           expenseId: $checkedConvert('expense_id', (v) => v as String?),
           customerId: $checkedConvert('customer_id', (v) => v as String?),
+          leadId: $checkedConvert('lead_id', (v) => v as String?),
         );
         return val;
       },
@@ -175,6 +187,7 @@ Notification _$NotificationFromJson(Map<String, dynamic> json) =>
         'taskId': 'task_id',
         'expenseId': 'expense_id',
         'customerId': 'customer_id',
+        'leadId': 'lead_id',
       },
     );
 
@@ -189,6 +202,7 @@ Map<String, dynamic> _$NotificationToJson(Notification instance) =>
       'task_id': ?instance.taskId,
       'expense_id': ?instance.expenseId,
       'customer_id': ?instance.customerId,
+      'lead_id': ?instance.leadId,
     };
 
 const _$NotificationKindEnumEnumMap = {
@@ -212,4 +226,12 @@ const _$NotificationKindEnumEnumMap = {
   NotificationKindEnum.documentsVerified: 'documents_verified',
   NotificationKindEnum.quoteShared: 'quote_shared',
   NotificationKindEnum.guide: 'guide',
+  NotificationKindEnum.taskSubmitted: 'task_submitted',
+  NotificationKindEnum.taskProblem: 'task_problem',
+  NotificationKindEnum.taskMessage: 'task_message',
+  NotificationKindEnum.expenseSubmitted: 'expense_submitted',
+  NotificationKindEnum.paymentClaimed: 'payment_claimed',
+  NotificationKindEnum.registrationClosed: 'registration_closed',
+  NotificationKindEnum.leadNew: 'lead_new',
+  NotificationKindEnum.leadAssigned: 'lead_assigned',
 };

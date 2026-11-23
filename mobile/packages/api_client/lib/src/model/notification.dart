@@ -36,12 +36,15 @@ class Notification {
     this.expenseId,
 
     this.customerId,
+
+    this.leadId,
   });
 
   /// UUIDv7.
   @JsonKey(name: r'id', required: true, includeIfNull: false)
   final String id;
 
+  /// `task_submitted`, `task_problem`, `task_message`, `expense_submitted`, `payment_claimed`, `lead_new` and an admin's `kyc_submitted` are for the website: never pushed. `lead_assigned` goes to the Sales Agent given a lead (F20).
   @JsonKey(name: r'kind', required: true, includeIfNull: false)
   final NotificationKindEnum kind;
 
@@ -70,12 +73,27 @@ class Notification {
   @JsonKey(name: r'customer_id', required: false, includeIfNull: false)
   final String? customerId;
 
+  /// A lead (F20).
+  @JsonKey(name: r'lead_id', required: false, includeIfNull: false)
+  final String? leadId;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is Notification &&
             runtimeType == other.runtimeType &&
             equals(
-              [id, kind, title, body, at, read, taskId, expenseId, customerId],
+              [
+                id,
+                kind,
+                title,
+                body,
+                at,
+                read,
+                taskId,
+                expenseId,
+                customerId,
+                leadId,
+              ],
               [
                 other.id,
                 other.kind,
@@ -86,6 +104,7 @@ class Notification {
                 other.taskId,
                 other.expenseId,
                 other.customerId,
+                other.leadId,
               ],
             );
   }
@@ -103,6 +122,7 @@ class Notification {
         taskId,
         expenseId,
         customerId,
+        leadId,
       ]);
 
   factory Notification.fromJson(Map<String, dynamic> json) =>
@@ -116,6 +136,7 @@ class Notification {
   }
 }
 
+/// `task_submitted`, `task_problem`, `task_message`, `expense_submitted`, `payment_claimed`, `lead_new` and an admin's `kyc_submitted` are for the website: never pushed. `lead_assigned` goes to the Sales Agent given a lead (F20).
 enum NotificationKindEnum {
   @JsonValue(r'task_assigned')
   taskAssigned(r'task_assigned'),
@@ -156,7 +177,23 @@ enum NotificationKindEnum {
   @JsonValue(r'quote_shared')
   quoteShared(r'quote_shared'),
   @JsonValue(r'guide')
-  guide(r'guide');
+  guide(r'guide'),
+  @JsonValue(r'task_submitted')
+  taskSubmitted(r'task_submitted'),
+  @JsonValue(r'task_problem')
+  taskProblem(r'task_problem'),
+  @JsonValue(r'task_message')
+  taskMessage(r'task_message'),
+  @JsonValue(r'expense_submitted')
+  expenseSubmitted(r'expense_submitted'),
+  @JsonValue(r'payment_claimed')
+  paymentClaimed(r'payment_claimed'),
+  @JsonValue(r'registration_closed')
+  registrationClosed(r'registration_closed'),
+  @JsonValue(r'lead_new')
+  leadNew(r'lead_new'),
+  @JsonValue(r'lead_assigned')
+  leadAssigned(r'lead_assigned');
 
   const NotificationKindEnum(this.value);
 

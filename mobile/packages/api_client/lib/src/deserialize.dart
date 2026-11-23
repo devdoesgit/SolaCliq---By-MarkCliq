@@ -1,5 +1,29 @@
 import 'package:api_client/src/model/accept_terms_request.dart';
+import 'package:api_client/src/model/account_delete.dart';
 import 'package:api_client/src/model/add_member_request.dart';
+import 'package:api_client/src/model/admin_commission.dart';
+import 'package:api_client/src/model/admin_commission_page.dart';
+import 'package:api_client/src/model/admin_customer.dart';
+import 'package:api_client/src/model/admin_customer_page.dart';
+import 'package:api_client/src/model/admin_customer_summary.dart';
+import 'package:api_client/src/model/admin_document.dart';
+import 'package:api_client/src/model/admin_document_file.dart';
+import 'package:api_client/src/model/admin_expense.dart';
+import 'package:api_client/src/model/admin_expense_page.dart';
+import 'package:api_client/src/model/admin_expense_summary.dart';
+import 'package:api_client/src/model/admin_file.dart';
+import 'package:api_client/src/model/admin_overview.dart';
+import 'package:api_client/src/model/admin_payment.dart';
+import 'package:api_client/src/model/admin_payment_page.dart';
+import 'package:api_client/src/model/admin_price.dart';
+import 'package:api_client/src/model/admin_settings.dart';
+import 'package:api_client/src/model/admin_settings_set.dart';
+import 'package:api_client/src/model/admin_stage.dart';
+import 'package:api_client/src/model/admin_task.dart';
+import 'package:api_client/src/model/admin_task_event.dart';
+import 'package:api_client/src/model/admin_task_page.dart';
+import 'package:api_client/src/model/admin_task_problem.dart';
+import 'package:api_client/src/model/admin_task_summary.dart';
 import 'package:api_client/src/model/attendance_day.dart';
 import 'package:api_client/src/model/attendance_day_view.dart';
 import 'package:api_client/src/model/attendance_day_view_people_inner.dart';
@@ -13,6 +37,8 @@ import 'package:api_client/src/model/checklist_item.dart';
 import 'package:api_client/src/model/claim_install_payment_request.dart';
 import 'package:api_client/src/model/commission.dart';
 import 'package:api_client/src/model/commission_decision.dart';
+import 'package:api_client/src/model/commission_totals.dart';
+import 'package:api_client/src/model/complete_signup_request.dart';
 import 'package:api_client/src/model/customer_detail.dart';
 import 'package:api_client/src/model/customer_detail_advance.dart';
 import 'package:api_client/src/model/customer_detail_documents.dart';
@@ -25,11 +51,14 @@ import 'package:api_client/src/model/customer_registration_create_documents_inne
 import 'package:api_client/src/model/customer_summary.dart';
 import 'package:api_client/src/model/customer_verify.dart';
 import 'package:api_client/src/model/device_registration.dart';
+import 'package:api_client/src/model/document_file.dart';
+import 'package:api_client/src/model/document_replace.dart';
 import 'package:api_client/src/model/done.dart';
 import 'package:api_client/src/model/email_request.dart';
 import 'package:api_client/src/model/expense.dart';
 import 'package:api_client/src/model/expense_create.dart';
 import 'package:api_client/src/model/expense_page.dart';
+import 'package:api_client/src/model/finished_week.dart';
 import 'package:api_client/src/model/health.dart';
 import 'package:api_client/src/model/home_attendance.dart';
 import 'package:api_client/src/model/home_day.dart';
@@ -48,6 +77,14 @@ import 'package:api_client/src/model/install_next_visit.dart';
 import 'package:api_client/src/model/install_next_visit_person.dart';
 import 'package:api_client/src/model/install_payment.dart';
 import 'package:api_client/src/model/install_stage.dart';
+import 'package:api_client/src/model/lead.dart';
+import 'package:api_client/src/model/lead_create.dart';
+import 'package:api_client/src/model/lead_key_info.dart';
+import 'package:api_client/src/model/lead_key_new.dart';
+import 'package:api_client/src/model/lead_page.dart';
+import 'package:api_client/src/model/lead_receipt.dart';
+import 'package:api_client/src/model/lead_summary.dart';
+import 'package:api_client/src/model/lead_update.dart';
 import 'package:api_client/src/model/login_request.dart';
 import 'package:api_client/src/model/login_response.dart';
 import 'package:api_client/src/model/logo_set.dart';
@@ -71,6 +108,7 @@ import 'package:api_client/src/model/personal_details.dart';
 import 'package:api_client/src/model/platform_org.dart';
 import 'package:api_client/src/model/platform_org_owner.dart';
 import 'package:api_client/src/model/platform_org_page.dart';
+import 'package:api_client/src/model/price_set.dart';
 import 'package:api_client/src/model/problem.dart';
 import 'package:api_client/src/model/problem_errors_inner.dart';
 import 'package:api_client/src/model/proof_photo.dart';
@@ -80,7 +118,6 @@ import 'package:api_client/src/model/quote_estimate.dart';
 import 'package:api_client/src/model/quote_request.dart';
 import 'package:api_client/src/model/quote_request_create.dart';
 import 'package:api_client/src/model/refresh_request.dart';
-import 'package:api_client/src/model/replace_customer_document_request.dart';
 import 'package:api_client/src/model/replace_expense_receipt_request.dart';
 import 'package:api_client/src/model/reset_password_request.dart';
 import 'package:api_client/src/model/review_item.dart';
@@ -88,8 +125,12 @@ import 'package:api_client/src/model/review_queue.dart';
 import 'package:api_client/src/model/send_task_message_request.dart';
 import 'package:api_client/src/model/set_task_checklist_item_request.dart';
 import 'package:api_client/src/model/settings.dart';
-import 'package:api_client/src/model/signup_request.dart';
+import 'package:api_client/src/model/signup_setup.dart';
 import 'package:api_client/src/model/slot_create.dart';
+import 'package:api_client/src/model/stage.dart';
+import 'package:api_client/src/model/stage_list.dart';
+import 'package:api_client/src/model/stage_set.dart';
+import 'package:api_client/src/model/stage_template_set.dart';
 import 'package:api_client/src/model/submit_task_request.dart';
 import 'package:api_client/src/model/task.dart';
 import 'package:api_client/src/model/task_approved.dart';
@@ -110,7 +151,7 @@ import 'package:api_client/src/model/terms_status.dart';
 import 'package:api_client/src/model/token_pair.dart';
 import 'package:api_client/src/model/upload.dart';
 import 'package:api_client/src/model/upload_create.dart';
-import 'package:api_client/src/model/verify_email_request.dart';
+import 'package:api_client/src/model/verify_signup_request.dart';
 import 'package:api_client/src/model/worker_stats.dart';
 
 final _regList = RegExp(r'^List<(.*)>$');
@@ -138,9 +179,77 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'AcceptTermsRequest':
       return AcceptTermsRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'AccountDelete':
+      return AccountDelete.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'AddMemberRequest':
       return AddMemberRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'AdminCommission':
+      return AdminCommission.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminCommissionPage':
+      return AdminCommissionPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminCustomer':
+      return AdminCustomer.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminCustomerPage':
+      return AdminCustomerPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminCustomerSummary':
+      return AdminCustomerSummary.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminDocument':
+      return AdminDocument.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminDocumentFile':
+      return AdminDocumentFile.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminExpense':
+      return AdminExpense.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminExpensePage':
+      return AdminExpensePage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminExpenseSummary':
+      return AdminExpenseSummary.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminFile':
+      return AdminFile.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminOverview':
+      return AdminOverview.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminPayment':
+      return AdminPayment.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminPaymentPage':
+      return AdminPaymentPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminPaymentStatus':
+    case 'AdminPrice':
+      return AdminPrice.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminSettings':
+      return AdminSettings.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminSettingsSet':
+      return AdminSettingsSet.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminStage':
+      return AdminStage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminTask':
+      return AdminTask.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminTaskEvent':
+      return AdminTaskEvent.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminTaskPage':
+      return AdminTaskPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminTaskProblem':
+      return AdminTaskProblem.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminTaskSummary':
+      return AdminTaskSummary.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminTaskView':
     case 'AttendanceDay':
       return AttendanceDay.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -185,6 +294,12 @@ ReturnType deserialize<ReturnType, BaseType>(
       return CommissionDecision.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'CommissionStatus':
+    case 'CommissionTotals':
+      return CommissionTotals.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'CompleteSignupRequest':
+      return CompleteSignupRequest.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ConnectionType':
     case 'CustomerDetail':
       return CustomerDetail.fromJson(value as Map<String, dynamic>)
@@ -222,6 +337,12 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'DeviceRegistration':
       return DeviceRegistration.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'DocumentFile':
+      return DocumentFile.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'DocumentReplace':
+      return DocumentReplace.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'DocumentSide':
     case 'DocumentStatus':
     case 'Done':
       return Done.fromJson(value as Map<String, dynamic>) as ReturnType;
@@ -236,6 +357,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ExpensePage':
       return ExpensePage.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'ExpenseStatus':
+    case 'FinishedWeek':
+      return FinishedWeek.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Health':
       return Health.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'HomeAttendance':
@@ -281,6 +404,23 @@ ReturnType deserialize<ReturnType, BaseType>(
       return InstallStage.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'KycKind':
     case 'KycStatus':
+    case 'Lead':
+      return Lead.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadCreate':
+      return LeadCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadKeyInfo':
+      return LeadKeyInfo.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadKeyNew':
+      return LeadKeyNew.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadPage':
+      return LeadPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadReceipt':
+      return LeadReceipt.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadStatus':
+    case 'LeadSummary':
+      return LeadSummary.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LeadUpdate':
+      return LeadUpdate.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginRequest':
       return LoginRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginResponse':
@@ -340,6 +480,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'PlatformOrgPage':
       return PlatformOrgPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'PriceSet':
+      return PriceSet.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Problem':
       return Problem.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'ProblemErrorsInner':
@@ -365,10 +507,6 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'RefreshRequest':
       return RefreshRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
-    case 'ReplaceCustomerDocumentRequest':
-      return ReplaceCustomerDocumentRequest.fromJson(
-        value as Map<String, dynamic>,
-      ) as ReturnType;
     case 'ReplaceExpenseReceiptRequest':
       return ReplaceExpenseReceiptRequest.fromJson(
         value as Map<String, dynamic>,
@@ -390,11 +528,19 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'Settings':
       return Settings.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'SignupRequest':
-      return SignupRequest.fromJson(value as Map<String, dynamic>)
-          as ReturnType;
+    case 'SignupSetup':
+      return SignupSetup.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'SlotCreate':
       return SlotCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'Stage':
+      return Stage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StageList':
+      return StageList.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StageSet':
+      return StageSet.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StageTemplateSet':
+      return StageTemplateSet.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'SubmitTaskRequest':
       return SubmitTaskRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -439,8 +585,8 @@ ReturnType deserialize<ReturnType, BaseType>(
       return Upload.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'UploadCreate':
       return UploadCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'VerifyEmailRequest':
-      return VerifyEmailRequest.fromJson(value as Map<String, dynamic>)
+    case 'VerifySignupRequest':
+      return VerifySignupRequest.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'WorkerStats':
       return WorkerStats.fromJson(value as Map<String, dynamic>) as ReturnType;

@@ -35,6 +35,10 @@ class Member {
     required this.status,
 
     required this.addedAt,
+
+    this.customers,
+
+    this.openTasks,
   });
 
   /// UUIDv7.
@@ -60,12 +64,30 @@ class Member {
   @JsonKey(name: r'added_at', required: true, includeIfNull: false)
   final DateTime addedAt;
 
+  /// Customers they registered that weren't turned down.
+  @JsonKey(name: r'customers', required: false, includeIfNull: false)
+  final int? customers;
+
+  /// Their tasks not yet approved or cancelled, which stay with them if they're removed.
+  @JsonKey(name: r'open_tasks', required: false, includeIfNull: false)
+  final int? openTasks;
+
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is Member &&
             runtimeType == other.runtimeType &&
             equals(
-              [userId, name, email, role, payType, status, addedAt],
+              [
+                userId,
+                name,
+                email,
+                role,
+                payType,
+                status,
+                addedAt,
+                customers,
+                openTasks,
+              ],
               [
                 other.userId,
                 other.name,
@@ -74,6 +96,8 @@ class Member {
                 other.payType,
                 other.status,
                 other.addedAt,
+                other.customers,
+                other.openTasks,
               ],
             );
   }
@@ -81,7 +105,17 @@ class Member {
   @override
   int get hashCode =>
       runtimeType.hashCode ^
-      mapPropsToHashCode([userId, name, email, role, payType, status, addedAt]);
+      mapPropsToHashCode([
+        userId,
+        name,
+        email,
+        role,
+        payType,
+        status,
+        addedAt,
+        customers,
+        openTasks,
+      ]);
 
   factory Member.fromJson(Map<String, dynamic> json) => _$MemberFromJson(json);
 

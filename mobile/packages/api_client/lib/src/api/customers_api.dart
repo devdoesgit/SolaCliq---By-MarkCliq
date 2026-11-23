@@ -14,9 +14,9 @@ import 'package:api_client/src/model/customer_detail.dart';
 import 'package:api_client/src/model/customer_list.dart';
 import 'package:api_client/src/model/customer_registration.dart';
 import 'package:api_client/src/model/customer_registration_create.dart';
+import 'package:api_client/src/model/document_replace.dart';
 import 'package:api_client/src/model/kyc_kind.dart';
 import 'package:api_client/src/model/problem.dart';
-import 'package:api_client/src/model/replace_customer_document_request.dart';
 
 class CustomersApi {
   final Dio _dio;
@@ -209,13 +209,13 @@ class CustomersApi {
   }
 
   /// Send a clearer copy of a document the admin sent back
-  /// Only the document the admin sent back (409 &#x60;registration.locked&#x60; otherwise). The document and the customer go back to &#x60;in_review&#x60;. The file is an upload of this company (purpose &#x60;kyc&#x60;), checked in storage (422 on &#x60;upload_id&#x60; if it didn&#39;t finish).
+  /// Only the document the admin sent back (409 &#x60;registration.locked&#x60; otherwise). The document and the customer go back to &#x60;in_review&#x60;. The 1 to 5 files replace the whole set. Each is an upload of this company (purpose &#x60;kyc&#x60;), checked in storage (422 on &#x60;files&#x60; if one didn&#39;t finish).
   ///
   /// Parameters:
   /// * [orgId] - The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message.
   /// * [customerId]
   /// * [kind]
-  /// * [replaceCustomerDocumentRequest]
+  /// * [documentReplace]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -229,7 +229,7 @@ class CustomersApi {
     required String orgId,
     required String customerId,
     required KycKind kind,
-    required ReplaceCustomerDocumentRequest replaceCustomerDocumentRequest,
+    required DocumentReplace documentReplace,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -278,7 +278,7 @@ class CustomersApi {
     dynamic _bodyData;
 
     try {
-      _bodyData = jsonEncode(replaceCustomerDocumentRequest);
+      _bodyData = jsonEncode(documentReplace);
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _options.compose(_dio.options, _path),

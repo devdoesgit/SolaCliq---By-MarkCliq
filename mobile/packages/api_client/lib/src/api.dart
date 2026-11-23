@@ -14,11 +14,13 @@ import 'package:api_client/src/api/customers_api.dart';
 import 'package:api_client/src/api/expenses_api.dart';
 import 'package:api_client/src/api/home_api.dart';
 import 'package:api_client/src/api/install_api.dart';
+import 'package:api_client/src/api/leads_api.dart';
 import 'package:api_client/src/api/notifications_api.dart';
 import 'package:api_client/src/api/onboarding_api.dart';
 import 'package:api_client/src/api/platform_api.dart';
 import 'package:api_client/src/api/profile_api.dart';
 import 'package:api_client/src/api/quotes_api.dart';
+import 'package:api_client/src/api/stages_api.dart';
 import 'package:api_client/src/api/system_api.dart';
 import 'package:api_client/src/api/tasks_api.dart';
 import 'package:api_client/src/api/team_api.dart';
@@ -178,6 +180,12 @@ class ApiClient {
     return InstallApi(dio);
   }
 
+  /// Get LeadsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  LeadsApi getLeadsApi() {
+    return LeadsApi(dio);
+  }
+
   /// Get NotificationsApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   NotificationsApi getNotificationsApi() {
@@ -206,6 +214,12 @@ class ApiClient {
   /// by doing that all interceptors will not be executed
   QuotesApi getQuotesApi() {
     return QuotesApi(dio);
+  }
+
+  /// Get StagesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  StagesApi getStagesApi() {
+    return StagesApi(dio);
   }
 
   /// Get SystemApi instance, base route and serializer can be overridden by a given but be careful,

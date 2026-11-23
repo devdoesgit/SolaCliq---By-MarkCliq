@@ -1,4 +1,7 @@
 # api_client (EXPERIMENTAL)
+Writes that carry the website's cookies must come from the website
+itself: from another origin they are 403 `auth.cross_origin`.
+
 Contract between the SolaCliq backend, mobile app and admin website.
 Conventions are in docs/architecture.md under \"API conventions\":
 money in integer paise, UUIDv7 ids, ISO 8601 UTC timestamps, cursor
@@ -56,13 +59,12 @@ import 'package:api_client/api_client.dart';
 final api = ApiClient().getAdminApi();
 final String orgId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | The org the request is for; the caller needs a membership in it. Every `/orgs/{org_id}/...` request answers 403 with `org.not_member` (no membership, or it was removed), `org.role_not_allowed` (the endpoint is for another role), `org.pending` (MarkCliq hasn't approved the company yet), `org.suspended` or `org.rejected`. A company that isn't active gives its members none of its data, only its name and status in `/me`, so the app shows a message. 
 final String customerId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
-final CommissionDecision commissionDecision = ; // CommissionDecision | 
 
 try {
-    final response = await api.approveCommission(orgId, customerId, commissionDecision);
+    final response = await api.adminGetCustomer(orgId, customerId);
     print(response);
 } on DioException catch (e) {
-    print("Exception when calling AdminApi->approveCommission: $e\n");
+    print("Exception when calling AdminApi->adminGetCustomer: $e\n");
 }
 
 ```
@@ -73,6 +75,19 @@ All URIs are relative to *https://solacliq.markcliq.com/api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AdminApi*](doc/AdminApi.md) | [**adminGetCustomer**](doc/AdminApi.md#admingetcustomer) | **GET** /orgs/{org_id}/admin/customers/{customer_id} | One customer, whole
+[*AdminApi*](doc/AdminApi.md) | [**adminGetExpense**](doc/AdminApi.md#admingetexpense) | **GET** /orgs/{org_id}/admin/expenses/{expense_id} | One expense, with its receipt
+[*AdminApi*](doc/AdminApi.md) | [**adminGetOverview**](doc/AdminApi.md#admingetoverview) | **GET** /orgs/{org_id}/admin/overview | The website&#39;s overview totals
+[*AdminApi*](doc/AdminApi.md) | [**adminGetSettings**](doc/AdminApi.md#admingetsettings) | **GET** /orgs/{org_id}/admin/settings | The company&#39;s settings
+[*AdminApi*](doc/AdminApi.md) | [**adminGetTask**](doc/AdminApi.md#admingettask) | **GET** /orgs/{org_id}/admin/tasks/{task_id} | One task, with its proof and history
+[*AdminApi*](doc/AdminApi.md) | [**adminListCommissions**](doc/AdminApi.md#adminlistcommissions) | **GET** /orgs/{org_id}/admin/commissions | Agents&#39; commissions, newest first
+[*AdminApi*](doc/AdminApi.md) | [**adminListCustomers**](doc/AdminApi.md#adminlistcustomers) | **GET** /orgs/{org_id}/admin/customers | The company&#39;s customers, newest first
+[*AdminApi*](doc/AdminApi.md) | [**adminListExpenses**](doc/AdminApi.md#adminlistexpenses) | **GET** /orgs/{org_id}/admin/expenses | Everyone&#39;s expenses, newest first
+[*AdminApi*](doc/AdminApi.md) | [**adminListPayments**](doc/AdminApi.md#adminlistpayments) | **GET** /orgs/{org_id}/admin/payments | Customers&#39; payments, newest first
+[*AdminApi*](doc/AdminApi.md) | [**adminListTasks**](doc/AdminApi.md#adminlisttasks) | **GET** /orgs/{org_id}/admin/tasks | The company&#39;s tasks, newest first
+[*AdminApi*](doc/AdminApi.md) | [**adminSetCustomerPrice**](doc/AdminApi.md#adminsetcustomerprice) | **PUT** /orgs/{org_id}/admin/customers/{customer_id}/price | Correct a customer&#39;s price
+[*AdminApi*](doc/AdminApi.md) | [**adminSetCustomerStage**](doc/AdminApi.md#adminsetcustomerstage) | **PUT** /orgs/{org_id}/admin/customers/{customer_id}/stage | Move a customer&#39;s install stage
+[*AdminApi*](doc/AdminApi.md) | [**adminSetSettings**](doc/AdminApi.md#adminsetsettings) | **PUT** /orgs/{org_id}/admin/settings | Change the company&#39;s settings
 [*AdminApi*](doc/AdminApi.md) | [**approveCommission**](doc/AdminApi.md#approvecommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission | Approve an agent&#39;s commission, as asked or changed
 [*AdminApi*](doc/AdminApi.md) | [**approveExpense**](doc/AdminApi.md#approveexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/approve | Approve an expense
 [*AdminApi*](doc/AdminApi.md) | [**approveTask**](doc/AdminApi.md#approvetask) | **POST** /orgs/{org_id}/tasks/{task_id}/approve | Approve a submitted task; the customer moves to the next stage
@@ -86,7 +101,9 @@ Class | Method | HTTP request | Description
 [*AdminApi*](doc/AdminApi.md) | [**handOver**](doc/AdminApi.md#handover) | **POST** /orgs/{org_id}/customers/{customer_id}/handover | Hand the system over to the customer
 [*AdminApi*](doc/AdminApi.md) | [**payCommission**](doc/AdminApi.md#paycommission) | **POST** /orgs/{org_id}/customers/{customer_id}/commission/paid | Mark a payable commission paid
 [*AdminApi*](doc/AdminApi.md) | [**payExpense**](doc/AdminApi.md#payexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/paid | Mark an approved expense paid
+[*AdminApi*](doc/AdminApi.md) | [**paymentNotReceived**](doc/AdminApi.md#paymentnotreceived) | **POST** /orgs/{org_id}/payments/{payment_id}/not-received | Say a claimed payment didn&#39;t arrive
 [*AdminApi*](doc/AdminApi.md) | [**rejectCustomer**](doc/AdminApi.md#rejectcustomer) | **POST** /orgs/{org_id}/customers/{customer_id}/reject | Don&#39;t take a customer up
+[*AdminApi*](doc/AdminApi.md) | [**rejectExpense**](doc/AdminApi.md#rejectexpense) | **POST** /orgs/{org_id}/expenses/{expense_id}/reject | Don&#39;t accept an expense
 [*AdminApi*](doc/AdminApi.md) | [**removeOrgLogo**](doc/AdminApi.md#removeorglogo) | **DELETE** /orgs/{org_id}/logo | Remove the company&#39;s logo (F15)
 [*AdminApi*](doc/AdminApi.md) | [**requestPayment**](doc/AdminApi.md#requestpayment) | **POST** /orgs/{org_id}/payments/{payment_id}/request | Ask the customer for the next payment
 [*AdminApi*](doc/AdminApi.md) | [**returnCustomerDocument**](doc/AdminApi.md#returncustomerdocument) | **POST** /orgs/{org_id}/customers/{customer_id}/documents/{kind}/return | Send one KYC document back to the agent
@@ -100,15 +117,16 @@ Class | Method | HTTP request | Description
 [*AttendanceApi*](doc/AttendanceApi.md) | [**getAttendanceDay**](doc/AttendanceApi.md#getattendanceday) | **GET** /orgs/{org_id}/attendance/day | Everyone&#39;s attendance on one date
 [*AttendanceApi*](doc/AttendanceApi.md) | [**getAttendanceMonth**](doc/AttendanceApi.md#getattendancemonth) | **GET** /orgs/{org_id}/attendance/month | Everyone&#39;s attendance in one month
 [*AttendanceApi*](doc/AttendanceApi.md) | [**startAttendanceDay**](doc/AttendanceApi.md#startattendanceday) | **POST** /orgs/{org_id}/me/attendance/start | Start the caller&#39;s working day
+[*AuthApi*](doc/AuthApi.md) | [**completeSignup**](doc/AuthApi.md#completesignup) | **POST** /auth/signup/complete | Create the account and log in
+[*AuthApi*](doc/AuthApi.md) | [**deleteAccount**](doc/AuthApi.md#deleteaccount) | **POST** /me/delete | Delete the caller&#39;s account
 [*AuthApi*](doc/AuthApi.md) | [**forgotPassword**](doc/AuthApi.md#forgotpassword) | **POST** /auth/password/forgot | Email a password reset or set-up code
 [*AuthApi*](doc/AuthApi.md) | [**getMe**](doc/AuthApi.md#getme) | **GET** /me | The signed-in person and their memberships
 [*AuthApi*](doc/AuthApi.md) | [**login**](doc/AuthApi.md#login) | **POST** /auth/login | Log in
 [*AuthApi*](doc/AuthApi.md) | [**logout**](doc/AuthApi.md#logout) | **POST** /auth/logout | Log out of this session
 [*AuthApi*](doc/AuthApi.md) | [**refreshSession**](doc/AuthApi.md#refreshsession) | **POST** /auth/refresh | Get new tokens
-[*AuthApi*](doc/AuthApi.md) | [**resendVerification**](doc/AuthApi.md#resendverification) | **POST** /auth/email/resend | Send a new verification code
 [*AuthApi*](doc/AuthApi.md) | [**resetPassword**](doc/AuthApi.md#resetpassword) | **POST** /auth/password/reset | Set a new password with the reset code
-[*AuthApi*](doc/AuthApi.md) | [**signup**](doc/AuthApi.md#signup) | **POST** /auth/signup | Create a customer account
-[*AuthApi*](doc/AuthApi.md) | [**verifyEmail**](doc/AuthApi.md#verifyemail) | **POST** /auth/email/verify | Verify an email with its code
+[*AuthApi*](doc/AuthApi.md) | [**signup**](doc/AuthApi.md#signup) | **POST** /auth/signup | Start signing up (email a code)
+[*AuthApi*](doc/AuthApi.md) | [**verifySignup**](doc/AuthApi.md#verifysignup) | **POST** /auth/signup/verify | Prove the inbox with the code
 [*CustomersApi*](doc/CustomersApi.md) | [**getMyCustomer**](doc/CustomersApi.md#getmycustomer) | **GET** /orgs/{org_id}/my-customers/{customer_id} | One customer the caller registered
 [*CustomersApi*](doc/CustomersApi.md) | [**listMyCustomers**](doc/CustomersApi.md#listmycustomers) | **GET** /orgs/{org_id}/my-customers | The customers the caller registered, newest first
 [*CustomersApi*](doc/CustomersApi.md) | [**replaceCustomerDocument**](doc/CustomersApi.md#replacecustomerdocument) | **PUT** /orgs/{org_id}/my-customers/{customer_id}/documents/{kind} | Send a clearer copy of a document the admin sent back
@@ -120,6 +138,14 @@ Class | Method | HTTP request | Description
 [*HomeApi*](doc/HomeApi.md) | [**getOrgHome**](doc/HomeApi.md#getorghome) | **GET** /orgs/{org_id}/home | The home screen for the caller&#39;s role in this company
 [*InstallApi*](doc/InstallApi.md) | [**claimInstallPayment**](doc/InstallApi.md#claiminstallpayment) | **POST** /orgs/{org_id}/my-install/payments/{payment_id}/claim | The customer says they paid an instalment
 [*InstallApi*](doc/InstallApi.md) | [**getMyInstall**](doc/InstallApi.md#getmyinstall) | **GET** /orgs/{org_id}/my-install | The caller&#39;s own install with this company
+[*LeadsApi*](doc/LeadsApi.md) | [**adminGetLeadKey**](doc/LeadsApi.md#admingetleadkey) | **GET** /orgs/{org_id}/admin/lead-key | Whether the company has a lead key
+[*LeadsApi*](doc/LeadsApi.md) | [**adminMakeLeadKey**](doc/LeadsApi.md#adminmakeleadkey) | **POST** /orgs/{org_id}/admin/lead-key | Make a new lead key
+[*LeadsApi*](doc/LeadsApi.md) | [**createLead**](doc/LeadsApi.md#createlead) | **POST** /leads | Send a lead to a company
+[*LeadsApi*](doc/LeadsApi.md) | [**deleteLead**](doc/LeadsApi.md#deletelead) | **DELETE** /orgs/{org_id}/leads/{lead_id} | Delete a lead for good
+[*LeadsApi*](doc/LeadsApi.md) | [**getLead**](doc/LeadsApi.md#getlead) | **GET** /orgs/{org_id}/leads/{lead_id} | One lead, with everything the form sent
+[*LeadsApi*](doc/LeadsApi.md) | [**listLeads**](doc/LeadsApi.md#listleads) | **GET** /orgs/{org_id}/leads | The company&#39;s leads, newest first
+[*LeadsApi*](doc/LeadsApi.md) | [**listMyLeads**](doc/LeadsApi.md#listmyleads) | **GET** /orgs/{org_id}/leads/mine | The leads handed to the caller, newest first
+[*LeadsApi*](doc/LeadsApi.md) | [**updateLead**](doc/LeadsApi.md#updatelead) | **PATCH** /orgs/{org_id}/leads/{lead_id} | Change a lead&#39;s status, note or agent
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listMyNotifications**](doc/NotificationsApi.md#listmynotifications) | **GET** /me/notifications | The caller&#39;s own notifications, outside any company
 [*NotificationsApi*](doc/NotificationsApi.md) | [**listNotifications**](doc/NotificationsApi.md#listnotifications) | **GET** /orgs/{org_id}/notifications | The caller&#39;s notifications in this company, newest first
 [*NotificationsApi*](doc/NotificationsApi.md) | [**markMyNotificationsRead**](doc/NotificationsApi.md#markmynotificationsread) | **POST** /me/notifications/read | Mark all of the caller&#39;s own notifications as read
@@ -136,6 +162,8 @@ Class | Method | HTTP request | Description
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMyDetails**](doc/ProfileApi.md#updatemydetails) | **PUT** /me/details | Change the caller&#39;s personal details or payout bank
 [*ProfileApi*](doc/ProfileApi.md) | [**updateMySettings**](doc/ProfileApi.md#updatemysettings) | **PUT** /me/settings | Change the caller&#39;s settings
 [*QuotesApi*](doc/QuotesApi.md) | [**createQuoteRequest**](doc/QuotesApi.md#createquoterequest) | **POST** /quote-requests | Ask for a solar quote
+[*StagesApi*](doc/StagesApi.md) | [**adminSetStage**](doc/StagesApi.md#adminsetstage) | **PUT** /orgs/{org_id}/admin/stages/{index} | Change one stage&#39;s name and template
+[*StagesApi*](doc/StagesApi.md) | [**listStages**](doc/StagesApi.md#liststages) | **GET** /orgs/{org_id}/stages | The company&#39;s 7 install stages
 [*SystemApi*](doc/SystemApi.md) | [**getHealth**](doc/SystemApi.md#gethealth) | **GET** /health | Service health
 [*TasksApi*](doc/TasksApi.md) | [**addTaskPhoto**](doc/TasksApi.md#addtaskphoto) | **POST** /orgs/{org_id}/tasks/{task_id}/photos | Attach a proof photo to one of the task&#39;s photo slots
 [*TasksApi*](doc/TasksApi.md) | [**getMyStats**](doc/TasksApi.md#getmystats) | **GET** /orgs/{org_id}/me/stats | The caller&#39;s work this month, for their profile
@@ -155,7 +183,33 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [AcceptTermsRequest](doc/AcceptTermsRequest.md)
+ - [AccountDelete](doc/AccountDelete.md)
  - [AddMemberRequest](doc/AddMemberRequest.md)
+ - [AdminCommission](doc/AdminCommission.md)
+ - [AdminCommissionPage](doc/AdminCommissionPage.md)
+ - [AdminCustomer](doc/AdminCustomer.md)
+ - [AdminCustomerPage](doc/AdminCustomerPage.md)
+ - [AdminCustomerSummary](doc/AdminCustomerSummary.md)
+ - [AdminDocument](doc/AdminDocument.md)
+ - [AdminDocumentFile](doc/AdminDocumentFile.md)
+ - [AdminExpense](doc/AdminExpense.md)
+ - [AdminExpensePage](doc/AdminExpensePage.md)
+ - [AdminExpenseSummary](doc/AdminExpenseSummary.md)
+ - [AdminFile](doc/AdminFile.md)
+ - [AdminOverview](doc/AdminOverview.md)
+ - [AdminPayment](doc/AdminPayment.md)
+ - [AdminPaymentPage](doc/AdminPaymentPage.md)
+ - [AdminPaymentStatus](doc/AdminPaymentStatus.md)
+ - [AdminPrice](doc/AdminPrice.md)
+ - [AdminSettings](doc/AdminSettings.md)
+ - [AdminSettingsSet](doc/AdminSettingsSet.md)
+ - [AdminStage](doc/AdminStage.md)
+ - [AdminTask](doc/AdminTask.md)
+ - [AdminTaskEvent](doc/AdminTaskEvent.md)
+ - [AdminTaskPage](doc/AdminTaskPage.md)
+ - [AdminTaskProblem](doc/AdminTaskProblem.md)
+ - [AdminTaskSummary](doc/AdminTaskSummary.md)
+ - [AdminTaskView](doc/AdminTaskView.md)
  - [AttendanceDay](doc/AttendanceDay.md)
  - [AttendanceDayView](doc/AttendanceDayView.md)
  - [AttendanceDayViewPeopleInner](doc/AttendanceDayViewPeopleInner.md)
@@ -173,6 +227,8 @@ Class | Method | HTTP request | Description
  - [Commission](doc/Commission.md)
  - [CommissionDecision](doc/CommissionDecision.md)
  - [CommissionStatus](doc/CommissionStatus.md)
+ - [CommissionTotals](doc/CommissionTotals.md)
+ - [CompleteSignupRequest](doc/CompleteSignupRequest.md)
  - [ConnectionType](doc/ConnectionType.md)
  - [CustomerDetail](doc/CustomerDetail.md)
  - [CustomerDetailAdvance](doc/CustomerDetailAdvance.md)
@@ -186,6 +242,9 @@ Class | Method | HTTP request | Description
  - [CustomerSummary](doc/CustomerSummary.md)
  - [CustomerVerify](doc/CustomerVerify.md)
  - [DeviceRegistration](doc/DeviceRegistration.md)
+ - [DocumentFile](doc/DocumentFile.md)
+ - [DocumentReplace](doc/DocumentReplace.md)
+ - [DocumentSide](doc/DocumentSide.md)
  - [DocumentStatus](doc/DocumentStatus.md)
  - [Done](doc/Done.md)
  - [EmailRequest](doc/EmailRequest.md)
@@ -194,6 +253,7 @@ Class | Method | HTTP request | Description
  - [ExpenseCreate](doc/ExpenseCreate.md)
  - [ExpensePage](doc/ExpensePage.md)
  - [ExpenseStatus](doc/ExpenseStatus.md)
+ - [FinishedWeek](doc/FinishedWeek.md)
  - [Health](doc/Health.md)
  - [HomeAttendance](doc/HomeAttendance.md)
  - [HomeDay](doc/HomeDay.md)
@@ -215,6 +275,15 @@ Class | Method | HTTP request | Description
  - [InstallStage](doc/InstallStage.md)
  - [KycKind](doc/KycKind.md)
  - [KycStatus](doc/KycStatus.md)
+ - [Lead](doc/Lead.md)
+ - [LeadCreate](doc/LeadCreate.md)
+ - [LeadKeyInfo](doc/LeadKeyInfo.md)
+ - [LeadKeyNew](doc/LeadKeyNew.md)
+ - [LeadPage](doc/LeadPage.md)
+ - [LeadReceipt](doc/LeadReceipt.md)
+ - [LeadStatus](doc/LeadStatus.md)
+ - [LeadSummary](doc/LeadSummary.md)
+ - [LeadUpdate](doc/LeadUpdate.md)
  - [LoginRequest](doc/LoginRequest.md)
  - [LoginResponse](doc/LoginResponse.md)
  - [LogoSet](doc/LogoSet.md)
@@ -241,6 +310,7 @@ Class | Method | HTTP request | Description
  - [PlatformOrg](doc/PlatformOrg.md)
  - [PlatformOrgOwner](doc/PlatformOrgOwner.md)
  - [PlatformOrgPage](doc/PlatformOrgPage.md)
+ - [PriceSet](doc/PriceSet.md)
  - [Problem](doc/Problem.md)
  - [ProblemErrorsInner](doc/ProblemErrorsInner.md)
  - [ProofPhoto](doc/ProofPhoto.md)
@@ -252,7 +322,6 @@ Class | Method | HTTP request | Description
  - [QuoteRequestCreate](doc/QuoteRequestCreate.md)
  - [QuoteTimeline](doc/QuoteTimeline.md)
  - [RefreshRequest](doc/RefreshRequest.md)
- - [ReplaceCustomerDocumentRequest](doc/ReplaceCustomerDocumentRequest.md)
  - [ReplaceExpenseReceiptRequest](doc/ReplaceExpenseReceiptRequest.md)
  - [ResetPasswordRequest](doc/ResetPasswordRequest.md)
  - [ReviewItem](doc/ReviewItem.md)
@@ -262,8 +331,12 @@ Class | Method | HTTP request | Description
  - [SendTaskMessageRequest](doc/SendTaskMessageRequest.md)
  - [SetTaskChecklistItemRequest](doc/SetTaskChecklistItemRequest.md)
  - [Settings](doc/Settings.md)
- - [SignupRequest](doc/SignupRequest.md)
+ - [SignupSetup](doc/SignupSetup.md)
  - [SlotCreate](doc/SlotCreate.md)
+ - [Stage](doc/Stage.md)
+ - [StageList](doc/StageList.md)
+ - [StageSet](doc/StageSet.md)
+ - [StageTemplateSet](doc/StageTemplateSet.md)
  - [SubmitTaskRequest](doc/SubmitTaskRequest.md)
  - [Task](doc/Task.md)
  - [TaskApproved](doc/TaskApproved.md)
@@ -286,7 +359,7 @@ Class | Method | HTTP request | Description
  - [TokenPair](doc/TokenPair.md)
  - [Upload](doc/Upload.md)
  - [UploadCreate](doc/UploadCreate.md)
- - [VerifyEmailRequest](doc/VerifyEmailRequest.md)
+ - [VerifySignupRequest](doc/VerifySignupRequest.md)
  - [WorkerStats](doc/WorkerStats.md)
 
 
@@ -303,6 +376,10 @@ Authentication schemes defined for the API:
 - **Type**: API key
 - **API key parameter name**: solacliq_session
 - **Location**: 
+
+### leadKey
+
+- **Type**: HTTP Bearer Token authentication
 
 
 ## Author

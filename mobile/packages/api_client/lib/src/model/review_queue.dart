@@ -20,6 +20,8 @@ part 'review_queue.g.dart';
 class ReviewQueue {
   /// Returns a new [ReviewQueue] instance.
   ReviewQueue({
+    required this.leads,
+
     required this.commissions,
 
     required this.expenses,
@@ -30,6 +32,10 @@ class ReviewQueue {
 
     required this.tasks,
   });
+
+  /// New landing-page leads nobody has yet (F20); `reference` is empty.
+  @JsonKey(name: r'leads', required: true, includeIfNull: false)
+  final List<ReviewItem> leads;
 
   @JsonKey(name: r'commissions', required: true, includeIfNull: false)
   final List<ReviewItem> commissions;
@@ -51,8 +57,9 @@ class ReviewQueue {
         other is ReviewQueue &&
             runtimeType == other.runtimeType &&
             equals(
-              [commissions, expenses, payments, registrations, tasks],
+              [leads, commissions, expenses, payments, registrations, tasks],
               [
+                other.leads,
                 other.commissions,
                 other.expenses,
                 other.payments,
@@ -66,6 +73,7 @@ class ReviewQueue {
   int get hashCode =>
       runtimeType.hashCode ^
       mapPropsToHashCode([
+        leads,
         commissions,
         expenses,
         payments,

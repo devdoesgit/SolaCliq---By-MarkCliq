@@ -7,7 +7,7 @@ import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
 
-part 'verify_email_request.g.dart';
+part 'verify_signup_request.g.dart';
 
 @CopyWith()
 @JsonSerializable(
@@ -16,9 +16,9 @@ part 'verify_email_request.g.dart';
   disallowUnrecognizedKeys: false,
   explicitToJson: true,
 )
-class VerifyEmailRequest {
-  /// Returns a new [VerifyEmailRequest] instance.
-  VerifyEmailRequest({required this.email, required this.code});
+class VerifySignupRequest {
+  /// Returns a new [VerifySignupRequest] instance.
+  VerifySignupRequest({required this.email, required this.code});
 
   @JsonKey(name: r'email', required: true, includeIfNull: false)
   final String email;
@@ -29,7 +29,7 @@ class VerifyEmailRequest {
 
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is VerifyEmailRequest &&
+        other is VerifySignupRequest &&
             runtimeType == other.runtimeType &&
             equals([email, code], [other.email, other.code]);
   }
@@ -37,10 +37,10 @@ class VerifyEmailRequest {
   @override
   int get hashCode => runtimeType.hashCode ^ mapPropsToHashCode([email, code]);
 
-  factory VerifyEmailRequest.fromJson(Map<String, dynamic> json) =>
-      _$VerifyEmailRequestFromJson(json);
+  factory VerifySignupRequest.fromJson(Map<String, dynamic> json) =>
+      _$VerifySignupRequestFromJson(json);
 
-  Map<String, dynamic> toJson() => _$VerifyEmailRequestToJson(this);
+  Map<String, dynamic> toJson() => _$VerifySignupRequestToJson(this);
 
   @override
   String toString() {

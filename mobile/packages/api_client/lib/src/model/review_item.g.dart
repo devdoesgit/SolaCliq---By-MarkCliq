@@ -19,6 +19,8 @@ abstract class _$ReviewItemCWProxy {
 
   ReviewItem title(String title);
 
+  ReviewItem amount(int? amount);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `ReviewItem(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -32,6 +34,7 @@ abstract class _$ReviewItemCWProxy {
     String reference,
     String status,
     String title,
+    int? amount,
   });
 }
 
@@ -60,6 +63,9 @@ class _$ReviewItemCWProxyImpl implements _$ReviewItemCWProxy {
   ReviewItem title(String title) => this(title: title);
 
   @override
+  ReviewItem amount(int? amount) => this(amount: amount);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `ReviewItem(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -73,6 +79,7 @@ class _$ReviewItemCWProxyImpl implements _$ReviewItemCWProxy {
     Object? reference = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? title = const $CopyWithPlaceholder(),
+    Object? amount = const $CopyWithPlaceholder(),
   }) {
     return ReviewItem(
       at: at == const $CopyWithPlaceholder()
@@ -99,6 +106,10 @@ class _$ReviewItemCWProxyImpl implements _$ReviewItemCWProxy {
           ? _value.title
           // ignore: cast_nullable_to_non_nullable
           : title as String,
+      amount: amount == const $CopyWithPlaceholder()
+          ? _value.amount
+          // ignore: cast_nullable_to_non_nullable
+          : amount as int?,
     );
   }
 }
@@ -133,6 +144,7 @@ ReviewItem _$ReviewItemFromJson(Map<String, dynamic> json) =>
         reference: $checkedConvert('reference', (v) => v as String),
         status: $checkedConvert('status', (v) => v as String),
         title: $checkedConvert('title', (v) => v as String),
+        amount: $checkedConvert('amount', (v) => (v as num?)?.toInt()),
       );
       return val;
     });
@@ -145,4 +157,5 @@ Map<String, dynamic> _$ReviewItemToJson(ReviewItem instance) =>
       'reference': instance.reference,
       'status': instance.status,
       'title': instance.title,
+      'amount': ?instance.amount,
     };

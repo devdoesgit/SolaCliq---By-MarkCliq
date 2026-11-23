@@ -7,6 +7,8 @@ part of 'review_queue.dart';
 // **************************************************************************
 
 abstract class _$ReviewQueueCWProxy {
+  ReviewQueue leads(List<ReviewItem> leads);
+
   ReviewQueue commissions(List<ReviewItem> commissions);
 
   ReviewQueue expenses(List<ReviewItem> expenses);
@@ -24,6 +26,7 @@ abstract class _$ReviewQueueCWProxy {
   /// ReviewQueue(...).copyWith(id: 12, name: "My name")
   /// ````
   ReviewQueue call({
+    List<ReviewItem> leads,
     List<ReviewItem> commissions,
     List<ReviewItem> expenses,
     List<ReviewItem> payments,
@@ -37,6 +40,9 @@ class _$ReviewQueueCWProxyImpl implements _$ReviewQueueCWProxy {
   const _$ReviewQueueCWProxyImpl(this._value);
 
   final ReviewQueue _value;
+
+  @override
+  ReviewQueue leads(List<ReviewItem> leads) => this(leads: leads);
 
   @override
   ReviewQueue commissions(List<ReviewItem> commissions) =>
@@ -63,6 +69,7 @@ class _$ReviewQueueCWProxyImpl implements _$ReviewQueueCWProxy {
   /// ReviewQueue(...).copyWith(id: 12, name: "My name")
   /// ````
   ReviewQueue call({
+    Object? leads = const $CopyWithPlaceholder(),
     Object? commissions = const $CopyWithPlaceholder(),
     Object? expenses = const $CopyWithPlaceholder(),
     Object? payments = const $CopyWithPlaceholder(),
@@ -70,6 +77,10 @@ class _$ReviewQueueCWProxyImpl implements _$ReviewQueueCWProxy {
     Object? tasks = const $CopyWithPlaceholder(),
   }) {
     return ReviewQueue(
+      leads: leads == const $CopyWithPlaceholder()
+          ? _value.leads
+          // ignore: cast_nullable_to_non_nullable
+          : leads as List<ReviewItem>,
       commissions: commissions == const $CopyWithPlaceholder()
           ? _value.commissions
           // ignore: cast_nullable_to_non_nullable
@@ -109,6 +120,7 @@ ReviewQueue _$ReviewQueueFromJson(Map<String, dynamic> json) =>
       $checkKeys(
         json,
         requiredKeys: const [
+          'leads',
           'commissions',
           'expenses',
           'payments',
@@ -117,6 +129,12 @@ ReviewQueue _$ReviewQueueFromJson(Map<String, dynamic> json) =>
         ],
       );
       final val = ReviewQueue(
+        leads: $checkedConvert(
+          'leads',
+          (v) => (v as List<dynamic>)
+              .map((e) => ReviewItem.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        ),
         commissions: $checkedConvert(
           'commissions',
           (v) => (v as List<dynamic>)
@@ -153,6 +171,7 @@ ReviewQueue _$ReviewQueueFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$ReviewQueueToJson(ReviewQueue instance) =>
     <String, dynamic>{
+      'leads': instance.leads.map((e) => e.toJson()).toList(),
       'commissions': instance.commissions.map((e) => e.toJson()).toList(),
       'expenses': instance.expenses.map((e) => e.toJson()).toList(),
       'payments': instance.payments.map((e) => e.toJson()).toList(),

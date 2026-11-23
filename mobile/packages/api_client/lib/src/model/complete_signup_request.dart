@@ -7,7 +7,7 @@ import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/src/equatable_utils.dart';
 
-part 'signup_request.g.dart';
+part 'complete_signup_request.g.dart';
 
 @CopyWith()
 @JsonSerializable(
@@ -16,12 +16,12 @@ part 'signup_request.g.dart';
   disallowUnrecognizedKeys: false,
   explicitToJson: true,
 )
-class SignupRequest {
-  /// Returns a new [SignupRequest] instance.
-  SignupRequest({
-    required this.name,
+class CompleteSignupRequest {
+  /// Returns a new [CompleteSignupRequest] instance.
+  CompleteSignupRequest({
+    required this.signupToken,
 
-    required this.email,
+    required this.name,
 
     this.phone,
 
@@ -30,11 +30,11 @@ class SignupRequest {
     required this.termsVersion,
   });
 
+  @JsonKey(name: r'signup_token', required: true, includeIfNull: false)
+  final String signupToken;
+
   @JsonKey(name: r'name', required: true, includeIfNull: false)
   final String name;
-
-  @JsonKey(name: r'email', required: true, includeIfNull: false)
-  final String email;
 
   /// Indian mobile number, 10 digits, without +91.
   @JsonKey(name: r'phone', required: false, includeIfNull: false)
@@ -51,13 +51,13 @@ class SignupRequest {
 
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is SignupRequest &&
+        other is CompleteSignupRequest &&
             runtimeType == other.runtimeType &&
             equals(
-              [name, email, phone, password, termsVersion],
+              [signupToken, name, phone, password, termsVersion],
               [
+                other.signupToken,
                 other.name,
-                other.email,
                 other.phone,
                 other.password,
                 other.termsVersion,
@@ -68,12 +68,12 @@ class SignupRequest {
   @override
   int get hashCode =>
       runtimeType.hashCode ^
-      mapPropsToHashCode([name, email, phone, password, termsVersion]);
+      mapPropsToHashCode([signupToken, name, phone, password, termsVersion]);
 
-  factory SignupRequest.fromJson(Map<String, dynamic> json) =>
-      _$SignupRequestFromJson(json);
+  factory CompleteSignupRequest.fromJson(Map<String, dynamic> json) =>
+      _$CompleteSignupRequestFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SignupRequestToJson(this);
+  Map<String, dynamic> toJson() => _$CompleteSignupRequestToJson(this);
 
   @override
   String toString() {

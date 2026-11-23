@@ -9,7 +9,7 @@ part of 'customer_registration_create_documents_inner.dart';
 abstract class _$CustomerRegistrationCreateDocumentsInnerCWProxy {
   CustomerRegistrationCreateDocumentsInner kind(KycKind kind);
 
-  CustomerRegistrationCreateDocumentsInner uploadId(String uploadId);
+  CustomerRegistrationCreateDocumentsInner files(List<DocumentFile> files);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `CustomerRegistrationCreateDocumentsInner(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
@@ -19,7 +19,7 @@ abstract class _$CustomerRegistrationCreateDocumentsInnerCWProxy {
   /// ````
   CustomerRegistrationCreateDocumentsInner call({
     KycKind kind,
-    String uploadId,
+    List<DocumentFile> files,
   });
 }
 
@@ -35,8 +35,8 @@ class _$CustomerRegistrationCreateDocumentsInnerCWProxyImpl
       this(kind: kind);
 
   @override
-  CustomerRegistrationCreateDocumentsInner uploadId(String uploadId) =>
-      this(uploadId: uploadId);
+  CustomerRegistrationCreateDocumentsInner files(List<DocumentFile> files) =>
+      this(files: files);
 
   @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `CustomerRegistrationCreateDocumentsInner(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -47,17 +47,17 @@ class _$CustomerRegistrationCreateDocumentsInnerCWProxyImpl
   /// ````
   CustomerRegistrationCreateDocumentsInner call({
     Object? kind = const $CopyWithPlaceholder(),
-    Object? uploadId = const $CopyWithPlaceholder(),
+    Object? files = const $CopyWithPlaceholder(),
   }) {
     return CustomerRegistrationCreateDocumentsInner(
       kind: kind == const $CopyWithPlaceholder()
           ? _value.kind
           // ignore: cast_nullable_to_non_nullable
           : kind as KycKind,
-      uploadId: uploadId == const $CopyWithPlaceholder()
-          ? _value.uploadId
+      files: files == const $CopyWithPlaceholder()
+          ? _value.files
           // ignore: cast_nullable_to_non_nullable
-          : uploadId as String,
+          : files as List<DocumentFile>,
     );
   }
 }
@@ -79,19 +79,24 @@ _$CustomerRegistrationCreateDocumentsInnerFromJson(Map<String, dynamic> json) =>
     $checkedCreate('CustomerRegistrationCreateDocumentsInner', json, (
       $checkedConvert,
     ) {
-      $checkKeys(json, requiredKeys: const ['kind', 'upload_id']);
+      $checkKeys(json, requiredKeys: const ['kind', 'files']);
       final val = CustomerRegistrationCreateDocumentsInner(
         kind: $checkedConvert('kind', (v) => $enumDecode(_$KycKindEnumMap, v)),
-        uploadId: $checkedConvert('upload_id', (v) => v as String),
+        files: $checkedConvert(
+          'files',
+          (v) => (v as List<dynamic>)
+              .map((e) => DocumentFile.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        ),
       );
       return val;
-    }, fieldKeyMap: const {'uploadId': 'upload_id'});
+    });
 
 Map<String, dynamic> _$CustomerRegistrationCreateDocumentsInnerToJson(
   CustomerRegistrationCreateDocumentsInner instance,
 ) => <String, dynamic>{
   'kind': _$KycKindEnumMap[instance.kind]!,
-  'upload_id': instance.uploadId,
+  'files': instance.files.map((e) => e.toJson()).toList(),
 };
 
 const _$KycKindEnumMap = {

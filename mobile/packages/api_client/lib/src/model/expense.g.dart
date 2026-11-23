@@ -257,4 +257,5 @@ const _$ExpenseStatusEnumMap = {
   ExpenseStatus.approved: 'approved',
   ExpenseStatus.needsFix: 'needs_fix',
   ExpenseStatus.paid: 'paid',
+  ExpenseStatus.rejected: 'rejected',
 };
