@@ -123,6 +123,12 @@ impl Roles for Customers {
     const ALLOWED: &'static [Role] = &[Role::Customer];
 }
 
+// Leads (F20): the admin works all of them, an agent the ones handed to them.
+pub struct AdminsAndAgents;
+impl Roles for AdminsAndAgents {
+    const ALLOWED: &'static [Role] = &[Role::OrgAdmin, Role::Agent];
+}
+
 // The company's admin only (the website's team page).
 pub struct Admins;
 impl Roles for Admins {

@@ -38,8 +38,14 @@ pub enum Rule {
     // POST /auth/login, per IP and per email (guessing one account).
     LoginByIp,
     LoginByEmail,
-    // Code emails (resend, forgot password), per IP.
+    // Code emails (forgot password), per IP.
     CodeEmailByIp,
+    /*
+        Code emails, per email and kind, whether or not it has an account.
+        With 5 tries a code, this bounds guessing one person's code from
+        any number of addresses to 15 an hour
+    */
+    CodeEmailByEmail,
     // Code checks (verify, reset), per IP. Each code also allows 5 tries.
     CodeCheckByIp,
     // POST /org-registrations, per IP.
@@ -59,6 +65,11 @@ pub enum Rule {
         stops a script from filling the bucket
     */
     UploadByUser,
+    /*
+        POST /leads, per company. A busy campaign stays far below it; a
+        leaked key can't fill the company's list
+    */
+    LeadByOrg,
 }
 
 impl Rule {
@@ -67,15 +78,22 @@ impl Rule {
         const MINUTE: u64 = 60;
         const HOUR: u64 = 60 * MINUTE;
         let (count, seconds) = match self {
-            Rule::SignupByIp => (10, HOUR),
+            /*
+                30, not 10: Indian mobile networks put many phones behind
+                one address, and a team sets up on one Wi-Fi. Guessing is
+                bounded per email
+            */
+            Rule::SignupByIp => (30, HOUR),
             Rule::LoginByIp => (30, 15 * MINUTE),
             Rule::LoginByEmail => (10, 15 * MINUTE),
-            Rule::CodeEmailByIp => (10, HOUR),
+            Rule::CodeEmailByIp => (30, HOUR),
+            Rule::CodeEmailByEmail => (3, HOUR),
             Rule::CodeCheckByIp => (30, 15 * MINUTE),
             Rule::RegistrationByIp => (5, HOUR),
             Rule::QuoteByUser => (5, 24 * HOUR),
             Rule::AlreadyRegisteredByEmail => (1, HOUR),
             Rule::UploadByUser => (200, HOUR),
+            Rule::LeadByOrg => (300, HOUR),
         };
         (count, Duration::from_secs(seconds))
     }

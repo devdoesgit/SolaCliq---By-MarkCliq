@@ -48,6 +48,18 @@ pub enum Kind {
     DocumentsVerified,
     QuoteShared,
     Guide,
+    // For the company's admins, on the website: never pushed.
+    TaskSubmitted,
+    TaskProblem,
+    TaskMessage,
+    ExpenseSubmitted,
+    PaymentClaimed,
+    // To a customer who wasn't taken up.
+    RegistrationClosed,
+    // A landing-page lead arrived (admins, website only), or was handed
+    // to a Sales Agent (F20).
+    LeadNew,
+    LeadAssigned,
 }
 
 // The contract's `Notification`.
@@ -65,6 +77,8 @@ pub struct Notification {
     pub expense_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lead_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -102,6 +116,7 @@ pub struct Links {
     pub task_id: Option<Uuid>,
     pub expense_id: Option<Uuid>,
     pub customer_id: Option<Uuid>,
+    pub lead_id: Option<Uuid>,
 }
 
 /*
@@ -119,8 +134,8 @@ pub async fn add(
 ) -> ApiResult<()> {
     sqlx::query(
         "INSERT INTO notifications (id, user_id, org_id, kind, title, body,
-                                    task_id, expense_id, customer_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+                                    task_id, expense_id, customer_id, lead_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
     )
     .bind(Uuid::now_v7())
     .bind(user_id)
@@ -131,8 +146,52 @@ pub async fn add(
     .bind(links.task_id)
     .bind(links.expense_id)
     .bind(links.customer_id)
+    .bind(links.lead_id)
     .execute(conn)
     .await?;
+    Ok(())
+}
+
+/*
+    Tells each of the company's admins something waits for them
+    --------------------------------------------------------------------
+    - written already handled (`pushed_at`): admins check the website,
+      so it's never pushed (F12; owner, 2026-11-15)
+*/
+pub async fn add_for_admins(
+    conn: &mut PgConnection,
+    org_id: Uuid,
+    kind: Kind,
+    title: &str,
+    body: &str,
+    links: Links,
+) -> ApiResult<()> {
+    let admins: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM memberships
+         WHERE org_id = $1 AND role = 'org_admin' AND removed_at IS NULL",
+    )
+    .bind(org_id)
+    .fetch_all(&mut *conn)
+    .await?;
+    for admin in admins {
+        sqlx::query(
+            "INSERT INTO notifications (id, user_id, org_id, kind, title, body,
+                                        task_id, expense_id, customer_id, lead_id, pushed_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())",
+        )
+        .bind(Uuid::now_v7())
+        .bind(admin)
+        .bind(org_id)
+        .bind(kind)
+        .bind(title)
+        .bind(body)
+        .bind(links.task_id)
+        .bind(links.expense_id)
+        .bind(links.customer_id)
+        .bind(links.lead_id)
+        .execute(&mut *conn)
+        .await?;
+    }
     Ok(())
 }
 
@@ -180,6 +239,7 @@ struct Row {
     task_id: Option<Uuid>,
     expense_id: Option<Uuid>,
     customer_id: Option<Uuid>,
+    lead_id: Option<Uuid>,
 }
 
 /*
@@ -195,7 +255,7 @@ pub async fn page(
 ) -> ApiResult<NotificationPage> {
     let mut rows: Vec<Row> = sqlx::query_as(
         "SELECT id, kind, title, body, created_at, read_at IS NOT NULL AS read,
-                task_id, expense_id, customer_id
+                task_id, expense_id, customer_id, lead_id
          FROM notifications
          WHERE user_id = $1 AND org_id IS NOT DISTINCT FROM $2
            AND ($4::timestamptz IS NULL OR (created_at, id) < ($4, $5))
@@ -229,6 +289,7 @@ pub async fn page(
                 task_id: r.task_id,
                 expense_id: r.expense_id,
                 customer_id: r.customer_id,
+                lead_id: r.lead_id,
             })
             .collect(),
         unread_count,

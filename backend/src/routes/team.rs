@@ -55,6 +55,10 @@ pub struct Member {
     pub pay_type: Option<PayType>,
     pub status: MemberStatus,
     pub added_at: DateTime<Utc>,
+    // Not yet approved or cancelled: they stay with them if they're removed.
+    pub open_tasks: i64,
+    // Those they registered that weren't turned down.
+    pub customers: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -84,6 +88,8 @@ struct MemberRow {
     pay_type: Option<PayType>,
     invited: bool,
     added_at: DateTime<Utc>,
+    open_tasks: i64,
+    customers: i64,
 }
 
 impl From<MemberRow> for Member {
@@ -100,6 +106,8 @@ impl From<MemberRow> for Member {
                 MemberStatus::Active
             },
             added_at: r.added_at,
+            open_tasks: r.open_tasks,
+            customers: r.customers,
         }
     }
 }
@@ -138,7 +146,13 @@ async fn list_members(
     let mut rows: Vec<MemberRow> = sqlx::query_as(
         "SELECT m.id AS membership_id, u.id AS user_id, u.name, u.email,
                 m.role, m.pay_type, u.password_hash IS NULL AS invited,
-                m.created_at AS added_at
+                m.created_at AS added_at,
+                (SELECT count(*) FROM tasks t
+                 WHERE t.org_id = m.org_id AND t.assignee_id = m.user_id
+                   AND t.status NOT IN ('approved', 'cancelled')) AS open_tasks,
+                (SELECT count(*) FROM customers c
+                 WHERE c.org_id = m.org_id AND c.registered_by = m.user_id
+                   AND c.kyc_status <> 'rejected') AS customers
          FROM memberships m JOIN users u ON u.id = m.user_id
          WHERE m.org_id = $1
            AND m.removed_at IS NULL
@@ -266,7 +280,13 @@ async fn add_member(
          )
          SELECT m.id AS membership_id, u.id AS user_id, u.name, u.email,
                 m.role, m.pay_type, u.password_hash IS NULL AS invited,
-                m.created_at AS added_at
+                m.created_at AS added_at,
+                (SELECT count(*) FROM tasks t
+                 WHERE t.org_id = $3 AND t.assignee_id = m.user_id
+                   AND t.status NOT IN ('approved', 'cancelled')) AS open_tasks,
+                (SELECT count(*) FROM customers c
+                 WHERE c.org_id = $3 AND c.registered_by = m.user_id
+                   AND c.kyc_status <> 'rejected') AS customers
          FROM m JOIN users u ON u.id = m.user_id",
     )
     .bind(Uuid::now_v7())
@@ -431,6 +451,7 @@ async fn remove_member(
         == 1;
 
     if removed {
+        crate::routes::leads::release(&mut tx, admin.org_id, user_id).await?;
         tx.commit().await?;
         tracing::info!(org_id = %admin.org_id, %user_id, by = %admin.user_id, "member removed");
         return Ok(StatusCode::NO_CONTENT);

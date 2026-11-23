@@ -40,6 +40,11 @@ impl Modify for AuthSchemes {
                 crate::extract::SESSION_COOKIE,
             ))),
         );
+        // A company's lead key, for its landing page's server (F20).
+        components.add_security_scheme(
+            "leadKey",
+            SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).build()),
+        );
     }
 }
 

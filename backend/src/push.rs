@@ -210,6 +210,7 @@ struct Claimed {
     task_id: Option<Uuid>,
     expense_id: Option<Uuid>,
     customer_id: Option<Uuid>,
+    lead_id: Option<Uuid>,
     created_at: DateTime<Utc>,
 }
 
@@ -238,6 +239,7 @@ fn message(n: &Claimed, token: &str, sound: bool) -> Value {
         ("task_id", n.task_id),
         ("expense_id", n.expense_id),
         ("customer_id", n.customer_id),
+        ("lead_id", n.lead_id),
     ] {
         if let Some(id) = id {
             data[key] = id.to_string().into();
@@ -272,7 +274,7 @@ pub async fn push_once(db: &PgPool, sender: &mut Sender) -> ApiResult<usize> {
                       LIMIT $1
                       FOR UPDATE SKIP LOCKED)
          RETURNING id, user_id, org_id, kind, title, body,
-                   task_id, expense_id, customer_id, created_at",
+                   task_id, expense_id, customer_id, lead_id, created_at",
     )
     .bind(BATCH)
     .fetch_all(&mut *tx)
@@ -350,6 +352,7 @@ mod tests {
             task_id: Some(Uuid::max()),
             expense_id: None,
             customer_id: None,
+            lead_id: None,
             created_at: Utc::now(),
         }
     }
