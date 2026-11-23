@@ -77,8 +77,8 @@ describe('Amount', () => {
         <Amount paise={500000} tone="credit" />
       </>,
     );
-    expect(screen.getByText('₹1,85,000.00')).toBeInTheDocument();
-    expect(screen.getByText('−₹5,000.00')).toBeInTheDocument();
+    expect(screen.getByText('₹1,85,000')).toBeInTheDocument();
+    expect(screen.getByText('−₹5,000')).toBeInTheDocument();
   });
 
   it('summary lists lines and the total', () => {
@@ -89,8 +89,8 @@ describe('Amount', () => {
       />,
     );
     expect(screen.getByText('Subsidy')).toBeInTheDocument();
-    expect(screen.getByText('−₹78,000.00')).toBeInTheDocument();
-    expect(screen.getByText('₹42,000.00')).toBeInTheDocument();
+    expect(screen.getByText('−₹78,000')).toBeInTheDocument();
+    expect(screen.getByText('₹42,000')).toBeInTheDocument();
   });
 });
 

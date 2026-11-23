@@ -15,7 +15,7 @@ export function ListRow({ title, meta, end, onClick }: ListRowProps) {
   const content = (
     <>
       <span className="sc-row-main">
-        <span className="t-title">{title}</span>
+        <span className="t-row-title">{title}</span>
         {meta && <span className="t-label muted">{meta}</span>}
       </span>
       {end && <span className="sc-row-end">{end}</span>}

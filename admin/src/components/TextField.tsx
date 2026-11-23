@@ -1,13 +1,13 @@
 import { useId, type InputHTMLAttributes } from 'react';
 
 export interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
-  /** Field label, sentence case; shown in uppercase. */
+  /** Field label, sentence case. */
   label: string;
   /** Help text under the field. */
   help?: string;
   /** Error text; replaces help and marks the field invalid. */
   error?: string;
-  /** Mono with tabular figures: amounts, kW, readings. */
+  /** Tabular figures: amounts, kW, readings. */
   numeric?: boolean;
 }
 

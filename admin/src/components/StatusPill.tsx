@@ -1,7 +1,7 @@
 import { toneClass, type Tone } from './tone';
 
 export interface StatusPillProps {
-  /** The status word, sentence case; shown in uppercase. */
+  /** The status word, sentence case. */
   label: string;
   tone?: Tone;
 }
