@@ -12,6 +12,7 @@ import 'package:solacliq/l10n/l10n.dart';
 import 'package:solacliq/tasks/cubit/task_cubit.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/tasks/view/capture_problems.dart';
+import 'package:solacliq/tasks/view/location_note.dart';
 import 'package:solacliq/tasks/view/task_text.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 
@@ -46,6 +47,8 @@ class _ProofCameraPageState extends State<ProofCameraPage>
   bool _restartOnResume = false;
   String? _slotId;
   bool _flash = false;
+  // They've read why location is used, this visit.
+  bool _explained = false;
   bool _shooting = false;
 
   @override
@@ -132,6 +135,18 @@ class _ProofCameraPageState extends State<ProofCameraPage>
     }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      // Say why before Android asks (Google Play's prominent disclosure).
+      // Once a visit: back from Settings only asks Android again.
+      if (!_explained) {
+        if (!mounted) return;
+        if (!await showLocationNote(context)) {
+          if (mounted && context.canPop()) _finish();
+          return _update(
+            () => _problems.location = CaptureProblem.locationDenied,
+          );
+        }
+        _explained = true;
+      }
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied ||

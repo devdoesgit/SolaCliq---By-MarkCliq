@@ -90,6 +90,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Why, before Android is asked.
+    expect(location.asks, 0);
+    await tester.tapKey('location_note_continue');
+    await tester.pumpAndSettle();
   }
 
   Future<void> dialogClosed(WidgetTester tester) async {

@@ -147,7 +147,7 @@ class _ProblemFormState extends State<_ProblemForm> {
                           color: SolaColors.muted,
                         ),
                       )
-                    : FilePreview(image: MemoryImage(photo.bytes)),
+                    : FilePreview(image: pickedImage(photo)),
               ),
               Expanded(
                 child: SolaText(
