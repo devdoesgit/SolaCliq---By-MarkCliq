@@ -72,6 +72,8 @@ pub enum ExpenseStatus {
     NeedsFix,
     // Approved and paid out (with salary or cash).
     Paid,
+    // Not accepted, with the admin's reason. Final.
+    Rejected,
 }
 
 // The contract's `TaskRef`: the task an expense was for.
@@ -240,10 +242,13 @@ impl Row {
             spent_on: self.spent_on,
             status: self.status,
             has_receipt: receipt_url.is_some(),
-            // The admin's reason matters only while it's being fixed.
-            admin_note: self
-                .admin_note
-                .filter(|_| self.status == ExpenseStatus::NeedsFix),
+            // The admin's reason: while it's being fixed, or why it was refused.
+            admin_note: self.admin_note.filter(|_| {
+                matches!(
+                    self.status,
+                    ExpenseStatus::NeedsFix | ExpenseStatus::Rejected
+                )
+            }),
             admin_name: self.admin_name,
             task: match (self.task_id, self.task_title, self.task_customer) {
                 (Some(id), Some(title), Some(customer_name)) => Some(ExpenseTask {
@@ -413,6 +418,22 @@ async fn create_expense(
     .await?;
 
     let expense = load(&mut tx, state.storage.as_ref(), &member, id).await?;
+    crate::notify::add_for_admins(
+        &mut tx,
+        member.org_id,
+        crate::notify::Kind::ExpenseSubmitted,
+        "Expense to check",
+        &format!(
+            "{} · {}",
+            expense.reference,
+            crate::routes::quotes::rupees(expense.amount)
+        ),
+        crate::notify::Links {
+            expense_id: Some(id),
+            ..Default::default()
+        },
+    )
+    .await?;
     let body = serde_json::to_value(&expense).map_err(|_| ApiError::internal())?;
     if !idempotency::save(
         &mut tx,
@@ -539,6 +560,22 @@ async fn replace_expense_receipt(
     .execute(&mut *tx)
     .await?;
     let expense = load(&mut tx, state.storage.as_ref(), &member, path.expense_id).await?;
+    crate::notify::add_for_admins(
+        &mut tx,
+        member.org_id,
+        crate::notify::Kind::ExpenseSubmitted,
+        "Expense fixed",
+        &format!(
+            "{} · {}",
+            expense.reference,
+            crate::routes::quotes::rupees(expense.amount)
+        ),
+        crate::notify::Links {
+            expense_id: Some(path.expense_id),
+            ..Default::default()
+        },
+    )
+    .await?;
     tx.commit().await?;
     Ok(Json(expense))
 }
