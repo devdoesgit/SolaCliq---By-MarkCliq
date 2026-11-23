@@ -926,3 +926,8 @@ Change a decision by adding a new line, not by editing an old one.
   MarkCliq's ("our app leads we will manage independently").
 - **Lead notices go with the app release.** An older app can't read the
   new notification kinds, so the server with F20 ships with the new APK.
+- **Team edit is role and pay, not personal details (F21, 2026-11-23,
+  owner).** An account can belong to several companies, so name, phone,
+  email and bank stay the person's own ("we let the person edit, not the
+  admin"). A role changes only with nothing open in the old role; pay
+  applies from now on.

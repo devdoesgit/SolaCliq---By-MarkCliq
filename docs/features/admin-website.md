@@ -222,7 +222,6 @@ Different from the artboards, on purpose:
 
 Drawn, and not built (each needs a backend and a decision):
 
-- **Change a member's role** or pay type.
 - **Create the next task on approve**, with its installer.
 - **Edit the note** on a task.
 - **Reject a commission** (it can be approved at a changed amount).
@@ -235,3 +234,6 @@ Built since (2026-11-23): **Leads** (F20, the company's own landing-page
 leads: the artboard's cards with Call and "Give to", not its quote
 requests with Accept and Pass) and **Stage templates** (F19, as the
 Settings artboard, with a name field the artboard lacks).
+Also built (2026-11-23): **changing a member's role or pay** (F21), as
+the member artboards: role and pay cards in place, "Save changes" with
+a confirm.

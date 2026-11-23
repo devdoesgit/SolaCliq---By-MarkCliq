@@ -39,6 +39,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F18 | Account deletion, KYC retention, notices | built 2026-11-22; retention off until switched on; defaults to confirm (`features/F18-data-rights.md`) |
 | F19 | Stage templates per company | built 2026-11-23: backend, website editor, New task fills from it, app shows the company's names (`features/F19-stage-templates.md`) |
 | F20 | Landing-page leads | built 2026-11-23: lead key and intake, website Leads, agents' leads in the app (`features/F20-leads.md`) |
+| F21 | Editing a team member | built 2026-11-23: role and pay type, resend invite; people keep editing their own details (`features/F21-team-edit.md`) |
 
 ## Which part each feature touches
 
@@ -64,6 +65,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F17 | Attendance days, start and end of day | "Start day" and "End day" on Home | Today and month views, CSV |
 | F19 | `org_stages`, `/stages`, names everywhere | The company's stage names | Stage templates in Settings; New task fills from them |
 | F20 | `leads`, lead key, `POST /leads` | "Leads for you" on Customers, lead page | Leads, lead page, key in Settings |
+| F21 | `PATCH` member, resend invite | New role's home on next load | Role and pay on the member page, Resend invite |
 
 ## Scope per feature
 

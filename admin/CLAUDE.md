@@ -7,7 +7,7 @@ KYC, tasks and proof, expenses, commissions, payments, UPI id (W0 to W4,
 `../docs/features/admin-website.md`), and the public legal pages
 (`/terms`, `/privacy`, `/company-terms`, made from `../legal/*.md` at
 build time; F16). Also built: the overview and notifications (W5), logo and
-attendance (W6), stage templates (F19) and leads (F20).
+attendance (W6), stage templates (F19), leads (F20) and editing a member (F21).
 Workers, agents and customers use the mobile app.
 
 Stack and API conventions: `../docs/architecture.md`.
