@@ -77,10 +77,6 @@
     "@codeSent": {
         "description": "Confirms a new code was requested."
     },
-    "emailVerified": "Email verified. Log in to continue.",
-    "@emailVerified": {
-        "description": "Shown on the log in screen after verifying."
-    },
     "forgotPassword": "Forgot password?",
     "@forgotPassword": {
         "description": "Link on the log in screen."
@@ -92,10 +88,6 @@
     "passwordChanged": "Password changed. Log in with your new password.",
     "@passwordChanged": {
         "description": "Shown on the log in screen after a reset."
-    },
-    "verifyNow": "Verify email",
-    "@verifyNow": {
-        "description": "Action when logging in with an unverified email."
     },
     "logOut": "Log out",
     "@logOut": {
@@ -140,10 +132,6 @@
     "failInvalidCredentials": "Email or password is wrong.",
     "@failInvalidCredentials": {
         "description": "Login failed. Never says which."
-    },
-    "failEmailUnverified": "Verify your email before logging in.",
-    "@failEmailUnverified": {
-        "description": "Login with an unverified email."
     },
     "failCodeInvalid": "That code is wrong or has expired. Check the email, or send a new one.",
     "@failCodeInvalid": {
@@ -212,10 +200,6 @@
     "back": "Back",
     "@back": {
         "description": "Back button label."
-    },
-    "failPasswordNotSet": "Your account was set up for you. Create a password to log in.",
-    "@failPasswordNotSet": {
-        "description": "Login to an account an agent or admin created, before a password is chosen."
     },
     "setUpAccount": "Set up your account",
     "@setUpAccount": {
@@ -775,6 +759,27 @@
     "@signupBody": {
         "description": "Sign up text."
     },
+    "signupDetailsTitle": "Finish your account",
+    "@signupDetailsTitle": {
+        "description": "Sign-up step 3: the details."
+    },
+    "signupDetailsBody": "{email} is confirmed. Add your details and choose a password.",
+    "@signupDetailsBody": {
+        "description": "Sign-up step 3: the email the code proved.",
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
+    },
+    "failSignupExpired": "That took too long, or this account is already set up. Start again.",
+    "@failSignupExpired": {
+        "description": "The sign-up's setup token no longer works."
+    },
+    "startAgain": "Start again",
+    "@startAgain": {
+        "description": "Back to the first step of sign-up."
+    },
     "signupPasswordRule": "At least 8 characters, with a number.",
     "@signupPasswordRule": {
         "description": "Under the sign up form."
@@ -1161,6 +1166,10 @@
     "@statusApproved": {
         "description": "Status."
     },
+    "statusRejected": "Not accepted",
+    "@statusRejected": {
+        "description": "Status: an expense the admin refused. Final."
+    },
     "statusNeedsFix": "Fix receipt",
     "@statusNeedsFix": {
         "description": "Status."
@@ -1200,6 +1209,47 @@
                 "type": "String"
             }
         }
+    },
+    "deleteAccount": "Delete account",
+    "@deleteAccount": {
+        "description": "Link and sheet title."
+    },
+    "deleteAccountBody": "This can't be undone. Your login and personal details are erased. A company's records of your work or install stay with that company, with your name on them.",
+    "@deleteAccountBody": {
+        "description": "What deleting does."
+    },
+    "deleteAccountPassword": "Enter your password.",
+    "@deleteAccountPassword": {
+        "description": "Error: the password is needed to delete."
+    },
+    "deleteAccountConfirm": "Delete for good",
+    "@deleteAccountConfirm": {
+        "description": "Button: deletes the account."
+    },
+    "failPasswordIncorrect": "That password isn't right.",
+    "@failPasswordIncorrect": {
+        "description": "Deleting the account with a wrong password."
+    },
+    "failAdminAccount": "An admin's account can't be deleted here. Write to info@markcliq.com and we'll close it.",
+    "@failAdminAccount": {
+        "description": "An admin trying to delete their account."
+    },
+    "consentNotice": "Show the customer: {company} stores their details and documents to install the system and claim the subsidy. Their agent and the company's admin see the documents. They're deleted 30 days after a rejection, or a year after handover.",
+    "@consentNotice": {
+        "description": "What the customer agrees to.",
+        "placeholders": {
+            "company": {
+                "type": "String"
+            }
+        }
+    },
+    "locationNoteTitle": "Photos record where they were taken",
+    "@locationNoteTitle": {
+        "description": "Before the location permission."
+    },
+    "locationNoteBody": "Photos are tagged with where they were taken, so your company can see the work was done on site. The app reads your location only while this camera is open.",
+    "@locationNoteBody": {
+        "description": "Before the location permission."
     },
     "cancel": "Cancel",
     "@cancel": {
@@ -1637,6 +1687,53 @@
     "@errorCustomerConsent": {
         "description": "Error on the documents step."
     },
+    "filesUploaded": "{count} files",
+    "@filesUploaded": {
+        "description": "Pill: how many of a document's files are up (2 to 5).",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "sideFront": "Front",
+    "@sideFront": {
+        "description": "A document's side."
+    },
+    "sideBack": "Back",
+    "@sideBack": {
+        "description": "A document's side."
+    },
+    "fileNumbered": "File {n}",
+    "@fileNumbered": {
+        "description": "One file of a document.",
+        "placeholders": {
+            "n": {
+                "type": "String"
+            }
+        }
+    },
+    "addAnotherFile": "Add more",
+    "@addAnotherFile": {
+        "description": "Adds another file to a document."
+    },
+    "removeFile": "Remove",
+    "@removeFile": {
+        "description": "Takes a file off a document."
+    },
+    "uploadingPercent": "Uploading, {percent}%",
+    "@uploadingPercent": {
+        "description": "One file's progress.",
+        "placeholders": {
+            "percent": {
+                "type": "String"
+            }
+        }
+    },
+    "waitForUploads": "Wait for the uploads",
+    "@waitForUploads": {
+        "description": "Disabled button while a file is on its way."
+    },
     "uploading": "Uploading",
     "@uploading": {
         "description": "Spoken while a document uploads."
@@ -2050,6 +2147,10 @@
     "send": "Send",
     "@send": {
         "description": "Button."
+    },
+    "notAcceptedByAdmin": "Not accepted by admin",
+    "@notAcceptedByAdmin": {
+        "description": "Banner over the admin's reason for refusing an expense."
     },
     "sentBackByAdmin": "Sent back by admin",
     "@sentBackByAdmin": {
@@ -3887,11 +3988,108 @@
     "attendanceWorkingSince": "Working since {time}",
     "@attendanceWorkingSince": {
         "description": "The card while the day is on. time: the start, e.g. 9:12 AM.",
-        "placeholders": {"time": {"type": "String"}}
+        "placeholders": {
+            "time": {
+                "type": "String"
+            }
+        }
     },
     "attendanceSpan": "{start} to {end} · {hours} h {minutes} m",
     "@attendanceSpan": {
         "description": "An ended day: its start, end and worked time.",
-        "placeholders": {"start": {"type": "String"}, "end": {"type": "String"}, "hours": {"type": "int"}, "minutes": {"type": "int"}}
+        "placeholders": {
+            "start": {
+                "type": "String"
+            },
+            "end": {
+                "type": "String"
+            },
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "leadsForYou": "Leads for you",
+    "@leadsForYou": {
+        "description": "Heading over the leads the admin gave a Sales Agent, on their Customers tab."
+    },
+    "leadTitle": "Lead",
+    "@leadTitle": {
+        "description": "Lead page title."
+    },
+    "leadStatusNew": "New",
+    "@leadStatusNew": {
+        "description": "A lead nobody has called yet."
+    },
+    "leadStatusContacted": "Contacted",
+    "@leadStatusContacted": {
+        "description": "A lead that was called."
+    },
+    "leadStatusWon": "Won",
+    "@leadStatusWon": {
+        "description": "A lead that became a customer."
+    },
+    "leadStatusLost": "Lost",
+    "@leadStatusLost": {
+        "description": "A lead that won't go ahead."
+    },
+    "leadStanding": "Where it stands",
+    "@leadStanding": {
+        "description": "Label of the lead status choice."
+    },
+    "leadNote": "Note",
+    "@leadNote": {
+        "description": "Label of the note on a lead."
+    },
+    "leadNoteHint": "What they said, and what's next",
+    "@leadNoteHint": {
+        "description": "Placeholder of the note on a lead."
+    },
+    "leadSaveNote": "Save note",
+    "@leadSaveNote": {
+        "description": "Button that saves the note on a lead."
+    },
+    "leadSaved": "Saved",
+    "@leadSaved": {
+        "description": "Shown after a lead's status or note is saved."
+    },
+    "leadLoadFailed": "Couldn't load this lead",
+    "@leadLoadFailed": {
+        "description": "A lead didn't load."
+    },
+    "leadSaveFailed": "Couldn't save that",
+    "@leadSaveFailed": {
+        "description": "Changing a lead failed."
+    },
+    "leadWonHint": "Won? Add them as a customer with the + tab, as you do for anyone.",
+    "@leadWonHint": {
+        "description": "Shown when a lead is marked won."
+    },
+    "leadMonthlyBill": "Monthly bill",
+    "@leadMonthlyBill": {
+        "description": "A lead's answer: their electricity bill."
+    },
+    "leadRoof": "Roof",
+    "@leadRoof": {
+        "description": "A lead's answer: their roof."
+    },
+    "leadEmail": "Email",
+    "@leadEmail": {
+        "description": "A lead's email."
+    },
+    "leadCity": "City",
+    "@leadCity": {
+        "description": "A lead's city."
+    },
+    "leadSource": "Came from",
+    "@leadSource": {
+        "description": "Where a lead came from, e.g. Meta ad."
+    },
+    "leadMessage": "Their message",
+    "@leadMessage": {
+        "description": "What the lead wrote on the form."
     }
 }
