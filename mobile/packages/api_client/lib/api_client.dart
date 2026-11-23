@@ -136,6 +136,7 @@ export 'package:api_client/src/model/me.dart';
 export 'package:api_client/src/model/member.dart';
 export 'package:api_client/src/model/member_page.dart';
 export 'package:api_client/src/model/member_status.dart';
+export 'package:api_client/src/model/member_update.dart';
 export 'package:api_client/src/model/membership.dart';
 export 'package:api_client/src/model/membership_org.dart';
 export 'package:api_client/src/model/my_document.dart';

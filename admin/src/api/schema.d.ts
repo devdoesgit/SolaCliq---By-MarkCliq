@@ -334,6 +334,53 @@ export interface paths {
         delete: operations["removeMember"];
         options?: never;
         head?: never;
+        /**
+         * Change a worker's or agent's role or pay type
+         * @description Org admin only (F21). `pay_type` (agents) applies from now on:
+         *     customers already registered keep their commission. `role` between
+         *     `worker` and `agent` only when nothing is open in the old role
+         *     (409 `member.has_open_work`, with what's open): an installer's
+         *     tasks assigned, in review or sent back; an agent's customers in
+         *     review or with them, commissions not yet paid, leads new or
+         *     contacted. Becoming an agent needs `pay_type`. The admin's own
+         *     membership can't change (422 `member.cannot_change_admin`). The
+         *     person's name, phone and email are theirs to edit, not here.
+         */
+        patch: operations["updateMember"];
+        trace?: never;
+    };
+    "/orgs/{org_id}/members/{user_id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+                user_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a member's invite again
+         * @description Org admin only (F21). For a member who hasn't set a password yet:
+         *     the same email as when they were added. 409
+         *     `member.already_set_up` once they have one. At most 3 an hour per
+         *     address (429 `auth.too_many_attempts`).
+         */
+        post: operations["resendInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -3081,6 +3128,11 @@ export interface components {
             role: components["schemas"]["Role"];
             pay_type?: components["schemas"]["PayType"];
         };
+        MemberUpdate: {
+            /** @enum {string} */
+            role?: "worker" | "agent";
+            pay_type?: components["schemas"]["PayType"];
+        };
         /**
          * @description Agents (shown as Sales) only, and always present for them.
          *     `commission` agents enter a commission on each customer they add;
@@ -5052,6 +5104,82 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    updateMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+                user_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberUpdate"];
+            };
+        };
+        responses: {
+            /** @description Done. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    resendInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The org the request is for; the caller needs a membership in it.
+                 *     Every `/orgs/{org_id}/...` request answers 403 with `org.not_member`
+                 *     (no membership, or it was removed), `org.role_not_allowed` (the
+                 *     endpoint is for another role), `org.pending` (MarkCliq hasn't
+                 *     approved the company yet), `org.suspended` or `org.rejected`. A
+                 *     company that isn't active gives its members none of its data, only
+                 *     its name and status in `/me`, so the app shows a message.
+                 */
+                org_id: components["parameters"]["OrgId"];
+                user_id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sent. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     registerOrg: {

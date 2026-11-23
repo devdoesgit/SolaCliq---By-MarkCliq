@@ -177,6 +177,8 @@ Class | Method | HTTP request | Description
 [*TeamApi*](doc/TeamApi.md) | [**addMember**](doc/TeamApi.md#addmember) | **POST** /orgs/{org_id}/members | Add a worker or agent
 [*TeamApi*](doc/TeamApi.md) | [**listMembers**](doc/TeamApi.md#listmembers) | **GET** /orgs/{org_id}/members | The org&#39;s admin, workers and agents
 [*TeamApi*](doc/TeamApi.md) | [**removeMember**](doc/TeamApi.md#removemember) | **DELETE** /orgs/{org_id}/members/{user_id} | Remove a worker or agent from the org
+[*TeamApi*](doc/TeamApi.md) | [**resendInvite**](doc/TeamApi.md#resendinvite) | **POST** /orgs/{org_id}/members/{user_id}/invite | Send a member&#39;s invite again
+[*TeamApi*](doc/TeamApi.md) | [**updateMember**](doc/TeamApi.md#updatemember) | **PATCH** /orgs/{org_id}/members/{user_id} | Change a worker&#39;s or agent&#39;s role or pay type
 [*UploadsApi*](doc/UploadsApi.md) | [**createUpload**](doc/UploadsApi.md#createupload) | **POST** /orgs/{org_id}/uploads | Get a presigned URL to upload one file for this company
 
 
@@ -291,6 +293,7 @@ Class | Method | HTTP request | Description
  - [Member](doc/Member.md)
  - [MemberPage](doc/MemberPage.md)
  - [MemberStatus](doc/MemberStatus.md)
+ - [MemberUpdate](doc/MemberUpdate.md)
  - [Membership](doc/Membership.md)
  - [MembershipOrg](doc/MembershipOrg.md)
  - [MyDocument](doc/MyDocument.md)

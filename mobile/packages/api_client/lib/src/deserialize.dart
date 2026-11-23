@@ -91,6 +91,7 @@ import 'package:api_client/src/model/logo_set.dart';
 import 'package:api_client/src/model/me.dart';
 import 'package:api_client/src/model/member.dart';
 import 'package:api_client/src/model/member_page.dart';
+import 'package:api_client/src/model/member_update.dart';
 import 'package:api_client/src/model/membership.dart';
 import 'package:api_client/src/model/membership_org.dart';
 import 'package:api_client/src/model/my_document.dart';
@@ -435,6 +436,8 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'MemberPage':
       return MemberPage.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'MemberStatus':
+    case 'MemberUpdate':
+      return MemberUpdate.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'Membership':
       return Membership.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'MembershipOrg':
