@@ -127,3 +127,9 @@ figures in the screens are illustrative.
 - `Ios2CustWorkspaces.dc.html`: Customer · workspaces
 - `Ios2SettingsCust.dc.html`: Settings · customer
 - `Ios2HelpCust.dc.html`: Help · customer
+
+## 5-admin: the admin website
+
+`5-admin/` is the canvas's page "v2 · 5 Admin web" (37 artboards,
+1280 x 800), copied 2026-11-23. Where the website differs, and why:
+`docs/features/admin-website.md`, "The admin design".

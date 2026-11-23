@@ -54,8 +54,7 @@ Keep these current. They are the record of what SolaCliq is and why.
 - `questioner.md`: open questions for the pilot vendor. Nothing in it is
   settled.
 - Design system: `design/tokens.json` is the source of truth for the
-  mobile app; the admin website reads `design/tokens.web.json` (the
-  markcliq.com tokens) until it is redone. `make tokens` generates both.
+  mobile app and the admin website; `make tokens` generates both.
   The mobile app follows the "iOS v2" design (SolaCliq Login canvas,
   https://claude.ai/artifact/8nC3HVvyGMq7v2wf3gVGUZ, pages "v2 · 1" to
   "v2 · 4"; a copy of each screen is in `design/ios-v2/`); the tokens hold
@@ -83,8 +82,10 @@ Keep these current. They are the record of what SolaCliq is and why.
   and pill buttons. `design/tokens.json` holds the values; apps generate
   theirs from it with `make tokens`. Deviations exist only where field use
   or accessibility needs them (WCAG AA contrast, 48px targets), and are
-  noted on the token. The admin website keeps the markcliq.com look until
-  it is redone, last.
+  noted on the token. The admin website follows the canvas's own admin
+  screens (page "v2 · 5 Admin web", copied to `design/ios-v2/5-admin/`),
+  not just the tokens, since 2026-11-23: open the artboard before
+  building or changing a screen, and compare a screenshot with it after.
 - Mobile: every interactive widget gets a `Key` and a Semantics label, so
   Claude can find and tap it through mobile-mcp and it is accessible to users.
 - Money is integer paise everywhere. Never floats.
