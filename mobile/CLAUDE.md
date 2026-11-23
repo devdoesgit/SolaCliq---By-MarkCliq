@@ -141,6 +141,7 @@ has it (`lib/app/dev/quick_forms.dart`).
 | Sales | Home, customers (filter, search), customer, fix a returned document (built) | F4 |
 | Sales | Add customer with commission (commission pay type), optional site location (built) | F4/F8 |
 | Sales | Earnings, payout bank (commission) or Alerts tab (salary) (built) | F8 |
+| Sales | Leads for you on Customers, lead (call, status, note) (built) | F20 |
 | Customer | Home, track install, payments (UPI or bank, claim), documents (built) | F9 |
 | Everyone | Profile, settings, help sheet, workspaces; Personal: Learn, notifications (built) | F1/F12 |
 | Everyone | Terms tick on sign-up and registration, "Before you start", legal links in Profile (built) | F16 |
