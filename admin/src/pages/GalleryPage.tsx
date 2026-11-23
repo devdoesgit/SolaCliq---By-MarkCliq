@@ -21,8 +21,8 @@ export function GalleryPage() {
   const tap = (what: string) => () => setTapped(what);
 
   return (
-    <main className="page stack" style={{ gap: 'var(--space-12)' }}>
-      <header className="stack" style={{ gap: 'var(--space-4)' }}>
+    <main className="page stack" style={{ gap: 'var(--space-34)' }}>
+      <header className="stack" style={{ gap: 'var(--space-16)' }}>
         <Link to="/" className="t-label">
           Back
         </Link>
@@ -36,7 +36,7 @@ export function GalleryPage() {
       </p>
 
       <Section title="Buttons">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-12)' }}>
           <Button variant="primary" onClick={tap('Save expense')}>
             Save expense
           </Button>
@@ -55,7 +55,7 @@ export function GalleryPage() {
       </Section>
 
       <Section title="Text fields">
-        <div className="stack" style={{ gap: 'var(--space-6)' }}>
+        <div className="stack" style={{ gap: 'var(--space-24)' }}>
           <TextField
             label="Customer name"
             placeholder="Full name"
@@ -67,7 +67,7 @@ export function GalleryPage() {
       </Section>
 
       <Section title="Status pills">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-8)' }}>
           <StatusPill label="Draft" />
           <StatusPill label="Approved" tone="success" />
           <StatusPill label="Flagged" tone="warning" />
@@ -120,8 +120,8 @@ export function GalleryPage() {
       </Section>
 
       <Section title="Amounts">
-        <div className="stack" style={{ gap: 'var(--space-6)' }}>
-          <div className="stack" style={{ gap: 'var(--space-1)' }}>
+        <div className="stack" style={{ gap: 'var(--space-24)' }}>
+          <div className="stack" style={{ gap: 'var(--space-4)' }}>
             <span className="t-label muted">Balance due</span>
             <Amount paise={4250000} tone="due" large />
           </div>
@@ -137,7 +137,7 @@ export function GalleryPage() {
       </Section>
 
       <Section title="Notices">
-        <div className="stack" style={{ gap: 'var(--space-3)', maxWidth: '40rem' }}>
+        <div className="stack" style={{ gap: 'var(--space-12)', maxWidth: '40rem' }}>
           <Notice title="Waiting for approval" body="MarkCliq is checking your GSTIN." />
           <Notice
             tone="warning"
@@ -159,7 +159,7 @@ export function GalleryPage() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="stack" style={{ gap: 'var(--space-6)' }}>
+    <section className="stack" style={{ gap: 'var(--space-24)' }}>
       <h2 className="t-h2">{title}</h2>
       {children}
     </section>

@@ -1,7 +1,6 @@
 /** Why an auth request failed, from the API's problem `code` or the network. */
 export type AuthErrorCode =
   | 'invalid_credentials'
-  | 'email_unverified'
   | 'code_invalid'
   | 'code_expired'
   | 'too_many_attempts'
@@ -13,7 +12,6 @@ export type AuthErrorCode =
 
 const API_CODES: Record<string, AuthErrorCode> = {
   'auth.invalid_credentials': 'invalid_credentials',
-  'account.email_unverified': 'email_unverified',
   'auth.code_invalid': 'code_invalid',
   'auth.code_expired': 'code_expired',
   'auth.too_many_attempts': 'too_many_attempts',
@@ -25,7 +23,6 @@ const API_CODES: Record<string, AuthErrorCode> = {
 /** What each failure tells the person. Same wording as the mobile app. */
 export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   invalid_credentials: 'Email or password is wrong.',
-  email_unverified: "Your email isn't verified yet. Use the code we emailed you.",
   code_invalid: 'That code is wrong or has expired. Check the email, or request a new one.',
   code_expired: 'That code has expired. Request a new one.',
   too_many_attempts: 'Too many tries. Wait a few minutes and try again.',

@@ -1,6 +1,9 @@
-import { Navigate, Outlet, useLocation } from 'react-router';
+import { Navigate, Outlet, useLocation, useSearchParams } from 'react-router';
+import { adminCompanies } from '../../app/org';
 import { Button, Notice } from '../../components';
-import { useMe } from './session';
+import { useMe, type Me } from './session';
+import { safeNextPath } from './validators';
+import { TermsGate } from './TermsGate';
 
 function Loading() {
   return (
@@ -41,14 +44,33 @@ export function RequireSession() {
     const to = next === '/' ? '/login' : `/login?next=${encodeURIComponent(next)}`;
     return <Navigate to={to} replace />;
   }
+  if ((me.terms.accepted_version ?? 0) < me.terms.current_version) return <TermsGate me={me} />;
   return <Outlet />;
 }
 
-/** Log in and password pages. Signed-in people go home instead. */
+/*
+  Where log in leads: the page that was opened
+  ----------------------------------------------------------------------
+  - unless it's a company this person doesn't manage: on a shared
+    computer `next` is the last person's
+*/
+function landing(me: Me, next: string | null): string {
+  const path = safeNextPath(next);
+  const company = /^\/c\/([^/?#]+)/.exec(path)?.[1];
+  return company && adminCompanies(me).some((m) => m.org.id === company) ? path : '/';
+}
+
+/*
+  Log in and password pages: signed-in people go on from them
+  ----------------------------------------------------------------------
+  - this is also what follows a log in: `me` arriving redraws this
+    before the page's own code after log in could navigate
+*/
 export function PublicOnly() {
   const { data: me, isPending, isError, refetch } = useMe();
+  const [params] = useSearchParams();
   if (isPending) return <Loading />;
   if (isError) return <SessionError retry={() => void refetch()} />;
-  if (me) return <Navigate to="/" replace />;
+  if (me) return <Navigate to={landing(me, params.get('next'))} replace />;
   return <Outlet />;
 }

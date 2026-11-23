@@ -1,15 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button, Notice, TextField } from '../components';
 import { AuthError } from '../features/auth/authErrors';
 import { AuthLayout } from '../features/auth/AuthLayout';
 import { PasswordField } from '../features/auth/PasswordField';
 import { useLogin } from '../features/auth/session';
-import { safeNextPath, validateEmail, validateExistingPassword } from '../features/auth/validators';
+import { validateEmail, validateExistingPassword } from '../features/auth/validators';
 
 export function LoginPage() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
   const login = useLogin();
   const [email, setEmail] = useState(params.get('email') ?? '');
   const [password, setPassword] = useState('');
@@ -30,18 +29,15 @@ export function LoginPage() {
     };
     setErrors(next);
     if (next.email || next.password) return;
-    login.mutate(
-      { email: email.trim(), password },
-      { onSuccess: () => navigate(safeNextPath(params.get('next')), { replace: true }) },
-    );
+    // PublicOnly moves on once this succeeds.
+    login.mutate({ email: email.trim(), password });
   }
 
   const failure = login.error instanceof AuthError ? login.error : null;
 
   return (
     <AuthLayout
-      title="Log in"
-      intro="For solar vendors using SolaCliq, and the MarkCliq team."
+      title="Admin log in"
       onSubmit={submit}
       notice={
         failure ? (
@@ -61,11 +57,19 @@ export function LoginPage() {
           >
             Forgot password?
           </Link>
+          {/* Always: log in can't say who is waiting to set up (QA-28). */}
+          <Link
+            className="t-label"
+            to={email.trim() ? `/forgot?email=${encodeURIComponent(email.trim())}` : '/forgot'}
+          >
+            First time here? Set your password
+          </Link>
+          <p className="auth-foot">Your EPC account is set up by MarkCliq.</p>
         </>
       }
     >
       <TextField
-        label="Email"
+        label="Work email"
         type="email"
         autoComplete="email"
         value={email}

@@ -74,14 +74,14 @@ function renderAt(path: string) {
 }
 
 async function logIn(email: string, password: string) {
-  await userEvent.type(screen.getByLabelText('Email'), email);
+  await userEvent.type(screen.getByLabelText(/^(Work email|Email)$/), email);
   await userEvent.type(screen.getByLabelText('Password'), password);
   await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
 }
 
 describe('validators', () => {
   it('checks email, new password and code', () => {
-    expect(validateEmail('')).toBe('Enter Email.');
+    expect(validateEmail('')).toBe('Enter an email address.');
     expect(validateEmail('nope')).toMatch(/name@example.com/);
     expect(validateEmail(' a@b.co ')).toBeUndefined();
     expect(validateNewPassword('short')).toBe('Use at least 8 characters.');
@@ -130,22 +130,22 @@ describe('fetchMe', () => {
 describe('log in', () => {
   it('signed out: the home page sends you to log in', async () => {
     renderAt('/');
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Admin log in' })).toBeInTheDocument();
   });
 
   it('checks fields before sending anything', async () => {
     renderAt('/login');
-    await screen.findByRole('heading', { name: 'Log in' });
+    await screen.findByRole('heading', { name: 'Admin log in' });
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(screen.getByText('Enter Email.')).toBeInTheDocument();
-    expect(screen.getByText('Enter Password.')).toBeInTheDocument();
+    expect(screen.getByText('Enter an email address.')).toBeInTheDocument();
+    expect(screen.getByText('Enter a password.')).toBeInTheDocument();
     expect(postMock).not.toHaveBeenCalled();
   });
 
   it('wrong details show one message for both', async () => {
     postHandler = () => answer(401, problem(401, 'auth.invalid_credentials'));
     renderAt('/login');
-    await screen.findByRole('heading', { name: 'Log in' });
+    await screen.findByRole('heading', { name: 'Admin log in' });
     await logIn('ravi@example.com', 'wrong');
     expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is wrong.');
   });
@@ -158,7 +158,7 @@ describe('log in', () => {
       return answer(200, { user: orgAdmin });
     };
     renderAt('/login');
-    await screen.findByRole('heading', { name: 'Log in' });
+    await screen.findByRole('heading', { name: 'Admin log in' });
     await logIn(' ravi@example.com ', 'secret');
     expect(await screen.findByRole('heading', { name: 'Hello, Ravi Admin' })).toBeInTheDocument();
     expect(screen.getByText('Example Solar (illustrative)')).toBeInTheDocument();
@@ -171,7 +171,7 @@ describe('log in', () => {
       return answer(200, { user: orgAdmin });
     };
     const router = renderAt('/login?next=%2F%2Fevil.example');
-    await screen.findByRole('heading', { name: 'Log in' });
+    await screen.findByRole('heading', { name: 'Admin log in' });
     await logIn('ravi@example.com', 'secret');
     await screen.findByRole('heading', { name: 'Hello, Ravi Admin' });
     expect(router.state.location.pathname).toBe('/');
@@ -199,13 +199,26 @@ describe('log in', () => {
     };
     renderAt('/');
     await userEvent.click(await screen.findByRole('button', { name: 'Log out' }));
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Admin log in' })).toBeInTheDocument();
   });
 
   it('a server outage shows a retry, not the log in page', async () => {
     getMock.mockResolvedValue(answer(503, {}));
     renderAt('/');
     expect(await screen.findByRole('alert')).toHaveTextContent("Can't reach the server");
+  });
+});
+
+describe('a new owner', () => {
+  it('can always set a first password, whatever log in says', async () => {
+    postHandler = () => answer(401, problem(401, 'auth.invalid_credentials'));
+    renderAt('/login');
+    await screen.findByRole('heading', { name: 'Admin log in' });
+    await logIn('ravi@example.com', 'anything');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is wrong.');
+    expect(
+      screen.getByRole('link', { name: 'First time here? Set your password' }),
+    ).toHaveAttribute('href', '/forgot?email=ravi%40example.com');
   });
 });
 
@@ -232,7 +245,7 @@ describe('password reset', () => {
     expect(
       await screen.findByText('Password changed. Log in with your new password.'),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toHaveValue('ravi@example.com');
+    expect(screen.getByLabelText(/^(Work email|Email)$/)).toHaveValue('ravi@example.com');
     expect(calls).toEqual(['/auth/password/forgot', '/auth/password/reset']);
   });
 

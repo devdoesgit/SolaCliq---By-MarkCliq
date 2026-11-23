@@ -8,17 +8,17 @@ const CODE = /^\d{6}$/;
 
 export function validateEmail(value: string): string | undefined {
   const v = value.trim();
-  if (!v) return 'Enter Email.';
+  if (!v) return 'Enter an email address.';
   return EMAIL.test(v) ? undefined : 'Enter an email like name@example.com.';
 }
 
 /** For log in: anything non-empty, since old passwords may predate rules. */
 export function validateExistingPassword(value: string): string | undefined {
-  return value ? undefined : 'Enter Password.';
+  return value ? undefined : 'Enter a password.';
 }
 
 export function validateNewPassword(value: string): string | undefined {
-  if (!value) return 'Enter Password.';
+  if (!value) return 'Enter a password.';
   return value.length < 8 ? 'Use at least 8 characters.' : undefined;
 }
 
