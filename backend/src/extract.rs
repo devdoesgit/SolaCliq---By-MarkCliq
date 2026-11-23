@@ -106,7 +106,7 @@ impl axum::extract::FromRequestParts<crate::AppState> for AuthUser {
 }
 
 /// `Authorization: Bearer abc` → `Some("abc")`.
-fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
+pub(crate) fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
     headers
         .get(axum::http::header::AUTHORIZATION)?
         .to_str()

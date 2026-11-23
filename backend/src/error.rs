@@ -142,6 +142,15 @@ impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
         match e {
             sqlx::Error::RowNotFound => Self::not_found(),
+            /*
+                A NUL character in some text
+                ----------------------------------------------------------
+                - valid in JSON and in a URL, refused by Postgres (22021
+                  in text, 22P05 in jsonb): the caller's mistake, so 422
+            */
+            sqlx::Error::Database(d) if matches!(d.code().as_deref(), Some("22021" | "22P05")) => {
+                Self::validation(Vec::new()).detail("Text can't hold that character.")
+            }
             e => {
                 tracing::error!(error = %e, "database error");
                 Self::internal()
