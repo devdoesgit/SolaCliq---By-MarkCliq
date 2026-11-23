@@ -1,6 +1,6 @@
-/* Base styles, matching markcliq.com. Values come from tokens.css
-   (generated from design/tokens.json); never hard-code one that exists
-   there. */
+/* Base styles: the app's iOS v2 design on the web. Values come from
+   tokens.css (generated from design/tokens.json); never hard-code one
+   that exists there. */
 
 *,
 *::before,
@@ -11,13 +11,16 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--bg-stone-bottom);
 }
 
 body {
   margin: 0;
-  background: var(--surface);
+  min-height: 100vh;
+  background: linear-gradient(var(--bg-stone-top), var(--bg-stone-bottom));
   color: var(--ink);
-  font-family: var(--text-body-family);
+  /* Inter is bundled; the token's stack covers the rest. */
+  font-family: 'Inter Variable', var(--font-sans);
   font-size: var(--text-body-size);
   line-height: var(--text-body-line-height);
   font-weight: var(--text-body-weight);
@@ -25,110 +28,102 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 ::selection {
-  background: color-mix(in oklab, var(--accent) 20%, transparent);
+  background: var(--butter);
 }
 
 :focus-visible {
-  outline: var(--focus-width) solid var(--focus);
-  outline-offset: var(--focus-width);
+  outline: var(--space-2) solid var(--focus);
+  outline-offset: var(--space-2);
+}
+
+/* Focused by the page on navigation, not something to act on. */
+main:focus {
+  outline: none;
 }
 
 h1,
 h2,
 h3,
-p {
+p,
+dl,
+dd {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 a {
-  color: var(--accent);
-  text-underline-offset: 3px;
+  color: inherit;
+  text-underline-offset: var(--space-4);
 }
 
-/* Type scale. Headings and labels are uppercase, as on markcliq.com. */
-
-.t-display,
-.t-h1,
-.t-h2 {
-  text-transform: uppercase;
-}
+/* Type scale */
 
 .t-display {
-  font-family: var(--text-display-family);
-  font-size: var(--text-display-size);
-  line-height: var(--text-display-line-height);
-  font-weight: var(--text-display-weight);
-  letter-spacing: var(--text-display-tracking);
-}
-
-.t-h1 {
-  font-family: var(--text-h1-family);
-  font-size: var(--text-h1-size);
-  line-height: var(--text-h1-line-height);
-  font-weight: var(--text-h1-weight);
-  letter-spacing: var(--text-h1-tracking);
-}
-
-.t-h2 {
-  font-family: var(--text-h2-family);
-  font-size: var(--text-h2-size);
-  line-height: var(--text-h2-line-height);
-  font-weight: var(--text-h2-weight);
-  letter-spacing: var(--text-h2-tracking);
-}
-
-.t-title {
-  font-family: var(--text-title-family);
   font-size: var(--text-title-size);
   line-height: var(--text-title-line-height);
   font-weight: var(--text-title-weight);
+  letter-spacing: var(--text-title-tracking);
 }
 
-.t-body {
-  font-family: var(--text-body-family);
-  font-size: var(--text-body-size);
-  line-height: var(--text-body-line-height);
-  font-weight: var(--text-body-weight);
+.t-h1 {
+  font-size: var(--text-sheet-title-size);
+  line-height: var(--text-sheet-title-line-height);
+  font-weight: var(--text-sheet-title-weight);
+  letter-spacing: var(--text-sheet-title-tracking);
+}
+
+.t-h2 {
+  font-size: var(--text-section-size);
+  line-height: var(--text-section-line-height);
+  font-weight: var(--text-section-weight);
+  letter-spacing: var(--text-section-tracking);
+}
+
+.t-row-title {
+  font-size: var(--text-row-title-size);
+  line-height: var(--text-row-title-line-height);
+  font-weight: var(--text-row-title-weight);
 }
 
 .t-body-sm {
-  font-family: var(--text-body-sm-family);
-  font-size: var(--text-body-sm-size);
-  line-height: var(--text-body-sm-line-height);
-  font-weight: var(--text-body-sm-weight);
+  font-size: var(--text-small-size);
+  line-height: var(--text-small-line-height);
+  font-weight: var(--text-small-weight);
 }
 
 .t-label {
-  font-family: var(--text-label-family);
-  font-size: var(--text-label-size);
-  line-height: var(--text-label-line-height);
-  font-weight: var(--text-label-weight);
-  letter-spacing: var(--text-label-tracking);
-  text-transform: uppercase;
+  font-size: var(--text-meta-size);
+  line-height: var(--text-meta-line-height);
+  font-weight: var(--text-chip-weight);
+}
+
+.t-num,
+.t-num-lg {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .t-num {
-  font-family: var(--text-num-family);
-  font-size: var(--text-num-size);
-  line-height: var(--text-num-line-height);
-  font-weight: var(--text-num-weight);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-weight: var(--text-body-strong-weight);
 }
 
 .t-num-lg {
-  font-family: var(--text-num-lg-family);
-  font-size: var(--text-num-lg-size);
-  line-height: var(--text-num-lg-line-height);
-  font-weight: var(--text-num-lg-weight);
-  letter-spacing: var(--text-num-lg-tracking);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-size: var(--text-stat-size);
+  line-height: var(--text-stat-line-height);
+  font-weight: var(--text-stat-weight);
+  letter-spacing: var(--text-stat-tracking);
 }
 
 .muted {
-  color: var(--ink-muted);
+  color: var(--muted);
 }
 
 .visually-hidden {
@@ -143,24 +138,232 @@ a {
   border: 0;
 }
 
-/* Page layout: 24px gutter on phones, 48px from tablet up (markcliq.com
-   px-6 / md:px-12). */
+/* Pages outside a company: log in, the choice of company, legal. */
 
 .page {
-  max-width: 80rem;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: var(--space-12) var(--space-6) var(--space-24);
+  padding: var(--space-34) var(--space-20);
 }
 
-@media (min-width: 768px) {
-  .page {
-    padding-inline: var(--space-12);
-  }
+.home {
+  max-width: 40rem;
+}
+
+.stack,
+.stack-lg {
+  display: flex;
+  flex-direction: column;
 }
 
 .stack {
+  gap: var(--space-12);
+}
+
+.stack-lg {
+  gap: var(--space-24);
+}
+
+/* Outside a company: the photo, and the work beside it. */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30rem;
+  min-height: 100vh;
+  background: var(--cream);
+}
+
+.auth-photo {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-photo > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The line under the photo reads on the shade, not on the photo. */
+.auth-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    transparent 45%,
+    color-mix(in srgb, var(--energy-bottom) 85%, transparent) 100%
+  );
+}
+
+.auth-claim {
+  position: absolute;
+  z-index: 1;
+  right: calc(var(--space-20) * 2);
+  bottom: calc(var(--space-20) * 2);
+  left: calc(var(--space-20) * 2);
   display: flex;
   flex-direction: column;
+  gap: var(--space-8);
+  color: var(--surface);
+  font-size: var(--text-body-lg-size);
+}
+
+.auth-claim-title {
+  font-size: 2.25rem;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.auth-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-18);
+  min-width: 0;
+  padding: calc(var(--space-20) * 2) calc(var(--space-28) * 2);
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  margin-bottom: var(--space-12);
+  font-size: var(--text-section-size);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.auth-brand img {
+  width: var(--nav-button);
+  height: var(--nav-button);
+  border-radius: var(--radius-11);
+  box-shadow: 0 0 0 var(--hairline) var(--line);
+}
+
+.auth-brand-for {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.auth-title {
+  font-size: var(--text-intro-size);
+  line-height: var(--text-intro-line-height);
+  font-weight: 700;
+  letter-spacing: var(--text-intro-tracking);
+}
+
+.auth-intro,
+.auth-foot {
+  color: var(--muted);
+}
+
+.auth-foot {
+  font-size: var(--text-caption-size);
+  text-align: center;
+}
+
+.auth-form,
+.auth-fields,
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-form {
+  gap: var(--space-22);
+}
+
+.auth-fields {
+  gap: var(--space-14);
+}
+
+.auth-actions {
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.auth-actions .sc-btn {
+  min-height: 3.125rem;
+  font-size: var(--text-body-lg-size);
+  font-weight: 700;
+  box-shadow: var(--shadow-sun);
+}
+
+/* After the field, so Tab goes from typing it straight on; drawn above it. */
+.password {
+  position: relative;
+}
+
+.password-show {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-height: var(--space-24);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tan-text);
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-actions a {
+  color: var(--tan-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-actions a:hover {
+  text-decoration: underline;
+}
+
+.auth-legal {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-16);
+  color: var(--muted);
+  font-size: var(--text-caption-size);
+}
+
+.auth .sc-list {
+  box-shadow: var(--shadow-card);
+}
+
+.auth .option {
+  align-items: flex-start;
+}
+
+/* A phone gets the photo as a band, with the line still on it. */
+@media (max-width: 860px) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 12rem auto;
+  }
+
+  .auth-claim {
+    right: var(--space-20);
+    bottom: var(--space-16);
+    left: var(--space-20);
+    font-size: var(--text-meta-size);
+  }
+
+  .auth-claim-title {
+    font-size: var(--text-sheet-title-size);
+  }
+
+  /* The band is short, so the line sits on the photo's busy middle. */
+  .auth-photo::after {
+    background: color-mix(in srgb, var(--energy-bottom) 62%, transparent);
+  }
+
+  .auth-main {
+    justify-content: flex-start;
+    padding: var(--space-28) var(--space-20);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -170,44 +373,4 @@ a {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
   }
-}
-
-/* Log in and password pages: one narrow column. */
-
-.auth-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: 32rem;
-  margin-inline: 0;
-}
-
-@media (min-width: 768px) {
-  .auth-page {
-    padding-top: var(--space-24);
-  }
-}
-
-.auth-intro {
-  margin-bottom: var(--space-4);
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  margin-top: var(--space-4);
-}
-
-.auth-fields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-.auth-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
 }
