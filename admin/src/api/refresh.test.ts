@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { withRefresh } from './refresh';
+import { withRefresh, type Tabs } from './refresh';
 
 const BASE = 'http://api.test/api/v1';
 
@@ -66,5 +66,62 @@ describe('withRefresh', () => {
     const req = new Request(`${BASE}/orgs`, { method: 'POST', body: '{"name":"x"}' });
     expect((await withRefresh(BASE, fetch)(req)).status).toBe(200);
     expect(bodies).toEqual(['{"name":"x"}', '{"name":"x"}']);
+  });
+
+  /*
+    A9: a second refresh with the same cookie ends the session, so two
+    tabs must send one
+  */
+  it('two tabs with a 401 at once send one refresh', async () => {
+    let refreshes = 0;
+    let fresh = false;
+    const fetch = async (req: Request) => {
+      if (req.url.endsWith('/auth/refresh')) {
+        refreshes++;
+        await new Promise((done) => setTimeout(done, 5));
+        if (refreshes > 1) return new Response(null, { status: 401 });
+        fresh = true;
+        return new Response(null, { status: 204 });
+      }
+      return new Response(null, { status: fresh ? 200 : 401 });
+    };
+    let queue: Promise<unknown> = Promise.resolve();
+    let stamp = 0;
+    const tabs: Tabs = {
+      exclusive(work) {
+        const result = queue.then(work);
+        queue = result;
+        return result;
+      },
+      stamp: () => String(stamp),
+      refreshed: () => {
+        stamp++;
+      },
+    };
+    const one = withRefresh(BASE, fetch, tabs);
+    const two = withRefresh(BASE, fetch, tabs);
+    const results = await Promise.all([one(get('/me')), two(get('/me'))]);
+    expect(results.map((r) => r.status)).toEqual([200, 200]);
+    expect(refreshes).toBe(1);
+  });
+});
+
+describe('bodies nobody reads', () => {
+  it("the refresh's and the retried 401's are closed, not left open", async () => {
+    const closed: string[] = [];
+    const body = (name: string) => new ReadableStream({ cancel: () => void closed.push(name) });
+    let calls = 0;
+    const send = withRefresh(
+      'http://local/api/v1',
+      async (input) => {
+        calls++;
+        if (input.url.endsWith('/auth/refresh'))
+          return new Response(body('refresh'), { status: 200 });
+        return calls === 1 ? new Response(body('first'), { status: 401 }) : new Response('ok');
+      },
+      { exclusive: (work) => work(), stamp: () => null, refreshed: () => {} },
+    );
+    expect((await send(new Request('http://local/api/v1/me'))).status).toBe(200);
+    expect(closed).toEqual(['refresh', 'first']);
   });
 });

@@ -27,7 +27,8 @@ function legalMarkdown(): Plugin {
         /\]\(([a-z-]+\.md)\)/g,
         (link, name: string) => (LEGAL_PATHS[name] ? `](${LEGAL_PATHS[name]})` : link),
       );
-      const html = await marked.parse(markdown);
+      // A wide table scrolls by itself, so the keyboard must be able to reach it.
+      const html = (await marked.parse(markdown)).replaceAll('<table>', '<table tabindex="0">');
       return `export default ${JSON.stringify(html)};`;
     },
   };

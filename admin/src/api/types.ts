@@ -1,0 +1,30 @@
+import type { components } from './schema';
+
+type S = components['schemas'];
+
+export type CustomerSummary = S['AdminCustomerSummary'];
+export type Customer = S['AdminCustomer'];
+export type CustomerDocument = S['AdminDocument'];
+export type ApiFile = S['AdminFile'];
+export type TaskSummary = S['AdminTaskSummary'];
+export type Task = S['AdminTask'];
+export type ProofSlot = S['ProofSlot'];
+export type Member = S['Member'];
+export type ExpenseSummary = S['AdminExpenseSummary'];
+export type Commission = S['AdminCommission'];
+export type Payment = S['AdminPayment'];
+export type ReviewItem = S['ReviewItem'];
+export type ReviewQueue = S['ReviewQueue'];
+export type ApiNotification = S['Notification'];
+export type AttendanceDay = S['AttendanceDay'];
+export type AttendanceTap = S['AttendanceTap'];
+export type AttendancePerson = S['AttendancePerson'];
+export type KycStatus = S['KycStatus'];
+export type TaskView = S['AdminTaskView'];
+export type ExpenseStatus = S['ExpenseStatus'];
+export type CommissionStatus = S['CommissionStatus'];
+export type PaymentStatus = S['AdminPaymentStatus'];
+export type LeadSummary = S['LeadSummary'];
+export type Lead = S['Lead'];
+export type LeadStatus = S['LeadStatus'];
+export type Stage = S['Stage'];
