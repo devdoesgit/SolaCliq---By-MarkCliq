@@ -84,6 +84,30 @@ jobs:
       - name: Test app
         run: flutter test
         working-directory: mobile
+      - name: Placeholder Firebase config
+        # The real file stays out of the repo (F12). The build only needs
+        # one of the right shape; these values reach no Firebase project.
+        run: |
+          cat > android/app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "solacliq-ci-placeholder",
+              "storage_bucket": "solacliq-ci-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": { "package_name": "com.markcliq.solacliq.dev" }
+                },
+                "api_key": [{ "current_key": "ci-placeholder" }]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+        working-directory: mobile
       - name: Build debug APK (development)
         run: flutter build apk --debug --flavor development -t lib/main_development.dart
         working-directory: mobile
