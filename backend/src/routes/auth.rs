@@ -4,7 +4,8 @@
     - phase 1: sign up
     - phase 2: log in
     - phase 3a: refresh and log out
-    - phase 3b: email codes (verify, resend, forgot and reset password)
+    - phase 3b: email codes (forgot and reset password)
+    - code-first sign-up (2026-11-22, QA-27): email → code → details
 */
 
 use axum::{
@@ -31,6 +32,7 @@ use crate::{
     password,
     routes::me::{self, Me},
     session::{self, Client, Tokens},
+    signup,
     terms::{self, Agreement, Document, Source},
 };
 use crate::{
@@ -40,9 +42,9 @@ use crate::{
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
-        .routes(routes!(signup))
-        .routes(routes!(verify_email))
-        .routes(routes!(resend_verification))
+        .routes(routes!(start_signup))
+        .routes(routes!(verify_signup))
+        .routes(routes!(complete_signup))
         .routes(routes!(login))
         .routes(routes!(refresh))
         .routes(routes!(logout))
@@ -50,13 +52,128 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(reset_password))
 }
 
-/// The request body. `Deserialize` lets serde build it from JSON; a missing
-/// required field fails before our code runs (see `extract.rs`).
-/// `Option<String>` means the field may be left out.
 #[derive(Debug, Deserialize, ToSchema)]
-pub struct SignupRequest {
-    pub name: String,
+pub struct EmailRequest {
     pub email: String,
+}
+
+/*
+    Sign up, step 1: the email alone
+    --------------------------------------------------------------------
+    - nothing else is taken, so there's nothing a stranger could plant
+      on someone's email (QA-27). Another code is this same request
+    - always 202. An email whose account has a password gets a notice
+      instead of a code; its step 2 then fails like a wrong code
+    - an account made for someone (no password yet) gets a code: proving
+      the inbox is all that "set up" needs too
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/signup",
+    operation_id = "signup",
+    tag = "auth",
+    security(()),
+    request_body = EmailRequest,
+    responses(
+        (status = 202, description = "Accepted; a code is on its way if the email can sign up."),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn start_signup(
+    State(state): State<AppState>,
+    ip: ClientIp,
+    ApiJson(req): ApiJson<EmailRequest>,
+) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::SignupByIp, &ip.0)?;
+    let email = normalize_email(&req.email);
+    // Checked first: it becomes a key, a row and an address to send to.
+    if !looks_like_email(&email) {
+        return Err(ApiError::validation(vec![field(
+            "email",
+            "Enter a valid email address.",
+        )]));
+    }
+    // Before the lookup, so the 429 is the same with or without an account.
+    state
+        .limits
+        .check(Rule::CodeEmailByEmail, &format!("signup:{email}"))?;
+
+    let has_password: Option<bool> =
+        sqlx::query_scalar("SELECT password_hash IS NOT NULL FROM users WHERE email = $1")
+            .bind(&email)
+            .fetch_optional(&state.db)
+            .await?;
+    if has_password == Some(true) {
+        // At most one an hour per address: sign-up can't flood an inbox.
+        if state.limits.allow(Rule::AlreadyRegisteredByEmail, &email) {
+            state.mailer.send(already_registered_email(&email));
+        }
+    } else if let Some(code) = signup::issue(&state.db, &state.code_secret, &email).await? {
+        state
+            .mailer
+            .send(codes::email(&email, Purpose::SignUp, &code));
+    }
+    Ok(StatusCode::ACCEPTED)
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifySignupRequest {
+    pub email: String,
+    // 6 digits, from the email.
+    pub code: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SignupSetup {
+    // Single use, for step 3.
+    pub signup_token: String,
+    // Seconds it works for.
+    pub expires_in: i64,
+}
+
+/*
+    Sign up, step 2: the code
+    --------------------------------------------------------------------
+    - right code -> a one-time setup token, 15 minutes
+    - codes last 5 minutes and allow 5 tries; past either, or with no
+      code at all, the answer is the same as a wrong code
+*/
+#[utoipa::path(
+    post,
+    path = "/auth/signup/verify",
+    operation_id = "verifySignup",
+    tag = "auth",
+    security(()),
+    request_body = VerifySignupRequest,
+    responses(
+        (status = 200, description = "The inbox is proven.", body = SignupSetup),
+        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn verify_signup(
+    State(state): State<AppState>,
+    ip: ClientIp,
+    ApiJson(req): ApiJson<VerifySignupRequest>,
+) -> ApiResult<Json<SignupSetup>> {
+    state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
+    let email = normalize_email(&req.email);
+    let signup_token = signup::prove(&state.db, &state.code_secret, &email, &req.code).await?;
+    Ok(Json(SignupSetup {
+        signup_token,
+        expires_in: i64::from(signup::TOKEN_MINUTES) * 60,
+    }))
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CompleteSignupRequest {
+    pub signup_token: String,
+    pub name: String,
     pub phone: Option<String>,
     pub password: String,
     /// The version of the terms the person ticked (F16, `terms.rs`).
@@ -66,225 +183,97 @@ pub struct SignupRequest {
 }
 
 /*
-    Create a customer account
+    Sign up, step 3: the details, with the token
     --------------------------------------------------------------------
-    - creates unverified account, with the person's agreement to the
-      terms (F16) in the same transaction
-    - emails a 6 digit code
-    - return 202 regardless
-    - email already taken: unverified gets a new code, verified gets an
-      "you already have an account" email
+    - the fields are checked first, so a typo doesn't use up the token
+    - in one transaction: the token is used, the account is made (or the
+      one someone made for them completed) with what was sent here, and
+      the agreement to the terms is recorded (F16)
+    - never over a password: if one was set meanwhile, 400
+    - answers as an app login
 */
 #[utoipa::path(
     post,
-    path = "/auth/signup",
-    operation_id = "signup",
+    path = "/auth/signup/complete",
+    operation_id = "completeSignup",
     tag = "auth",
     security(()),
-    request_body = SignupRequest,
+    request_body = CompleteSignupRequest,
     responses(
-        (status = 202, description = "Accepted; a code is on its way if the email is new."),
+        (status = 200, description = "Created and logged in.", body = LoginResponse),
+        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
 )]
-async fn signup(
+async fn complete_signup(
     State(state): State<AppState>,
     ip: ClientIp,
-    ApiJson(req): ApiJson<SignupRequest>,
-) -> ApiResult<StatusCode> {
-    state.limits.check(Rule::SignupByIp, &ip.0)?;
-    let sent_version = req.terms_version;
-    /*
-        Validate all the input fields
-            - phone, email, name
-            if any error return 422
-        then the terms: the app sends only once they're ticked
-    */
-    let input: ValidSignup = validate(req)?;
-    let terms_version = terms::check_sent(sent_version)?;
+    ApiJson(req): ApiJson<CompleteSignupRequest>,
+) -> ApiResult<Json<LoginResponse>> {
+    state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
+    let input = validate(&req)?;
+    let terms_version = terms::check_sent(req.terms_version)?;
+    // Before the transaction: Argon2 is slow on purpose.
+    let password_hash = password::hash(req.password).await?;
 
-    let password_hash = password::hash(input.password).await?;
-
-    /*
-        Insert. ON CONFLICT DO NOTHING: if the email already exists,
-        nothing happens and nothing fails, even with two sign-ups racing.
-        $1, $2... are bound parameters: the values never become part of
-        the SQL text, so there's no SQL injection.
-    */
-    let new_id = Uuid::now_v7();
     let mut tx = state.db.begin().await?;
-    let inserted = sqlx::query(
-        "INSERT INTO users (id, email, name, phone, password_hash)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (email) DO NOTHING",
+    let email = signup::claim(&mut tx, &req.signup_token)
+        .await?
+        .ok_or_else(signup_expired)?;
+    let user_id: Uuid = sqlx::query_scalar(
+        "INSERT INTO users (id, email, name, phone, password_hash, email_verified_at)
+         VALUES ($1, $2, $3, $4, $5, now())
+         ON CONFLICT (email) DO UPDATE
+            SET name = EXCLUDED.name,
+                phone = EXCLUDED.phone,
+                password_hash = EXCLUDED.password_hash,
+                email_verified_at = now(),
+                updated_at = now()
+          WHERE users.password_hash IS NULL
+         RETURNING id",
     )
-    .bind(new_id)
-    .bind(&input.email)
+    .bind(Uuid::now_v7())
+    .bind(&email)
     .bind(&input.name)
     .bind(&input.phone)
     .bind(&password_hash)
-    .execute(&mut *tx)
-    .await? // a database error becomes a 500 HTTP Code Error
-    .rows_affected()
-        == 1;
-    /*
-        Only a new account gets the agreement: this request isn't logged
-        in, so it can't speak for an account that already exists. That
-        one is asked after its next login (`/me`)
-    */
-    if inserted {
-        terms::record(
-            &mut tx,
-            Agreement {
-                user_id: new_id,
-                document: Document::Terms,
-                org_id: None,
-                version: terms_version,
-                source: Source::Signup,
-                ip: &ip,
-            },
-        )
-        .await?;
-    }
-    tx.commit().await?;
-
-    if inserted {
-        tracing::info!(email = %input.email, "signup: new account");
-        send_code(&state, new_id, &input.email, Purpose::VerifyEmail).await?;
-    } else {
-        tracing::info!(email = %input.email, "signup: email already has an account");
-        /*
-            The password sent now is ignored: the account keeps its own.
-                - not verified yet -> a fresh code (they likely lost the first)
-                - verified -> tell the owner, who can log in or reset
-        */
-        match find_user(&state.db, &input.email).await? {
-            Some(user) if !user.verified => {
-                send_code(&state, user.id, &input.email, Purpose::VerifyEmail).await?;
-            }
-            // At most one an hour per address: sign-up can't flood an inbox.
-            Some(_)
-                if state
-                    .limits
-                    .allow(Rule::AlreadyRegisteredByEmail, &input.email) =>
-            {
-                state.mailer.send(already_registered_email(&input.email));
-            }
-            Some(_) => {}
-            None => {} // deleted in the meantime; nothing to send
-        }
-    }
-
-    Ok(StatusCode::ACCEPTED)
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct EmailRequest {
-    pub email: String,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct VerifyEmailRequest {
-    pub email: String,
-    // 6 digits, from the email.
-    pub code: String,
-}
-
-/*
-    Verify an email with its code
-    --------------------------------------------------------------------
-    - right code -> email verified, the account can log in (204)
-    - codes last 5 minutes and allow 5 tries; past either, the answer is
-      the same as a wrong code (see codes.rs)
-*/
-#[utoipa::path(
-    post,
-    path = "/auth/email/verify",
-    operation_id = "verifyEmail",
-    tag = "auth",
-    security(()),
-    request_body = VerifyEmailRequest,
-    responses(
-        (status = 204, description = "Email verified; the account can log in."),
-        (status = 400, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
-            content_type = "application/problem+json"),
-        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
-            content_type = "application/problem+json"),
-    ),
-)]
-async fn verify_email(
-    State(state): State<AppState>,
-    ip: ClientIp,
-    ApiJson(req): ApiJson<VerifyEmailRequest>,
-) -> ApiResult<StatusCode> {
-    state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
-    let email = normalize_email(&req.email);
-    let user_id = find_user(&state.db, &email).await?.map(|u| u.id);
-    let checked = codes::check(
-        &state.db,
-        &state.code_secret,
-        user_id,
-        Purpose::VerifyEmail,
-        &req.code,
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or_else(signup_expired)?;
+    terms::record(
+        &mut tx,
+        Agreement {
+            user_id,
+            document: Document::Terms,
+            org_id: None,
+            version: terms_version,
+            source: Source::Signup,
+            ip: &ip,
+        },
     )
     .await?;
-
-    /*
-        use up the code and mark the email verified together:
-        both happen or neither
-    */
-    let user_id = checked.user_id();
-    let mut tx = state.db.begin().await?;
-    codes::consume(&mut tx, checked).await?;
-    sqlx::query(
-        "UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()),
-                          updated_at = now()
-         WHERE id = $1",
-    )
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await?;
     tx.commit().await?;
+    tracing::info!(%user_id, "sign-up completed");
 
-    tracing::info!(%user_id, "email verified");
-    Ok(StatusCode::NO_CONTENT)
+    let tokens = session::create(&state.db, &state.lifetimes, user_id, Client::App).await?;
+    let user = me::load(&state.db, state.storage.as_ref(), user_id).await?;
+    Ok(Json(LoginResponse {
+        user,
+        tokens: Some(tokens.into()),
+    }))
 }
 
-/*
-    Send a new verification code
-    --------------------------------------------------------------------
-    - only for an account that isn't verified yet
-    - always 202, so it can't be used to find out who has an account
-*/
-#[utoipa::path(
-    post,
-    path = "/auth/email/resend",
-    operation_id = "resendVerification",
-    tag = "auth",
-    security(()),
-    request_body = EmailRequest,
-    responses(
-        (status = 202, description = "Accepted."),
-        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
-            content_type = "application/problem+json"),
-    ),
-)]
-async fn resend_verification(
-    State(state): State<AppState>,
-    ip: ClientIp,
-    ApiJson(req): ApiJson<EmailRequest>,
-) -> ApiResult<StatusCode> {
-    state.limits.check(Rule::CodeEmailByIp, &ip.0)?;
-    let email = normalize_email(&req.email);
-    if let Some(user) = find_user(&state.db, &email).await?
-        && !user.verified
-    {
-        send_code(&state, user.id, &email, Purpose::VerifyEmail).await?;
-    }
-    Ok(StatusCode::ACCEPTED)
+fn signup_expired() -> ApiError {
+    ApiError::new(
+        StatusCode::BAD_REQUEST,
+        "auth.signup_expired",
+        "Start signing up again",
+    )
+    .detail("This took too long, or the account is already set up.")
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -318,10 +307,10 @@ pub struct TokenPair {
     --------------------------------------------------------------------
     `client: app` returns a token pair in the body.
     `client: web` sets the access and refresh cookies and returns no tokens
-    wrong email and wrong password give the same `auth.invalid_credentials`; an unverified
-    account gets `account.email_unverified` only after the right password.
-    An account created for someone (by an agent or org admin)
-    that has no password yet gets 403 `account.password_not_set`.
+    every refusal is the same `auth.invalid_credentials`, after the same
+    Argon2 work: no account, a wrong password, or an account made for
+    someone that has no password yet. So log in can't show who has an
+    account or who was invited (QA-28)
 */
 #[utoipa::path(
     post,
@@ -334,8 +323,6 @@ pub struct TokenPair {
         (status = 200, description = "Logged in.", body = LoginResponse),
         (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
-        (status = 403, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
-            content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
@@ -346,10 +333,12 @@ async fn login(
     ApiJson(req): ApiJson<LoginRequest>,
 ) -> ApiResult<Response> {
     state.limits.check(Rule::LoginByIp, &ip.0)?;
-    state
-        .limits
-        .check(Rule::LoginByEmail, &normalize_email(&req.email))?;
     let email = normalize_email(&req.email);
+    // Before it becomes a rate-limit key: no email is longer.
+    if email.len() > 254 {
+        return Err(invalid_credentials());
+    }
+    state.limits.check(Rule::LoginByEmail, &email)?;
     if req.password.is_empty() || req.password.chars().count() > 128 {
         return Err(invalid_credentials());
     }
@@ -357,57 +346,21 @@ async fn login(
     /*
         find the account by email id
             - Option<> since it might not exist
+            - a password only exists on a verified email (the database's
+              CHECK), so there is no unverified case
     */
-    let row: Option<(Uuid, Option<String>, bool)> = sqlx::query_as(
-        "SELECT id, password_hash, email_verified_at IS NOT NULL
-         FROM users WHERE email = $1",
-    )
-    .bind(&email)
-    .fetch_optional(&state.db)
-    .await?;
+    let row: Option<(Uuid, Option<String>)> =
+        sqlx::query_as("SELECT id, password_hash FROM users WHERE email = $1")
+            .bind(&email)
+            .fetch_optional(&state.db)
+            .await?;
+    let (user_id, stored_hash) = row.map_or((None, None), |(id, hash)| (Some(id), hash));
 
-    /*
-        extract parts from the above row, if None then we assign accordingly
-    */
-    let (user_id, stored_hash, verified) = match row {
-        Some((id, hash, verified)) => (Some(id), hash, verified),
-        None => (None, None, false),
-    };
-
-    if user_id.is_some() && stored_hash.is_none() {
-        /*
-            this case is when admin creates the user for their org
-        */
-        return Err(ApiError::new(
-            StatusCode::FORBIDDEN,
-            "account.password_not_set",
-            "Set your password first",
-        )
-        .detail("Use \"Forgot password\" to set a password for this account."));
-    }
-
-    /*
-        Verify password now, if error -> Invalid Creds
-    */
+    // With no hash it still does the work, against a dummy (password.rs).
     let ok = password::verify(req.password, stored_hash).await?;
     let Some(user_id) = user_id.filter(|_| ok) else {
         return Err(invalid_credentials());
     };
-
-    /*
-        if the password was right
-            - check if the user if verified
-                - YES -> continue
-                - NO -> Ask them to verify by sending OTP
-    */
-    if !verified {
-        return Err(ApiError::new(
-            StatusCode::FORBIDDEN,
-            "account.email_unverified",
-            "Verify your email first",
-        )
-        .detail("Enter the 6-digit code we emailed you."));
-    }
 
     /*
         Start a new session
@@ -553,8 +506,19 @@ async fn forgot_password(
 ) -> ApiResult<StatusCode> {
     state.limits.check(Rule::CodeEmailByIp, &ip.0)?;
     let email = normalize_email(&req.email);
-    if let Some(user) = find_user(&state.db, &email).await? {
-        send_code(&state, user.id, &email, Purpose::ResetPassword).await?;
+    if !looks_like_email(&email) {
+        return Ok(StatusCode::ACCEPTED);
+    }
+    // Before the lookup, so the 429 is the same with or without an account.
+    state
+        .limits
+        .check(Rule::CodeEmailByEmail, &format!("reset:{email}"))?;
+    if let Some(user_id) = find_user(&state.db, &email).await?
+        && let Some(code) = codes::issue(&state.db, &state.code_secret, user_id).await?
+    {
+        state
+            .mailer
+            .send(codes::email(&email, Purpose::ResetPassword, &code));
     }
     Ok(StatusCode::ACCEPTED)
 }
@@ -602,15 +566,8 @@ async fn reset_password(
         return Err(password_too_weak("new_password"));
     }
     let email = normalize_email(&req.email);
-    let user_id = find_user(&state.db, &email).await?.map(|u| u.id);
-    let checked = codes::check(
-        &state.db,
-        &state.code_secret,
-        user_id,
-        Purpose::ResetPassword,
-        &req.code,
-    )
-    .await?;
+    let user_id = find_user(&state.db, &email).await?;
+    let checked = codes::check(&state.db, &state.code_secret, user_id, &req.code).await?;
 
     /*
         hash before the transaction: Argon2 is slow on purpose, and the
@@ -638,33 +595,12 @@ async fn reset_password(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// What the code flows need to know about an account.
-struct FoundUser {
-    id: Uuid,
-    verified: bool,
-}
-
 // The account with this (already normalized) email, if any.
-async fn find_user(db: &sqlx::PgPool, email: &str) -> ApiResult<Option<FoundUser>> {
-    let row: Option<(Uuid, bool)> =
-        sqlx::query_as("SELECT id, email_verified_at IS NOT NULL FROM users WHERE email = $1")
-            .bind(email)
-            .fetch_optional(db)
-            .await?;
-    Ok(row.map(|(id, verified)| FoundUser { id, verified }))
-}
-
-// Makes a code and emails it, unless one went out in the last minute.
-async fn send_code(
-    state: &AppState,
-    user_id: Uuid,
-    email: &str,
-    purpose: Purpose,
-) -> ApiResult<()> {
-    if let Some(code) = codes::issue(&state.db, &state.code_secret, user_id, purpose).await? {
-        state.mailer.send(codes::email(email, purpose, &code));
-    }
-    Ok(())
+async fn find_user(db: &sqlx::PgPool, email: &str) -> ApiResult<Option<Uuid>> {
+    Ok(sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+        .bind(email)
+        .fetch_optional(db)
+        .await?)
 }
 
 fn already_registered_email(to: &str) -> Email {
@@ -769,11 +705,11 @@ fn set_cookies(res: &mut Response, tokens: &Tokens, secure: bool) {
 }
 
 /// Tells the browser to delete a cookie (same name and path, Max-Age=0).
-fn clear_cookie(name: &str, path: &str) -> HeaderValue {
+pub(crate) fn clear_cookie(name: &str, path: &str) -> HeaderValue {
     cookie_header(name, "", path, 0, false)
 }
 
-fn refresh_path() -> String {
+pub(crate) fn refresh_path() -> String {
     format!("{API_PREFIX}/auth/refresh")
 }
 
@@ -785,33 +721,29 @@ fn cookie_header(name: &str, value: &str, path: &str, max_age: i64, secure: bool
     HeaderValue::from_str(&value).expect("cookie is ASCII")
 }
 
-/// Sign-up input after checking: trimmed, email lowercased.
+/// Step 3's input after checking: trimmed.
 #[derive(Debug)]
 struct ValidSignup {
     name: String,
-    email: String,
     phone: Option<String>,
-    password: String,
 }
 
 /// Collects every problem at once, so the app can mark all bad fields.
 /// A weak password on its own gets the contract's own code,
 /// `auth.password_too_weak`, which the app shows under the password field.
-fn validate(req: SignupRequest) -> Result<ValidSignup, ApiError> {
+fn validate(req: &CompleteSignupRequest) -> Result<ValidSignup, ApiError> {
     let name = req.name.trim().to_owned();
-    let email = normalize_email(&req.email);
     // `.filter(...)` turns Some("") into None: a blank phone means no phone.
     let phone = req
         .phone
-        .map(|p| p.trim().to_owned())
-        .filter(|p| !p.is_empty());
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .map(str::to_owned);
 
     let mut errors: Vec<FieldError> = Vec::new();
     if name.is_empty() || name.chars().count() > 100 {
         errors.push(field("name", "Enter your name (up to 100 characters)."));
-    }
-    if !looks_like_email(&email) {
-        errors.push(field("email", "Enter a valid email address."));
     }
     if let Some(p) = &phone
         && !is_indian_mobile(p)
@@ -834,12 +766,7 @@ fn validate(req: SignupRequest) -> Result<ValidSignup, ApiError> {
         return Err(ApiError::validation(errors));
     }
 
-    Ok(ValidSignup {
-        name,
-        email,
-        phone,
-        password: req.password,
-    })
+    Ok(ValidSignup { name, phone })
 }
 
 fn field(name: &str, message: &str) -> FieldError {

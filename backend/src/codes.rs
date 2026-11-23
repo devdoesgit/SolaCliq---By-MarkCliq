@@ -1,15 +1,15 @@
 /*
     6-digit codes sent by email (phase 3b)
     --------------------------------------------------------------------
-    - used for: verifying an email after sign-up, and resetting (or first
-      setting) a password
-    - table: email_codes
+    - used for: resetting (or first setting) an account's password, table
+      email_codes. Sign-up's codes have no account yet: signup.rs, which
+      shares the secret, the limits and the email
     - a code's life:
         1. issue: makes a code, stores its HMAC, returns the code to email
         2. check: counts a try and compares; a right code gives a `Checked`
         3. consume: deletes the code, inside the caller's transaction,
-           together with the change the code allows (verify the email,
-           set the password), so both happen or neither does
+           together with the change the code allows (set the password),
+           so both happen or neither does
 */
 
 use std::{fmt, sync::Arc};
@@ -36,21 +36,15 @@ pub const MAX_ATTEMPTS: i32 = 5;
 // No new code within this many seconds of the last one (no inbox flooding).
 pub const COOLDOWN_SECONDS: i32 = 60;
 
-// What a code is for. Stored as text; the table's CHECK allows only these.
+// What a code is for, as its email words it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Purpose {
-    VerifyEmail,
+    SignUp,
     ResetPassword,
 }
 
-impl Purpose {
-    fn as_str(self) -> &'static str {
-        match self {
-            Purpose::VerifyEmail => "verify_email",
-            Purpose::ResetPassword => "reset_password",
-        }
-    }
-}
+// `email_codes.purpose`: the one kind that belongs to an account.
+const RESET: &str = "reset_password";
 
 /*
     The key for the codes' HMAC (CODE_SECRET)
@@ -78,6 +72,16 @@ impl CodeSecret {
         mac.update(code.as_bytes());
         mac
     }
+
+    // What's stored for a code.
+    pub(crate) fn hash(&self, code: &str) -> Vec<u8> {
+        self.mac(code).finalize().into_bytes().to_vec()
+    }
+
+    // In constant time: how long it takes doesn't depend on how much matches.
+    pub(crate) fn matches(&self, code: &str, hash: &[u8]) -> bool {
+        self.mac(code).verify_slice(hash).is_ok()
+    }
 }
 
 impl fmt::Debug for CodeSecret {
@@ -100,10 +104,9 @@ pub async fn issue(
     db: &PgPool,
     secret: &CodeSecret,
     user_id: Uuid,
-    purpose: Purpose,
 ) -> Result<Option<String>, ApiError> {
     let code = new_code()?;
-    let hash = secret.mac(&code).finalize().into_bytes().to_vec();
+    let hash = secret.hash(&code);
 
     /*
         the cooldown is the WHERE on the update: an existing row younger
@@ -121,7 +124,7 @@ pub async fn issue(
           WHERE email_codes.created_at <= now() - $5 * interval '1 second'",
     )
     .bind(user_id)
-    .bind(purpose.as_str())
+    .bind(RESET)
     .bind(hash)
     .bind(TTL_MINUTES)
     .bind(COOLDOWN_SECONDS)
@@ -131,7 +134,7 @@ pub async fn issue(
         == 1;
 
     if !stored {
-        tracing::info!(%user_id, purpose = purpose.as_str(), "code not sent: cooldown");
+        tracing::info!(%user_id, "code not sent: cooldown");
         return Ok(None);
     }
     Ok(Some(code))
@@ -144,7 +147,6 @@ pub async fn issue(
 #[derive(Debug)]
 pub struct Checked {
     user_id: Uuid,
-    purpose: Purpose,
     hash: Vec<u8>,
 }
 
@@ -169,7 +171,6 @@ pub async fn check(
     db: &PgPool,
     secret: &CodeSecret,
     user_id: Option<Uuid>,
-    purpose: Purpose,
     code: &str,
 ) -> Result<Checked, ApiError> {
     if !is_six_digits(code) {
@@ -192,7 +193,7 @@ pub async fn check(
          RETURNING code_hash",
     )
     .bind(user_id)
-    .bind(purpose.as_str())
+    .bind(RESET)
     .bind(MAX_ATTEMPTS)
     .fetch_optional(db)
     .await?;
@@ -202,19 +203,10 @@ pub async fn check(
         return Err(code_invalid());
     };
 
-    /*
-        verify_slice compares in constant time: how long it takes doesn't
-        depend on how many bytes match
-    */
-    secret
-        .mac(code)
-        .verify_slice(&hash)
-        .map_err(|_| code_invalid())?;
-    Ok(Checked {
-        user_id,
-        purpose,
-        hash,
-    })
+    if !secret.matches(code, &hash) {
+        return Err(code_invalid());
+    }
+    Ok(Checked { user_id, hash })
 }
 
 /*
@@ -224,7 +216,7 @@ pub async fn check(
     - matches on the hash, so a code replaced since `check` (a resend in
       between) isn't used up by mistake
     - that case, or another request using this code first ->
-      400 auth.code_expired
+      400 auth.code_invalid, as every other bad code
 */
 pub async fn consume(conn: &mut PgConnection, checked: Checked) -> Result<(), ApiError> {
     let deleted = sqlx::query(
@@ -232,13 +224,13 @@ pub async fn consume(conn: &mut PgConnection, checked: Checked) -> Result<(), Ap
          WHERE user_id = $1 AND purpose = $2 AND code_hash = $3",
     )
     .bind(checked.user_id)
-    .bind(checked.purpose.as_str())
+    .bind(RESET)
     .bind(&checked.hash)
     .execute(conn)
     .await?
     .rows_affected();
     if deleted == 0 {
-        return Err(code_expired());
+        return Err(code_invalid());
     }
     Ok(())
 }
@@ -250,7 +242,7 @@ pub async fn consume(conn: &mut PgConnection, checked: Checked) -> Result<(), Ap
 */
 pub fn email(to: &str, purpose: Purpose, code: &str) -> Email {
     let (subject, heading, intro, reason) = match purpose {
-        Purpose::VerifyEmail => (
+        Purpose::SignUp => (
             format!("Your {PRODUCT_NAME} verification code"),
             "Verify your email",
             format!("Here is your {PRODUCT_NAME} verification code:"),
@@ -307,7 +299,7 @@ pub fn email(to: &str, purpose: Purpose, code: &str) -> Email {
 }
 
 // A uniformly random 6-digit code, "000000" to "999999".
-fn new_code() -> Result<String, ApiError> {
+pub(crate) fn new_code() -> Result<String, ApiError> {
     /*
         4_294_000_000 is the largest multiple of 1,000,000 that fits in a
         u32. Draws at or above it are thrown away, so every code is equally
@@ -327,7 +319,7 @@ fn new_code() -> Result<String, ApiError> {
     }
 }
 
-fn is_six_digits(code: &str) -> bool {
+pub(crate) fn is_six_digits(code: &str) -> bool {
     code.len() == 6 && code.bytes().all(|b| b.is_ascii_digit())
 }
 
@@ -338,11 +330,6 @@ pub fn code_invalid() -> ApiError {
         "Wrong or expired code",
     )
     .detail("Check the code, or request a new one.")
-}
-
-pub fn code_expired() -> ApiError {
-    ApiError::new(StatusCode::BAD_REQUEST, "auth.code_expired", "Code expired")
-        .detail("Request a new code.")
 }
 
 pub fn too_many_attempts() -> ApiError {

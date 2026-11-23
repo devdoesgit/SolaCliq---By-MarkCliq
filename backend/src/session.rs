@@ -66,7 +66,7 @@ impl Tokens {
 /// 32 random bytes as 64 hex characters. Unguessable, so a fast hash
 /// (SHA-256) is enough to store it; passwords need Argon2 because people
 /// pick guessable ones.
-fn new_token() -> Result<String, ApiError> {
+pub(crate) fn new_token() -> Result<String, ApiError> {
     let mut bytes = [0u8; 32];
     getrandom::fill(&mut bytes).map_err(|e| {
         tracing::error!(error = %e, "no randomness");

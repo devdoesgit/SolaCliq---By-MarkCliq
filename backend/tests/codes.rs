@@ -1,5 +1,5 @@
 /*
-    Phase 3b: 6-digit email codes (verify, resend, forgot, reset)
+    6-digit email codes (sign-up, forgot, reset)
     --------------------------------------------------------------------
     - emails land in the test outbox; `common::last_code` reads the code
     - the outbox is shared by every test in this file, so each test uses
@@ -16,19 +16,14 @@ use sqlx::PgPool;
 const PASSWORD: &str = "sunlight33";
 
 async fn signup(db: &PgPool, email: &str) {
-    let res = post(
-        db,
-        "/api/v1/auth/signup",
-        json!({ "name": "Asha Example", "email": email, "password": PASSWORD, "terms_version": 1 }),
-    )
-    .await;
+    let res = post(db, "/api/v1/auth/signup", json!({ "email": email })).await;
     assert_eq!(res.status, StatusCode::ACCEPTED);
 }
 
 async fn verify(db: &PgPool, email: &str, code: &str) -> common::Res {
     post(
         db,
-        "/api/v1/auth/email/verify",
+        "/api/v1/auth/signup/verify",
         json!({ "email": email, "code": code }),
     )
     .await
@@ -54,33 +49,6 @@ fn other_code(code: &str) -> String {
 }
 
 #[sqlx::test]
-async fn signup_code_verifies_and_then_login_works(db: PgPool) {
-    let email = "verify.ok@example.com";
-    signup(&db, email).await;
-    assert_eq!(
-        code_of(&login(&db, email, PASSWORD).await),
-        "account.email_unverified"
-    );
-
-    let res = verify(&db, email, &last_code(email)).await;
-    assert_eq!(res.status, StatusCode::NO_CONTENT);
-    assert_eq!(login(&db, email, PASSWORD).await.status, StatusCode::OK);
-}
-
-#[sqlx::test]
-async fn codes_are_stored_as_an_hmac_not_the_code(db: PgPool) {
-    let email = "stored.hashed@example.com";
-    signup(&db, email).await;
-    let code = last_code(email);
-    let (hash,): (Vec<u8>,) = sqlx::query_as("SELECT code_hash FROM email_codes")
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    assert_eq!(hash.len(), 32); // HMAC-SHA256
-    assert!(!hash.windows(6).any(|w| w == code.as_bytes()));
-}
-
-#[sqlx::test]
 async fn a_wrong_code_is_refused_and_the_right_one_still_works(db: PgPool) {
     let email = "verify.wrong@example.com";
     signup(&db, email).await;
@@ -89,10 +57,7 @@ async fn a_wrong_code_is_refused_and_the_right_one_still_works(db: PgPool) {
     let res = verify(&db, email, &other_code(&code)).await;
     assert_eq!(res.status, StatusCode::BAD_REQUEST);
     assert_eq!(code_of(&res), "auth.code_invalid");
-    assert_eq!(
-        verify(&db, email, &code).await.status,
-        StatusCode::NO_CONTENT
-    );
+    assert_eq!(verify(&db, email, &code).await.status, StatusCode::OK);
 }
 
 #[sqlx::test]
@@ -100,10 +65,7 @@ async fn a_code_works_once(db: PgPool) {
     let email = "verify.once@example.com";
     signup(&db, email).await;
     let code = last_code(email);
-    assert_eq!(
-        verify(&db, email, &code).await.status,
-        StatusCode::NO_CONTENT
-    );
+    assert_eq!(verify(&db, email, &code).await.status, StatusCode::OK);
 
     let again = verify(&db, email, &code).await;
     assert_eq!(again.status, StatusCode::BAD_REQUEST);
@@ -129,7 +91,7 @@ async fn the_sixth_try_is_refused_even_with_the_right_code(db: PgPool) {
 async fn an_expired_code_is_refused(db: PgPool) {
     let email = "verify.expired@example.com";
     signup(&db, email).await;
-    sqlx::query("UPDATE email_codes SET expires_at = now() - interval '1 second'")
+    sqlx::query("UPDATE signups SET expires_at = now() - interval '1 second'")
         .execute(&db)
         .await
         .unwrap();
@@ -148,7 +110,7 @@ async fn a_malformed_code_is_refused_without_using_a_try(db: PgPool) {
         let res = verify(&db, email, bad).await;
         assert_eq!(code_of(&res), "auth.code_invalid", "{bad:?}");
     }
-    let (attempts,): (i32,) = sqlx::query_as("SELECT attempts FROM email_codes")
+    let (attempts,): (i32,) = sqlx::query_as("SELECT attempts FROM signups")
         .fetch_one(&db)
         .await
         .unwrap();
@@ -161,7 +123,7 @@ async fn an_unknown_email_looks_like_a_wrong_code(db: PgPool) {
     assert_eq!(res.status, StatusCode::BAD_REQUEST);
     assert_eq!(code_of(&res), "auth.code_invalid");
 
-    for path in ["/api/v1/auth/email/resend", "/api/v1/auth/password/forgot"] {
+    for path in ["/api/v1/auth/password/forgot"] {
         let res = post(&db, path, json!({ "email": "nobody.verify@example.com" })).await;
         assert_eq!(res.status, StatusCode::ACCEPTED, "{path}");
     }
@@ -175,16 +137,16 @@ async fn resend_waits_a_minute_then_replaces_the_code(db: PgPool) {
     let first = last_code(email);
 
     // Within the minute: still 202, but no new email.
-    let res = post(&db, "/api/v1/auth/email/resend", json!({ "email": email })).await;
+    let res = post(&db, "/api/v1/auth/signup", json!({ "email": email })).await;
     assert_eq!(res.status, StatusCode::ACCEPTED);
     assert_eq!(emails_to(email).len(), 1);
 
     // A minute later: a new code, and the first one stops working.
-    sqlx::query("UPDATE email_codes SET created_at = now() - interval '61 seconds'")
+    sqlx::query("UPDATE signups SET created_at = now() - interval '61 seconds'")
         .execute(&db)
         .await
         .unwrap();
-    post(&db, "/api/v1/auth/email/resend", json!({ "email": email })).await;
+    post(&db, "/api/v1/auth/signup", json!({ "email": email })).await;
     assert_eq!(emails_to(email).len(), 2);
     let second = last_code(email);
     if first != second {
@@ -193,35 +155,7 @@ async fn resend_waits_a_minute_then_replaces_the_code(db: PgPool) {
             "auth.code_invalid"
         );
     }
-    assert_eq!(
-        verify(&db, email, &second).await.status,
-        StatusCode::NO_CONTENT
-    );
-}
-
-#[sqlx::test]
-async fn resend_sends_nothing_to_a_verified_account(db: PgPool) {
-    let email = "resend.verified@example.com";
-    verified_user(&db, email, PASSWORD).await;
-    let before = emails_to(email).len();
-
-    let res = post(&db, "/api/v1/auth/email/resend", json!({ "email": email })).await;
-    assert_eq!(res.status, StatusCode::ACCEPTED);
-    assert_eq!(emails_to(email).len(), before);
-}
-
-#[sqlx::test]
-async fn signing_up_again_with_a_verified_email_sends_a_notice(db: PgPool) {
-    let email = "signup.again@example.com";
-    verified_user(&db, email, PASSWORD).await;
-
-    signup(&db, email).await;
-    let last = emails_to(email).pop().unwrap();
-    assert!(last.subject.contains("already have"), "{}", last.subject);
-    assert!(
-        !last.body.chars().any(|c| c.is_ascii_digit()),
-        "no code in it"
-    );
+    assert_eq!(verify(&db, email, &second).await.status, StatusCode::OK);
 }
 
 #[sqlx::test]
@@ -291,7 +225,7 @@ async fn reset_sets_a_first_password_and_verifies_the_email(db: PgPool) {
         .unwrap();
     assert_eq!(
         code_of(&login(&db, email, PASSWORD).await),
-        "account.password_not_set"
+        "auth.invalid_credentials"
     );
 
     post(
@@ -313,6 +247,12 @@ async fn reset_sets_a_first_password_and_verifies_the_email(db: PgPool) {
 #[sqlx::test]
 async fn a_verify_code_cannot_reset_a_password(db: PgPool) {
     let email = "reset.purpose@example.com";
+    sqlx::query("INSERT INTO users (id, email, name) VALUES ($1, $2, 'Invited')")
+        .bind(uuid::Uuid::now_v7())
+        .bind(email)
+        .execute(&db)
+        .await
+        .unwrap();
     signup(&db, email).await;
     let res = post(
         &db,
@@ -333,8 +273,7 @@ async fn a_verify_code_cannot_reset_a_password(db: PgPool) {
 async fn an_existing_account_answers_like_a_new_one(db: PgPool) {
     let taken = "verify.taken@example.com";
     let fresh = "verify.fresh@example.com";
-    signup(&db, taken).await;
-    verify(&db, taken, &last_code(taken)).await;
+    verified_user(&db, taken, PASSWORD).await;
     signup(&db, taken).await;
     signup(&db, fresh).await;
 
@@ -355,8 +294,7 @@ async fn used_up_tries_answer_like_no_account(db: PgPool) {
     let taken = "tries.taken@example.com";
     let fresh = "tries.fresh@example.com";
     let nobody = "tries.nobody@example.com";
-    signup(&db, taken).await;
-    verify(&db, taken, &last_code(taken)).await;
+    verified_user(&db, taken, PASSWORD).await;
     signup(&db, fresh).await;
     let wrong = other_code(&last_code(fresh));
     for n in 1..=7 {

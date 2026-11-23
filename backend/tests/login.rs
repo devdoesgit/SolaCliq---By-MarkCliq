@@ -65,24 +65,7 @@ async fn wrong_password_and_unknown_email_look_the_same(db: PgPool) {
 }
 
 #[sqlx::test]
-async fn unverified_is_refused_only_after_the_right_password(db: PgPool) {
-    common::post(
-        &db,
-        "/api/v1/auth/signup",
-        json!({ "name": "Asha", "email": "asha@example.com", "password": "sunlight1", "terms_version": 1 }),
-    )
-    .await;
-
-    let wrong = post(&db, LOGIN, app_login("asha@example.com", "nope12345")).await;
-    assert_eq!(wrong.body["code"], "auth.invalid_credentials");
-
-    let right = post(&db, LOGIN, app_login("asha@example.com", "sunlight1")).await;
-    assert_eq!(right.status, StatusCode::FORBIDDEN);
-    assert_eq!(right.body["code"], "account.email_unverified");
-}
-
-#[sqlx::test]
-async fn account_without_password_is_told_to_set_one(db: PgPool) {
+async fn an_account_without_a_password_looks_like_no_account(db: PgPool) {
     // What an admin-created account looks like: no password_hash.
     sqlx::query("INSERT INTO users (id, email, name) VALUES ($1, 'ravi@example.com', 'Ravi')")
         .bind(uuid::Uuid::now_v7())
@@ -91,8 +74,8 @@ async fn account_without_password_is_told_to_set_one(db: PgPool) {
         .unwrap();
 
     let res = post(&db, LOGIN, app_login("ravi@example.com", "anything1")).await;
-    assert_eq!(res.status, StatusCode::FORBIDDEN);
-    assert_eq!(res.body["code"], "account.password_not_set");
+    assert_eq!(res.status, StatusCode::UNAUTHORIZED);
+    assert_eq!(res.body["code"], "auth.invalid_credentials");
 }
 
 #[sqlx::test]
