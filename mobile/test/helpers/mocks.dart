@@ -9,6 +9,7 @@ import 'package:solacliq/expenses/data/expense_repository.dart';
 import 'package:solacliq/health/data/health_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/install/data/install_repository.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
@@ -40,6 +41,8 @@ class MockTaskRepository extends Mock implements TaskRepository;
 class MockNotificationRepository extends Mock implements NotificationRepository;
 
 class MockCustomerRepository extends Mock implements CustomerRepository;
+
+class MockLeadRepository extends Mock implements LeadRepository;
 
 class MockProfileRepository extends Mock implements ProfileRepository;
 

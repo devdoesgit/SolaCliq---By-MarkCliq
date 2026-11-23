@@ -9,6 +9,7 @@ import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/install/data/install_repository.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
 import 'package:solacliq/profile/data/profile_repository.dart';
 import 'package:solacliq/workspace/cubit/workspace_cubit.dart';
@@ -100,6 +101,7 @@ void main() {
       repositories: [
         RepositoryProvider<HomeRepository>.value(value: homes),
         RepositoryProvider<CustomerRepository>.value(value: customers),
+        RepositoryProvider<LeadRepository>.value(value: emptyLeads()),
         RepositoryProvider<InstallRepository>.value(value: installs),
         RepositoryProvider<ProfileRepository>.value(value: profiles),
         RepositoryProvider<NotificationRepository>.value(value: notifications),

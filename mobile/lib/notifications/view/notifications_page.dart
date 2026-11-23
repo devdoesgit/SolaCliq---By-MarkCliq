@@ -258,6 +258,14 @@ class _Icon extends StatelessWidget {
       NotificationKind.paymentDue => (SolaIcons.wallet, SolaTone.danger),
       NotificationKind.quoteShared => (SolaIcons.sun, SolaTone.success),
       NotificationKind.guide => (SolaIcons.file, SolaTone.quiet),
+      NotificationKind.taskSubmitted ||
+      NotificationKind.taskMessage => (SolaIcons.list, SolaTone.quiet),
+      NotificationKind.taskProblem => (SolaIcons.alert, SolaTone.danger),
+      NotificationKind.expenseSubmitted => (SolaIcons.receipt, SolaTone.quiet),
+      NotificationKind.paymentClaimed => (SolaIcons.wallet, SolaTone.warning),
+      NotificationKind.registrationClosed => (SolaIcons.close, SolaTone.quiet),
+      NotificationKind.leadNew => (SolaIcons.phone, SolaTone.quiet),
+      NotificationKind.leadAssigned => (SolaIcons.phone, SolaTone.warning),
     };
     return SolaAvatar(
       icon: icon,
@@ -273,9 +281,21 @@ enum NotificationTab { track, payments }
 /// Where [n] leads: a route, a [NotificationTab]'s name, or null. The
 /// list and a tapped push (F12) both open notifications this way.
 String? destination(AppNotification n) => switch (n) {
+  // An admin's: their screens are on the website, and these would be 403.
+  AppNotification(
+    kind: NotificationKind.kycSubmitted ||
+        NotificationKind.taskSubmitted ||
+        NotificationKind.taskProblem ||
+        NotificationKind.taskMessage ||
+        NotificationKind.expenseSubmitted ||
+        NotificationKind.paymentClaimed ||
+        NotificationKind.leadNew,
+  ) =>
+    null,
   AppNotification(:final taskId?) => AppRoutes.task(taskId),
   AppNotification(:final expenseId?) => AppRoutes.expenseDetail(expenseId),
   AppNotification(:final customerId?) => AppRoutes.customer(customerId),
+  AppNotification(:final leadId?) => AppRoutes.lead(leadId),
   AppNotification(kind: NotificationKind.guide) => AppRoutes.learn,
   AppNotification(kind: NotificationKind.documentsVerified) =>
     AppRoutes.documents,

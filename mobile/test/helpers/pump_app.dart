@@ -12,6 +12,7 @@ import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/expenses/data/expense_repository.dart';
 import 'package:solacliq/health/data/health_repository.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
 import 'package:solacliq/tasks/data/task_repository.dart';
 import 'package:solacliq/workspace/cubit/workspace_cubit.dart';
 
@@ -30,6 +31,7 @@ const List<String> _otherRoutes = [
   AppRoutes.login,
   AppRoutes.signup,
   AppRoutes.verify,
+  AppRoutes.signupDetails,
   AppRoutes.forgot,
   AppRoutes.reset,
   AppRoutes.requestAccess,
@@ -44,6 +46,7 @@ const List<String> _otherRoutes = [
   AppRoutes.useWebsite,
   AppRoutes.notifications,
   '${AppRoutes.customers}/:id',
+  '${AppRoutes.leads}/:id',
   '${AppRoutes.tasks}/:id',
   '${AppRoutes.tasks}/:id/camera',
   '${AppRoutes.tasks}/:id/history',
@@ -64,6 +67,13 @@ TaskRepository _emptyTasks() {
     ),
   );
   return tasks;
+}
+
+/// A lead repository with nothing in it.
+LeadRepository emptyLeads() {
+  final leads = MockLeadRepository();
+  when(() => leads.mine(any())).thenAnswer((_) async => []);
+  return leads;
 }
 
 /// An expense repository with nothing in it.
@@ -109,7 +119,11 @@ extension PumpApp on WidgetTester {
           RepositoryProvider<MockPersonaInterceptor>.value(
             value: persona ?? MockPersonaInterceptor(),
           ),
-          RepositoryProvider(create: (_) => PendingLogin()),
+          RepositoryProvider(
+            create: (_) =>
+                PendingSignup()
+                  ..hold(email: 'asha@example.com', token: 'setup-token'),
+          ),
           // Off, so tests exercise validation.
           RepositoryProvider(
             create: (_) => QuickForms(available: false),
@@ -118,6 +132,7 @@ extension PumpApp on WidgetTester {
           // Empty unless a test gives its own.
           RepositoryProvider<TaskRepository>.value(value: _emptyTasks()),
           RepositoryProvider<ExpenseRepository>.value(value: _emptyExpenses()),
+          RepositoryProvider<LeadRepository>.value(value: emptyLeads()),
           ...repositories,
         ],
         child: BlocProvider<WorkspaceCubit>.value(

@@ -9,6 +9,9 @@ import 'package:solacliq/app/widgets/load_view.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/customers/view/customer_text.dart';
 import 'package:solacliq/l10n/l10n.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
+import 'package:solacliq/leads/view/lead_text.dart';
+import 'package:solacliq/tasks/view/task_text.dart';
 
 /// Which customers the list shows.
 enum CustomerFilter { all, fix, review, approved }
@@ -29,6 +32,7 @@ class CustomersTab extends StatefulWidget {
 
 class CustomersTabState extends State<CustomersTab> {
   late Future<List<CustomerSummary>> _customers = _fetch();
+  late Future<List<Lead>> _leads = _fetchLeads();
   late CustomerFilter _filter = widget.filter;
   bool _searching = false;
   String _query = '';
@@ -36,10 +40,22 @@ class CustomersTabState extends State<CustomersTab> {
   Future<List<CustomerSummary>> _fetch() =>
       context.read<CustomerRepository>().mine(widget.orgId);
 
-  /// Fetches the list again, as the tab is opened.
+  // The admin's leads for this agent (F20). Not loading them leaves the
+  // customers usable, so a failure shows no section rather than an error.
+  Future<List<Lead>> _fetchLeads() =>
+      context.read<LeadRepository>().mine(widget.orgId);
+
+  /// Fetches the lists again, as the tab is opened.
   void reload() => setState(() {
     _customers = _fetch();
+    _leads = _fetchLeads();
   });
+
+  Future<void> _openLead(Lead lead) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await context.push(AppRoutes.lead(lead.id));
+    if (mounted) reload();
+  }
 
   @override
   void didUpdateWidget(CustomersTab oldWidget) {
@@ -108,6 +124,7 @@ class CustomersTabState extends State<CustomersTab> {
                   ),
                 ],
               ),
+            _LeadsForYou(leads: _leads, onOpen: _openLead),
             SolaSegmented<CustomerFilter>(
               key: const ValueKey('customers_filter'),
               label: l10n.tabCustomers,
@@ -199,6 +216,50 @@ class CustomerGroup extends StatelessWidget {
             onTap: () => onOpen(c),
           ),
       ],
+    );
+  }
+}
+
+/// The leads still to work (new or contacted), above the customers.
+class _LeadsForYou extends StatelessWidget {
+  const new({required this.leads, required this.onOpen});
+
+  final Future<List<Lead>> leads;
+  final ValueChanged<Lead> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return FutureBuilder(
+      future: leads,
+      builder: (context, snapshot) {
+        final open = [...?snapshot.data?.where((l) => l.open)];
+        if (open.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: SolaSpace.space8,
+          children: [
+            SolaText(l10n.leadsForYou, style: SolaTextStyle.section),
+            SolaGroup(
+              children: [
+                for (final l in open)
+                  SolaListRow(
+                    key: ValueKey('lead_row_${l.id}'),
+                    title: l.name,
+                    subtitle: [
+                      ?l.city,
+                      l.source,
+                      formatAgo(l.receivedAt),
+                    ].join(' · '),
+                    leading: SolaAvatar(initials: initialsOf(l.name)),
+                    trailing: l.status.pill(l10n),
+                    onTap: () => onOpen(l),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

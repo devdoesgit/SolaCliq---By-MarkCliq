@@ -8,6 +8,20 @@ import 'package:solacliq/notifications/view/notifications_page.dart';
 import '../helpers/helpers.dart';
 
 void main() {
+  test("an admin's notification opens nothing in the app", () {
+    AppNotification of(NotificationKind kind) => AppNotification(
+      id: 'n',
+      kind: kind,
+      title: '',
+      body: '',
+      at: DateTime(2026),
+      read: false,
+      taskId: 't1',
+    );
+    expect(destination(of(NotificationKind.taskSubmitted)), isNull);
+    expect(destination(of(NotificationKind.taskReturned)), isNotNull);
+  });
+
   late MockNotificationRepository notifications;
 
   setUp(() {

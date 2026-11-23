@@ -27,6 +27,8 @@ import 'package:solacliq/home/view/home_page.dart';
 import 'package:solacliq/install/data/install_repository.dart';
 import 'package:solacliq/install/view/payments_tab.dart';
 import 'package:solacliq/install/view/track_tab.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
+import 'package:solacliq/leads/view/lead_page.dart';
 import 'package:solacliq/learn/view/learn_page.dart';
 import 'package:solacliq/legal/view/terms_page.dart';
 import 'package:solacliq/notifications/data/notification_repository.dart';
@@ -63,6 +65,19 @@ void main() {
   );
   final customer = MemberWorkspace(testMembership(role: OrgRole.customer));
   late MockCustomerRepository customers;
+  late MockLeadRepository leads;
+  final lead = Lead(
+    id: 'l1',
+    name: 'Asha Lead (illustrative)',
+    phone: '9814022671',
+    source: 'Meta ad',
+    status: LeadStatus.fresh,
+    receivedAt: DateTime(2026, 11, 23, 10),
+    city: 'Mohali',
+    monthlyBill: '₹3,000 to ₹5,000',
+    message: 'Please call after 5.',
+    answers: const {'Roof owner?': 'Yes'},
+  );
   late MockProfileRepository profiles;
   late MockInstallRepository installs;
   final summary = CustomerSummary(
@@ -130,6 +145,9 @@ void main() {
 
   setUp(() {
     customers = MockCustomerRepository();
+    leads = MockLeadRepository();
+    when(() => leads.mine(any())).thenAnswer((_) async => [lead]);
+    when(() => leads.get(any(), any())).thenAnswer((_) async => lead);
     when(() => customers.mine(any())).thenAnswer((_) async => [summary]);
     when(() => customers.get(any(), any())).thenAnswer(
       (_) async => CustomerDetail(
@@ -261,6 +279,7 @@ void main() {
           value: MockRegistrationRepository(),
         ),
         RepositoryProvider<CustomerRepository>.value(value: customers),
+        RepositoryProvider<LeadRepository>.value(value: leads),
         RepositoryProvider<ProfileRepository>.value(value: profiles),
         RepositoryProvider<InstallRepository>.value(value: installs),
         // Nothing saved to send, so it never calls the server.
@@ -353,6 +372,7 @@ void main() {
     'customer home': (const HomePage(), customer),
     'customers tab': (const CustomersTab(orgId: 'o1'), agent),
     'customer': (CustomerPage(workspace: agent, customerId: 'c1'), agent),
+    'lead': (LeadPage(workspace: agent, leadId: 'l1'), agent),
     'fix document': (
       FixDocumentPage(workspace: agent, customerId: 'c1'),
       agent,

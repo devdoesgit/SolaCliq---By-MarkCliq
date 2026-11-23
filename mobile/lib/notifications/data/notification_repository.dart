@@ -23,6 +23,16 @@ enum NotificationKind {
   documentsVerified,
   quoteShared,
   guide,
+  // For a company's admins, on the website: they open nothing here.
+  taskSubmitted,
+  taskProblem,
+  taskMessage,
+  expenseSubmitted,
+  paymentClaimed,
+  registrationClosed,
+  // A landing-page lead: new (admins, website only), or handed to an agent.
+  leadNew,
+  leadAssigned,
 }
 
 class AppNotification extends Equatable {
@@ -36,6 +46,7 @@ class AppNotification extends Equatable {
     this.taskId,
     this.expenseId,
     this.customerId,
+    this.leadId,
   });
 
   final String id;
@@ -52,6 +63,9 @@ class AppNotification extends Equatable {
   /// One of a Sales person's customers.
   final String? customerId;
 
+  /// A lead handed to a Sales person (F20).
+  final String? leadId;
+
   AppNotification markRead() => AppNotification(
     id: id,
     kind: kind,
@@ -62,6 +76,7 @@ class AppNotification extends Equatable {
     taskId: taskId,
     expenseId: expenseId,
     customerId: customerId,
+    leadId: leadId,
   );
 
   @override
@@ -75,6 +90,7 @@ class AppNotification extends Equatable {
     taskId,
     expenseId,
     customerId,
+    leadId,
   ];
 }
 
@@ -104,6 +120,7 @@ class NotificationRepository {
           taskId: n.taskId,
           expenseId: n.expenseId,
           customerId: n.customerId,
+          leadId: n.leadId,
         ),
     ];
   }

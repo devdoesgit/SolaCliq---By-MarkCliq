@@ -10,7 +10,7 @@ import 'package:solacliq/app/dev/quick_forms.dart';
 import 'package:solacliq/auth/auth.dart';
 import 'package:solacliq/auth/view/login_page.dart';
 import 'package:solacliq/auth/view/reset_password_page.dart';
-import 'package:solacliq/auth/view/signup_page.dart';
+import 'package:solacliq/auth/view/signup_details_page.dart';
 import 'package:solacliq/auth/view/welcome_page.dart';
 import 'package:solacliq/customers/data/customer_repository.dart';
 import 'package:solacliq/customers/data/registration_repository.dart';
@@ -19,6 +19,7 @@ import 'package:solacliq/customers/view/customers_tab.dart';
 import 'package:solacliq/expenses/view/expense_page.dart';
 import 'package:solacliq/home/data/home_repository.dart';
 import 'package:solacliq/home/view/home_parts.dart';
+import 'package:solacliq/leads/data/lead_repository.dart';
 import 'package:solacliq/uploads/data/upload_repository.dart';
 import 'package:solacliq/workspace/data/workspace.dart';
 
@@ -96,6 +97,7 @@ void main() {
         const CustomersTab(orgId: 'o1'),
         repositories: [
           RepositoryProvider<CustomerRepository>.value(value: customers),
+          RepositoryProvider<LeadRepository>.value(value: emptyLeads()),
         ],
       );
       await tester.pumpAndSettle();
@@ -286,8 +288,15 @@ void main() {
     testWidgets('QA-17 an upload error is shown whole', (tester) async {
       ImagePickerPlatform.instance = _Picks();
       final uploads = MockUploadRepository();
-      when(() => uploads.upload(any(), any(), any()))
-          .thenThrow(const UploadRefused(UploadProblem.tooLarge));
+      when(
+        () => uploads.upload(
+          any(),
+          any(),
+          any(),
+          onProgress: any(named: 'onProgress'),
+          cancelled: any(named: 'cancelled'),
+        ),
+      ).thenThrow(const UploadRefused(UploadProblem.tooLarge));
       _phone(tester);
       await tester.pumpApp(
         AddCustomerPage(
@@ -316,6 +325,13 @@ void main() {
       await tester.pumpAndSettle();
       final error = tester.widget<Text>(find.textContaining('over 10 MB'));
       expect(error.maxLines, greaterThan(1));
+      // Aadhaar's first file took the Front slot; Back is still offered.
+      expect(find.byKey(const ValueKey('doc_aadhaar_front')), findsNothing);
+      expect(find.byKey(const ValueKey('doc_aadhaar_back')), findsOneWidget);
+      await tester.tapKey('file_aadhaar_1_remove');
+      await tester.pumpAndSettle();
+      expect(find.textContaining('over 10 MB'), findsNothing);
+      expect(find.byKey(const ValueKey('doc_aadhaar_front')), findsOneWidget);
     });
 
     testWidgets('QA-25 over 1,000 kW is caught in the app', (tester) async {
@@ -343,7 +359,7 @@ void main() {
   });
 
   testWidgets('QA-26 sign-up errors clear while typing', (tester) async {
-    await tester.pumpApp(const SignupPage());
+    await tester.pumpApp(const SignupDetailsPage());
     await tester.tapKey('signup_submit');
     await tester.pumpAndSettle();
     expect(find.text('Enter a password.'), findsOne);

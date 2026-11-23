@@ -17,6 +17,7 @@ class PushMessage extends Equatable {
     this.taskId,
     this.expenseId,
     this.customerId,
+    this.leadId,
   });
 
   /// From the push's `data`; null when it isn't one of ours.
@@ -34,6 +35,7 @@ class PushMessage extends Equatable {
       taskId: id('task_id'),
       expenseId: id('expense_id'),
       customerId: id('customer_id'),
+      leadId: id('lead_id'),
     );
   }
 
@@ -45,6 +47,7 @@ class PushMessage extends Equatable {
   final String? taskId;
   final String? expenseId;
   final String? customerId;
+  final String? leadId;
 
   /// As a list item, to open it the way the notifications list does.
   AppNotification toNotification() => AppNotification(
@@ -57,6 +60,7 @@ class PushMessage extends Equatable {
     taskId: taskId,
     expenseId: expenseId,
     customerId: customerId,
+    leadId: leadId,
   );
 
   @override
@@ -67,6 +71,7 @@ class PushMessage extends Equatable {
     taskId,
     expenseId,
     customerId,
+    leadId,
   ];
 }
 
