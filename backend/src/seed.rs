@@ -221,6 +221,7 @@ pub async fn run(db: &PgPool, env: Environment) -> Result<(), SeedError> {
     registrations(&mut tx).await?;
     installs(&mut tx).await?;
     attendance(&mut tx).await?;
+    leads(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -923,25 +924,34 @@ async fn registrations(tx: &mut PgConnection) -> Result<(), SeedError> {
                 (_, "approved") => ("verified", None),
                 _ => ("in_review", None),
             };
+            let document = Uuid::now_v7();
             sqlx::query(
-                "INSERT INTO documents (id, org_id, customer_id, kind, upload_id, status,
+                "INSERT INTO documents (id, org_id, customer_id, kind, status,
                                         admin_note, admin_note_by, admin_note_at, uploaded_by,
                                         created_at, updated_at)
-                 SELECT $1, $2, $3, $4::kyc_kind, $5, $6::document_status, $7,
-                        CASE WHEN $7 IS NULL THEN NULL ELSE d.id END,
-                        CASE WHEN $7 IS NULL THEN NULL ELSE now() - interval '1 day' END, a.id,
+                 SELECT $1, $2, $3, $4::kyc_kind, $5::document_status, $6,
+                        CASE WHEN $6 IS NULL THEN NULL ELSE d.id END,
+                        CASE WHEN $6 IS NULL THEN NULL ELSE now() - interval '1 day' END, a.id,
                         c.created_at, c.created_at
                  FROM users a, users d, customers c
-                 WHERE a.email = $8 AND d.email = 'dev@example.com' AND c.id = $3",
+                 WHERE a.email = $7 AND d.email = 'dev@example.com' AND c.id = $3",
             )
-            .bind(Uuid::now_v7())
+            .bind(document)
             .bind(EXAMPLE_SOLAR)
             .bind(id)
             .bind(*kind)
-            .bind(upload)
             .bind(status)
             .bind(note)
             .bind(c.agent)
+            .execute(&mut *tx)
+            .await?;
+            sqlx::query(
+                "INSERT INTO document_files (org_id, document_id, upload_id, position)
+                 VALUES ($1, $2, $3, 1)",
+            )
+            .bind(EXAMPLE_SOLAR)
+            .bind(document)
+            .bind(upload)
             .execute(&mut *tx)
             .await?;
         }
@@ -1116,6 +1126,90 @@ async fn attendance(tx: &mut PgConnection) -> Result<(), SeedError> {
         .bind(started)
         .bind(ended)
         .bind(email)
+        .execute(&mut *tx)
+        .await?;
+    }
+    Ok(())
+}
+
+/*
+    Landing-page leads (F20)
+    --------------------------------------------------------------------
+    - three new, one with Meena and already called; all illustrative
+    - no lead key: the admin makes one in Settings to try sending
+*/
+async fn leads(tx: &mut PgConnection) -> Result<(), SeedError> {
+    sqlx::query("DELETE FROM leads WHERE org_id = $1 AND external_id LIKE 'seed-%'")
+        .bind(EXAMPLE_SOLAR)
+        .execute(&mut *tx)
+        .await?;
+    // (name, phone, city, bill, roof, source, hours ago, with Meena)
+    let leads: [(&str, &str, &str, &str, &str, &str, i32, bool); 4] = [
+        (
+            "Harpreet Example (illustrative)",
+            "9814000901",
+            "Mohali",
+            "₹3,000 to ₹6,000",
+            "RCC roof",
+            "Meta ad",
+            2,
+            false,
+        ),
+        (
+            "Sunita Example (illustrative)",
+            "9814000902",
+            "Kharar",
+            "₹6,000+",
+            "Tin shed",
+            "Google search",
+            5,
+            false,
+        ),
+        (
+            "Vikas Example (illustrative)",
+            "9814000903",
+            "Zirakpur",
+            "₹1,500 to ₹3,000",
+            "RCC roof",
+            "Landing page",
+            26,
+            false,
+        ),
+        (
+            "Neelam Example (illustrative)",
+            "9814000904",
+            "Panchkula",
+            "₹3,000 to ₹6,000",
+            "RCC roof",
+            "Meta ad",
+            50,
+            true,
+        ),
+    ];
+    for (n, (name, phone, city, bill, roof, source, hours, meena)) in leads.into_iter().enumerate()
+    {
+        sqlx::query(
+            "INSERT INTO leads (id, org_id, external_id, name, phone, city, monthly_bill, roof_type,
+                                source, campaign, extra, status, note, agent_id, created_at)
+             SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Rooftop subsidy, November',
+                    '{\"Own the roof?\": \"Yes\"}'::jsonb,
+                    CASE WHEN $10 THEN 'contacted' ELSE 'new' END::lead_status,
+                    CASE WHEN $10 THEN 'Wants a site visit on Saturday.' END,
+                    CASE WHEN $10 THEN u.id END,
+                    now() - make_interval(hours => $11)
+             FROM users u WHERE u.email = 'meena@example.com'",
+        )
+        .bind(Uuid::now_v7())
+        .bind(EXAMPLE_SOLAR)
+        .bind(format!("seed-{n}"))
+        .bind(name)
+        .bind(phone)
+        .bind(city)
+        .bind(bill)
+        .bind(roof)
+        .bind(source)
+        .bind(meena)
+        .bind(hours)
         .execute(&mut *tx)
         .await?;
     }
