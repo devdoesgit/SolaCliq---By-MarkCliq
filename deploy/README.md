@@ -16,7 +16,8 @@ Commands marked **local** run on the development machine, in the repo.
 | `solacliq.env.example` | filled in as `/etc/solacliq/solacliq.env` |
 | `db-setup.sql` | run once with `psql` |
 | `build.sh` | **local**: builds a release archive |
-| `release.sh` | on the server: puts a release live |
+| `release.sh` | on the server: backs up, puts a release live, rolls back if it fails |
+| `restore.sh` | on the server: puts a backup back (also used by `release.sh`) |
 
 On the server:
 
@@ -111,6 +112,29 @@ Fill in the two database passwords, `CODE_SECRET`, `BANK_KEY` and the
 production R2 token's four values. Save `BANK_KEY` in your password
 manager: without it the stored bank account numbers can't be read.
 
+**The bucket's CORS rule.** Without it the website can't upload a logo.
+In Cloudflare: R2 → `solacliq-uploads` → Settings → CORS policy → Edit:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://solacliq.markcliq.com"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Check it from any machine, with your account id. Expected: a line
+`access-control-allow-origin: https://solacliq.markcliq.com`.
+
+```
+curl -si -X OPTIONS "https://<account id>.r2.cloudflarestorage.com/solacliq-uploads/check" \
+  -H "Origin: https://solacliq.markcliq.com" -H "Access-Control-Request-Method: PUT" \
+  -H "Access-Control-Request-Headers: content-type" | grep -i allow-origin
+```
+
 ### 7. The services
 
 **local**: `scp deploy/*.service deploy/*.timer <you>@solacliq.markcliq.com:/tmp/`
@@ -130,7 +154,7 @@ The API starts with the first release, next.
 
 ```
 deploy/build.sh
-scp deploy/out/solacliq-<commit>.tar.gz deploy/release.sh <you>@solacliq.markcliq.com:/tmp/
+scp deploy/out/solacliq-<commit>.tar.gz deploy/release.sh deploy/restore.sh <you>@solacliq.markcliq.com:/tmp/
 ```
 
 On the server:
@@ -165,7 +189,56 @@ request can take a few seconds while Caddy gets the certificate.
    info@markcliq.com.
 4. Make your account MarkCliq's platform admin (it must have signed up first):
    `sudo systemd-run --pty --wait -q --uid=solacliq -p EnvironmentFile=/etc/solacliq/solacliq.env /opt/solacliq/current/backend make-platform-admin <your email>`
-5. Next morning: `ls -l /var/backups/solacliq/` shows a dump.
+5. Approve that test company (next section), open
+   https://solacliq.markcliq.com as its owner, choose "First time here?
+   Set your password", and add a logo in Settings (it proves R2's rule).
+6. Next morning: `ls -l /var/backups/solacliq/` shows a dump.
+
+## Approve a company
+
+A vendor can't use the website until MarkCliq approves them, and there's
+no page for it yet. On any machine with curl and Python, as a platform
+admin (step 10.4). Run each block by itself.
+
+Log in (the password isn't shown or saved):
+
+```
+API=https://solacliq.markcliq.com/api/v1
+read -rp "Your email: " EMAIL
+```
+
+```
+read -rsp "Your password: " PW
+```
+
+```
+TOKEN=$(EMAIL="$EMAIL" PW="$PW" python3 -c 'import json,os; print(json.dumps({"email": os.environ["EMAIL"], "password": os.environ["PW"], "client": "app"}))' \
+  | curl -fsS -H 'content-type: application/json' -d @- "$API/auth/login" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["tokens"]["access_token"])'); unset PW
+```
+
+See who is waiting:
+
+```
+curl -fsS -H "Authorization: Bearer $TOKEN" "$API/platform/orgs?status=pending" \
+  | python3 -c 'import json,sys; [print(o["id"], o["name"], (o.get("owner") or {}).get("email", "")) for o in json.load(sys.stdin)["items"]]'
+```
+
+Approve one, after calling the owner. They get an email with the link to
+set their password:
+
+```
+ORG=paste-the-id-here
+```
+
+```
+curl -fsS -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"status":"active"}' "$API/platform/orgs/$ORG/status"
+```
+
+To turn one down instead, send
+`{"status":"rejected","note":"The reason, which the owner is emailed"}`.
+The token works for 15 minutes; log in again after that.
 
 ## The production app
 
@@ -202,19 +275,29 @@ adb install build/app/outputs/flutter-apk/app-production-release.apk
 
 ## Later releases
 
-**local**: commit, `deploy/build.sh`, `scp` the archive.
+**local**: commit, `deploy/build.sh`, then `scp` the archive with
+`deploy/release.sh` and `deploy/restore.sh`, and reload Caddy if
+`deploy/Caddyfile` changed.
 **Server**: `sudo bash /tmp/release.sh /tmp/solacliq-<commit>.tar.gz`.
 
-A release with a migration changes the database for good: take a backup
-first (`sudo systemctl start solacliq-backup`).
+It stops the API for a few seconds, takes a backup, then starts the
+release. If that doesn't start, the previous release comes back by
+itself, with the backup if a migration had run. Don't roll back by
+moving `current` yourself after a migration: an older API won't start on
+a newer database.
 
 ## Restore a backup
 
 ```
-sudo systemctl stop solacliq-api
-sudo -u postgres pg_restore --clean --if-exists -d solacliq /var/backups/solacliq/solacliq-<date>.dump
-sudo systemctl start solacliq-api
+sudo bash /tmp/restore.sh /var/backups/solacliq/<dump> [solacliq-<commit>]
 ```
+
+Give the release the dump was made with when it's older than the live
+one. What was written after the dump was taken is not in it. The
+database it replaces is kept as `solacliq_replaced_<time>`; once you're
+sure, drop it with `sudo -u postgres dropdb <that name>`. Don't use
+`pg_restore --clean` on the live database: later releases can then never
+migrate it.
 
 ## Logs
 
