@@ -1,6 +1,7 @@
 //! SolaCliq API. `app` builds the router; `main.rs` wires config, the
 //! database and the server around it, so tests can build the same router.
 
+pub mod account;
 pub mod bank;
 pub mod codes;
 pub mod config;
@@ -15,14 +16,18 @@ pub mod mail;
 pub mod notify;
 pub mod openapi;
 pub mod org;
+pub mod origin;
 pub mod page;
 pub mod password;
 pub mod push;
 pub mod rate_limit;
+pub mod retention;
 pub mod routes;
 pub mod scope;
 pub mod seed;
 pub mod session;
+pub mod signup;
+pub mod stages;
 pub mod storage;
 pub mod terms;
 pub mod validate;
@@ -91,6 +96,7 @@ pub fn app(state: AppState) -> Router {
         .nest(API_PREFIX, api)
         .merge(openapi::docs(spec))
         .fallback(routes::not_found)
+        .layer(axum::middleware::from_fn(origin::same_origin))
         .layer(TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(30),

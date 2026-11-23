@@ -59,8 +59,16 @@ cargo run -- send-test-push <token>      # checks the Firebase (push) setup
   `home`, `notifications` and `uploads` (phase 7), `tasks` and
   `expenses` (phase 8), `customers` (phase 9: registration, my
   customers, documents), `install` (phase 10), `admin` (the
-  company's actions for the website), `attendance` (F17);
-  merged in `routes/mod.rs`.
+  company's actions for the website), `admin_site` (what the website
+  reads, price, stage, settings), `attendance` (F17), `logo` (F15),
+  `stages` (F19), `leads` (F20, with the public `POST /leads`); merged in
+  `routes/mod.rs`.
+- `src/stages.rs`: a company's 7 stage names and templates
+  (`stages::load` reads the scope's company); use it wherever a stage
+  is named, never a fixed list.
+- `src/origin.rs`: cross-site writes refused. `src/signup.rs`: code-first
+  sign-up. `src/account.rs`: account deletion. `src/retention.rs`: KYC
+  retention (F18).
 - `src/scope.rs`: the row-level security scopes and the startup check.
 - `src/storage.rs`: signed R2 URLs (uploads and reads), and the
   server's own HEAD and DELETE.

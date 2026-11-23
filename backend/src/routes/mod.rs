@@ -3,6 +3,7 @@
 //! so the spec is generated from them.
 
 pub mod admin;
+pub mod admin_site;
 pub mod attendance;
 pub mod auth;
 pub mod customers;
@@ -11,6 +12,7 @@ pub mod expenses;
 pub mod health;
 pub mod home;
 pub mod install;
+pub mod leads;
 pub mod logo;
 pub mod me;
 pub mod notifications;
@@ -18,6 +20,7 @@ pub mod platform;
 pub mod profile;
 pub mod quotes;
 pub mod registration;
+pub mod stages;
 pub mod tasks;
 pub mod team;
 pub mod uploads;
@@ -39,7 +42,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(team::router())
         .merge(registration::router())
         .merge(admin::router())
+        .merge(admin_site::router())
         .merge(attendance::router())
+        .merge(stages::router())
+        .merge(leads::router())
         .merge(customers::router())
         .merge(expenses::router())
         .merge(platform::router())
