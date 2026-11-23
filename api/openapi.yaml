@@ -7,6 +7,9 @@ info:
     url: https://markcliq.com
     email: info@markcliq.com
   description: |
+    Writes that carry the website's cookies must come from the website
+    itself: from another origin they are 403 `auth.cross_origin`.
+
     Contract between the SolaCliq backend, mobile app and admin website.
     Conventions are in docs/architecture.md under "API conventions":
     money in integer paise, UUIDv7 ids, ISO 8601 UTC timestamps, cursor
@@ -54,6 +57,10 @@ tags:
     description: The company's side of each flow, for the admin website.
   - name: attendance
     description: Installers and salaried sales marking their working day (F17).
+  - name: stages
+    description: Each company's 7 install stages and their templates (F19).
+  - name: leads
+    description: Landing-page leads sent to a company, tracked and assigned (F20).
 
 paths:
   /health:
@@ -82,57 +89,15 @@ paths:
   /auth/signup:
     post:
       operationId: signup
-      summary: Create a customer account
+      summary: Start signing up (email a code)
       description: |
-        Creates an unverified account and emails a 6-digit code. Always 202,
-        whether or not the email already has an account (no enumeration);
-        an existing account gets an "you already have an account" email.
-      tags: [auth]
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignupRequest"
-      responses:
-        "202":
-          description: Accepted; a code is on its way if the email is new.
-        "422":
-          $ref: "#/components/responses/Problem"
-        "429":
-          $ref: "#/components/responses/Problem"
-
-  /auth/email/verify:
-    post:
-      operationId: verifyEmail
-      summary: Verify an email with its code
-      description: |
-        Marks the email verified so the account can log in. Codes last 5
-        minutes and allow 5 tries. A wrong, expired, used-up or never
-        sent code all answer 400 `auth.code_invalid`, so the reply can't
-        show which emails have accounts; 429 is only the per-IP limit.
-      tags: [auth]
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VerifyEmailRequest"
-      responses:
-        "204":
-          description: Email verified; the account can log in.
-        "400":
-          $ref: "#/components/responses/Problem"
-        "429":
-          $ref: "#/components/responses/Problem"
-
-  /auth/email/resend:
-    post:
-      operationId: resendVerification
-      summary: Send a new verification code
-      description: Always 202 (no enumeration).
+        Step 1 of 3, also how to ask for another code (one a minute).
+        Creates no account. Always 202, whether or not the email has an
+        account (no enumeration): one with a password gets a "you already
+        have an account" email instead of a code. An account made for
+        someone (invited, registered by an agent) gets a code and can
+        finish this way. 429 after 3 an hour for one email, whether or
+        not it has an account, or over the per-IP limit.
       tags: [auth]
       security: []
       requestBody:
@@ -143,7 +108,71 @@ paths:
               $ref: "#/components/schemas/EmailRequest"
       responses:
         "202":
-          description: Accepted.
+          description: Accepted; a code is on its way if the email can sign up.
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/signup/verify:
+    post:
+      operationId: verifySignup
+      summary: Prove the inbox with the code
+      description: |
+        Step 2 of 3. Returns a one-time setup token for step 3. Codes last
+        5 minutes and allow 5 tries. A wrong, expired, used-up or never
+        sent code all answer 400 `auth.code_invalid`, so the reply can't
+        show which emails have accounts; 429 is only the per-IP limit.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifySignupRequest"
+      responses:
+        "200":
+          description: The inbox is proven.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupSetup"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /auth/signup/complete:
+    post:
+      operationId: completeSignup
+      summary: Create the account and log in
+      description: |
+        Step 3 of 3, with the setup token. Only now is the account made
+        (or, if someone made it for this person, completed): name, mobile,
+        password and the agreement to the terms are what was sent here,
+        nothing from before. Answers as an app login. The token works once
+        and for 15 minutes: after that, or if the account got a password
+        meanwhile, 400 `auth.signup_expired`.
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteSignupRequest"
+      responses:
+        "200":
+          description: Created and logged in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
         "429":
           $ref: "#/components/responses/Problem"
 
@@ -153,12 +182,11 @@ paths:
       summary: Log in
       description: |
         `client: app` returns a token pair in the body. `client: web` sets
-        the access and refresh cookies and returns no tokens. Wrong email and wrong
-        password give the same `auth.invalid_credentials`; an unverified
-        account gets `account.email_unverified` only after the right
-        password. An account created for someone (by an agent or org admin)
-        that has no password yet gets 403 `account.password_not_set`; the
-        person sets one through /auth/password/forgot and /reset.
+        the access and refresh cookies and returns no tokens. An unknown
+        email, a wrong password and an account with no password yet all
+        give the same `auth.invalid_credentials`, so log in can't show
+        which emails have accounts or were invited. Someone invited sets
+        a password through /auth/password/forgot and /reset, or signs up.
       tags: [auth]
       security: []
       requestBody:
@@ -212,8 +240,6 @@ paths:
                   value:
                     {"user": {"id": "01928f6e-0000-7000-8000-000000000005", "name": "Dev Example (illustrative)", "email": "dev@example.com", "email_verified": true, "is_platform_admin": false, "terms": {"accepted_version": 1, "current_version": 1}, "memberships": [{"org": {"id": "01928f6e-0000-7000-8000-0000000000a1", "name": "Example Solar (illustrative)", "status": "active"}, "role": "org_admin"}]}, "tokens": {"access_token": "mock-access", "refresh_token": "mock-refresh", "access_expires_in": 900, "token_type": "Bearer"}}
         "401":
-          $ref: "#/components/responses/Problem"
-        "403":
           $ref: "#/components/responses/Problem"
         "429":
           $ref: "#/components/responses/Problem"
@@ -421,6 +447,36 @@ paths:
                       - org: {id: 01928f6e-0000-7000-8000-0000000000a1, name: Example Solar (illustrative), status: active}
                         role: org_admin
         "401":
+          $ref: "#/components/responses/Problem"
+
+  /me/delete:
+    post:
+      operationId: deleteAccount
+      summary: Delete the caller's account
+      description: |
+        Can't be undone. Erases the login and personal data and ends every
+        membership; a company's records of the person's work stay with it.
+        400 `account.password_incorrect`; 409 `account.last_admin` or
+        `account.platform_admin`.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountDelete"
+      responses:
+        "204":
+          description: Deleted, and logged out everywhere.
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/members:
@@ -966,10 +1022,14 @@ paths:
     post:
       operationId: createTask
       summary: Create a task for an installer (TSK-0001)
-      description: Company admins only (the website). Writes the history and the notification
-        the other person sees. See docs/features/admin-actions.md.
+      description: |
+        Company admins only (the website). Writes the history and the
+        notification the other person sees. Safe to retry with the same
+        `Idempotency-Key`. See docs/features/admin-actions.md.
       tags:
       - admin
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1831,19 +1891,16 @@ paths:
       description: |
         Only the document the admin sent back (409 `registration.locked`
         otherwise). The document and the customer go back to `in_review`.
-        The file is an upload of this company (purpose `kyc`), checked in
-        storage (422 on `upload_id` if it didn't finish).
+        The 1 to 5 files replace the whole set. Each is an upload of this
+        company (purpose `kyc`), checked in storage (422 on `files` if
+        one didn't finish).
       tags: [customers]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [upload_id]
-              properties:
-                upload_id:
-                  $ref: "#/components/schemas/Id"
+              $ref: "#/components/schemas/DocumentReplace"
       responses:
         "200":
           description: With the admin again.
@@ -2314,14 +2371,94 @@ paths:
         '422':
           $ref: '#/components/responses/Problem'
 
+  /orgs/{org_id}/expenses/{expense_id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/ExpenseId"
+    post:
+      operationId: rejectExpense
+      summary: Don't accept an expense
+      description: |
+        Company admins only. From `in_review` or `needs_fix`, with a reason
+        the person sees. Final (409 `expense.locked` after).
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteBody"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Done"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/payments/{payment_id}/not-received:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Id"
+    post:
+      operationId: paymentNotReceived
+      summary: Say a claimed payment didn't arrive
+      description: |
+        Company admins only. A `claimed` payment goes back to `due`, and
+        the customer is told why and can pay or claim again. 409
+        `payment.not_due` otherwise.
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteBody"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Done"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
   /orgs/{org_id}/review:
     parameters:
     - $ref: '#/components/parameters/OrgId'
     get:
       operationId: getReviewQueue
       summary: Everything waiting for the admin, oldest first
-      description: Company admins only (the website). Writes the history and the notification
-        the other person sees. See docs/features/admin-actions.md.
+      description: |
+        Company admins only (the website). Tasks: `submitted`, `problem`,
+        or `reply` (the installer's message is the latest thing that
+        happened on an open task). Expenses: `in_review`, or `approved`
+        and still to pay. Commissions: `in_review` or `payable`.
+        Payments: claimed. Registrations in review (one with the agent
+        isn't waiting for the admin).
       tags:
       - admin
       responses:
@@ -2567,6 +2704,720 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
 
+  /orgs/{org_id}/admin/overview:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminGetOverview
+      summary: The website's overview totals
+      description: |
+        Company admins only. Read only; months and weeks are India's.
+      tags: [admin]
+      responses:
+        "200":
+          description: The totals.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/customers:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminListCustomers
+      summary: The company's customers, newest first
+      description: |
+        Company admins only. `q` looks in name, phone, email, reference and
+        consumer number, ignoring case.
+      tags: [admin]
+      parameters:
+        - name: q
+          in: query
+          schema:
+            {type: string, maxLength: 100}
+        - name: kyc_status
+          in: query
+          schema:
+            $ref: "#/components/schemas/KycStatus"
+        - name: stage
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 7}
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomerPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/customers/{customer_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/CustomerId"
+    get:
+      operationId: adminGetCustomer
+      summary: One customer, whole
+      description: |
+        Company admins only. The registration, every KYC document with a
+        15-minute link, the price, payments and commission.
+      tags: [admin]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCustomer"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/customers/{customer_id}/stage:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/CustomerId"
+    put:
+      operationId: adminSetCustomerStage
+      summary: Move a customer's install stage
+      description: |
+        Company admins only. Either way, for a verified customer until
+        handover (409 `registration.locked`).
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StageSet"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Done"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/customers/{customer_id}/price:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/CustomerId"
+    put:
+      operationId: adminSetCustomerPrice
+      summary: Correct a customer's price
+      description: |
+        Company admins only, until a payment is paid (409 `price.locked`).
+        The three parts are worked out again. A claimed payment goes back
+        to `due`, as the claim was for another amount, and the customer is
+        told the new amount of anything due.
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PriceSet"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Done"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/tasks:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminListTasks
+      summary: The company's tasks, newest first
+      description: |
+        Company admins only. `open`: assigned or returned. `problem`: open
+        with a reported problem. `done`: approved or cancelled.
+      tags: [admin]
+      parameters:
+        - name: view
+          in: query
+          schema:
+            $ref: "#/components/schemas/AdminTaskView"
+        - name: assignee_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: customer_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTaskPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/tasks/{task_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      operationId: adminGetTask
+      summary: One task, with its proof and history
+      description: |
+        Company admins only. Photo links work for 15 minutes.
+      tags: [admin]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTask"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/expenses:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminListExpenses
+      summary: Everyone's expenses, newest first
+      description: |
+        Company admins only.
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ExpenseStatus"
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminExpensePage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/expenses/{expense_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/ExpenseId"
+    get:
+      operationId: adminGetExpense
+      summary: One expense, with its receipt
+      description: |
+        Company admins only. The receipt's link works for 15 minutes. Of
+        the payee's bank account, only the last 4 digits.
+      tags: [admin]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminExpense"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/commissions:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminListCommissions
+      summary: Agents' commissions, newest first
+      description: |
+        Company admins only. Not those of rejected customers. Of the
+        agent's bank account, only the last 4 digits.
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/CommissionStatus"
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCommissionPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/payments:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminListPayments
+      summary: Customers' payments, newest first
+      description: |
+        Company admins only.
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/AdminPaymentStatus"
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminPaymentPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/settings:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminGetSettings
+      summary: The company's settings
+      description: |
+        Company admins only.
+      tags: [admin]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+    put:
+      operationId: adminSetSettings
+      summary: Change the company's settings
+      description: |
+        Company admins only. An empty or null `upi_id` removes it, and
+        with it the "Pay by UPI" button of its customers.
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSettingsSet"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSettings"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/stages:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listStages
+      summary: The company's 7 install stages
+      description: |
+        Any member. In order, with each stage's template: what a new task
+        at that stage asks for. A stage the company hasn't changed has the
+        standard name and an empty template.
+      tags: [stages]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StageList"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/stages/{index}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - name: index
+        in: path
+        required: true
+        description: The stage, from 1 to 7.
+        schema:
+          {type: integer, minimum: 1, maximum: 7}
+    put:
+      operationId: adminSetStage
+      summary: Change one stage's name and template
+      description: |
+        Company admins only. Replaces the name, checklist and photos.
+        Blank items are dropped and repeats kept once. Tasks already made
+        keep what they were made with.
+      tags: [stages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StageTemplateSet"
+      responses:
+        "200":
+          description: All 7 stages, after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StageList"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /leads:
+    post:
+      operationId: createLead
+      summary: Send a lead to a company
+      description: |
+        For a landing page's server, with the company's lead key as the
+        bearer token (made in the website's Settings). Never call it from
+        a browser: the key would be public. 401 `lead.bad_key` for a
+        missing, wrong or replaced key. `consent` must be true (422
+        `lead.consent_required`). With an `external_id` already sent, the
+        first lead comes back with 200 and nothing changes. At most 300 an
+        hour per company (429 `auth.too_many_attempts`).
+      tags: [leads]
+      security:
+        - leadKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadCreate"
+      responses:
+        "200":
+          description: Already sent (same `external_id`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadReceipt"
+        "201":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadReceipt"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/leads:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listLeads
+      summary: The company's leads, newest first
+      description: |
+        Company admins only. `q` matches the name, phone, email or city.
+      tags: [leads]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/LeadStatus"
+        - name: agent_id
+          in: query
+          description: Only the leads with this agent.
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: q
+          in: query
+          schema:
+            {type: string, maxLength: 100}
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/leads/mine:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: listMyLeads
+      summary: The leads handed to the caller, newest first
+      description: |
+        Sales agents only.
+      tags: [leads]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/LeadStatus"
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            {type: integer, minimum: 1, maximum: 100, default: 25}
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/leads/{lead_id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - $ref: "#/components/parameters/LeadId"
+    get:
+      operationId: getLead
+      summary: One lead, with everything the form sent
+      description: |
+        Company admins, or the agent it's with (404 for anyone else).
+      tags: [leads]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateLead
+      summary: Change a lead's status, note or agent
+      description: |
+        Company admins: any field. `agent_id` hands it to a Sales Agent of
+        the company (422 `lead.not_an_agent` otherwise), who is notified;
+        null takes it back. The agent it's with: `status` and `note` only
+        (403 `lead.admin_only` for `agent_id`). An empty note removes it.
+      tags: [leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadUpdate"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteLead
+      summary: Delete a lead for good
+      description: |
+        Company admins only. For a person asking to be forgotten.
+      tags: [leads]
+      responses:
+        "204":
+          description: Deleted.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/admin/lead-key:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+    get:
+      operationId: adminGetLeadKey
+      summary: Whether the company has a lead key
+      description: |
+        Company admins only. Never the key itself: it's shown once, when
+        made.
+      tags: [leads]
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadKeyInfo"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: adminMakeLeadKey
+      summary: Make a new lead key
+      description: |
+        Company admins only. Returns the key once. Any earlier key stops
+        working at once.
+      tags: [leads]
+      responses:
+        "201":
+          description: The new key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadKeyNew"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
 components:
   securitySchemes:
     bearer:
@@ -2578,6 +3429,10 @@ components:
       in: cookie
       name: solacliq_session
       description: Session cookie, used by the admin website.
+    leadKey:
+      type: http
+      scheme: bearer
+      description: A company's lead key, for its landing page's server (F20).
 
   parameters:
     CustomerId:
@@ -2594,6 +3449,12 @@ components:
         $ref: "#/components/schemas/Id"
     ExpenseId:
       name: expense_id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Id"
+    LeadId:
+      name: lead_id
       in: path
       required: true
       schema:
@@ -2787,17 +3648,39 @@ components:
       description: 6-digit code from the email.
       examples: ["482913"]
 
-    SignupRequest:
+    VerifySignupRequest:
       type: object
-      required: [name, email, password, terms_version]
+      required: [email, code]
       properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        code:
+          $ref: "#/components/schemas/VerificationCode"
+
+    SignupSetup:
+      type: object
+      required: [signup_token, expires_in]
+      properties:
+        signup_token:
+          type: string
+          description: Single use. Keep it in memory, never in storage or a URL.
+        expires_in:
+          type: integer
+          format: int64
+          description: Seconds it works for.
+          examples: [900]
+
+    CompleteSignupRequest:
+      type: object
+      required: [signup_token, name, password, terms_version]
+      properties:
+        signup_token:
+          type: string
         name:
           type: string
           minLength: 1
           maxLength: 100
           examples: ["Asha Example (illustrative)"]
-        email:
-          $ref: "#/components/schemas/Email"
         phone:
           $ref: "#/components/schemas/Phone"
         password:
@@ -2848,15 +3731,6 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/Email"
-
-    VerifyEmailRequest:
-      type: object
-      required: [email, code]
-      properties:
-        email:
-          $ref: "#/components/schemas/Email"
-        code:
-          $ref: "#/components/schemas/VerificationCode"
 
     LoginRequest:
       type: object
@@ -3017,6 +3891,16 @@ components:
           $ref: "#/components/schemas/MemberStatus"
         added_at:
           $ref: "#/components/schemas/Timestamp"
+        customers:
+          type: integer
+          format: int64
+          description: Customers they registered that weren't turned down.
+        open_tasks:
+          type: integer
+          format: int64
+          description: |
+            Their tasks not yet approved or cancelled, which stay with them
+            if they're removed.
 
     MemberPage:
       type: object
@@ -3538,8 +4422,8 @@ components:
 
     ExpenseStatus:
       type: string
-      enum: [in_review, approved, needs_fix, paid]
-      description: "`paid`: approved and paid out (with salary or cash)."
+      enum: [in_review, approved, needs_fix, paid, rejected]
+      description: "`paid`: approved and paid out (with salary or cash). `rejected`: not accepted, with the admin's reason; final."
 
     ExpenseCreate:
       type: object
@@ -3689,12 +4573,16 @@ components:
           type: array
           items:
             type: object
-            required: [kind, upload_id]
+            required: [kind, files]
             properties:
               kind:
                 $ref: "#/components/schemas/KycKind"
-              upload_id:
-                $ref: "#/components/schemas/Id"
+              files:
+                type: array
+                minItems: 1
+                maxItems: 5
+                items:
+                  $ref: "#/components/schemas/DocumentFile"
         consent:
           type: boolean
           description: The customer agreed to share these with the company. Must be true.
@@ -3707,6 +4595,42 @@ components:
           type: string
           maxLength: 200
           description: How the agent worked it out.
+
+    AccountDelete:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 128
+
+    DocumentReplace:
+      type: object
+      required: [files]
+      properties:
+        files:
+          type: array
+          minItems: 1
+          maxItems: 5
+          description: Replaces the whole set.
+          items:
+            $ref: "#/components/schemas/DocumentFile"
+
+    DocumentSide:
+      type: string
+      enum: [front, back]
+      description: A label only; neither side is required.
+
+    DocumentFile:
+      type: object
+      required: [upload_id]
+      properties:
+        upload_id:
+          $ref: "#/components/schemas/Id"
+        side:
+          $ref: "#/components/schemas/DocumentSide"
 
     CustomerRegistration:
       type: object
@@ -4027,7 +4951,12 @@ components:
           $ref: "#/components/schemas/Id"
         kind:
           type: string
-          enum: [task_assigned, task_approved, task_returned, task_cancelled, task_rescheduled, expense_approved, expense_returned, expense_paid, kyc_returned, kyc_submitted, kyc_approved, install_started, commission_changed, commission_payable, commission_paid, visit_booked, payment_due, documents_verified, quote_shared, guide]
+          enum: [task_assigned, task_approved, task_returned, task_cancelled, task_rescheduled, expense_approved, expense_returned, expense_paid, kyc_returned, kyc_submitted, kyc_approved, install_started, commission_changed, commission_payable, commission_paid, visit_booked, payment_due, documents_verified, quote_shared, guide, task_submitted, task_problem, task_message, expense_submitted, payment_claimed, registration_closed, lead_new, lead_assigned]
+          description: |
+            `task_submitted`, `task_problem`, `task_message`,
+            `expense_submitted`, `payment_claimed`, `lead_new` and an
+            admin's `kyc_submitted` are for the website: never pushed.
+            `lead_assigned` goes to the Sales Agent given a lead (F20).
         title:
           type: string
         body:
@@ -4043,6 +4972,9 @@ components:
         customer_id:
           $ref: "#/components/schemas/Id"
           description: One of the caller's customers (Sales).
+        lead_id:
+          $ref: "#/components/schemas/Id"
+          description: A lead (F20).
 
     NotificationPage:
       type: object
@@ -4476,6 +5408,8 @@ components:
           type: string
         title:
           type: string
+        amount:
+          $ref: "#/components/schemas/Money"
 
     ReviewQueue:
       type: object
@@ -4485,7 +5419,13 @@ components:
       - registrations
       - commissions
       - payments
+      - leads
       properties:
+        leads:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+          description: New landing-page leads nobody has yet (F20); `reference` is empty.
         commissions:
           type: array
           items:
@@ -4707,3 +5647,743 @@ components:
                 type: integer
                 minimum: 0
                 description: Total worked time of the ended days.
+
+    AdminFile:
+      type: object
+      required: [url, content_type, size_bytes]
+      properties:
+        url:
+          type: string
+          description: Works for 15 minutes.
+        content_type:
+          type: string
+          description: As the sender declared it; the file may be something else.
+        size_bytes:
+          type: integer
+          format: int64
+
+    AdminDocumentFile:
+      type: object
+      required: [file]
+      properties:
+        file:
+          $ref: "#/components/schemas/AdminFile"
+        side:
+          $ref: "#/components/schemas/DocumentSide"
+
+    AdminStage:
+      type: object
+      required: [index, count, name]
+      properties:
+        index:
+          type: integer
+          format: int32
+        count:
+          type: integer
+          format: int32
+        name:
+          type: string
+
+    AdminOverview:
+      type: object
+      required: [today, installs_running, by_stage, collected_this_month, to_collect, finished_by_week, commissions]
+      properties:
+        today:
+          type: string
+          format: date
+        installs_running:
+          type: integer
+          format: int64
+          description: Verified and not handed over.
+        by_stage:
+          type: array
+          description: Of those, how many at each stage, first to last.
+          items:
+            type: integer
+            format: int64
+        collected_this_month:
+          $ref: "#/components/schemas/Money"
+        to_collect:
+          $ref: "#/components/schemas/Money"
+        finished_by_week:
+          type: array
+          description: Four runs of 7 days; the last ends today (India).
+          items:
+            $ref: "#/components/schemas/FinishedWeek"
+        commissions:
+          $ref: "#/components/schemas/CommissionTotals"
+
+    FinishedWeek:
+      type: object
+      required: [from, count]
+      properties:
+        from:
+          type: string
+          format: date
+        count:
+          type: integer
+          format: int64
+
+    CommissionTotals:
+      type: object
+      required: [in_review, waiting, payable, paid_this_month]
+      properties:
+        in_review:
+          $ref: "#/components/schemas/Money"
+        waiting:
+          $ref: "#/components/schemas/Money"
+        payable:
+          $ref: "#/components/schemas/Money"
+        paid_this_month:
+          $ref: "#/components/schemas/Money"
+
+    AdminCustomerSummary:
+      type: object
+      required: [id, reference, name, place, kyc_status, created_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        place:
+          type: string
+        system_kw:
+          type: number
+        kyc_status:
+          $ref: "#/components/schemas/KycStatus"
+        stage:
+          $ref: "#/components/schemas/AdminStage"
+        agent_name:
+          type: string
+        advance_status:
+          $ref: "#/components/schemas/AdminPaymentStatus"
+        commission_amount:
+          $ref: "#/components/schemas/Money"
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    AdminCustomerPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCustomerSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AdminDocument:
+      type: object
+      required: [kind, title, status, files, updated_at]
+      properties:
+        kind:
+          $ref: "#/components/schemas/KycKind"
+        title:
+          type: string
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        files:
+          type: array
+          description: The current set, 1 to 5, in the order added.
+          items:
+            $ref: "#/components/schemas/AdminDocumentFile"
+        note:
+          type: string
+          description: Why it was sent back.
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    AdminPrice:
+      type: object
+      required: [total, subsidy, editable]
+      properties:
+        total:
+          $ref: "#/components/schemas/Money"
+        subsidy:
+          $ref: "#/components/schemas/Money"
+        editable:
+          type: boolean
+          description: No payment is paid yet.
+
+    AdminPaymentStatus:
+      type: string
+      enum: [due, claimed, paid, later]
+
+    AdminPayment:
+      type: object
+      required: [id, customer_id, customer_name, customer_reference, label, amount, status]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        customer_id:
+          $ref: "#/components/schemas/Id"
+        customer_name:
+          type: string
+        customer_reference:
+          type: string
+        label:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        status:
+          $ref: "#/components/schemas/AdminPaymentStatus"
+        due_on:
+          type: string
+          format: date
+        claimed_at:
+          $ref: "#/components/schemas/Timestamp"
+        claimed_method:
+          type: string
+          enum: [upi, bank_transfer]
+        paid_on:
+          type: string
+          format: date
+
+    AdminPaymentPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminPayment"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AdminCommission:
+      type: object
+      required: [customer_id, customer_name, customer_reference, amount, status, advance_paid]
+      properties:
+        customer_id:
+          $ref: "#/components/schemas/Id"
+        customer_name:
+          type: string
+        customer_reference:
+          type: string
+        agent_name:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        proposed_amount:
+          $ref: "#/components/schemas/Money"
+        note:
+          type: string
+        admin_note:
+          type: string
+        status:
+          $ref: "#/components/schemas/CommissionStatus"
+        advance_paid:
+          type: boolean
+        payable_since:
+          type: string
+          format: date
+        paid_on:
+          type: string
+          format: date
+        payout_last4:
+          type: string
+          description: The last 4 digits of the payout account, never more.
+
+    AdminCommissionPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCommission"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AdminCustomer:
+      allOf:
+        - $ref: "#/components/schemas/AdminCustomerSummary"
+        - type: object
+          required: [address, suggested_subsidy, documents, payments]
+          properties:
+            email:
+              type: string
+            address:
+              type: string
+            city:
+              type: string
+            pin_code:
+              type: string
+            state:
+              type: string
+            discom:
+              type: string
+            consumer_number:
+              type: string
+            sanctioned_load_kw:
+              type: number
+            connection_type:
+              $ref: "#/components/schemas/ConnectionType"
+            roof:
+              $ref: "#/components/schemas/RoofType"
+            lat:
+              type: number
+            lng:
+              type: number
+            subsidy_requested:
+              type: boolean
+            consent_at:
+              $ref: "#/components/schemas/Timestamp"
+            suggested_subsidy:
+              $ref: "#/components/schemas/Money"
+            rejected_note:
+              type: string
+            handed_over_on:
+              type: string
+              format: date
+            documents:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminDocument"
+            price:
+              $ref: "#/components/schemas/AdminPrice"
+            payments:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminPayment"
+            commission:
+              $ref: "#/components/schemas/AdminCommission"
+
+    StageSet:
+      type: object
+      required: [stage_index]
+      properties:
+        stage_index:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 7
+
+    PriceSet:
+      type: object
+      required: [total, subsidy]
+      properties:
+        total:
+          $ref: "#/components/schemas/Money"
+        subsidy:
+          $ref: "#/components/schemas/Money"
+
+    AdminTaskView:
+      type: string
+      enum: [open, assigned, returned, submitted, problem, done]
+
+    AdminTaskSummary:
+      type: object
+      required: [id, reference, title, status, due_at, status_at, stage, customer_id, customer_name, assignee_id, assignee_name, assignee_active, has_problem, place]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+        title:
+          type: string
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        due_at:
+          $ref: "#/components/schemas/Timestamp"
+        status_at:
+          $ref: "#/components/schemas/Timestamp"
+        stage:
+          $ref: "#/components/schemas/AdminStage"
+        customer_id:
+          $ref: "#/components/schemas/Id"
+        customer_name:
+          type: string
+        place:
+          type: string
+          description: The customer's city, or their address without one.
+        system_kw:
+          type: number
+        assignee_id:
+          $ref: "#/components/schemas/Id"
+        assignee_name:
+          type: string
+        assignee_active:
+          type: boolean
+          description: False once they were removed from the company.
+        has_problem:
+          type: boolean
+
+    AdminTaskPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminTaskSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AdminTaskEvent:
+      type: object
+      required: [kind, actor_name, at]
+      properties:
+        kind:
+          type: string
+          enum: [assigned, photos_uploaded, submitted, resubmitted, returned, approved, problem_reported, rescheduled, reassigned, cancelled, message]
+        actor_name:
+          type: string
+        at:
+          $ref: "#/components/schemas/Timestamp"
+        detail:
+          type: string
+
+    AdminTaskProblem:
+      type: object
+      required: [reason, note, at]
+      properties:
+        reason:
+          $ref: "#/components/schemas/TaskProblemReason"
+        note:
+          type: string
+        at:
+          $ref: "#/components/schemas/Timestamp"
+        photo:
+          $ref: "#/components/schemas/AdminFile"
+
+    AdminTask:
+      allOf:
+        - $ref: "#/components/schemas/AdminTaskSummary"
+        - type: object
+          required: [address, photos, checklist, events]
+          properties:
+            address:
+              type: string
+            phone:
+              type: string
+            lat:
+              type: number
+            lng:
+              type: number
+            admin_note:
+              type: string
+            worker_note:
+              type: string
+            submitted_at:
+              $ref: "#/components/schemas/Timestamp"
+            returned_note:
+              type: string
+            cancelled_note:
+              type: string
+            problem:
+              $ref: "#/components/schemas/AdminTaskProblem"
+            photos:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProofSlot"
+            checklist:
+              type: array
+              items:
+                $ref: "#/components/schemas/ChecklistItem"
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminTaskEvent"
+
+    AdminExpenseSummary:
+      type: object
+      required: [id, reference, owner_name, amount, category, note, spent_on, status, has_receipt, created_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        reference:
+          type: string
+        owner_name:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        category:
+          $ref: "#/components/schemas/ExpenseCategory"
+        note:
+          type: string
+        spent_on:
+          type: string
+          format: date
+        status:
+          $ref: "#/components/schemas/ExpenseStatus"
+        has_receipt:
+          type: boolean
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    AdminExpensePage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminExpenseSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    AdminExpense:
+      allOf:
+        - $ref: "#/components/schemas/AdminExpenseSummary"
+        - type: object
+          required: [status_at]
+          properties:
+            status_at:
+              $ref: "#/components/schemas/Timestamp"
+            receipt:
+              $ref: "#/components/schemas/AdminFile"
+            admin_note:
+              type: string
+            fix_note:
+              type: string
+            admin_name:
+              type: string
+            task:
+              $ref: "#/components/schemas/TaskRef"
+            payout_last4:
+              type: string
+              description: The last 4 digits of the payout account, never more.
+
+    AdminSettings:
+      type: object
+      required: [stages]
+      properties:
+        upi_id:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+          description: The install stages, in order.
+
+    Stage:
+      type: object
+      required: [index, name, checklist, photos]
+      properties:
+        index:
+          type: integer
+          minimum: 1
+          maximum: 7
+        name:
+          type: string
+        checklist:
+          type: array
+          items:
+            type: string
+          description: What a new task at this stage asks to tick off.
+        photos:
+          type: array
+          items:
+            type: string
+          description: The photos a new task at this stage asks for.
+
+    StageList:
+      type: object
+      required: [stages]
+      properties:
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stage"
+          description: All 7, in order.
+
+    StageTemplateSet:
+      type: object
+      required: [name, checklist, photos]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        checklist:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 120
+        photos:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            maxLength: 60
+
+    LeadStatus:
+      type: string
+      enum: [new, contacted, won, lost]
+
+    LeadCreate:
+      type: object
+      required: [name, phone, consent]
+      properties:
+        external_id:
+          type: string
+          maxLength: 100
+          description: The landing page's own id for this form; a resend with it returns the first lead.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+          description: An Indian mobile number; +91, spaces and dashes are allowed.
+        email:
+          type: string
+          maxLength: 254
+        city:
+          type: string
+          maxLength: 60
+        pin_code:
+          type: string
+          maxLength: 6
+        monthly_bill:
+          type: string
+          maxLength: 40
+          description: As the form asked it, e.g. "₹3,000 to ₹5,000".
+        roof_type:
+          type: string
+          maxLength: 40
+        message:
+          type: string
+          maxLength: 1000
+        source:
+          type: string
+          maxLength: 60
+          description: Where the person came from, e.g. "Meta ad". Default "Landing page".
+        campaign:
+          type: string
+          maxLength: 100
+        page_url:
+          type: string
+          maxLength: 500
+        extra:
+          type: object
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            maxLength: 200
+          description: Any other short answers from the form, by question (keys up to 60 characters).
+        consent:
+          type: boolean
+          description: The person agreed that the company may contact them. Must be true.
+
+    LeadReceipt:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+
+    LeadSummary:
+      type: object
+      required: [id, name, phone, source, status, received_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+        phone:
+          type: string
+          description: Ten digits.
+        city:
+          type: string
+        source:
+          type: string
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        agent_id:
+          $ref: "#/components/schemas/Id"
+        agent_name:
+          type: string
+          description: The Sales Agent it's with; both absent when no one has it.
+        received_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    Lead:
+      allOf:
+        - $ref: "#/components/schemas/LeadSummary"
+        - type: object
+          required: [extra]
+          properties:
+            email:
+              type: string
+            pin_code:
+              type: string
+            monthly_bill:
+              type: string
+            roof_type:
+              type: string
+            message:
+              type: string
+            campaign:
+              type: string
+            page_url:
+              type: string
+            extra:
+              type: object
+              additionalProperties:
+                type: string
+            note:
+              type: string
+            updated_at:
+              $ref: "#/components/schemas/Timestamp"
+
+    LeadPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+
+    LeadUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        note:
+          type: string
+          maxLength: 1000
+        agent_id:
+          type: [string, "null"]
+          format: uuid
+          description: Admins only. Null takes the lead back.
+
+    LeadKeyInfo:
+      type: object
+      required: [set]
+      properties:
+        set:
+          type: boolean
+        made_at:
+          $ref: "#/components/schemas/Timestamp"
+        last_used_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    LeadKeyNew:
+      type: object
+      required: [key, made_at]
+      properties:
+        key:
+          type: string
+          description: Shown once. Keep it on the landing page's server.
+        made_at:
+          $ref: "#/components/schemas/Timestamp"
+
+    AdminSettingsSet:
+      type: object
+      properties:
+        upi_id:
+          type: [string, "null"]
+          maxLength: 130
+          examples: ["examplesolar@okhdfc"]
