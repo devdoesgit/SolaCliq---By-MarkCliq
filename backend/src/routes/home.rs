@@ -29,11 +29,12 @@ use crate::{
     org::{OrgMember, PayType, Role},
     routes::{
         attendance::{self, HomeAttendance},
-        customers::{CommissionStatus, KycKind, KycStatus, STAGES},
+        customers::{CommissionStatus, KycKind, KycStatus},
         install::{self, Install, PaymentStatus, StageStatus},
         quotes::rupees,
         tasks::TaskStatus,
     },
+    stages::{self, Stages},
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -268,12 +269,14 @@ async fn home(State(state): State<AppState>, member: OrgMember) -> ApiResult<Jso
         ),
         _ => (None, (0, 0)),
     };
+    let stages = stages::load(&mut tx).await?;
     tx.commit().await?;
 
     let who = Who {
         first_name: name.split_whitespace().next().unwrap_or(&name).to_owned(),
         org_name,
         now,
+        stages,
     };
     let mut summary = match (member.role, member.pay_type) {
         (Role::Worker, _) => worker(&who, &tasks, in_review),
@@ -293,6 +296,8 @@ struct Who {
     org_name: String,
     // Now, in Indian time.
     now: DateTime<FixedOffset>,
+    // The company's stage names.
+    stages: Stages,
 }
 
 fn greeting(now: &DateTime<FixedOffset>) -> &'static str {
@@ -605,12 +610,7 @@ fn customer_row(who: &Who, c: &AgentCustomer) -> HomeRow {
         ),
         KycStatus::Approved => (
             c.stage_index
-                .and_then(|i| {
-                    Some(format!(
-                        "Stage {i} · {}",
-                        STAGES.get(usize::try_from(i).ok()?.checked_sub(1)?)?
-                    ))
-                })
+                .and_then(|i| who.stages.line(i))
                 .unwrap_or_else(|| "Approved".into()),
             "Approved",
             HomeTone::Success,
@@ -1002,6 +1002,7 @@ mod tests {
             first_name: "Ravi".into(),
             org_name: "Example Solar".into(),
             now: india::now(utc),
+            stages: Stages::default(),
         }
     }
 

@@ -15,7 +15,12 @@
 
 use std::collections::BTreeSet;
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{
+    Json,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::{DateTime, Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
@@ -27,14 +32,16 @@ use crate::{
     AppState, counter,
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath},
+    idempotency::{self, IdempotencyKey},
     india,
     notify::{self, Kind, Links},
     org::{Admins, OrgMember},
     routes::{
-        customers::{KycKind, STAGES},
+        customers::KycKind,
         install::{default_plan, pm_surya_ghar},
         tasks::{TaskEventKind, TaskStatus, event},
     },
+    stages,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -47,6 +54,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(schedule_task))
         .routes(routes!(approve_expense))
         .routes(routes!(return_expense))
+        .routes(routes!(reject_expense))
         .routes(routes!(pay_expense))
         .routes(routes!(verify_customer))
         .routes(routes!(reject_customer))
@@ -56,10 +64,12 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(hand_over))
         .routes(routes!(request_payment))
         .routes(routes!(confirm_payment))
+        .routes(routes!(payment_not_received))
 }
 
 const MAX_NOTE: usize = 500;
-// Up to ₹10 crore, in paise.
+// ₹10 up to ₹10 crore, in paise: under ₹4 the 30% part rounds to ₹0.
+const MIN_TOTAL: i64 = 1000;
 const MAX_TOTAL: i64 = 10_000_000_000;
 
 fn today() -> NaiveDate {
@@ -73,7 +83,7 @@ fn when(at: DateTime<Utc>) -> String {
         .to_string()
 }
 
-fn conflict(code: &'static str, title: &'static str) -> ApiError {
+pub(crate) fn conflict(code: &'static str, title: &'static str) -> ApiError {
     ApiError::new(StatusCode::CONFLICT, code, title)
 }
 
@@ -93,6 +103,17 @@ fn optional_note(field: &str, value: Option<&str>) -> ApiResult<Option<String>> 
         Some(v) => required_note(field, v).map(Some),
         None => Ok(None),
     }
+}
+
+// A system's price and its subsidy, in paise: at verifying and when corrected.
+pub(crate) fn check_price(total: i64, subsidy: Option<i64>) -> ApiResult<()> {
+    if !(MIN_TOTAL..=MAX_TOTAL).contains(&total) {
+        return Err(ApiError::validation(Vec::new()).field("total", "₹10 up to ₹10 crore."));
+    }
+    if subsidy.is_some_and(|s| s < 0 || s > total) {
+        return Err(ApiError::validation(Vec::new()).field("subsidy", "₹0 up to the total."));
+    }
+    Ok(())
 }
 
 // What actions answer with: the record's id and its reference, if any.
@@ -118,6 +139,9 @@ pub struct ReviewItem {
     pub person: String,
     pub status: String,
     pub at: DateTime<Utc>,
+    // Paise: what an expense, commission or payment is for.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<i64>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -127,12 +151,19 @@ pub struct ReviewQueue {
     pub registrations: Vec<ReviewItem>,
     pub commissions: Vec<ReviewItem>,
     pub payments: Vec<ReviewItem>,
+    // Landing-page leads nobody has yet (F20).
+    pub leads: Vec<ReviewItem>,
 }
 
 /*
-    Everything waiting for the admin, oldest first: tasks submitted or
-    with a problem, expenses and registrations in review, commissions to
-    approve, payments the customer says they made
+    Everything waiting for the admin, oldest first
+    --------------------------------------------------------------------
+    - tasks: submitted, a problem, or a reply: the installer's message
+      is the latest thing that happened on an open task
+    - expenses in review, or approved and still to pay
+    - registrations in review (sent back, they wait for the agent)
+    - commissions to approve or pay, payments the customer says they made
+    - new leads not yet handed to an agent (F20)
 */
 #[utoipa::path(
     get,
@@ -155,34 +186,47 @@ async fn review_queue(
     let mut tx = admin.begin(&state.db).await?;
     let tasks = sqlx::query_as(
         "SELECT t.id, t.reference, t.title || ' · ' || c.name AS title, u.name AS person,
-                CASE WHEN t.problem_at IS NOT NULL AND t.status = 'assigned'
-                     THEN 'problem' ELSE t.status::text END AS status,
-                coalesce(t.problem_at, t.status_at) AS at
-         FROM tasks t JOIN customers c ON c.id = t.customer_id JOIN users u ON u.id = t.assignee_id
-         WHERE t.status = 'submitted' OR (t.status = 'assigned' AND t.problem_at IS NOT NULL)
+                CASE WHEN t.status = 'submitted' THEN 'submitted'
+                     WHEN t.problem_at IS NOT NULL AND t.status = 'assigned' THEN 'problem'
+                     ELSE 'reply' END AS status,
+                CASE WHEN t.status = 'submitted' THEN t.status_at
+                     ELSE coalesce(t.problem_at, last.created_at, t.status_at) END AS at,
+                NULL::bigint AS amount
+         FROM tasks t
+         JOIN customers c ON c.id = t.customer_id
+         JOIN users u ON u.id = t.assignee_id
+         LEFT JOIN LATERAL (
+             SELECT kind, actor_id, created_at FROM task_events
+             WHERE task_id = t.id ORDER BY created_at DESC, id DESC LIMIT 1
+         ) last ON true
+         WHERE t.status = 'submitted'
+            OR (t.status = 'assigned' AND t.problem_at IS NOT NULL)
+            OR (t.status IN ('assigned', 'returned')
+                AND last.kind = 'message' AND last.actor_id = t.assignee_id)
          ORDER BY at",
     )
     .fetch_all(&mut *tx)
     .await?;
     let expenses = sqlx::query_as(
         "SELECT e.id, e.reference, initcap(e.category::text) || ' · ' || e.note AS title,
-                u.name AS person, e.status::text AS status, e.status_at AS at
+                u.name AS person, e.status::text AS status, e.status_at AS at, e.amount
          FROM expenses e JOIN users u ON u.id = e.owner_id
-         WHERE e.status = 'in_review' ORDER BY e.status_at",
+         WHERE e.status IN ('in_review', 'approved') ORDER BY e.status_at",
     )
     .fetch_all(&mut *tx)
     .await?;
     let registrations = sqlx::query_as(
         "SELECT c.id, c.reference, c.name AS title, coalesce(u.name, '') AS person,
-                c.kyc_status::text AS status, c.created_at AS at
+                c.kyc_status::text AS status, c.created_at AS at, NULL::bigint AS amount
          FROM customers c LEFT JOIN users u ON u.id = c.registered_by
-         WHERE c.kyc_status IN ('in_review', 'needs_fix') ORDER BY c.created_at",
+         WHERE c.kyc_status = 'in_review' ORDER BY c.created_at",
     )
     .fetch_all(&mut *tx)
     .await?;
     let commissions = sqlx::query_as(
         "SELECT c.id, c.reference, c.name AS title, coalesce(u.name, '') AS person,
-                c.commission_status::text AS status, c.created_at AS at
+                c.commission_status::text AS status, c.created_at AS at,
+                c.commission AS amount
          FROM customers c LEFT JOIN users u ON u.id = c.registered_by
          WHERE c.commission_status IN ('in_review', 'payable') AND c.kyc_status = 'approved'
          ORDER BY c.created_at",
@@ -191,10 +235,17 @@ async fn review_queue(
     .await?;
     let payments = sqlx::query_as(
         "SELECT p.id, c.reference, p.label AS title, c.name AS person,
-                p.status::text AS status, p.claimed_at AS at
+                p.status::text AS status, p.claimed_at AS at, p.amount
          FROM install_payments p JOIN installs i ON i.id = p.install_id
          JOIN customers c ON c.id = i.customer_id
          WHERE p.status = 'claimed' ORDER BY p.claimed_at",
+    )
+    .fetch_all(&mut *tx)
+    .await?;
+    let leads = sqlx::query_as(
+        "SELECT id, '' AS reference, name AS title, source AS person, 'new' AS status,
+                created_at AS at, NULL::bigint AS amount
+         FROM leads WHERE status = 'new' AND agent_id IS NULL ORDER BY created_at",
     )
     .fetch_all(&mut *tx)
     .await?;
@@ -205,6 +256,7 @@ async fn review_queue(
         registrations,
         commissions,
         payments,
+        leads,
     }))
 }
 
@@ -274,7 +326,7 @@ fn check_parts(task: &TaskCreate) -> ApiResult<()> {
     if title.is_empty() || title.chars().count() > 100 {
         return bad("title", "1 to 100 characters.");
     }
-    if !(1..=STAGES.len() as i32).contains(&task.stage_index) {
+    if !(1..=stages::COUNT).contains(&task.stage_index) {
         return bad("stage_index", "1 to 7.");
     }
     let mut ids = BTreeSet::new();
@@ -339,12 +391,16 @@ fn task_locked() -> ApiError {
 
 const ERRORS: &str = "Error, as RFC 9457 problem details.";
 
+// Safe to retry (Idempotency-Key): a double click makes one task.
 #[utoipa::path(
     post,
     path = "/orgs/{org_id}/tasks",
     operation_id = "createTask",
     tag = "admin",
-    params(("org_id" = Uuid, Path, description = "The company.")),
+    params(
+        ("org_id" = Uuid, Path, description = "The company."),
+        ("Idempotency-Key" = Uuid, Header, description = "The same UUID on every retry."),
+    ),
     request_body = TaskCreate,
     responses(
         (status = 201, description = "Assigned.", body = Done),
@@ -357,8 +413,13 @@ const ERRORS: &str = "Error, as RFC 9457 problem details.";
 async fn create_task(
     State(state): State<AppState>,
     admin: OrgMember<Admins>,
+    key: IdempotencyKey,
     ApiJson(req): ApiJson<TaskCreate>,
-) -> ApiResult<(StatusCode, Json<Done>)> {
+) -> ApiResult<Response> {
+    let request = format!("POST /api/v1/orgs/{}/tasks", admin.org_id);
+    if let Some(done) = idempotency::replay(&state.db, admin.user_id, key, &request).await? {
+        return Ok(done);
+    }
     check_parts(&req)?;
     let note = optional_note("admin_note", req.admin_note.as_deref())?;
     let mut tx = admin.begin(&state.db).await?;
@@ -456,14 +517,20 @@ async fn create_task(
         )
         .await?;
     }
+    let done = Done {
+        id,
+        reference: Some(reference),
+    };
+    let body = serde_json::to_value(&done).map_err(|_| ApiError::internal())?;
+    let status = StatusCode::CREATED;
+    if !idempotency::save(&mut tx, admin.user_id, key, &request, status, &body).await? {
+        drop(tx);
+        return idempotency::replay(&state.db, admin.user_id, key, &request)
+            .await?
+            .ok_or_else(ApiError::internal);
+    }
     tx.commit().await?;
-    Ok((
-        StatusCode::CREATED,
-        Json(Done {
-            id,
-            reference: Some(reference),
-        }),
-    ))
+    Ok((status, Json(body)).into_response())
 }
 
 /*
@@ -507,8 +574,9 @@ async fn approve_task(
     .bind(admin.user_id)
     .execute(&mut *tx)
     .await?;
-    let count = STAGES.len() as i32;
+    let count = stages::COUNT;
     let next = (stage + 1).min(count);
+    let names = stages::load(&mut tx).await?;
     sqlx::query(
         "UPDATE customers SET stage_index = $2
          WHERE id = $1 AND coalesce(stage_index, 1) < $2",
@@ -533,10 +601,7 @@ async fn approve_task(
         worker_id,
         Kind::TaskApproved,
         &format!("Stage {stage} approved"),
-        &format!(
-            "{customer} · {title} · moved to {}",
-            STAGES[(next - 1) as usize]
-        ),
+        &format!("{customer} · {title} · moved to {}", names.name_at(next)),
         Links {
             task_id: Some(path.task_id),
             ..Links::default()
@@ -667,7 +732,8 @@ async fn cancel_task(
 ) -> ApiResult<Json<Done>> {
     let note = required_note("note", &req.note)?;
     let mut tx = admin.begin(&state.db).await?;
-    let (status, worker_id, title, customer, ..) = lock_task(&mut tx, path.task_id).await?;
+    let (status, worker_id, title, customer, customer_user, ..) =
+        lock_task(&mut tx, path.task_id).await?;
     if matches!(status, TaskStatus::Approved | TaskStatus::Cancelled) {
         return Err(task_locked());
     }
@@ -703,6 +769,19 @@ async fn cancel_task(
         },
     )
     .await?;
+    if let Some(user) = customer_user {
+        // Without the note: it's written for the installer.
+        notify::add(
+            &mut tx,
+            admin.org_id,
+            user,
+            Kind::VisitBooked,
+            "Visit cancelled",
+            &title,
+            Links::default(),
+        )
+        .await?;
+    }
     tx.commit().await?;
     Ok(Json(Done {
         id: path.task_id,
@@ -740,10 +819,15 @@ async fn schedule_task(
     ApiJson(req): ApiJson<TaskSchedule>,
 ) -> ApiResult<Json<Done>> {
     let mut tx = admin.begin(&state.db).await?;
-    let (status, old_worker, title, customer, ..) = lock_task(&mut tx, path.task_id).await?;
+    let (status, old_worker, title, customer, customer_user, ..) =
+        lock_task(&mut tx, path.task_id).await?;
     if !matches!(status, TaskStatus::Assigned | TaskStatus::Returned) {
         return Err(task_locked());
     }
+    let old_due: DateTime<Utc> = sqlx::query_scalar("SELECT due_at FROM tasks WHERE id = $1")
+        .bind(path.task_id)
+        .fetch_one(&mut *tx)
+        .await?;
     let new_worker = match req.assignee_id {
         Some(w) if w != old_worker => {
             worker(&mut tx, w, "assignee_id").await?;
@@ -821,6 +905,21 @@ async fn schedule_task(
             .await?;
         }
     }
+    // A new installer at the same time is nothing to the customer.
+    if let Some(user) = customer_user
+        && when(old_due) != due
+    {
+        notify::add(
+            &mut tx,
+            admin.org_id,
+            user,
+            Kind::VisitBooked,
+            "Visit moved",
+            &format!("{title} is now on {due}"),
+            Links::default(),
+        )
+        .await?;
+    }
     tx.commit().await?;
     Ok(Json(Done {
         id: path.task_id,
@@ -843,7 +942,7 @@ struct ExpensePath {
 */
 // One expense decision: from which state, to which, and what the owner is told.
 struct ExpenseMove<'a> {
-    from: &'a str,
+    from: &'a [&'a str],
     to: &'a str,
     note: Option<&'a str>,
     kind: Kind,
@@ -864,7 +963,7 @@ async fn decide_expense(
     .fetch_optional(&mut *tx)
     .await?
     .ok_or_else(ApiError::not_found)?;
-    if status != m.from {
+    if !m.from.contains(&status.as_str()) {
         return Err(conflict(
             "expense.locked",
             "This expense can't move to that state now",
@@ -933,7 +1032,7 @@ async fn approve_expense(
         &admin,
         path.expense_id,
         ExpenseMove {
-            from: "in_review",
+            from: &["in_review"],
             to: "approved",
             note: None,
             kind: Kind::ExpenseApproved,
@@ -974,11 +1073,53 @@ async fn return_expense(
         &admin,
         path.expense_id,
         ExpenseMove {
-            from: "in_review",
+            from: &["in_review"],
             to: "needs_fix",
             note: Some(&note),
             kind: Kind::ExpenseReturned,
             title: "Expense sent back",
+        },
+    )
+    .await
+}
+
+// Not accepted, with the reason. Final.
+#[utoipa::path(
+    post,
+    path = "/orgs/{org_id}/expenses/{expense_id}/reject",
+    operation_id = "rejectExpense",
+    tag = "admin",
+    params(
+        ("org_id" = Uuid, Path, description = "The company."),
+        ("expense_id" = Uuid, Path, description = "The expense."),
+    ),
+    request_body = NoteBody,
+    responses(
+        (status = 200, description = "Done.", body = Done),
+        (status = 401, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 403, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 404, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 409, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 422, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+    ),
+)]
+async fn reject_expense(
+    State(state): State<AppState>,
+    admin: OrgMember<Admins>,
+    ApiPath(path): ApiPath<ExpensePath>,
+    ApiJson(req): ApiJson<NoteBody>,
+) -> ApiResult<Json<Done>> {
+    let note = required_note("note", &req.note)?;
+    decide_expense(
+        &state,
+        &admin,
+        path.expense_id,
+        ExpenseMove {
+            from: &["in_review", "needs_fix"],
+            to: "rejected",
+            note: Some(&note),
+            kind: Kind::ExpenseReturned,
+            title: "Expense not accepted",
         },
     )
     .await
@@ -1011,7 +1152,7 @@ async fn pay_expense(
         &admin,
         path.expense_id,
         ExpenseMove {
-            from: "approved",
+            from: &["approved"],
             to: "paid",
             note: None,
             kind: Kind::ExpensePaid,
@@ -1076,7 +1217,7 @@ async fn lock_customer(conn: &mut PgConnection, customer_id: Uuid) -> ApiResult<
     .ok_or_else(ApiError::not_found)
 }
 
-fn registration_locked() -> ApiError {
+pub(crate) fn registration_locked() -> ApiError {
     conflict(
         "registration.locked",
         "This customer can't be changed that way now",
@@ -1120,14 +1261,7 @@ async fn verify_customer(
     ApiPath(path): ApiPath<CustomerPath>,
     ApiJson(req): ApiJson<CustomerVerify>,
 ) -> ApiResult<Json<Done>> {
-    if !(1..=MAX_TOTAL).contains(&req.total) {
-        return Err(
-            ApiError::validation(Vec::new()).field("total", "More than ₹0, up to ₹10 crore.")
-        );
-    }
-    if req.subsidy.is_some_and(|s| s < 0 || s > req.total) {
-        return Err(ApiError::validation(Vec::new()).field("subsidy", "₹0 up to the total."));
-    }
+    check_price(req.total, req.subsidy)?;
     let mut tx = admin.begin(&state.db).await?;
     let c = lock_customer(&mut tx, path.customer_id).await?;
     let fixing: bool = sqlx::query_scalar(
@@ -1292,6 +1426,18 @@ async fn reject_customer(
         )
         .await?;
     }
+    if let Some(customer) = c.user_id {
+        notify::add(
+            &mut tx,
+            admin.org_id,
+            customer,
+            Kind::RegistrationClosed,
+            "Registration not taken up",
+            &format!("“{note}”"),
+            Links::default(),
+        )
+        .await?;
+    }
     tx.commit().await?;
     Ok(Json(Done {
         id: path.customer_id,
@@ -1434,7 +1580,7 @@ async fn approve_commission(
          SET commission = coalesce($2, commission),
              commission_proposed = CASE WHEN $3 THEN commission END,
              commission_status = CASE WHEN $4 THEN 'payable' ELSE 'approved' END::commission_status,
-             commission_payable_since = CASE WHEN $4 THEN current_date END,
+             commission_payable_since = CASE WHEN $4 THEN $7::date END,
              commission_admin_note = $5,
              commission_admin_by = CASE WHEN $5 IS NULL THEN NULL ELSE $6 END,
              commission_admin_at = CASE WHEN $5 IS NULL THEN NULL ELSE now() END
@@ -1446,6 +1592,7 @@ async fn approve_commission(
     .bind(payable)
     .bind(&note)
     .bind(admin.user_id)
+    .bind(today())
     .execute(&mut *tx)
     .await?;
     if let Some(agent) = c.registered_by {
@@ -1513,10 +1660,11 @@ async fn pay_commission(
         ));
     }
     sqlx::query(
-        "UPDATE customers SET commission_status = 'paid', commission_paid_on = current_date
+        "UPDATE customers SET commission_status = 'paid', commission_paid_on = $2
          WHERE id = $1",
     )
     .bind(path.customer_id)
+    .bind(today())
     .execute(&mut *tx)
     .await?;
     if let (Some(agent), Some(amount)) = (c.registered_by, c.commission) {
@@ -1576,7 +1724,7 @@ async fn hand_over(
     }
     sqlx::query("UPDATE customers SET stage_index = $2 WHERE id = $1")
         .bind(path.customer_id)
-        .bind(STAGES.len() as i32)
+        .bind(stages::COUNT)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
@@ -1723,10 +1871,11 @@ async fn confirm_payment(
         if c.commission_status.as_deref() == Some("approved") {
             sqlx::query(
                 "UPDATE customers SET commission_status = 'payable',
-                                      commission_payable_since = current_date
+                                      commission_payable_since = $2
                  WHERE id = $1",
             )
             .bind(customer_id)
+            .bind(today())
             .execute(&mut *tx)
             .await?;
             if let (Some(agent), Some(amount)) = (c.registered_by, c.commission) {
@@ -1744,6 +1893,74 @@ async fn confirm_payment(
         }
     }
     tx.commit().await?;
+    Ok(Json(Done {
+        id: path.payment_id,
+        reference: None,
+    }))
+}
+
+/*
+    The customer said they paid, and the money isn't there
+    --------------------------------------------------------------------
+    - back to due, so they can pay or say so again
+    - they're told why
+*/
+#[utoipa::path(
+    post,
+    path = "/orgs/{org_id}/payments/{payment_id}/not-received",
+    operation_id = "paymentNotReceived",
+    tag = "admin",
+    params(
+        ("org_id" = Uuid, Path, description = "The company."),
+        ("payment_id" = Uuid, Path, description = "The payment."),
+    ),
+    request_body = NoteBody,
+    responses(
+        (status = 200, description = "Done.", body = Done),
+        (status = 401, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 403, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 404, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 409, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+        (status = 422, description = ERRORS, body = crate::error::Problem, content_type = "application/problem+json"),
+    ),
+)]
+async fn payment_not_received(
+    State(state): State<AppState>,
+    admin: OrgMember<Admins>,
+    ApiPath(path): ApiPath<PaymentPath>,
+    ApiJson(req): ApiJson<NoteBody>,
+) -> ApiResult<Json<Done>> {
+    let note = required_note("note", &req.note)?;
+    let mut tx = admin.begin(&state.db).await?;
+    let (status, _, label, amount, _, customer_user) =
+        lock_payment(&mut tx, path.payment_id).await?;
+    if status != "claimed" {
+        return Err(conflict("payment.not_due", "This payment wasn't claimed"));
+    }
+    sqlx::query(
+        "UPDATE install_payments SET status = 'due', claimed_at = NULL, claimed_method = NULL
+         WHERE id = $1",
+    )
+    .bind(path.payment_id)
+    .execute(&mut *tx)
+    .await?;
+    if let Some(customer) = customer_user {
+        notify::add(
+            &mut tx,
+            admin.org_id,
+            customer,
+            Kind::PaymentDue,
+            "Payment not received",
+            &format!(
+                "{label} · {}: “{note}”",
+                crate::routes::quotes::rupees(amount)
+            ),
+            Links::default(),
+        )
+        .await?;
+    }
+    tx.commit().await?;
+    tracing::info!(org_id = %admin.org_id, payment_id = %path.payment_id, "payment not received");
     Ok(Json(Done {
         id: path.payment_id,
         reference: None,

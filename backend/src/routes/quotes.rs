@@ -434,6 +434,12 @@ fn lead_email(
     "₹1,95,000" (the last three digits, then pairs)
 */
 pub(crate) fn rupees(paise: i64) -> String {
+    let part = paise % 100;
+    let paise_text = if part == 0 {
+        String::new()
+    } else {
+        format!(".{part:02}")
+    };
     let digits = (paise / 100).to_string();
     let (rest, last3) = digits.split_at(digits.len().saturating_sub(3));
     let mut groups: Vec<&str> = Vec::new();
@@ -448,7 +454,7 @@ pub(crate) fn rupees(paise: i64) -> String {
     }
     groups.reverse();
     groups.push(last3);
-    format!("₹{}", groups.join(","))
+    format!("₹{}{paise_text}", groups.join(","))
 }
 
 #[cfg(test)]
@@ -459,6 +465,10 @@ mod tests {
     fn rupees_are_grouped_the_indian_way() {
         assert_eq!(rupees(0), "₹0");
         assert_eq!(rupees(999 * 100), "₹999");
+        // Never rounded: paise show when there are any (QA-05, A11).
+        assert_eq!(rupees(455), "₹4.55");
+        assert_eq!(rupees(5), "₹0.05");
+        assert_eq!(rupees(124_050), "₹1,240.50");
         assert_eq!(rupees(1_000 * 100), "₹1,000");
         assert_eq!(rupees(78_000 * 100), "₹78,000");
         assert_eq!(rupees(195_000 * 100), "₹1,95,000");

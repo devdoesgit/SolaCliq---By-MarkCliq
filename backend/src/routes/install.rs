@@ -32,7 +32,7 @@ use crate::{
     idempotency::{self, IdempotencyKey},
     india,
     org::{Customers, OrgMember},
-    routes::customers::STAGES,
+    stages,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -303,7 +303,8 @@ pub async fn load(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Option<In
     .fetch_optional(&mut *conn)
     .await?;
 
-    let count = STAGES.len() as i32;
+    let names = stages::load(&mut *conn).await?;
+    let count = stages::COUNT;
     let handed_over = i.handed_over_on.is_some();
     let current = if handed_over {
         count
@@ -315,8 +316,9 @@ pub async fn load(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Option<In
         let first = v.worker.split_whitespace().next().unwrap_or(&v.worker);
         format!("{} · {first}", at.format("%a %-d %b, %H:%M"))
     });
-    let stages = STAGES
-        .iter()
+    let stages = names
+        .names()
+        .into_iter()
         .enumerate()
         .map(|(n, name)| {
             let index = n as i32 + 1;
@@ -333,7 +335,7 @@ pub async fn load(conn: &mut PgConnection, user_id: Uuid) -> ApiResult<Option<In
                 _ => None,
             };
             InstallStage {
-                name: (*name).to_owned(),
+                name,
                 detail,
                 status,
             }
@@ -491,6 +493,28 @@ async fn claim_install_payment(
     .bind(path.payment_id)
     .bind(req.method)
     .execute(&mut *tx)
+    .await?;
+
+    let (customer_id, about): (Uuid, String) = sqlx::query_as(
+        "SELECT c.id, c.name || ' · ' || p.label
+         FROM install_payments p JOIN installs i ON i.id = p.install_id
+         JOIN customers c ON c.id = i.customer_id
+         WHERE p.id = $1",
+    )
+    .bind(path.payment_id)
+    .fetch_one(&mut *tx)
+    .await?;
+    crate::notify::add_for_admins(
+        &mut tx,
+        member.org_id,
+        crate::notify::Kind::PaymentClaimed,
+        "Payment to confirm",
+        &about,
+        crate::notify::Links {
+            customer_id: Some(customer_id),
+            ..Default::default()
+        },
+    )
     .await?;
 
     let install = load(&mut tx, member.user_id)

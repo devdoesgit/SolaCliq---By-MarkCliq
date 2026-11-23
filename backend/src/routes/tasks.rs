@@ -37,7 +37,7 @@ use crate::{
     error::{ApiError, ApiResult},
     extract::{ApiJson, ApiPath, ApiQuery},
     idempotency::{self, IdempotencyKey},
-    india,
+    india, notify,
     org::{OrgMember, Workers},
     page::{Cursor, Page, PageInfo},
     routes::uploads::{self, UploadPurpose},
@@ -623,6 +623,32 @@ pub(crate) async fn event(
     Ok(())
 }
 
+// Tells the admins about a task: its title, the customer, then `more`.
+async fn tell_admins(
+    conn: &mut PgConnection,
+    org_id: Uuid,
+    task_id: Uuid,
+    kind: notify::Kind,
+    title: &str,
+    more: Option<&str>,
+) -> ApiResult<()> {
+    let mut body: String = sqlx::query_scalar(
+        "SELECT t.title || ' · ' || c.name
+         FROM tasks t JOIN customers c ON c.id = t.customer_id WHERE t.id = $1",
+    )
+    .bind(task_id)
+    .fetch_one(&mut *conn)
+    .await?;
+    if let Some(more) = more {
+        body.push_str(&format!(": “{more}”"));
+    }
+    let links = notify::Links {
+        task_id: Some(task_id),
+        ..Default::default()
+    };
+    notify::add_for_admins(conn, org_id, kind, title, &body, links).await
+}
+
 /*
     #25 The caller's tasks
 */
@@ -1054,6 +1080,15 @@ async fn submit_task(
     )
     .await?;
 
+    tell_admins(
+        &mut tx,
+        member.org_id,
+        task_id,
+        crate::notify::Kind::TaskSubmitted,
+        "Proof to check",
+        None,
+    )
+    .await?;
     let task = load(
         &mut tx,
         state.storage.as_ref(),
@@ -1172,6 +1207,15 @@ async fn report_task_problem(
     )
     .await?;
 
+    tell_admins(
+        &mut tx,
+        member.org_id,
+        task_id,
+        crate::notify::Kind::TaskProblem,
+        "Problem reported",
+        Some(&note),
+    )
+    .await?;
     let task = load(
         &mut tx,
         state.storage.as_ref(),
@@ -1254,6 +1298,15 @@ async fn send_task_message(
         path.task_id,
         TaskEventKind::Message,
         member.user_id,
+        Some(&text),
+    )
+    .await?;
+    tell_admins(
+        &mut tx,
+        member.org_id,
+        path.task_id,
+        crate::notify::Kind::TaskMessage,
+        "Installer replied",
         Some(&text),
     )
     .await?;

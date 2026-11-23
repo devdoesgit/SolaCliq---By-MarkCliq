@@ -150,21 +150,34 @@ pub async fn get(db: &PgPool, path: &str, token: Option<&str>) -> Res {
     send(db, req.body(Body::empty()).unwrap()).await
 }
 
-/// Signs up through the API, then marks the email verified in SQL (the
-/// code step is phase 3).
+/// An account that finished signing up, made in SQL: the tests share one
+/// outbox, so they can't all read a code for the same email. The steps
+/// themselves are `signup.rs`.
 pub async fn verified_user(db: &PgPool, email: &str, password: &str) {
-    let res = post(
-        db,
-        "/api/v1/auth/signup",
-        json!({ "name": "Asha Example", "email": email, "password": password, "terms_version": 1 }),
+    let hash = backend::password::hash(password.to_owned()).await.unwrap();
+    let id: uuid::Uuid = sqlx::query_scalar(
+        "INSERT INTO users (id, email, name, password_hash, email_verified_at)
+         VALUES ($1, $2, 'Asha Example', $3, now())
+         ON CONFLICT (email) DO UPDATE
+            SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash,
+                email_verified_at = now()
+         RETURNING id",
     )
-    .await;
-    assert_eq!(res.status, StatusCode::ACCEPTED);
-    sqlx::query("UPDATE users SET email_verified_at = now() WHERE email = $1")
-        .bind(email)
-        .execute(db)
-        .await
-        .unwrap();
+    .bind(uuid::Uuid::now_v7())
+    .bind(email)
+    .bind(hash)
+    .fetch_one(db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO agreements (id, user_id, document, version, source)
+         VALUES ($1, $2, 'terms', 1, 'signup')",
+    )
+    .bind(uuid::Uuid::now_v7())
+    .bind(id)
+    .execute(db)
+    .await
+    .unwrap();
 }
 
 /// Every `Set-Cookie` header of a response, in order.

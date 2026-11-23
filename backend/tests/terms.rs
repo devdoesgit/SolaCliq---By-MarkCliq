@@ -11,8 +11,9 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-fn signup_body(email: &str, terms_version: Option<i32>) -> Value {
-    let mut body = json!({ "name": "Asha Example", "email": email, "password": "sunlight1" });
+fn signup_body(token: &str, terms_version: Option<i32>) -> Value {
+    let mut body =
+        json!({ "signup_token": token, "name": "Asha Example", "password": "sunlight1" });
     if let Some(v) = terms_version {
         body["terms_version"] = json!(v);
     }
@@ -70,19 +71,29 @@ async fn user_count(db: &PgPool) -> i64 {
         .unwrap()
 }
 
+async fn signup_token(db: &PgPool, email: &str) -> String {
+    post(db, "/api/v1/auth/signup", json!({ "email": email })).await;
+    let code = common::last_code(email);
+    let body = json!({ "email": email, "code": code });
+    let res = post(db, "/api/v1/auth/signup/verify", body).await;
+    res.body["signup_token"].as_str().unwrap().to_owned()
+}
+
 #[sqlx::test]
 async fn signup_records_the_agreement(db: PgPool) {
+    let email = "terms.agree@example.com";
+    let token = signup_token(&db, email).await;
     let res = post_from(
         &db,
-        "/api/v1/auth/signup",
+        "/api/v1/auth/signup/complete",
         "49.36.10.20",
-        signup_body("asha@example.com", Some(TERMS_VERSION)),
+        signup_body(&token, Some(TERMS_VERSION)),
     )
     .await;
-    assert_eq!(res.status, StatusCode::ACCEPTED, "{}", res.body);
+    assert_eq!(res.status, StatusCode::OK, "{}", res.body);
 
     assert_eq!(
-        agreements(&db, "asha@example.com").await,
+        agreements(&db, email).await,
         vec![(
             "terms".into(),
             None,
@@ -95,11 +106,12 @@ async fn signup_records_the_agreement(db: PgPool) {
 
 #[sqlx::test]
 async fn signup_without_agreeing_makes_no_account(db: PgPool) {
+    let token = signup_token(&db, "terms.refuse@example.com").await;
     for version in [None, Some(0), Some(TERMS_VERSION + 1)] {
         let res = post(
             &db,
-            "/api/v1/auth/signup",
-            signup_body("asha@example.com", version),
+            "/api/v1/auth/signup/complete",
+            signup_body(&token, version),
         )
         .await;
         assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY, "{version:?}");
@@ -111,21 +123,22 @@ async fn signup_without_agreeing_makes_no_account(db: PgPool) {
 
 #[sqlx::test]
 async fn signup_on_an_existing_email_agrees_nothing_for_it(db: PgPool) {
-    verified_user(&db, "asha@example.com", "sunlight1").await;
+    let email = "terms.existing@example.com";
+    // The token was proven before the account got its password.
+    let token = signup_token(&db, email).await;
+    verified_user(&db, email, "sunlight1").await;
     sqlx::query("DELETE FROM agreements")
         .execute(&db)
         .await
         .unwrap();
-
-    // Someone else signing up with Asha's email can't agree for her.
     let res = post(
         &db,
-        "/api/v1/auth/signup",
-        signup_body("asha@example.com", Some(TERMS_VERSION)),
+        "/api/v1/auth/signup/complete",
+        signup_body(&token, Some(TERMS_VERSION)),
     )
     .await;
-    assert_eq!(res.status, StatusCode::ACCEPTED);
-    assert!(agreements(&db, "asha@example.com").await.is_empty());
+    assert_eq!(res.status, StatusCode::BAD_REQUEST, "{}", res.body);
+    assert!(agreements(&db, email).await.is_empty());
 }
 
 #[sqlx::test]

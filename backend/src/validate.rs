@@ -37,6 +37,20 @@ pub fn is_pin_code(pin: &str) -> bool {
     pin.len() == 6 && !pin.starts_with('0') && pin.chars().all(|c| c.is_ascii_digit())
 }
 
+// A UPI id: name@bank.
+pub fn is_upi_id(value: &str) -> bool {
+    let Some((name, bank)) = value.split_once('@') else {
+        return false;
+    };
+    (2..=64).contains(&name.len())
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || ".-_".contains(c))
+        && (2..=64).contains(&bank.len())
+        && bank.starts_with(|c: char| c.is_ascii_alphabetic())
+        && bank.chars().all(|c| c.is_ascii_alphanumeric())
+}
+
 // A latitude, in degrees.
 pub fn is_lat(value: f64) -> bool {
     (-90.0..=90.0).contains(&value)

@@ -131,7 +131,7 @@ async fn adding_a_new_email_makes_an_invited_account(db: PgPool) {
         json!({"email": "neha@example.com", "password": "anything1", "client": "app"}),
     )
     .await;
-    assert_eq!(login.body["code"], "account.password_not_set");
+    assert_eq!(login.body["code"], "auth.invalid_credentials");
 }
 
 #[sqlx::test]

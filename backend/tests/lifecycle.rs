@@ -30,7 +30,7 @@ async fn set_up(db: &PgPool, email: &'static str) -> Person {
     )
     .await;
     assert_eq!(
-        res.body["code"], "account.password_not_set",
+        res.body["code"], "auth.invalid_credentials",
         "{email}: {}",
         res.body
     );
@@ -177,7 +177,9 @@ async fn one_install_from_start_to_handover(db: PgPool) {
         "land_document",
         "signature",
     ] {
-        documents.push(json!({"kind": kind, "upload_id": file(&db, org, &meena, "kyc").await}));
+        documents.push(
+            json!({"kind": kind, "files": [{"upload_id": file(&db, org, &meena, "kyc").await}]}),
+        );
     }
     let reg = ok(
         &db,
@@ -243,7 +245,7 @@ async fn one_install_from_start_to_handover(db: PgPool) {
             "my-customers/{customer}/documents/electricity_bill"
         )),
         &meena,
-        Some(json!({"upload_id": fixed})),
+        Some(json!({"files": [{"upload_id": fixed}]})),
     )
     .await;
 

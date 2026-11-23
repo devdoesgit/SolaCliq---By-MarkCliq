@@ -81,8 +81,12 @@ async fn customer(db: &PgPool, co: &Co, kyc: &str, subsidy: bool) -> Uuid {
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO documents (id, org_id, customer_id, kind, upload_id, uploaded_by)
-             SELECT $1, $2, $3, $4::kyc_kind, $5, id FROM users WHERE email = 'meena@example.com'",
+            "WITH d AS (INSERT INTO documents (id, org_id, customer_id, kind, uploaded_by)
+                        SELECT $1, $2, $3, $4::kyc_kind, id FROM users
+                        WHERE email = 'meena@example.com'
+                        RETURNING id, org_id)
+             INSERT INTO document_files (org_id, document_id, upload_id, position)
+             SELECT org_id, id, $5, 1 FROM d",
         )
         .bind(Uuid::now_v7())
         .bind(co.org)
@@ -97,12 +101,15 @@ async fn customer(db: &PgPool, co: &Co, kyc: &str, subsidy: bool) -> Uuid {
 }
 
 async fn act(db: &PgPool, co: &Co, method: &str, rest: &str, body: Option<Value>) -> Res {
-    call(
+    // A fresh key each time, as the website sends with a write that needs one.
+    let key = Uuid::now_v7().to_string();
+    common::call_with(
         db,
         method,
         &format!("/api/v1/orgs/{}/{rest}", co.org),
         &co.admin,
         body,
+        &[("idempotency-key", &key)],
     )
     .await
 }
@@ -421,7 +428,7 @@ async fn customer_decisions_follow_its_state(db: PgPool) {
         &co,
         "POST",
         &format!("customers/{r}/verify"),
-        Some(json!({"total": 100})),
+        Some(json!({"total": 1000})),
     )
     .await;
     assert_eq!(res.status, StatusCode::CONFLICT);
