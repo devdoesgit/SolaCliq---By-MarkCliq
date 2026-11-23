@@ -228,6 +228,9 @@ abstract final class SolaRadius {
   /// Thumbnails.
   static const double radius12 = 12;
 
+  /// Fields, selects and sidebar links on the admin website.
+  static const double radius14 = 14;
+
   /// Week strip days.
   static const double radius16 = 16;
 
