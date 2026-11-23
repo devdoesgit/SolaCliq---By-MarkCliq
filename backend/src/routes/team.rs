@@ -4,6 +4,8 @@
     - GET    /orgs/{org_id}/members            list, newest first
     - POST   /orgs/{org_id}/members            add a worker or agent
     - DELETE /orgs/{org_id}/members/{user_id}  remove one
+    - PATCH  /orgs/{org_id}/members/{user_id}  change role or pay (F21)
+    - POST   /orgs/{org_id}/members/{user_id}/invite  send it again
     - org admins only (`OrgMember<Admins>`), of an active company
     - customers are never listed here: they arrive through registration
       (phase 9) and have their own pages
@@ -26,13 +28,15 @@ use crate::{
     },
     org::{Admins, OrgMember, PayType, Role},
     page::{Cursor, Page, PageInfo},
+    rate_limit::Rule,
     validate,
 };
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(list_members, add_member))
-        .routes(routes!(remove_member))
+        .routes(routes!(remove_member, update_member))
+        .routes(routes!(resend_invite))
 }
 
 // The contract's `MemberStatus`.
@@ -483,6 +487,258 @@ async fn remove_member(
       they ask for it, so it can't expire in the inbox)
     - an existing account: that they were added
 */
+/*
+    Editing a member (F21)
+*/
+
+// One member of this company, as the team page shows them; None if not one.
+async fn load_member(
+    conn: &mut sqlx::PgConnection,
+    org_id: Uuid,
+    user_id: Uuid,
+) -> ApiResult<Option<MemberRow>> {
+    Ok(sqlx::query_as(
+        "SELECT m.id AS membership_id, u.id AS user_id, u.name, u.email,
+                m.role, m.pay_type, u.password_hash IS NULL AS invited,
+                m.created_at AS added_at,
+                (SELECT count(*) FROM tasks t
+                 WHERE t.org_id = m.org_id AND t.assignee_id = m.user_id
+                   AND t.status NOT IN ('approved', 'cancelled')) AS open_tasks,
+                (SELECT count(*) FROM customers c
+                 WHERE c.org_id = m.org_id AND c.registered_by = m.user_id
+                   AND c.kyc_status <> 'rejected') AS customers
+         FROM memberships m JOIN users u ON u.id = m.user_id
+         WHERE m.org_id = $1 AND m.user_id = $2
+           AND m.removed_at IS NULL AND m.role <> 'customer'",
+    )
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_optional(conn)
+    .await?)
+}
+
+// The contract's `MemberUpdate`: a role between worker and agent, a pay type.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MemberUpdate {
+    pub role: Option<Role>,
+    pub pay_type: Option<PayType>,
+}
+
+// "2 open tasks", "1 customer in review": what keeps a role from changing.
+fn open_work(parts: &[(i64, &str, &str)]) -> Vec<String> {
+    parts
+        .iter()
+        .filter(|(n, ..)| *n > 0)
+        .map(|(n, one, many)| format!("{n} {}", if *n == 1 { one } else { many }))
+        .collect()
+}
+
+/*
+    Change a member's role or pay type
+    --------------------------------------------------------------------
+    - pay type: from now on. Commissions already entered stay as they are
+    - role, between installer and agent: only with nothing open in the
+      old role, so nothing is moved or lost unseen; the 409 says what
+    - the membership row is locked, so two admins' edits can't cross
+    - name, phone and email are the person's own (F21)
+*/
+#[utoipa::path(
+    patch,
+    path = "/orgs/{org_id}/members/{user_id}",
+    operation_id = "updateMember",
+    tag = "team",
+    params(
+        ("org_id" = Uuid, Path, description = "The company."),
+        ("user_id" = Uuid, Path, description = "The member."),
+    ),
+    request_body = MemberUpdate,
+    responses(
+        (status = 200, description = "The member, changed.", body = Member),
+        (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 403, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 404, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 409, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn update_member(
+    State(state): State<AppState>,
+    admin: OrgMember<Admins>,
+    ApiPath(path): ApiPath<MemberPath>,
+    ApiJson(req): ApiJson<MemberUpdate>,
+) -> ApiResult<Json<Member>> {
+    if matches!(req.role, Some(Role::OrgAdmin | Role::Customer)) {
+        return Err(
+            ApiError::validation(Vec::new()).field("role", "An EPC Installer or a Sales Agent.")
+        );
+    }
+    let mut tx = admin.begin(&state.db).await?;
+    let current: Option<(Role, Option<PayType>)> = sqlx::query_as(
+        "SELECT role, pay_type FROM memberships
+         WHERE org_id = $1 AND user_id = $2 AND removed_at IS NULL AND role <> 'customer'
+         FOR UPDATE",
+    )
+    .bind(admin.org_id)
+    .bind(path.user_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    let Some((role, pay)) = current else {
+        return Err(ApiError::not_found());
+    };
+    if role == Role::OrgAdmin {
+        return Err(ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "member.cannot_change_admin",
+            "The admin's role can't change here",
+        )
+        .detail("To hand the company to someone else, contact MarkCliq."));
+    }
+    let new_role = req.role.unwrap_or(role);
+    // Agents always have a pay type, workers never (the membership's check).
+    let new_pay = match new_role {
+        Role::Agent => Some(req.pay_type.or(pay).ok_or_else(|| {
+            ApiError::validation(Vec::new()).field("pay_type", "Choose how they're paid.")
+        })?),
+        _ if req.pay_type.is_some() => {
+            return Err(ApiError::validation(Vec::new())
+                .field("pay_type", "Only Sales Agents have a pay type."));
+        }
+        _ => None,
+    };
+
+    if new_role != role {
+        let blocking = if role == Role::Worker {
+            let tasks: i64 = sqlx::query_scalar(
+                "SELECT count(*) FROM tasks WHERE org_id = $1 AND assignee_id = $2
+                   AND status IN ('assigned', 'submitted', 'returned')",
+            )
+            .bind(admin.org_id)
+            .bind(path.user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            open_work(&[(tasks, "open task", "open tasks")])
+        } else {
+            let (kyc, commissions, leads): (i64, i64, i64) = sqlx::query_as(
+                "SELECT
+                   (SELECT count(*) FROM customers WHERE org_id = $1 AND registered_by = $2
+                      AND kyc_status IN ('in_review', 'needs_fix')),
+                   (SELECT count(*) FROM customers WHERE org_id = $1 AND registered_by = $2
+                      AND kyc_status <> 'rejected'
+                      AND commission_status IN ('in_review', 'approved', 'payable')),
+                   (SELECT count(*) FROM leads WHERE org_id = $1 AND agent_id = $2
+                      AND status IN ('new', 'contacted'))",
+            )
+            .bind(admin.org_id)
+            .bind(path.user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            open_work(&[
+                (kyc, "customer still in KYC", "customers still in KYC"),
+                (
+                    commissions,
+                    "commission not yet paid",
+                    "commissions not yet paid",
+                ),
+                (leads, "open lead", "open leads"),
+            ])
+        };
+        if !blocking.is_empty() {
+            return Err(ApiError::new(
+                StatusCode::CONFLICT,
+                "member.has_open_work",
+                "They still have open work",
+            )
+            .detail(format!(
+                "Finish or hand over first: {}.",
+                blocking.join(", ")
+            )));
+        }
+    }
+
+    sqlx::query(
+        "UPDATE memberships SET role = $3, pay_type = $4 WHERE org_id = $1 AND user_id = $2",
+    )
+    .bind(admin.org_id)
+    .bind(path.user_id)
+    .bind(new_role)
+    .bind(new_pay)
+    .execute(&mut *tx)
+    .await?;
+    let row = load_member(&mut tx, admin.org_id, path.user_id)
+        .await?
+        .ok_or_else(ApiError::not_found)?;
+    tx.commit().await?;
+    tracing::info!(
+        org_id = %admin.org_id, user_id = %path.user_id, by = %admin.user_id,
+        from = ?(role, pay), to = ?(new_role, new_pay), "member changed"
+    );
+    Ok(Json(row.into()))
+}
+
+/*
+    Send a member's invite again
+    --------------------------------------------------------------------
+    - only while they have no password: the email says how to set one
+    - 3 an hour per address: it's an email to someone else's inbox
+*/
+#[utoipa::path(
+    post,
+    path = "/orgs/{org_id}/members/{user_id}/invite",
+    operation_id = "resendInvite",
+    tag = "team",
+    params(
+        ("org_id" = Uuid, Path, description = "The company."),
+        ("user_id" = Uuid, Path, description = "The member."),
+    ),
+    responses(
+        (status = 204, description = "Sent."),
+        (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 403, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 404, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 409, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn resend_invite(
+    State(state): State<AppState>,
+    admin: OrgMember<Admins>,
+    ApiPath(path): ApiPath<MemberPath>,
+) -> ApiResult<StatusCode> {
+    let mut tx = admin.begin(&state.db).await?;
+    let row = load_member(&mut tx, admin.org_id, path.user_id)
+        .await?
+        .ok_or_else(ApiError::not_found)?;
+    let org_name: String = sqlx::query_scalar("SELECT name FROM orgs WHERE id = $1")
+        .bind(admin.org_id)
+        .fetch_one(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    if !row.invited {
+        return Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "member.already_set_up",
+            "They've already set up their account",
+        )
+        .detail("They can log in, or use \"Forgot password?\" in the app."));
+    }
+    state.limits.check(Rule::InviteByEmail, &row.email)?;
+    state
+        .mailer
+        .send(added_email(&row.email, &org_name, row.role, true));
+    tracing::info!(org_id = %admin.org_id, user_id = %path.user_id, "invite sent again");
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn added_email(to: &str, org_name: &str, role: Role, new_account: bool) -> Email {
     let role_label = match role {
         Role::OrgAdmin => "Admin",

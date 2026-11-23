@@ -70,6 +70,8 @@ pub enum Rule {
         leaked key can't fill the company's list
     */
     LeadByOrg,
+    // Sending a member's invite again (F21), per address.
+    InviteByEmail,
 }
 
 impl Rule {
@@ -94,6 +96,7 @@ impl Rule {
             Rule::AlreadyRegisteredByEmail => (1, HOUR),
             Rule::UploadByUser => (200, HOUR),
             Rule::LeadByOrg => (300, HOUR),
+            Rule::InviteByEmail => (3, HOUR),
         };
         (count, Duration::from_secs(seconds))
     }
