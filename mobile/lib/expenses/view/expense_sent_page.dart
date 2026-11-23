@@ -148,5 +148,10 @@ extension ExpenseStatusText on ExpenseStatus {
       tone: SolaTone.danger,
       icon: SolaIcons.alarm,
     ),
+    ExpenseStatus.rejected => SolaPill(
+      l10n.statusRejected,
+      tone: SolaTone.danger,
+      icon: SolaIcons.close,
+    ),
   };
 }

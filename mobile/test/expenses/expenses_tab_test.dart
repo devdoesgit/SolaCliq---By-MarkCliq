@@ -29,6 +29,37 @@ void main() {
   });
 
   group(ExpensesTab, () {
+    testWidgets('a refused claim says so and adds nothing to the month', (
+      tester,
+    ) async {
+      Expense claim(String id, int paise, ExpenseStatus status) => Expense(
+        id: id,
+        reference: id,
+        amountPaise: paise,
+        category: ExpenseCategory.fuel,
+        note: 'Note $id',
+        spentOn: DateTime.now(),
+        status: status,
+        hasReceipt: false,
+      );
+      when(() => expenses.mine(any())).thenAnswer(
+        (_) async => [
+          claim('e1', 45000, ExpenseStatus.approved),
+          claim('e2', 99000, ExpenseStatus.rejected),
+        ],
+      );
+      await tester.pumpApp(
+        const ExpensesTab(orgId: 'o1'),
+        repositories: [
+          RepositoryProvider<ExpenseRepository>.value(value: expenses),
+        ],
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Not accepted'), findsOneWidget);
+      expect(find.text('₹450'), findsWidgets);
+      expect(find.textContaining('1,440'), findsNothing);
+    });
+
     testWidgets('lists the expenses and opens one', (tester) async {
       await tester.pumpApp(
         const ExpensesTab(orgId: 'o1'),

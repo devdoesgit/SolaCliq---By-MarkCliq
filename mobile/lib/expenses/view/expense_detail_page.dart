@@ -179,9 +179,12 @@ class _Details extends StatelessWidget {
             title: error,
             announce: true,
           ),
-        if (e.status == ExpenseStatus.needsFix)
+        if (e.status == ExpenseStatus.needsFix ||
+            e.status == ExpenseStatus.rejected)
           SolaBanner(
-            title: l10n.sentBackByAdmin,
+            title: e.status == ExpenseStatus.rejected
+                ? l10n.notAcceptedByAdmin
+                : l10n.sentBackByAdmin,
             body: e.adminNote,
             tone: SolaTone.danger,
             icon: SolaIcons.alert,

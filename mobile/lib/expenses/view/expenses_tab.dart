@@ -126,7 +126,8 @@ class _Content extends StatelessWidget {
     ];
     int sum(bool Function(Expense) test) =>
         month.where(test).fold(0, (total, e) => total + e.amountPaise);
-    final total = sum((_) => true);
+    // A refused claim isn't money owed.
+    final total = sum((e) => e.status != ExpenseStatus.rejected);
     final approved = sum(
       (e) =>
           e.status == ExpenseStatus.approved || e.status == ExpenseStatus.paid,

@@ -4,7 +4,7 @@ import 'package:solacliq/app/data/api_call.dart';
 
 enum ExpenseCategory { fuel, material, labour, other }
 
-enum ExpenseStatus { inReview, approved, needsFix, paid }
+enum ExpenseStatus { inReview, approved, needsFix, paid, rejected }
 
 /// A cost a worker or agent sent to their admin.
 class Expense extends Equatable {
@@ -155,6 +155,7 @@ class ExpenseRepository {
       api.ExpenseStatus.approved => ExpenseStatus.approved,
       api.ExpenseStatus.needsFix => ExpenseStatus.needsFix,
       api.ExpenseStatus.paid => ExpenseStatus.paid,
+      api.ExpenseStatus.rejected => ExpenseStatus.rejected,
     },
     hasReceipt: e.hasReceipt,
     adminNote: e.adminNote,

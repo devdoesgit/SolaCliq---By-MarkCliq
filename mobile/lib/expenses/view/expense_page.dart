@@ -524,7 +524,7 @@ class _ReceiptTile extends StatelessWidget {
             : Stack(
                 fit: StackFit.expand,
                 children: [
-                  FilePreview(image: MemoryImage(receipt.bytes)),
+                  FilePreview(image: pickedImage(receipt)),
                   const PositionedDirectional(
                     end: 6,
                     bottom: 6,
