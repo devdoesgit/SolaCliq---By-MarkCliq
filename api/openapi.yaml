@@ -572,6 +572,74 @@ paths:
           $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateMember
+      summary: Change a worker's or agent's role or pay type
+      description: |
+        Org admin only (F21). `pay_type` (agents) applies from now on:
+        customers already registered keep their commission. `role` between
+        `worker` and `agent` only when nothing is open in the old role
+        (409 `member.has_open_work`, with what's open): an installer's
+        tasks assigned, in review or sent back; an agent's customers in
+        review or with them, commissions not yet paid, leads new or
+        contacted. Becoming an agent needs `pay_type`. The admin's own
+        membership can't change (422 `member.cannot_change_admin`). The
+        person's name, phone and email are theirs to edit, not here.
+      tags: [team]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpdate"
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /orgs/{org_id}/members/{user_id}/invite:
+    parameters:
+      - $ref: "#/components/parameters/OrgId"
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/Id"
+    post:
+      operationId: resendInvite
+      summary: Send a member's invite again
+      description: |
+        Org admin only (F21). For a member who hasn't set a password yet:
+        the same email as when they were added. 409
+        `member.already_set_up` once they have one. At most 3 an hour per
+        address (429 `auth.too_many_attempts`).
+      tags: [team]
+      responses:
+        "204":
+          description: Sent.
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
 
   /org-registrations:
     post:
@@ -3926,6 +3994,15 @@ components:
           $ref: "#/components/schemas/Email"
         role:
           $ref: "#/components/schemas/Role"
+        pay_type:
+          $ref: "#/components/schemas/PayType"
+
+    MemberUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [worker, agent]
         pay_type:
           $ref: "#/components/schemas/PayType"
 

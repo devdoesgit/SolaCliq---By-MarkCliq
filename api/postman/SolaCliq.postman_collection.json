@@ -4328,6 +4328,103 @@
           ]
         },
         {
+          "name": "updateMember",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/members/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "members",
+                "{{user_id}}"
+              ]
+            },
+            "description": "**Change a worker's or agent's role or pay type** (`updateMember`) · as Dev, the company's admin\n\nOrg admin only (F21). `pay_type` (agents) applies from now on:\ncustomers already registered keep their commission. `role` between\n`worker` and `agent` only when nothing is open in the old role\n(409 `member.has_open_work`, with what's open): an installer's\ntasks assigned, in review or sent back; an agent's customers in\nreview or with them, commissions not yet paid, leads new or\ncontacted. Becoming an agent needs `pay_type`. The admin's own\nmembership can't change (422 `member.cannot_change_admin`). The\nperson's name, phone and email are theirs to edit, not here.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"worker\",\n  \"pay_type\": \"commission\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "resendInvite",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{org_id}}/members/{{user_id}}/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orgs",
+                "{{org_id}}",
+                "members",
+                "{{user_id}}",
+                "invite"
+              ]
+            },
+            "description": "**Send a member's invite again** (`resendInvite`) · as Dev, the company's admin\n\nOrg admin only (F21). For a member who hasn't set a password yet:\nthe same email as when they were added. 409\n`member.already_set_up` once they have one. At most 3 an hour per\naddress (429 `auth.too_many_attempts`).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "setOrgLogo",
           "request": {
             "method": "PUT",
