@@ -45,7 +45,8 @@ async fn form(db: &PgPool, org: Uuid, token: &str, email: &str, phone: &str) -> 
         "land_document",
         "signature",
     ] {
-        documents.push(json!({"kind": kind, "upload_id": kyc_file(db, org, token).await}));
+        documents
+            .push(json!({"kind": kind, "files": [{"upload_id": kyc_file(db, org, token).await}]}));
     }
     json!({
         "name": "Rajinder Kaur", "phone": phone, "email": email,
@@ -242,14 +243,14 @@ async fn links_existing_accounts_safely(db: PgPool) {
     .unwrap();
     assert!(still, "a verified account keeps its password");
 
-    // Signed up with this email but never verified it: anyone could have.
-    let res = common::post(
-        &db,
-        "/api/v1/auth/signup",
-        json!({"name": "Someone", "email": "unverified@example.com", "password": "sunlight1", "terms_version": 1}),
+    // Made for them earlier, not set up yet.
+    sqlx::query(
+        "INSERT INTO users (id, email, name) VALUES ($1, 'unverified@example.com', 'Someone')",
     )
-    .await;
-    assert_eq!(res.status, StatusCode::ACCEPTED);
+    .bind(uuid::Uuid::now_v7())
+    .execute(&db)
+    .await
+    .unwrap();
     let body = form(&db, a, &meena, "unverified@example.com", "9814000105").await;
     assert_eq!(
         register(&db, a, &meena, body).await.status,
@@ -294,7 +295,7 @@ async fn a_kyc_file_that_never_reached_r2_stops_it(db: PgPool) {
         Some(json!({"content_type": "image/jpeg", "size_bytes": 3000, "purpose": "kyc"})),
     )
     .await;
-    body["documents"][0]["upload_id"] = res.body["upload_id"].clone();
+    body["documents"][0]["files"][0]["upload_id"] = res.body["upload_id"].clone();
     let res = register(&db, a, &meena, body).await;
     assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(res.body["errors"][0]["field"], "documents");
@@ -409,7 +410,7 @@ async fn a_returned_document_takes_a_new_copy(db: PgPool) {
         "PUT",
         &format!("{path}/documents/pan"),
         &meena,
-        Some(json!({"upload_id": file})),
+        Some(json!({"files": [{"upload_id": file}]})),
     )
     .await;
     assert_eq!(res.status, StatusCode::CONFLICT);
@@ -420,7 +421,7 @@ async fn a_returned_document_takes_a_new_copy(db: PgPool) {
         "PUT",
         &format!("{path}/documents/electricity_bill"),
         &meena,
-        Some(json!({"upload_id": file})),
+        Some(json!({"files": [{"upload_id": file}]})),
     )
     .await;
     assert_eq!(res.status, StatusCode::OK, "{}", res.body);
@@ -590,7 +591,7 @@ async fn a_new_customer_sets_up_and_follows_their_install(db: PgPool) {
     };
     assert_eq!(
         login("moonlight44").await.body["code"],
-        "account.password_not_set"
+        "auth.invalid_credentials"
     );
 
     // The emailed code sets a password (and verifies the email).
@@ -668,12 +669,12 @@ async fn subsidy_and_optional_documents(db: PgPool) {
         body["documents"]
             .as_array_mut()
             .unwrap()
-            .push(json!({"kind": kind, "upload_id": file}));
+            .push(json!({"kind": kind, "files": [{"upload_id": file}]}));
     }
 
     // The same kind twice is refused.
     let mut twice = body.clone();
-    let extra = json!({"kind": "pan", "upload_id": kyc_file(&db, a, &meena).await});
+    let extra = json!({"kind": "pan", "files": [{"upload_id": kyc_file(&db, a, &meena).await}]});
     twice["documents"].as_array_mut().unwrap().push(extra);
     let res = register(&db, a, &meena, twice).await;
     assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
@@ -767,14 +768,14 @@ async fn files_that_arent_the_agents_kyc_are_refused(db: PgPool) {
     let others = kyc_file(&db, a, &aman).await; // Aman's
     let elsewhere = kyc_file(&db, b, &meena).await; // Solar B's
     let base = form(&db, a, &meena, "files@example.com", "9814000123").await;
-    let same = base["documents"][1]["upload_id"].clone();
+    let same = base["documents"][1]["files"][0]["upload_id"].clone();
 
     for (i, upload) in [json!(receipt), json!(others), json!(elsewhere), same]
         .into_iter()
         .enumerate()
     {
         let mut body = base.clone();
-        body["documents"][0]["upload_id"] = upload;
+        body["documents"][0]["files"][0]["upload_id"] = upload;
         let res = register(&db, a, &meena, body).await;
         assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY, "case {i}");
         assert_eq!(res.body["errors"][0]["field"], "documents", "case {i}");
@@ -857,17 +858,7 @@ async fn a_customer_in_two_companies_sees_each_ones_documents(db: PgPool) {
         assert_eq!(res.body["items"].as_array().unwrap().len(), 5);
         assert_eq!(res.body["uploaded_by"], agent);
     }
-    let self_signed = common::post(
-        &db,
-        "/api/v1/auth/signup",
-        json!({"name": "Walk In", "email": "walkin@example.com", "password": "sunlight1", "terms_version": 1}),
-    )
-    .await;
-    assert_eq!(self_signed.status, StatusCode::ACCEPTED);
-    sqlx::query("UPDATE users SET email_verified_at = now() WHERE email = 'walkin@example.com'")
-        .execute(&db)
-        .await
-        .unwrap();
+    common::verified_user(&db, "walkin@example.com", "sunlight1").await;
     common::join(&db, a, "walkin@example.com", "customer", None).await;
     let walkin = common::token(&db, "walkin@example.com").await;
     let res = call(
@@ -950,7 +941,7 @@ async fn two_returned_documents_are_fixed_one_at_a_time(db: PgPool) {
         "PUT",
         &format!("{path}/documents/pan"),
         &meena,
-        Some(json!({"upload_id": lost.body["upload_id"]})),
+        Some(json!({"files": [{"upload_id": lost.body["upload_id"]}]})),
     )
     .await;
     assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
@@ -961,7 +952,7 @@ async fn two_returned_documents_are_fixed_one_at_a_time(db: PgPool) {
         "PUT",
         &format!("{path}/documents/pan"),
         &meena,
-        Some(json!({"upload_id": file})),
+        Some(json!({"files": [{"upload_id": file}]})),
     )
     .await;
     assert_eq!(res.status, StatusCode::OK);
@@ -977,7 +968,7 @@ async fn two_returned_documents_are_fixed_one_at_a_time(db: PgPool) {
         "PUT",
         &format!("{path}/documents/signature"),
         &meena,
-        Some(json!({"upload_id": file})),
+        Some(json!({"files": [{"upload_id": file}]})),
     )
     .await;
     assert_eq!(res.body["kyc_status"], "in_review");
@@ -994,7 +985,7 @@ async fn two_returned_documents_are_fixed_one_at_a_time(db: PgPool) {
         "PUT",
         &format!("{path}/documents/pan"),
         &meena,
-        Some(json!({"upload_id": file})),
+        Some(json!({"files": [{"upload_id": file}]})),
     )
     .await;
     assert_eq!(res.body["code"], "registration.locked");
@@ -1083,4 +1074,81 @@ async fn half_a_location_or_an_impossible_one_is_refused(db: PgPool) {
         assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
         assert_eq!(res.body["errors"][0]["field"], field);
     }
+}
+
+#[sqlx::test]
+async fn a_document_holds_one_to_five_files(db: PgPool) {
+    let (a, meena) = setup(&db).await;
+    let base = form(&db, a, &meena, "several@example.com", "9814000131").await;
+    let mut five = Vec::new();
+    for side in [Some("front"), Some("back"), None, None, None] {
+        let id = kyc_file(&db, a, &meena).await;
+        five.push(match side {
+            Some(side) => json!({"upload_id": id, "side": side}),
+            None => json!({"upload_id": id}),
+        });
+    }
+    let mut six = five.clone();
+    six.push(json!({"upload_id": kyc_file(&db, a, &meena).await}));
+    let repeated = vec![five[0].clone(), five[0].clone()];
+    for (i, files) in [vec![], six, repeated].into_iter().enumerate() {
+        let mut body = base.clone();
+        body["documents"][0]["files"] = json!(files);
+        let res = register(&db, a, &meena, body).await;
+        assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY, "case {i}");
+        assert_eq!(res.body["errors"][0]["field"], "documents", "case {i}");
+    }
+    // One that never arrived refuses them all, and keeps none.
+    let mut lost = five.clone();
+    lost[4] = json!({"upload_id": Uuid::now_v7()});
+    let mut body = base.clone();
+    body["documents"][0]["files"] = json!(lost);
+    assert_eq!(
+        register(&db, a, &meena, body).await.status,
+        StatusCode::UNPROCESSABLE_ENTITY
+    );
+    let used = "SELECT count(*) FROM uploads WHERE used_at IS NOT NULL";
+    assert_eq!(count(&db, used).await, 0);
+
+    let mut body = base.clone();
+    body["documents"][0]["files"] = json!(five);
+    let res = register(&db, a, &meena, body).await;
+    assert_eq!(res.status, StatusCode::CREATED, "{}", res.body);
+    let id = res.body["id"].as_str().unwrap().to_owned();
+    let saved: Vec<(i16, Option<String>)> = sqlx::query_as(
+        "SELECT f.position, f.side::text FROM document_files f
+         JOIN documents d ON d.id = f.document_id
+         WHERE d.kind = 'aadhaar' AND f.replaced_at IS NULL ORDER BY f.position",
+    )
+    .fetch_all(&db)
+    .await
+    .unwrap();
+    assert_eq!(saved.len(), 5);
+    assert_eq!(saved[0], (1, Some("front".into())));
+    assert_eq!(saved[1], (2, Some("back".into())));
+    assert_eq!(saved[4], (5, None));
+
+    // Sent back: the new set replaces the whole one, which is kept as replaced.
+    sqlx::query(
+        "UPDATE documents SET status = 'needs_fix', admin_note = 'Blurred.' WHERE kind = 'aadhaar'",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+    let path = format!("/api/v1/orgs/{a}/my-customers/{id}/documents/aadhaar");
+    let res = call(&db, "PUT", &path, &meena, Some(json!({"files": []}))).await;
+    assert_eq!(res.status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(res.body["errors"][0]["field"], "files");
+    let two = json!({"files": [
+        {"upload_id": kyc_file(&db, a, &meena).await},
+        {"upload_id": kyc_file(&db, a, &meena).await}
+    ]});
+    let res = call(&db, "PUT", &path, &meena, Some(two)).await;
+    assert_eq!(res.status, StatusCode::OK, "{}", res.body);
+    let current = "SELECT count(*) FROM document_files f JOIN documents d ON d.id = f.document_id
+         WHERE d.kind = 'aadhaar' AND f.replaced_at IS NULL";
+    assert_eq!(count(&db, current).await, 2);
+    let replaced = "SELECT count(*) FROM document_files f JOIN documents d ON d.id = f.document_id
+         WHERE d.kind = 'aadhaar' AND f.replaced_at IS NOT NULL";
+    assert_eq!(count(&db, replaced).await, 5);
 }

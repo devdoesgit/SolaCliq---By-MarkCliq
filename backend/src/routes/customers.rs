@@ -40,14 +40,19 @@ use crate::{
         Email,
         template::{self as t, Badge, EmailPage, Step, Tone},
     },
+    notify,
     org::{Agents, OrgMember, PayType, Role, WorkersAndCustomers},
     routes::{
         quotes::RoofType,
         tasks::{Person, TaskNote},
         uploads::{self, UploadPurpose},
     },
+    stages::{self, Stages},
     validate,
 };
+
+// Where the consent line in the welcome email points.
+const PRIVACY_URL: &str = "https://solacliq.markcliq.com/privacy";
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -62,20 +67,6 @@ pub fn router() -> OpenApiRouter<AppState> {
 const MAX_KW: f64 = 1000.0;
 // Up to ₹10 lakh, in paise.
 const MAX_COMMISSION: i64 = 100_000_000;
-
-/*
-    The install stages, in order: one fixed list until companies can set
-    their own (the app's and the contract's)
-*/
-pub const STAGES: [&str; 7] = [
-    "Site survey",
-    "Structure",
-    "Panel installation",
-    "Wiring and inverter",
-    "Earthing",
-    "Net meter",
-    "Handover",
-];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
@@ -164,10 +155,27 @@ pub enum CommissionStatus {
     Requests
 */
 
+// A label on a file: an Aadhaar's two sides. Never required.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "document_side", rename_all = "snake_case")]
+pub enum DocumentSide {
+    Front,
+    Back,
+}
+
+// The contract's `DocumentFile`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct DocumentFile {
+    pub upload_id: Uuid,
+    pub side: Option<DocumentSide>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RegistrationDocument {
     pub kind: KycKind,
-    pub upload_id: Uuid,
+    // 1 to 5, in the order added.
+    pub files: Vec<DocumentFile>,
 }
 
 // The contract's `CustomerRegistrationCreate`.
@@ -204,7 +212,45 @@ pub struct CustomerRegistrationCreate {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DocumentReplace {
-    pub upload_id: Uuid,
+    // 1 to 5: the whole new set.
+    pub files: Vec<DocumentFile>,
+}
+
+const MAX_FILES: usize = 5;
+
+// One document's files: 1 to 5, none twice.
+fn check_files(field: &str, files: &[DocumentFile]) -> ApiResult<()> {
+    let distinct: std::collections::BTreeSet<Uuid> = files.iter().map(|f| f.upload_id).collect();
+    if files.is_empty() || files.len() > MAX_FILES || distinct.len() != files.len() {
+        return Err(ApiError::validation(Vec::new()).field(
+            field,
+            format!("1 to {MAX_FILES} different files a document."),
+        ));
+    }
+    Ok(())
+}
+
+// Points a document at its files, already attached.
+async fn add_files(
+    conn: &mut PgConnection,
+    org_id: Uuid,
+    document_id: Uuid,
+    files: &[DocumentFile],
+) -> ApiResult<()> {
+    for (position, f) in (1i16..).zip(files) {
+        sqlx::query(
+            "INSERT INTO document_files (org_id, document_id, upload_id, position, side)
+             VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(org_id)
+        .bind(document_id)
+        .bind(f.upload_id)
+        .bind(position)
+        .bind(f.side)
+        .execute(&mut *conn)
+        .await?;
+    }
+    Ok(())
 }
 
 #[derive(Debug, Deserialize)]
@@ -461,6 +507,7 @@ fn check(req: &CustomerRegistrationCreate, pay_type: Option<PayType>) -> ApiResu
 
     let mut kinds = std::collections::BTreeSet::new();
     for d in &req.documents {
+        check_files("documents", &d.files)?;
         if !kinds.insert(d.kind) {
             return Err(ApiError::validation(Vec::new())
                 .field("documents", format!("{} is there twice.", d.kind.label())));
@@ -562,15 +609,9 @@ struct Row {
     doc_verified: i64,
 }
 
-// "Stage 2 · Structure" for an index from 1.
-fn stage_line(index: i32) -> Option<String> {
-    let label = STAGES.get(usize::try_from(index).ok()?.checked_sub(1)?)?;
-    Some(format!("Stage {index} · {label}"))
-}
-
 impl Row {
     // The one line under a customer, by where they stand.
-    fn detail(&self, now: DateTime<Utc>) -> String {
+    fn detail(&self, now: DateTime<Utc>, stages: &Stages) -> String {
         match self.kyc_status {
             KycStatus::InReview => {
                 let sent = self.created_at.with_timezone(&india::offset()).date_naive();
@@ -587,7 +628,7 @@ impl Row {
             },
             KycStatus::Approved => self
                 .stage_index
-                .and_then(stage_line)
+                .and_then(|i| stages.line(i))
                 .unwrap_or_else(|| "Approved".into()),
             KycStatus::Rejected => self
                 .rejected_note
@@ -618,28 +659,25 @@ impl Row {
         })
     }
 
-    fn summary(&self, now: DateTime<Utc>) -> CustomerSummary {
+    fn summary(&self, now: DateTime<Utc>, stages: &Stages) -> CustomerSummary {
         CustomerSummary {
             id: self.id,
             name: self.name.clone(),
             system_kw: self.system_kw,
             place: self.place.clone(),
             kyc_status: self.kyc_status,
-            detail: self.detail(now),
+            detail: self.detail(now, stages),
             sent_at: self.created_at,
             commission: self.commission(),
         }
     }
 
-    fn into_detail(self, now: DateTime<Utc>) -> CustomerDetail {
+    fn into_detail(self, now: DateTime<Utc>, stages: &Stages) -> CustomerDetail {
         let stage = match (self.kyc_status, self.stage_index) {
             (KycStatus::Approved, Some(index)) => Some(CustomerStage {
                 index,
-                count: STAGES.len() as i32,
-                label: STAGES
-                    .get((index - 1).max(0) as usize)
-                    .unwrap_or(&"")
-                    .to_string(),
+                count: stages::COUNT,
+                label: stages.name_at(index).to_owned(),
             }),
             _ => None,
         };
@@ -673,7 +711,7 @@ impl Row {
             DocumentsSummary { status, detail }
         });
         CustomerDetail {
-            summary: self.summary(now),
+            summary: self.summary(now, stages),
             phone: self.phone.clone().unwrap_or_default(),
             stage,
             returned,
@@ -694,7 +732,8 @@ async fn load(
         .fetch_optional(&mut *conn)
         .await?
         .ok_or_else(ApiError::not_found)?;
-    Ok(row.into_detail(Utc::now()))
+    let stages = stages::load(conn).await?;
+    Ok(row.into_detail(Utc::now(), &stages))
 }
 
 /*
@@ -705,8 +744,8 @@ async fn load(
     3. each document: an upload of this company, the agent's, in R2
     4. the customer record (SC-0001), its documents and commission
     5. the customer's account: made, or the existing one linked (an
-       unverified one loses any password: only the email's owner may
-       set one, with the emailed code), and a `customer` membership
+       unverified one has no password: only the email's owner can set
+       one, with an emailed code), and a `customer` membership
     6. after the commit, the email to the customer
     Safe to retry (Idempotency-Key)
 */
@@ -766,13 +805,13 @@ async fn submit_customer_registration(
     }
 
     // 3. The documents' files.
-    for d in &req.documents {
+    for f in req.documents.iter().flat_map(|d| &d.files) {
         uploads::attach(
             &mut tx,
             state.storage.as_ref(),
             agent.org_id,
             agent.user_id,
-            d.upload_id,
+            f.upload_id,
             UploadPurpose::Kyc,
             "documents",
         )
@@ -793,20 +832,13 @@ async fn submit_customer_registration(
     let (user_id, set_up) = match created {
         Some(id) => (id, true),
         None => {
+            // Unverified accounts have no password (the database's CHECK).
             let (id, verified): (Uuid, bool) = sqlx::query_as(
                 "SELECT id, email_verified_at IS NOT NULL FROM users WHERE email = $1",
             )
             .bind(&v.email)
             .fetch_one(&mut *tx)
             .await?;
-            if !verified {
-                sqlx::query(
-                    "UPDATE users SET password_hash = NULL, updated_at = now() WHERE id = $1",
-                )
-                .bind(id)
-                .execute(&mut *tx)
-                .await?;
-            }
             (id, !verified)
         }
     };
@@ -889,18 +921,19 @@ async fn submit_customer_registration(
         }
     })?;
     for d in &req.documents {
+        let document_id = Uuid::now_v7();
         sqlx::query(
-            "INSERT INTO documents (id, org_id, customer_id, kind, upload_id, uploaded_by)
-             VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO documents (id, org_id, customer_id, kind, uploaded_by)
+             VALUES ($1, $2, $3, $4, $5)",
         )
-        .bind(Uuid::now_v7())
+        .bind(document_id)
         .bind(agent.org_id)
         .bind(id)
         .bind(d.kind)
-        .bind(d.upload_id)
         .bind(agent.user_id)
         .execute(&mut *tx)
         .await?;
+        add_files(&mut tx, agent.org_id, document_id, &d.files).await?;
     }
 
     let (org_name, agent_name): (String, String) =
@@ -910,6 +943,18 @@ async fn submit_customer_registration(
             .fetch_one(&mut *tx)
             .await?;
 
+    notify::add_for_admins(
+        &mut tx,
+        agent.org_id,
+        notify::Kind::KycSubmitted,
+        "KYC to check",
+        &format!("{} · from {agent_name}", v.name),
+        notify::Links {
+            customer_id: Some(id),
+            ..Default::default()
+        },
+    )
+    .await?;
     let body = serde_json::to_value(CustomerRegistration {
         id,
         reference: reference.clone(),
@@ -975,10 +1020,11 @@ async fn list_my_customers(
     .bind(agent.user_id)
     .fetch_all(&mut *tx)
     .await?;
+    let stages = stages::load(&mut tx).await?;
     tx.commit().await?;
     let now = Utc::now();
     Ok(Json(CustomerList {
-        items: rows.iter().map(|r| r.summary(now)).collect(),
+        items: rows.iter().map(|r| r.summary(now, &stages)).collect(),
     }))
 }
 
@@ -1018,10 +1064,12 @@ async fn get_my_customer(
 /*
     #42 A new copy of the document the admin sent back
     --------------------------------------------------------------------
-    - only that one (409 `registration.locked` otherwise); the file is an
-      upload of this company, checked in R2
+    - only that one (409 `registration.locked` otherwise); its 1 to 5
+      files are uploads of this company, checked in R2, and replace the
+      whole set
     - the document goes back to `in_review`, and the customer too once
-      nothing else is waiting for a fix. The earlier file stays in R2
+      nothing else is waiting for a fix. The earlier files stay in R2,
+      linked as replaced
 */
 #[utoipa::path(
     put,
@@ -1065,38 +1113,47 @@ async fn replace_customer_document(
     if !mine {
         return Err(ApiError::not_found());
     }
-    let status: Option<DocumentStatus> = sqlx::query_scalar(
-        "SELECT status FROM documents WHERE customer_id = $1 AND kind = $2 FOR UPDATE",
+    let document: Option<(Uuid, DocumentStatus)> = sqlx::query_as(
+        "SELECT id, status FROM documents WHERE customer_id = $1 AND kind = $2 FOR UPDATE",
     )
     .bind(path.customer_id)
     .bind(path.kind)
     .fetch_optional(&mut *tx)
     .await?;
-    if status != Some(DocumentStatus::NeedsFix) {
+    let Some((document_id, DocumentStatus::NeedsFix)) = document else {
         return Err(locked());
+    };
+    check_files("files", &req.files)?;
+    for f in &req.files {
+        uploads::attach(
+            &mut tx,
+            state.storage.as_ref(),
+            agent.org_id,
+            agent.user_id,
+            f.upload_id,
+            UploadPurpose::Kyc,
+            "files",
+        )
+        .await?;
     }
-    uploads::attach(
-        &mut tx,
-        state.storage.as_ref(),
-        agent.org_id,
-        agent.user_id,
-        req.upload_id,
-        UploadPurpose::Kyc,
-        "upload_id",
-    )
-    .await?;
     sqlx::query(
-        "UPDATE documents
-         SET upload_id = $3, status = 'in_review', uploaded_by = $4, updated_at = now()
-         WHERE customer_id = $1 AND kind = $2",
+        "UPDATE document_files SET replaced_at = now()
+         WHERE org_id = $1 AND document_id = $2 AND replaced_at IS NULL",
     )
-    .bind(path.customer_id)
-    .bind(path.kind)
-    .bind(req.upload_id)
+    .bind(agent.org_id)
+    .bind(document_id)
+    .execute(&mut *tx)
+    .await?;
+    add_files(&mut tx, agent.org_id, document_id, &req.files).await?;
+    sqlx::query(
+        "UPDATE documents SET status = 'in_review', uploaded_by = $2, updated_at = now()
+         WHERE id = $1",
+    )
+    .bind(document_id)
     .bind(agent.user_id)
     .execute(&mut *tx)
     .await?;
-    sqlx::query(
+    let fixed = sqlx::query(
         "UPDATE customers SET kyc_status = 'in_review'
          WHERE id = $1 AND kyc_status = 'needs_fix'
            AND NOT EXISTS (SELECT 1 FROM documents
@@ -1104,7 +1161,28 @@ async fn replace_customer_document(
     )
     .bind(path.customer_id)
     .execute(&mut *tx)
-    .await?;
+    .await?
+    .rows_affected()
+        > 0;
+    if fixed {
+        // The last document sent back is in: it's the admin's again.
+        let name: String = sqlx::query_scalar("SELECT name FROM customers WHERE id = $1")
+            .bind(path.customer_id)
+            .fetch_one(&mut *tx)
+            .await?;
+        notify::add_for_admins(
+            &mut tx,
+            agent.org_id,
+            notify::Kind::KycSubmitted,
+            "KYC fixed",
+            &name,
+            notify::Links {
+                customer_id: Some(path.customer_id),
+                ..Default::default()
+            },
+        )
+        .await?;
+    }
     let customer = load(&mut tx, agent.user_id, path.customer_id).await?;
     tx.commit().await?;
     Ok(Json(customer))
@@ -1238,6 +1316,13 @@ fn welcome_email(w: &Welcome) -> Email {
          installation. If you didn't ask for one, ignore this email or call them.",
         w.org_name
     );
+    let consent = format!(
+        "{} told us you agreed to share your details and documents with {}. The company \
+         keeps them to install your system and claim the subsidy. How {PRODUCT_NAME} handles \
+         them: {PRIVACY_URL}. If you didn't agree, tell the company or write to \
+         info@markcliq.com.",
+        w.agent_name, w.org_name
+    );
     let open = "Install it from the link your installer shares, if it isn't on your phone.";
     let forgot = format!("Enter this email address: {}", w.to);
     let set = "Enter the 6-digit code we email you, and choose a password.";
@@ -1271,7 +1356,7 @@ fn welcome_email(w: &Welcome) -> Email {
         to: w.to.to_owned(),
         subject: format!("{} registered you for solar on {PRODUCT_NAME}", w.org_name),
         body: format!(
-            "{intro}\n\n{what}\n{next}\n\n{steps_text}\n\n{}\n\n{note}\n",
+            "{intro}\n\n{what}\n{next}\n\n{consent}\n\n{steps_text}\n\n{}\n\n{note}\n",
             t::sign_off_text()
         ),
         html: Some(t::page(EmailPage {
@@ -1293,6 +1378,7 @@ fn welcome_email(w: &Welcome) -> Email {
                     ("Registered by", w.agent_name.to_owned()),
                 ]),
                 t::para(&next),
+                t::para(&consent),
                 steps_html,
                 t::sign_off(),
             ]
@@ -1311,15 +1397,6 @@ fn trim_kw(kw: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn stages_read_from_one() {
-        assert_eq!(stage_line(1).unwrap(), "Stage 1 · Site survey");
-        assert_eq!(stage_line(2).unwrap(), "Stage 2 · Structure");
-        assert_eq!(stage_line(7).unwrap(), "Stage 7 · Handover");
-        assert!(stage_line(0).is_none());
-        assert!(stage_line(8).is_none());
-    }
 
     #[test]
     fn kw_reads_plainly() {
