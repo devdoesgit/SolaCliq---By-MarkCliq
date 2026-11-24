@@ -988,3 +988,13 @@ Change a decision by adding a new line, not by editing an old one.
   pages use the existing endpoints, no contract change. A platform admin
   always lands on the home page (MarkCliq's Companies on top), never
   jumped straight into one company.
+- **CI runs only what a change touches (owner, 2026-11-25).** It ran every
+  job on every push, spending the private repo's free runner minutes on
+  parts a change couldn't affect (a website push ran the Rust and Flutter
+  suites). Now a first job decides: backend, app, website and the
+  generated-files check each run when their files change; the API
+  contract, its generator settings and `ci.yml` itself run all of them;
+  a release tag always runs everything. A push to master is compared with
+  the last master commit CI passed, not the push before it, so a push
+  whose run was cancelled, skipped or failed is still checked by the next
+  one (found by the cloud review). Skipped jobs show grey, not green.

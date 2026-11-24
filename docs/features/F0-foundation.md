@@ -79,7 +79,9 @@ None directly. Builders only: the owner (backend) and Claude (mobile, admin).
 - Vitest + Testing Library for components and formatters; ESLint and
   Prettier.
 
-**CI** (GitHub Actions, on push and pull request)
+**CI** (GitHub Actions, on push and pull request; each runs only the
+parts it changed, a release tag runs everything: `docs/decisions.md`,
+2026-11-25)
 - Spec: Spectral lint.
 - Tokens and clients: `make tokens` and `make gen` leave no diff (generated
   files are up to date).

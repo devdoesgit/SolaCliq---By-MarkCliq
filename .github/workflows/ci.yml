@@ -1,5 +1,12 @@
 # Checks every push to master and every pull request into it, and every
 # release before it's built (deploy.yml calls it).
+#
+# A push or pull request runs only the parts it changed (`changes`); the
+# API contract and this file are shared, so a change to them runs all.
+# A push to master is compared with the last master commit CI passed,
+# not just the push before it, so a push whose run was cancelled,
+# skipped or failed is checked by the next one. A release tag always
+# runs everything.
 name: CI
 
 on:
@@ -15,6 +22,10 @@ concurrency:
 
 permissions:
   contents: read
+  # paths-filter lists a pull request's files through the API.
+  pull-requests: read
+  # `changes` looks up the last master commit CI passed.
+  actions: read
 
 env:
   FLUTTER_VERSION: "3.47.7"
@@ -22,8 +33,84 @@ env:
   RUST_VERSION: "1.98.1"
 
 jobs:
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.all.outputs.yes == 'true' || steps.base.outputs.everything == 'true' || steps.filter.outputs.backend == 'true' }}
+      contract: ${{ steps.all.outputs.yes == 'true' || steps.base.outputs.everything == 'true' || steps.filter.outputs.contract == 'true' }}
+      mobile: ${{ steps.all.outputs.yes == 'true' || steps.base.outputs.everything == 'true' || steps.filter.outputs.mobile == 'true' }}
+      admin: ${{ steps.all.outputs.yes == 'true' || steps.base.outputs.everything == 'true' || steps.filter.outputs.admin == 'true' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Every commit since the last one CI passed must be comparable.
+          fetch-depth: 0
+      - name: A release runs everything
+        id: all
+        run: echo "yes=${{ startsWith(github.ref, 'refs/tags/') }}" >> "$GITHUB_OUTPUT"
+      - name: The last master commit CI passed
+        id: base
+        if: steps.all.outputs.yes != 'true' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=master&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty' || true)"
+          # None yet, or not in this history (a rewritten branch): check everything.
+          if [[ -n "$sha" ]] && git merge-base --is-ancestor "$sha" HEAD; then
+            echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          else
+            echo "everything=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: steps.all.outputs.yes != 'true' && steps.base.outputs.everything != 'true'
+        with:
+          # Pushes: from the last passed commit. Pull requests: their own files.
+          base: ${{ steps.base.outputs.sha }}
+          filters: |
+            # The contract, and how clients are made from it (not
+            # api/postman, which nothing builds from).
+            shared: &shared
+              - api/openapi.yaml
+              - api/.spectral.yaml
+              - api/generator/**
+              - .github/workflows/ci.yml
+            backend:
+              - *shared
+              - backend/**
+            contract:
+              - *shared
+              - design/**
+              - tools/**
+              - Makefile
+              - package.json
+              - package-lock.json
+              - openapitools.json
+              # Everything `make check` reads: the generator versions
+              # (admin's openapi-typescript) and the formatter settings
+              # the generated Dart is written with.
+              - admin/package.json
+              - admin/package-lock.json
+              - admin/src/api/**
+              - admin/src/styles/tokens.css
+              - mobile/packages/api_client/**
+              - mobile/packages/sola_ui/pubspec.*
+              - mobile/packages/sola_ui/analysis_options.yaml
+              - mobile/packages/sola_ui/lib/src/tokens/**
+            mobile:
+              - *shared
+              - mobile/**
+            admin:
+              - *shared
+              - admin/**
+              - legal/**
+
   backend:
     name: Backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     # The same Postgres and logins as `make db`: every test makes its own
     # database in it.
@@ -62,6 +149,8 @@ jobs:
 
   image:
     name: API image
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -76,6 +165,8 @@ jobs:
 
   contract:
     name: API contract and generated files
+    needs: changes
+    if: needs.changes.outputs.contract == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -105,6 +196,8 @@ jobs:
 
   mobile:
     name: Mobile app
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -175,6 +268,8 @@ jobs:
 
   admin:
     name: Admin website
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
