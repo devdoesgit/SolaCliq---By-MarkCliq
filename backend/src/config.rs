@@ -58,6 +58,12 @@ pub struct Config {
         which `from_env` allows in development only
     */
     pub fcm_key_file: Option<PathBuf>,
+    /*
+        Networks whose `X-Real-IP` is believed (TRUSTED_PROXIES), besides
+        loopback: where Caddy's connections come from. In Docker that's
+        Docker's own networks (deploy/compose.yml)
+    */
+    pub trusted_proxies: Vec<crate::rate_limit::Net>,
 }
 
 /*
@@ -135,6 +141,10 @@ impl Config {
                 .ok()
                 .filter(|v| !v.trim().is_empty())
                 .map(PathBuf::from),
+            trusted_proxies: crate::rate_limit::parse_proxies(
+                &std::env::var("TRUSTED_PROXIES").unwrap_or_default(),
+            )
+            .map_err(|e| ConfigError::Invalid("TRUSTED_PROXIES", e))?,
         })
         .and_then(Self::check_mail)
         .and_then(Self::check_storage)
@@ -257,8 +267,10 @@ fn code_secret_from_env() -> Result<CodeSecret, ConfigError> {
     Ok(CodeSecret::new(raw.into_bytes()))
 }
 
-/// Each lifetime in its natural unit, so `.env` reads plainly. Unset means
-/// the default in `Lifetimes::default()`.
+/*
+    Each lifetime in its natural unit, so `.env` reads plainly. Unset means
+    the default in `Lifetimes::default()`.
+*/
 fn lifetimes_from_env() -> Result<Lifetimes, ConfigError> {
     let d = Lifetimes::default();
     let lifetimes = Lifetimes {
@@ -283,9 +295,11 @@ fn lifetimes_from_env() -> Result<Lifetimes, ConfigError> {
     Ok(lifetimes)
 }
 
-/// A whole number above 0, turned into a Duration by `unit`
-/// (`Duration::try_minutes` etc., which return None instead of panicking
-/// on a number too big to fit).
+/*
+    A whole number above 0, turned into a Duration by `unit`
+    (`Duration::try_minutes` etc., which return None instead of panicking
+    on a number too big to fit).
+*/
 fn duration(
     key: &'static str,
     default: i64,

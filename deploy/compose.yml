@@ -39,6 +39,11 @@ services:
     env_file: ${SOLACLIQ_ETC:-/etc/solacliq}/solacliq.env
     environment:
       BIND_ADDR: 0.0.0.0:8080
+      # Caddy reaches the API through Docker's own network, so the
+      # connection comes from Docker's gateway, not loopback: Docker's
+      # address pools are where X-Real-IP is believed. Nothing else can
+      # connect, as the port is published on 127.0.0.1 only.
+      TRUSTED_PROXIES: 172.16.0.0/12,192.168.0.0/16
     # The key files the env file names, at the same paths.
     volumes:
       - ${SOLACLIQ_ETC:-/etc/solacliq}:/etc/solacliq:ro,z

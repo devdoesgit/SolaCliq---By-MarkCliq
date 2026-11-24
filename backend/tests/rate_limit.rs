@@ -125,3 +125,57 @@ async fn quotes_are_limited_per_account_but_retries_still_work(db: PgPool) {
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(body["id"], first["id"]);
 }
+
+// A lead sent from `ip` with `key`, against an app whose limits are on.
+async fn send_lead(router: &axum::Router, ip: &str, key: &str) -> StatusCode {
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/v1/leads")
+        .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {key}"))
+        .header("x-real-ip", ip)
+        .body(Body::from(
+            json!({"name": "Asha (illustrative)", "phone": "9814022671", "consent": true})
+                .to_string(),
+        ))
+        .unwrap();
+    router.clone().oneshot(req).await.unwrap().status()
+}
+
+#[sqlx::test]
+async fn wrong_lead_keys_cant_use_up_a_companys_leads(db: PgPool) {
+    let a = common::org(&db, "Arka Solar", "active").await;
+    let admin = common::member(&db, a, "admin@example.com", "org_admin", None).await;
+    let made = common::call(
+        &db,
+        "POST",
+        &format!("/api/v1/orgs/{a}/admin/lead-key"),
+        &admin,
+        None,
+    )
+    .await;
+    let key = made.body["key"].as_str().unwrap().to_owned();
+
+    let mut state = common::state(&db);
+    state.limits = Arc::new(Limiter::new());
+    let router = app(state);
+
+    // Made-up keys with the company's id, from one address: 20, then refused.
+    let fake = format!("lead_{}_{}", a.simple(), "b".repeat(64));
+    for _ in 0..20 {
+        assert_eq!(
+            send_lead(&router, "10.0.0.1", &fake).await,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    assert_eq!(
+        send_lead(&router, "10.0.0.1", &fake).await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+
+    // The company's own landing page still gets its leads in.
+    assert_eq!(
+        send_lead(&router, "10.0.0.2", &key).await,
+        StatusCode::CREATED
+    );
+}

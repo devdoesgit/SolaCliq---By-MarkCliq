@@ -19,8 +19,10 @@ use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    // `cargo run -- openapi` prints the generated spec, for the CI check
-    // against ../api/openapi.yaml.
+    /*
+        `cargo run -- openapi` prints the generated spec, for the CI check
+        against ../api/openapi.yaml.
+    */
     if std::env::args().nth(1).as_deref() == Some("openapi") {
         println!("{}", openapi::spec_json());
         return ExitCode::SUCCESS;
@@ -232,6 +234,11 @@ async fn run_send_test_push(config: Config, token: &str) -> Fallible {
 }
 
 async fn serve(config: Config) -> Fallible {
+    tracing::info!(
+        proxies = config.trusted_proxies.len(),
+        "trusted proxy networks, besides loopback"
+    );
+    backend::rate_limit::trust_proxies(config.trusted_proxies.clone());
     let db = connect_app(&config).await?;
     let (mailer, mail_task) = mailer(&config)?;
     if let Some(storage) = config.storage.clone() {

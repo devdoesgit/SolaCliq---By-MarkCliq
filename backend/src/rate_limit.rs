@@ -10,16 +10,20 @@
       email) per window; past that, 429 `auth.too_many_attempts` with
       `Retry-After`
     - counts live in memory: one API process (one VPS), and losing them
-      on a restart only resets the windows. Old windows are dropped as
-      the map grows, so memory stays bounded
+      on a restart only resets the windows. Expired windows are dropped
+      as the map grows (at most once a second), and past `MAX_KEYS` a key
+      not seen before is refused, so memory stays bounded whatever
+      callers send
+    - an IPv6 address counts by its /64: one host gets a whole /64, so
+      counting each address would give it endless keys
     - the client's IP is `X-Real-IP` when the request came through Caddy
-      on this machine, else the connection's address (see `ClientIp`)
+      (a trusted proxy), else the connection's address (see `ClientIp`)
 */
 
 use std::{
     collections::HashMap,
-    net::SocketAddr,
-    sync::Mutex,
+    net::{IpAddr, Ipv6Addr, SocketAddr},
+    sync::{Mutex, OnceLock},
     time::{Duration, Instant},
 };
 
@@ -66,10 +70,17 @@ pub enum Rule {
     */
     UploadByUser,
     /*
-        POST /leads, per company. A busy campaign stays far below it; a
-        leaked key can't fill the company's list
+        POST /leads, per company, counted once the key is right. A busy
+        campaign stays far below it; a leaked key can't fill the
+        company's list
     */
     LeadByOrg,
+    /*
+        POST /leads with a wrong key, per IP. Counted apart from
+        `LeadByOrg`, so wrong keys can't use up a company's leads; not
+        on every lead, as one landing-page server sends many companies'
+    */
+    LeadBadKeyByIp,
     // Sending a member's invite again (F21), per address.
     InviteByEmail,
 }
@@ -96,6 +107,7 @@ impl Rule {
             Rule::AlreadyRegisteredByEmail => (1, HOUR),
             Rule::UploadByUser => (200, HOUR),
             Rule::LeadByOrg => (300, HOUR),
+            Rule::LeadBadKeyByIp => (20, HOUR),
             Rule::InviteByEmail => (3, HOUR),
         };
         (count, Duration::from_secs(seconds))
@@ -107,28 +119,44 @@ struct Window {
     count: u32,
 }
 
-// Past this many keys, expired windows are dropped before adding one.
+// Past this many keys, expired windows are dropped (at most once a second).
 const PRUNE_AT: usize = 10_000;
+/*
+    Past this many live keys, a key not seen before is refused (429) until
+    some expire: a flood of made-up keys can't grow the map without end.
+    About 100 bytes each, so some 20 MB at most
+*/
+const MAX_KEYS: usize = 200_000;
+const PRUNE_EVERY: Duration = Duration::from_secs(1);
+
+struct Windows {
+    map: HashMap<(Rule, String), Window>,
+    pruned: Option<Instant>,
+}
 
 pub struct Limiter {
     // Off in tests that aren't about limits: they all share one "IP".
     enabled: bool,
-    windows: Mutex<HashMap<(Rule, String), Window>>,
+    windows: Mutex<Windows>,
 }
 
 impl Limiter {
     pub fn new() -> Self {
-        Self {
-            enabled: true,
-            windows: Mutex::new(HashMap::new()),
-        }
+        Self::with(true)
     }
 
     // Allows everything. For tests.
     pub fn disabled() -> Self {
+        Self::with(false)
+    }
+
+    fn with(enabled: bool) -> Self {
         Self {
-            enabled: false,
-            windows: Mutex::new(HashMap::new()),
+            enabled,
+            windows: Mutex::new(Windows {
+                map: HashMap::new(),
+                pruned: None,
+            }),
         }
     }
 
@@ -150,6 +178,25 @@ impl Limiter {
         self.take(rule, key).is_none()
     }
 
+    // 429 if the key is already over the limit, without counting a request.
+    pub fn check_not_over(&self, rule: Rule, key: &str) -> Result<(), ApiError> {
+        if !self.enabled {
+            return Ok(());
+        }
+        let (max, period) = rule.limit();
+        let now = Instant::now();
+        let windows = self.windows.lock().unwrap_or_else(|e| e.into_inner());
+        match windows.map.get(&(rule, limit_key(key))) {
+            Some(w) if now.duration_since(w.started) < period && w.count >= max => {
+                tracing::warn!(?rule, %key, "rate limited");
+                Err(too_many_attempts()
+                    .detail("Too many requests. Wait a little, then try again.")
+                    .retry_after((period - now.duration_since(w.started)).as_secs().max(1)))
+            }
+            _ => Ok(()),
+        }
+    }
+
     // None when allowed; otherwise how long until the window resets.
     fn take(&self, rule: Rule, key: &str) -> Option<Duration> {
         if !self.enabled {
@@ -157,11 +204,23 @@ impl Limiter {
         }
         let (max, period) = rule.limit();
         let now = Instant::now();
-        let mut windows = self.windows.lock().unwrap_or_else(|e| e.into_inner());
-        if windows.len() >= PRUNE_AT {
-            windows.retain(|(rule, _), w| now.duration_since(w.started) < rule.limit().1);
+        let mut guard = self.windows.lock().unwrap_or_else(|e| e.into_inner());
+        let windows = &mut *guard;
+        let due = windows
+            .pruned
+            .is_none_or(|at| now.duration_since(at) >= PRUNE_EVERY);
+        if windows.map.len() >= PRUNE_AT && due {
+            windows
+                .map
+                .retain(|(rule, _), w| now.duration_since(w.started) < rule.limit().1);
+            windows.pruned = Some(now);
         }
-        let window = windows.entry((rule, key.to_lowercase())).or_insert(Window {
+        let id = (rule, limit_key(key));
+        if windows.map.len() >= MAX_KEYS && !windows.map.contains_key(&id) {
+            tracing::warn!(?rule, "rate limiter full; refusing a new key");
+            return Some(PRUNE_EVERY);
+        }
+        let window = windows.map.entry(id).or_insert(Window {
             started: now,
             count: 0,
         });
@@ -184,16 +243,132 @@ impl Default for Limiter {
 }
 
 /*
+    What a key counts as: emails whatever their case, an IPv6 address by
+    its /64 (the block one host or home gets), anything else as it is
+*/
+fn limit_key(key: &str) -> String {
+    match key.parse::<Ipv6Addr>() {
+        Ok(ip) if ip.to_ipv4_mapped().is_none() => {
+            let net = u128::from(ip) & (u128::MAX << 64);
+            format!("{}/64", Ipv6Addr::from(net))
+        }
+        _ => key.to_lowercase(),
+    }
+}
+
+/*
+    A network the API trusts to say who the client is: an address, or an
+    address and prefix ("172.16.0.0/12")
+*/
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Net {
+    addr: IpAddr,
+    prefix: u8,
+}
+
+impl Net {
+    fn contains(&self, ip: IpAddr) -> bool {
+        // An IPv4 client may arrive as an IPv4-mapped IPv6 address.
+        let ip = match ip {
+            IpAddr::V6(v6) => v6.to_ipv4_mapped().map_or(ip, IpAddr::V4),
+            v4 => v4,
+        };
+        match (self.addr, ip) {
+            (IpAddr::V4(net), IpAddr::V4(ip)) => {
+                let mask = u32::MAX
+                    .checked_shl(32 - u32::from(self.prefix))
+                    .unwrap_or(0);
+                u32::from(net) & mask == u32::from(ip) & mask
+            }
+            (IpAddr::V6(net), IpAddr::V6(ip)) => {
+                let mask = u128::MAX
+                    .checked_shl(128 - u32::from(self.prefix))
+                    .unwrap_or(0);
+                u128::from(net) & mask == u128::from(ip) & mask
+            }
+            _ => false,
+        }
+    }
+}
+
+impl std::str::FromStr for Net {
+    type Err = String;
+
+    fn from_str(text: &str) -> Result<Self, String> {
+        let text = text.trim();
+        let (addr, prefix) = text.split_once('/').unwrap_or((text, ""));
+        let addr: IpAddr = addr
+            .parse()
+            .map_err(|_| format!("{text:?} isn't an IP address or network"))?;
+        let max = if addr.is_ipv4() { 32 } else { 128 };
+        let prefix = if prefix.is_empty() {
+            max
+        } else {
+            prefix
+                .parse::<u8>()
+                .ok()
+                .filter(|p| *p <= max)
+                .ok_or_else(|| format!("{text:?} has a bad prefix"))?
+        };
+        Ok(Self { addr, prefix })
+    }
+}
+
+/*
+    Parses TRUSTED_PROXIES: networks separated by commas, empty for none.
+    Loopback is always trusted
+*/
+pub fn parse_proxies(text: &str) -> Result<Vec<Net>, String> {
+    text.split(',')
+        .filter(|part| !part.trim().is_empty())
+        .map(str::parse)
+        .collect()
+}
+
+static TRUSTED: OnceLock<Vec<Net>> = OnceLock::new();
+
+// Set once at start (main.rs), from TRUSTED_PROXIES.
+pub fn trust_proxies(nets: Vec<Net>) {
+    let _ = TRUSTED.set(nets);
+}
+
+fn trusted(peer: IpAddr) -> bool {
+    peer.is_loopback()
+        || peer.to_canonical().is_loopback()
+        || TRUSTED
+            .get()
+            .is_some_and(|nets| nets.iter().any(|n| n.contains(peer)))
+}
+
+/*
+    Who the client is, given the connection's address and `X-Real-IP`
+    ----------------------------------------------------------------------
+    - from a trusted proxy (loopback, or TRUSTED_PROXIES): the header,
+      which Caddy sets to the real client
+    - from anywhere else: the connection, and the header is ignored, so a
+      client can't pick its own IP to dodge the limits
+    - no connection info (tests calling the router directly): the header
+*/
+fn client_ip(peer: Option<IpAddr>, header: Option<String>) -> String {
+    match peer {
+        Some(peer) if trusted(peer) => header.unwrap_or_else(|| peer.to_string()),
+        Some(peer) => peer.to_string(),
+        None => header.unwrap_or_else(|| "unknown".into()),
+    }
+}
+
+/*
     The caller's IP address, as text
     --------------------------------------------------------------------
-    - `X-Real-IP` only when the connection comes from this machine: in
+    - `X-Real-IP` only when the connection comes from a trusted proxy: in
       production that's Caddy, which sets it to the real client address
-      (`header_up X-Real-IP {remote_host}`, deploy/Caddyfile). From anywhere else
-      the header is ignored, so a client can't pick its own IP to dodge
-      the limits
-    - otherwise the connection's address
-    - no connection info at all (tests calling the router directly): the
-      header, or "unknown"
+      (`header_up X-Real-IP {remote_host}`, deploy/Caddyfile)
+    - Caddy runs on the VPS and the API in Docker, so Caddy's connections
+      reach the API from Docker's network, not loopback:
+      TRUSTED_PROXIES (deploy/compose.yml) names those networks. Without
+      it every client would look like the one Docker gateway and share
+      one set of limits
+    - see `client_ip` for the rest
 */
 pub struct ClientIp(pub String);
 
@@ -212,12 +387,7 @@ impl<S: Send + Sync> FromRequestParts<S> for ClientIp {
             .extensions
             .get::<ConnectInfo<SocketAddr>>()
             .map(|ConnectInfo(addr)| addr.ip());
-        let ip = match peer {
-            Some(peer) if peer.is_loopback() => header.unwrap_or_else(|| peer.to_string()),
-            Some(peer) => peer.to_string(),
-            None => header.unwrap_or_else(|| "unknown".into()),
-        };
-        Ok(ClientIp(ip))
+        Ok(ClientIp(client_ip(peer, header)))
     }
 }
 
@@ -275,6 +445,93 @@ mod tests {
             .await
             .unwrap()
             .0
+    }
+
+    #[test]
+    fn x_real_ip_is_trusted_from_a_named_proxy_network() {
+        /*
+            Caddy on the VPS, the API in Docker: Caddy's connection arrives
+            from Docker's gateway, as in production
+        */
+        let docker: Vec<Net> = parse_proxies("172.16.0.0/12, 192.168.0.0/16").unwrap();
+        let from = |peer: &str, nets: &[Net]| {
+            let peer: IpAddr = peer.parse().unwrap();
+            nets.iter().any(|n| n.contains(peer))
+        };
+        assert!(from("172.18.0.1", &docker));
+        assert!(from("::ffff:172.18.0.1", &docker));
+        assert!(!from("172.32.0.1", &docker));
+        assert!(!from("203.0.113.9", &docker));
+        assert!(parse_proxies("").unwrap().is_empty());
+        assert!(parse_proxies("10.0.0.0/33").is_err());
+        assert!(parse_proxies("not an ip").is_err());
+        assert_eq!(
+            parse_proxies("fd00::/8").unwrap()[0],
+            "fd00::/8".parse::<Net>().unwrap()
+        );
+    }
+
+    #[test]
+    fn two_visitors_through_docker_count_apart() {
+        /*
+            The bug the review found: without the trusted network, both
+            visitors came out as the gateway and shared one limit
+        */
+        trust_proxies(parse_proxies("172.16.0.0/12").unwrap());
+        let gateway = Some("172.18.0.1".parse().unwrap());
+        assert_eq!(client_ip(gateway, Some("49.36.1.1".into())), "49.36.1.1");
+        assert_eq!(client_ip(gateway, Some("49.36.2.2".into())), "49.36.2.2");
+        // Not a trusted network: the header is still ignored.
+        assert_eq!(
+            client_ip(
+                Some("198.51.100.7".parse().unwrap()),
+                Some("1.2.3.4".into())
+            ),
+            "198.51.100.7"
+        );
+    }
+
+    #[test]
+    fn an_ipv6_host_counts_as_its_64() {
+        let l = Limiter::new();
+        for i in 0..5 {
+            assert!(l.allow(Rule::RegistrationByIp, &format!("2001:db8:1:2::{i}")));
+        }
+        assert!(!l.allow(Rule::RegistrationByIp, "2001:db8:1:2:ffff::1"));
+        // Another /64 has its own count.
+        assert!(l.allow(Rule::RegistrationByIp, "2001:db8:1:3::1"));
+    }
+
+    #[test]
+    fn a_full_limiter_refuses_new_keys_but_keeps_counting_old_ones() {
+        let l = Limiter::new();
+        {
+            let mut w = l.windows.lock().unwrap();
+            let now = Instant::now();
+            for i in 0..MAX_KEYS {
+                w.map.insert(
+                    (Rule::LeadByOrg, i.to_string()),
+                    Window {
+                        started: now,
+                        count: 0,
+                    },
+                );
+            }
+        }
+        assert!(!l.allow(Rule::LoginByIp, "203.0.113.9"));
+        assert!(l.allow(Rule::LeadByOrg, "7"));
+        assert_eq!(l.windows.lock().unwrap().map.len(), MAX_KEYS);
+    }
+
+    #[test]
+    fn checking_without_counting() {
+        let l = Limiter::new();
+        for _ in 0..20 {
+            assert!(l.check_not_over(Rule::LeadBadKeyByIp, "1.2.3.4").is_ok());
+            assert!(l.allow(Rule::LeadBadKeyByIp, "1.2.3.4"));
+        }
+        assert!(l.check_not_over(Rule::LeadBadKeyByIp, "1.2.3.4").is_err());
+        assert!(l.check_not_over(Rule::LeadBadKeyByIp, "5.6.7.8").is_ok());
     }
 
     #[tokio::test]

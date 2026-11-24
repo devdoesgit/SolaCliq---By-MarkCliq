@@ -34,7 +34,7 @@ use crate::{
     notify::{self, Kind, Links},
     org::{Admins, AdminsAndAgents, Agents, OrgMember, Role},
     page::{Cursor, Page, PageInfo},
-    rate_limit::Rule,
+    rate_limit::{ClientIp, Rule},
     scope,
     session::{hash_token, new_token},
     validate,
@@ -256,12 +256,27 @@ fn clean(req: LeadCreate) -> ApiResult<Clean> {
 )]
 async fn create_lead(
     State(state): State<AppState>,
+    ip: ClientIp,
     headers: HeaderMap,
     ApiJson(req): ApiJson<LeadCreate>,
 ) -> ApiResult<(StatusCode, Json<LeadReceipt>)> {
-    let key = bearer_token(&headers).ok_or_else(bad_key)?;
-    let org_id = key_org(key).ok_or_else(bad_key)?;
-    state.limits.check(Rule::LeadByOrg, &org_id.to_string())?;
+    /*
+        The limits, in this order
+        ----------------------------------------------------------------
+        - an address that sent too many wrong keys is refused first
+        - a wrong key counts against its address, never the company:
+          the company's id is in its key and in every link, so counting
+          it before the key is checked would let anyone use up a
+          company's leads with made-up keys
+        - only a right key counts against the company (`LeadByOrg`)
+    */
+    state.limits.check_not_over(Rule::LeadBadKeyByIp, &ip.0)?;
+    let wrong_key = || {
+        state.limits.allow(Rule::LeadBadKeyByIp, &ip.0);
+        bad_key()
+    };
+    let key = bearer_token(&headers).ok_or_else(wrong_key)?;
+    let org_id = key_org(key).ok_or_else(wrong_key)?;
 
     let mut tx = scope::company(&state.db, org_id).await?;
     let stored: Option<Vec<u8>> =
@@ -270,8 +285,9 @@ async fn create_lead(
             .fetch_optional(&mut *tx)
             .await?;
     if stored.as_deref() != Some(hash_token(key).as_slice()) {
-        return Err(bad_key());
+        return Err(wrong_key());
     }
+    state.limits.check(Rule::LeadByOrg, &org_id.to_string())?;
     // Checked after the key, so a wrong key learns nothing about the body.
     let lead = clean(req)?;
 
