@@ -45,18 +45,25 @@ pub fn router() -> OpenApiRouter<AppState> {
     PM Surya Ghar, the government's rooftop subsidy for homes, in paise:
     ₹30,000 per kW for the first 2 kW, ₹18,000 for the 3rd, ₹78,000 at
     most. The admin can change an install's figure (the website)
+    ----------------------------------------------------------------------
+    - money is whole paise: the size becomes whole watts once, then every
+      step is integer (₹30 a watt is 3,000 paise, ₹18 is 1,800)
 */
 pub fn pm_surya_ghar(kw: f64) -> i64 {
-    let rupees = if kw <= 0.0 {
-        0.0
-    } else if kw <= 2.0 {
-        30_000.0 * kw
-    } else if kw <= 3.0 {
-        60_000.0 + 18_000.0 * (kw - 2.0)
+    const FIRST_PAISE_PER_W: i64 = 3_000;
+    const THIRD_PAISE_PER_W: i64 = 1_800;
+    const MAX_PAISE: i64 = 7_800_000;
+    let watts = if kw.is_finite() && kw > 0.0 {
+        (kw * 1000.0).round() as i64
     } else {
-        78_000.0
+        0
     };
-    (rupees * 100.0).round() as i64
+    match watts {
+        0 => 0,
+        1..=2_000 => watts * FIRST_PAISE_PER_W,
+        2_001..=3_000 => 2_000 * FIRST_PAISE_PER_W + (watts - 2_000) * THIRD_PAISE_PER_W,
+        _ => MAX_PAISE,
+    }
 }
 
 /*
@@ -555,6 +562,11 @@ mod tests {
         assert_eq!(pm_surya_ghar(3.0), 7_800_000);
         assert_eq!(pm_surya_ghar(10.0), 7_800_000, "capped");
         assert_eq!(pm_surya_ghar(0.0), 0);
+        // Fractions of a kW come out in exact paise, never off by one.
+        assert_eq!(pm_surya_ghar(1.1), 3_300_000);
+        assert_eq!(pm_surya_ghar(2.3), 6_540_000);
+        assert_eq!(pm_surya_ghar(f64::NAN), 0);
+        assert_eq!(pm_surya_ghar(-1.0), 0);
     }
 
     #[test]
