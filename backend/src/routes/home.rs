@@ -136,6 +136,17 @@ pub enum TileIcon {
     Users,
 }
 
+/*
+    The names under a customer's progress bar: the company's own first
+    and last stage (F19), never a fixed list
+*/
+fn ends(stages: &Stages) -> Vec<String> {
+    vec![
+        stages.name_at(1).to_owned(),
+        stages.name_at(stages::COUNT).to_owned(),
+    ]
+}
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct HomeProgress {
     pub label: String,
@@ -905,7 +916,7 @@ fn customer(who: &Who, install: Option<&Install>, documents: (i64, i64)) -> Home
             label: "Install progress".into(),
             trailing: Some(who.org_name.clone()),
             segments,
-            stages: vec!["Survey".into(), "Install".into(), "Handover".into()],
+            stages: ends(&who.stages),
             legend: false,
         }),
         list: HomeList { title: None, rows },
@@ -955,7 +966,7 @@ fn customer_waiting(who: &Who) -> HomeSummary {
             label: "Install progress".into(),
             trailing: Some(who.org_name.clone()),
             segments: (0..7).map(empty).collect(),
-            stages: vec!["Survey".into(), "Install".into(), "Handover".into()],
+            stages: ends(&who.stages),
             legend: false,
         }),
         list: HomeList {

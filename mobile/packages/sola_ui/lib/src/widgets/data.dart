@@ -327,14 +327,21 @@ class SolaProgressCard extends StatelessWidget {
           ),
           if (stageLabels.isNotEmpty)
             ExcludeSemantics(
+              // A company names its own stages (up to 40 characters), so a
+              // long name is cut short rather than pushing the row wide.
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                spacing: SolaSpace.space8,
                 children: [
                   for (final s in stageLabels)
-                    SolaText(
-                      s,
-                      style: SolaTextStyle.caption,
-                      color: SolaColors.muted,
+                    Flexible(
+                      child: SolaText(
+                        s,
+                        style: SolaTextStyle.caption,
+                        color: SolaColors.muted,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),

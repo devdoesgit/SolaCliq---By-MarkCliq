@@ -47,6 +47,33 @@ async fn each_role_gets_its_home(db: PgPool) {
     assert_eq!(c["progress"]["segments"].as_array().unwrap().len(), 7);
     assert_eq!(actions(&c), ["track", "payments"]);
     assert!(c.get("week").is_none(), "only a worker's home has a week");
+    assert_eq!(
+        c["progress"]["stages"],
+        serde_json::json!(["Site survey", "Handover"])
+    );
+}
+
+#[sqlx::test]
+async fn a_customers_bar_uses_the_companys_own_stage_names(db: PgPool) {
+    let a = org(&db, "Example Solar", "active").await;
+    let admin = member(&db, a, "dev@example.com", "org_admin", None).await;
+    let customer = member(&db, a, "rajinder@example.com", "customer", None).await;
+    for (index, name) in [(1, "Roof check"), (7, "Switch-on")] {
+        let res = call(
+            &db,
+            "PUT",
+            &format!("/api/v1/orgs/{a}/admin/stages/{index}"),
+            &admin,
+            Some(serde_json::json!({"name": name, "checklist": [], "photos": []})),
+        )
+        .await;
+        assert_eq!(res.status, StatusCode::OK, "{}", res.body);
+    }
+    let c = home(&db, a, &customer).await;
+    assert_eq!(
+        c["progress"]["stages"],
+        serde_json::json!(["Roof check", "Switch-on"])
+    );
 }
 
 #[sqlx::test]
