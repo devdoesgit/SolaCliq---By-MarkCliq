@@ -305,7 +305,10 @@ fn init_tracing(json: bool) {
     });
     let registry = tracing_subscriber::registry().with(filter);
     if json {
-        registry.with(fmt::layer().json()).init();
+        // The request's span once, not again as a list.
+        registry
+            .with(fmt::layer().json().with_span_list(false))
+            .init();
     } else {
         registry.with(fmt::layer()).init();
     }

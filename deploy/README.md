@@ -452,3 +452,19 @@ journalctl -u caddy -f
 ```
 
 Each container keeps 5 log files of 10 MB.
+
+The API logs one JSON line per request (its id, method, path, status
+and time; never the query or the body) and every error. The health
+check stays out. Useful ones:
+
+```
+alias dc='docker compose -f /opt/solacliq/compose.yml'   # once per login
+dc logs --since 1h api | grep '"level":"ERROR"'        # errors in the last hour
+dc logs api | grep '"status":5'                         # server errors
+dc logs api | grep 3a6bfd41-a51c-46dc-a986-712c1bc4148d # one request, by its id
+```
+
+Every response carries its id in the `X-Request-Id` header (Postman
+shows it under Headers). When someone reports a failure, that id finds
+its log lines. A crash inside a request is caught, logged as
+`handler panicked` and answered with a plain 500.

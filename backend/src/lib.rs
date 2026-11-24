@@ -34,13 +34,20 @@ pub mod validate;
 
 use std::{sync::Arc, time::Duration};
 
-use axum::{Router, http::StatusCode};
+use axum::{
+    Router,
+    body::Body,
+    http::{Request, Response, StatusCode},
+    response::IntoResponse,
+};
 use sqlx::PgPool;
 use tower_http::{
+    catch_panic::CatchPanicLayer,
     request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer},
     timeout::TimeoutLayer,
-    trace::TraceLayer,
+    trace::{DefaultOnFailure, TraceLayer},
 };
+use tracing::{Level, Span};
 
 /// Shared by every handler.
 #[derive(Clone)]
@@ -101,8 +108,61 @@ pub fn app(state: AppState) -> Router {
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(30),
         ))
-        .layer(TraceLayer::new_for_http())
+        // Inside the trace layer, so a panic is logged as the 500 it becomes.
+        .layer(CatchPanicLayer::custom(panic_response))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(request_span)
+                .on_request(())
+                .on_response(log_response)
+                .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
+        )
         .layer(PropagateRequestIdLayer::x_request_id())
         .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
         .with_state(state)
+}
+
+/*
+    One span per request: its id (also sent back as X-Request-Id, so a
+    person's report can be matched to the log), method and path
+    ----------------------------------------------------------------------
+    - the path only, never the query: a search's query can hold a name or
+      a phone number
+    - the health check (every 10 s, from Docker) gets a debug span, so it
+      stays out of the log unless RUST_LOG asks for debug
+*/
+fn request_span(req: &Request<Body>) -> Span {
+    let id = req
+        .headers()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("-");
+    let path = req.uri().path();
+    if path == "/api/v1/health" {
+        tracing::debug_span!("request", id, method = %req.method(), path)
+    } else {
+        tracing::info_span!("request", id, method = %req.method(), path)
+    }
+}
+
+/// A line per answered request, with its status and time taken.
+fn log_response<B>(res: &Response<B>, latency: Duration, span: &Span) {
+    if !span.is_disabled() {
+        tracing::info!(
+            status = res.status().as_u16(),
+            ms = latency.as_millis() as u64,
+            "response"
+        );
+    }
+}
+
+/// A panic in a handler: logged, and answered with the usual plain 500.
+fn panic_response(err: Box<dyn std::any::Any + Send + 'static>) -> Response<Body> {
+    let detail = err
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| err.downcast_ref::<&str>().copied())
+        .unwrap_or("unknown");
+    tracing::error!(panic = detail, "handler panicked");
+    error::ApiError::internal().into_response()
 }
