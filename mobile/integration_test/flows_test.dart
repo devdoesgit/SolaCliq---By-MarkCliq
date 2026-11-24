@@ -39,7 +39,12 @@ Future<void> tapKey(WidgetTester tester, String key) async {
   final finder = find.byKey(ValueKey(key));
   await waitFor(tester, finder);
   await tester.ensureVisible(finder.first);
-  await tester.pumpAndSettle();
+  // A screen that never settles fails here, instead of hanging the run.
+  await tester.pumpAndSettle(
+    const Duration(milliseconds: 100),
+    EnginePhase.sendSemanticsUpdate,
+    const Duration(seconds: 10),
+  );
   await tester.tap(finder.first);
   await tester.pump(const Duration(milliseconds: 300));
 }
@@ -48,7 +53,12 @@ Future<void> tapText(WidgetTester tester, String text) async {
   final finder = find.text(text);
   await waitFor(tester, finder);
   await tester.ensureVisible(finder.first);
-  await tester.pumpAndSettle();
+  // A screen that never settles fails here, instead of hanging the run.
+  await tester.pumpAndSettle(
+    const Duration(milliseconds: 100),
+    EnginePhase.sendSemanticsUpdate,
+    const Duration(seconds: 10),
+  );
   await tester.tap(finder.first);
   await tester.pump(const Duration(milliseconds: 300));
 }
@@ -71,6 +81,11 @@ Future<void> start(WidgetTester tester) async {
           w.key == const ValueKey('tab_profile'),
     ),
   );
+  // A saved session from another run may be refused a moment later, which
+  // logs the app out by itself: let that happen before deciding.
+  for (var i = 0; i < 6 && welcome.evaluate().isEmpty; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+  }
   if (welcome.evaluate().isEmpty && home.evaluate().isNotEmpty) {
     await logOut(tester);
   }
@@ -82,8 +97,10 @@ Future<void> logIn(WidgetTester tester, String email) async {
   await waitFor(tester, field('login_email'));
   await tester.enterText(field('login_email'), email);
   await tester.enterText(field('login_password'), 'sunlight1');
+  // "Done" on the password submits the form, as a person would; the
+  // caller waits for the screen that follows.
   await tester.testTextInput.receiveAction(TextInputAction.done);
-  await tapKey(tester, 'login_submit');
+  await tester.pump(const Duration(milliseconds: 300));
 }
 
 Future<void> logOut(WidgetTester tester) async {
@@ -183,6 +200,43 @@ void main() {
     await waitFor(tester, find.text('The roof is shaded most of the day.'));
     expect(find.text('Install progress'), findsNothing);
     await tapKey(tester, 'nav_back');
+    await logOut(tester);
+  });
+
+  testWidgets('an agent works a lead the admin gave them (F20)', (
+    tester,
+  ) async {
+    await start(tester);
+    await logIn(tester, 'meena@example.com');
+    await tapKey(tester, 'tab_customers');
+    // The seed gives Meena one lead, already called.
+    await waitFor(tester, find.text('Leads for you'));
+    await tapText(tester, 'Neelam Example (illustrative)');
+    await waitFor(tester, find.byKey(const ValueKey('lead_call')));
+    expect(find.text('Wants a site visit on Saturday.'), findsWidgets);
+
+    // Won: saved at once, with the hint to register them.
+    await tapKey(tester, 'lead_status_2');
+    await waitFor(tester, find.textContaining('Add them as a customer'));
+    await tester.enterText(field('lead_note'), 'Registering on Monday');
+    // To the end of the page, as a person scrolls: "Save note" is above the
+    // pinned Call bar only there. Making it merely visible can leave it
+    // under the bar, and the tap would call the lead.
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('lead_save_note')));
+    await tester.pump(const Duration(milliseconds: 300));
+    await waitFor(tester, find.text('Saved'));
+
+    // Won leads leave the list.
+    await tapKey(tester, 'nav_back');
+    await waitFor(tester, find.byKey(const ValueKey('customers_filter')));
+    // Once the lead page has gone, the tab has read the list again.
+    await tester.pumpAndSettle();
+    await waitFor(tester, find.text('Arjun Mehra (illustrative)'));
+    expect(find.text('Leads for you'), findsNothing);
     await logOut(tester);
   });
 
