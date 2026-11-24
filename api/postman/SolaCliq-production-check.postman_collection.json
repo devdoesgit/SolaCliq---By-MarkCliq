@@ -1,0 +1,475 @@
+{
+  "info": {
+    "name": "SolaCliq production check",
+    "description": "The first check on the live server (deploy/README.md, step 11). Fill in the collection's variables with your own details; run the requests in order. No seed, no made-up people. Afterwards clear `password` and `code`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://solacliq.markcliq.com/api/v1"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "name",
+      "value": ""
+    },
+    {
+      "key": "phone",
+      "value": "",
+      "description": "10 digits, no +91"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "description": "8+ characters with a number. Clear it after."
+    },
+    {
+      "key": "code",
+      "value": "",
+      "description": "The 6 digits from the sign-up email"
+    },
+    {
+      "key": "legal_name",
+      "value": ""
+    },
+    {
+      "key": "trade_name",
+      "value": ""
+    },
+    {
+      "key": "business_type",
+      "value": "proprietorship"
+    },
+    {
+      "key": "gstin",
+      "value": ""
+    },
+    {
+      "key": "address_line_1",
+      "value": ""
+    },
+    {
+      "key": "city",
+      "value": ""
+    },
+    {
+      "key": "pin_code",
+      "value": ""
+    },
+    {
+      "key": "signup_token",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "org_id",
+      "value": ""
+    },
+    {
+      "key": "r2_test_body",
+      "value": "SolaCliq production check: a test file, deleted by itself."
+    }
+  ],
+  "item": [
+    {
+      "name": "0 Is it up",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "pm.test('database ok', () => pm.expect(pm.response.json().database).to.eql('ok'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 Your account",
+      "description": "1a\u20131c once, to sign up. If you already have an account, go to 1d.",
+      "item": [
+        {
+          "name": "1a Send the sign-up code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup",
+            "description": "Emails a 6-digit code. Put it in the `code` variable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1b Check the code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup/verify",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{code}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('signup_token', pm.response.json().signup_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1c Finish signing up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup/complete",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signup_token\": \"{{signup_token}}\",\n  \"name\": \"{{name}}\",\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\",\n  \"terms_version\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().tokens.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1d Log in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "The token lasts 15 minutes: run this again when a request answers 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"client\": \"app\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().tokens.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1e Who am I",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/me",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const me = pm.response.json();",
+                  "console.log('platform admin:', me.is_platform_admin);",
+                  "me.memberships.forEach((m) => console.log('member of', m.org.name, '(' + m.org.status + ') as', m.role));",
+                  "const mine = me.memberships.find((m) => m.role === 'org_admin');",
+                  "if (mine) pm.collectionVariables.set('org_id', mine.org.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 A company",
+      "description": "Before 2b, on the server: make your account the platform admin (docker compose ... exec api solacliq-api make-platform-admin <email>).",
+      "item": [
+        {
+          "name": "2a Register the company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/org-registrations",
+            "description": "You are its owner: the same email as your account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"terms_version\": 1,\n  \"legal_name\": \"{{legal_name}}\",\n  \"trade_name\": \"{{trade_name}}\",\n  \"business_type\": \"{{business_type}}\",\n  \"gstin\": \"{{gstin}}\",\n  \"address_line_1\": \"{{address_line_1}}\",\n  \"city\": \"{{city}}\",\n  \"pin_code\": \"{{pin_code}}\",\n  \"owner_name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 202', () => pm.response.to.have.status(202));",
+                  "console.log('MarkCliq should now get the review email at info@markcliq.com');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2b Companies waiting",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/platform/orgs?status=pending",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const email = pm.collectionVariables.get('email').toLowerCase();",
+                  "const org = pm.response.json().items.find((o) => (o.owner || {}).email === email);",
+                  "pm.test('your company is waiting', () => pm.expect(org, 'no pending company owned by ' + email).to.exist);",
+                  "if (org) pm.collectionVariables.set('org_id', org.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2c Approve it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/platform/orgs/{{org_id}}/status",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "pm.test('now active', () => pm.expect(pm.response.json().status).to.eql('active'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 As its admin",
+      "item": [
+        {
+          "name": "3a Who am I now",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/me",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const me = pm.response.json();",
+                  "console.log('platform admin:', me.is_platform_admin);",
+                  "me.memberships.forEach((m) => console.log('member of', m.org.name, '(' + m.org.status + ') as', m.role));",
+                  "const mine = me.memberships.find((m) => m.role === 'org_admin');",
+                  "if (mine) pm.collectionVariables.set('org_id', mine.org.id);",
+                  "",
+                  "pm.test('admin of the company', () => pm.expect(mine).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3b The company's overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/orgs/{{org_id}}/admin/overview",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3c A file to R2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/orgs/{{org_id}}/uploads",
+            "description": "Asks the API for an upload link, then sends a small test file to it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content_type\": \"image/png\",\n  \"size_bytes\": 58,\n  \"purpose\": \"logo\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 201', () => pm.response.to.have.status(201));",
+                  "const ticket = pm.response.json();",
+                  "pm.sendRequest({",
+                  "  url: ticket.url,",
+                  "  method: ticket.method,",
+                  "  header: Object.entries(ticket.headers).map(([key, value]) => ({ key, value })),",
+                  "  body: { mode: 'raw', raw: pm.collectionVariables.get('r2_test_body') },",
+                  "}, (err, res) => {",
+                  "  pm.test('R2 stored the file', () => {",
+                  "    pm.expect(err, String(err)).to.be.null;",
+                  "    pm.expect(res.code, res.text()).to.be.below(300);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
