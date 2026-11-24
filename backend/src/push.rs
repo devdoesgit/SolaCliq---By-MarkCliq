@@ -304,17 +304,38 @@ pub async fn push_once(db: &PgPool, sender: &mut Sender) -> ApiResult<usize> {
     };
     tx.commit().await?;
 
+    /*
+        Sending
+        ----------------------------------------------------------------
+        - each message stands alone: a device that can't be cleaned up is
+          logged and the round goes on, as the batch is already marked
+          sent and a stopped round would lose the rest for good
+        - freshness is checked again before each send, not only when the
+          batch was claimed: when Firebase is slow a round can take
+          minutes, and a doorbell that late is worse than none
+    */
     let mut sent = 0;
     for n in &fresh {
+        if Utc::now() - n.created_at >= TOO_LATE {
+            tracing::warn!(notification_id = %n.id, "push too late; skipped");
+            continue;
+        }
         for d in devices.iter().filter(|d| d.user_id == n.user_id) {
             match sender.send(&message(n, &d.token, d.sound)).await {
                 Outcome::Sent => sent += 1,
                 Outcome::Unregistered => {
-                    sqlx::query("DELETE FROM devices WHERE token = $1")
+                    let removed = sqlx::query("DELETE FROM devices WHERE token = $1")
                         .bind(&d.token)
                         .execute(db)
-                        .await?;
-                    tracing::info!(user_id = %d.user_id, "push token unregistered; device removed");
+                        .await;
+                    match removed {
+                        Ok(_) => {
+                            tracing::info!(user_id = %d.user_id, "push token unregistered; device removed")
+                        }
+                        Err(e) => {
+                            tracing::error!(error = %e, user_id = %d.user_id, "unregistered device not removed")
+                        }
+                    }
                 }
                 Outcome::Failed(reason) => {
                     tracing::warn!(notification_id = %n.id, %reason, "push not sent");
