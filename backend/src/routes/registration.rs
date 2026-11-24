@@ -1,0 +1,469 @@
+/*
+    A solar company registers with SolaCliq (F2)
+    --------------------------------------------------------------------
+    - POST /org-registrations, public (no login)
+    - flow:
+        1. the owner ticked the terms (F16); check every field; the GSTIN by format and checksum, with PAN
+           and state taken from it
+        2. one transaction: the company (pending), the owner's account
+           (no password), their org_admin membership and the agreements
+        3. email MarkCliq (REVIEW_EMAIL) to review it, and the owner that
+           it arrived
+    - a platform admin then approves or rejects it (`platform.rs`)
+*/
+
+use axum::{extract::State, http::StatusCode};
+use serde::Deserialize;
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
+use uuid::Uuid;
+
+use crate::{
+    AppState, PRODUCT_NAME,
+    error::{ApiError, ApiResult},
+    extract::ApiJson,
+    gstin::{self, Gstin},
+    mail::{
+        Email,
+        template::{self as t, Badge, EmailPage, Step, Tone},
+    },
+    org::BusinessType,
+    rate_limit::{ClientIp, Rule},
+    scope,
+    terms::{self, Agreement, Document, Source},
+    validate,
+};
+
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new().routes(routes!(register_org))
+}
+
+// The contract's `OrgRegistrationCreate`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct OrgRegistrationCreate {
+    pub legal_name: String,
+    // Shown in the app; the legal name when left out.
+    pub trade_name: Option<String>,
+    pub business_type: BusinessType,
+    pub gstin: String,
+    pub address_line_1: String,
+    pub address_line_2: Option<String>,
+    pub city: String,
+    pub pin_code: String,
+    pub owner_name: String,
+    pub email: String,
+    pub phone: String,
+    /// The owner ticked the terms and the Company Terms (F16).
+    #[schema(required = true, minimum = 1)]
+    pub terms_version: Option<i32>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/org-registrations",
+    operation_id = "registerOrg",
+    tag = "onboarding",
+    security(()),
+    request_body = OrgRegistrationCreate,
+    responses(
+        (status = 202, description = "Saved as pending; MarkCliq reviews it."),
+        (status = 409, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+    ),
+)]
+async fn register_org(
+    State(state): State<AppState>,
+    ip: ClientIp,
+    ApiJson(req): ApiJson<OrgRegistrationCreate>,
+) -> ApiResult<StatusCode> {
+    state.limits.check(Rule::RegistrationByIp, &ip.0)?;
+    let sent_version = req.terms_version;
+    let r = validate_registration(req)?;
+    let terms_version = terms::check_sent(sent_version)?;
+    /*
+        In the new company's scope: its row and its first membership are
+        the only company rows this transaction can write
+    */
+    let org_id = Uuid::now_v7();
+    let mut tx = scope::company(&state.db, org_id).await?;
+
+    /*
+        A GSTIN can have one live registration. Checked first for a clear
+        answer; the unique index (orgs_gstin_live) still decides if two
+        registrations race, and `taken_on_conflict` maps that to the same
+        409. `gstin_registered` looks past this scope at every company and
+        answers only yes or no (migration ..._row_level_security.sql)
+    */
+    let taken: bool = sqlx::query_scalar("SELECT gstin_registered($1)")
+        .bind(&r.gstin.number)
+        .fetch_one(&mut *tx)
+        .await?;
+    if taken {
+        return Err(gstin_taken());
+    }
+
+    /*
+        The owner's account. An email that already has an account (they
+        work with another company, say) keeps it as it is; otherwise a
+        new one with no password, set up after approval
+    */
+    let created: Option<Uuid> = sqlx::query_scalar(
+        "INSERT INTO users (id, email, name, phone) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id",
+    )
+    .bind(Uuid::now_v7())
+    .bind(&r.email)
+    .bind(&r.owner_name)
+    .bind(&r.phone)
+    .fetch_optional(&mut *tx)
+    .await?;
+    let owner_id = match created {
+        Some(id) => id,
+        None => {
+            sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+                .bind(&r.email)
+                .fetch_one(&mut *tx)
+                .await?
+        }
+    };
+
+    sqlx::query(
+        "INSERT INTO orgs (id, name, phone, status, legal_name, business_type,
+                           gstin, pan, address_line_1, address_line_2, city,
+                           state, pin_code)
+         VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+    )
+    .bind(org_id)
+    .bind(&r.name)
+    .bind(&r.phone)
+    .bind(&r.legal_name)
+    .bind(r.business_type)
+    .bind(&r.gstin.number)
+    .bind(&r.gstin.pan)
+    .bind(&r.address_line_1)
+    .bind(&r.address_line_2)
+    .bind(&r.city)
+    .bind(r.gstin.state)
+    .bind(&r.pin_code)
+    .execute(&mut *tx)
+    .await
+    .map_err(taken_on_conflict)?;
+
+    sqlx::query(
+        "INSERT INTO memberships (id, user_id, org_id, role) VALUES ($1, $2, $3, 'org_admin')",
+    )
+    .bind(Uuid::now_v7())
+    .bind(owner_id)
+    .bind(org_id)
+    .execute(&mut *tx)
+    .await?;
+
+    /*
+        The agreements (F16): the Company Terms, for the company, always;
+        the owner's own Terms only for an account made just now. An
+        existing account isn't logged in here, so it is asked after its
+        next login instead (`/me`)
+    */
+    terms::record(
+        &mut tx,
+        Agreement {
+            user_id: owner_id,
+            document: Document::CompanyTerms,
+            org_id: Some(org_id),
+            version: terms_version,
+            source: Source::OrgRegistration,
+            ip: &ip,
+        },
+    )
+    .await?;
+    if created.is_some() {
+        terms::record(
+            &mut tx,
+            Agreement {
+                user_id: owner_id,
+                document: Document::Terms,
+                org_id: None,
+                version: terms_version,
+                source: Source::OrgRegistration,
+                ip: &ip,
+            },
+        )
+        .await?;
+    }
+    tx.commit().await?;
+
+    tracing::info!(%org_id, gstin = %r.gstin.number, "company registered; pending review");
+    state
+        .mailer
+        .send(review_email(&state.review_email, org_id, &r));
+    state.mailer.send(received_email(&r));
+    Ok(StatusCode::ACCEPTED)
+}
+
+// A registration that passed every check, tidied.
+struct ValidRegistration {
+    // Shown in the app: the trade name, or the legal name.
+    name: String,
+    legal_name: String,
+    business_type: BusinessType,
+    gstin: Gstin,
+    address_line_1: String,
+    address_line_2: Option<String>,
+    city: String,
+    pin_code: String,
+    owner_name: String,
+    email: String,
+    phone: String,
+}
+
+/*
+    Every problem at once, so the form can mark all bad fields. A bad
+    GSTIN on its own gets its own code (`org.gstin_invalid`), which the
+    app shows under the GSTIN field
+*/
+fn validate_registration(req: OrgRegistrationCreate) -> ApiResult<ValidRegistration> {
+    let legal_name = req.legal_name.trim().to_owned();
+    let trade_name = optional(req.trade_name);
+    let address_line_1 = req.address_line_1.trim().to_owned();
+    let address_line_2 = optional(req.address_line_2);
+    let city = req.city.trim().to_owned();
+    let pin_code = req.pin_code.trim().to_owned();
+    let owner_name = req.owner_name.trim().to_owned();
+    let email = validate::normalize_email(&req.email);
+    let phone: String = req.phone.chars().filter(|c| !c.is_whitespace()).collect();
+
+    // (field, message) for every field that's wrong.
+    let mut errors: Vec<(&str, &str)> = Vec::new();
+    if !within(&legal_name, 150) {
+        errors.push((
+            "legal_name",
+            "Enter the legal name, as on the GST certificate.",
+        ));
+    }
+    if trade_name
+        .as_deref()
+        .is_some_and(|t| t.chars().count() > 150)
+    {
+        errors.push(("trade_name", "Up to 150 characters."));
+    }
+    if !within(&address_line_1, 200) {
+        errors.push(("address_line_1", "Enter the address."));
+    }
+    if address_line_2
+        .as_deref()
+        .is_some_and(|a| a.chars().count() > 200)
+    {
+        errors.push(("address_line_2", "Up to 200 characters."));
+    }
+    if !within(&city, 80) {
+        errors.push(("city", "Enter the city."));
+    }
+    if !validate::is_pin_code(&pin_code) {
+        errors.push(("pin_code", "Enter the 6-digit PIN code."));
+    }
+    if !within(&owner_name, 100) {
+        errors.push(("owner_name", "Enter your name."));
+    }
+    if !validate::looks_like_email(&email) {
+        errors.push(("email", "Enter a valid email address."));
+    }
+    if !validate::is_indian_mobile(&phone) {
+        errors.push(("phone", "Enter a 10-digit mobile number, without +91."));
+    }
+
+    let gstin = gstin::parse(&req.gstin);
+    let gstin = match (gstin, errors.is_empty()) {
+        (Some(g), true) => g,
+        (None, true) => {
+            return Err(ApiError::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "org.gstin_invalid",
+                "That GSTIN isn't valid",
+            )
+            .field(
+                "gstin",
+                "Check the 15-character GSTIN on your GST certificate.",
+            ));
+        }
+        (gstin, false) => {
+            if gstin.is_none() {
+                errors.push(("gstin", "Check the 15-character GSTIN."));
+            }
+            return Err(errors
+                .into_iter()
+                .fold(ApiError::validation(Vec::new()), |e, (f, m)| e.field(f, m)));
+        }
+    };
+
+    Ok(ValidRegistration {
+        name: trade_name.unwrap_or_else(|| legal_name.clone()),
+        legal_name,
+        business_type: req.business_type,
+        gstin,
+        address_line_1,
+        address_line_2,
+        city,
+        pin_code,
+        owner_name,
+        email,
+        phone,
+    })
+}
+
+// Trimmed; a blank value means it was left out.
+fn optional(value: Option<String>) -> Option<String> {
+    value.map(|v| v.trim().to_owned()).filter(|v| !v.is_empty())
+}
+
+// Not blank, and at most `max` characters.
+fn within(value: &str, max: usize) -> bool {
+    !value.is_empty() && value.chars().count() <= max
+}
+
+fn gstin_taken() -> ApiError {
+    ApiError::new(
+        StatusCode::CONFLICT,
+        "org.gstin_taken",
+        "This GSTIN is already registered",
+    )
+    .detail("A company with this GSTIN is already on SolaCliq or waiting for review. Contact MarkCliq if this is a mistake.")
+}
+
+// The unique GSTIN index refused the insert: same answer as the check.
+fn taken_on_conflict(e: sqlx::Error) -> ApiError {
+    let is_gstin = e
+        .as_database_error()
+        .and_then(|d| d.constraint())
+        .is_some_and(|c| c == "orgs_gstin_live");
+    if is_gstin { gstin_taken() } else { e.into() }
+}
+
+// To MarkCliq: everything needed to review and call them.
+fn review_email(to: &str, org_id: Uuid, r: &ValidRegistration) -> Email {
+    let address = match &r.address_line_2 {
+        Some(line2) => format!("{}, {line2}", r.address_line_1),
+        None => r.address_line_1.clone(),
+    };
+    let rows = [
+        ("Legal name", r.legal_name.clone()),
+        (
+            "Business type",
+            business_type_label(r.business_type).to_owned(),
+        ),
+        ("GSTIN", r.gstin.number.clone()),
+        ("PAN", r.gstin.pan.clone()),
+        ("Address", format!("{address}, {} {}", r.city, r.pin_code)),
+        ("Owner", r.owner_name.clone()),
+        ("Email", r.email.clone()),
+        ("Phone", format!("+91 {}", r.phone)),
+        ("Company id", org_id.to_string()),
+    ];
+    let decide = format!("POST /api/v1/platform/orgs/{org_id}/status");
+    let place = format!("{}, {}", r.city, r.gstin.state);
+    let text_rows: String = rows
+        .iter()
+        .map(|(label, value)| format!("{label}: {value}\n"))
+        .collect();
+    Email {
+        to: to.to_owned(),
+        subject: format!("New company to review: {}", r.name),
+        body: format!(
+            "{} ({place}) registered on {PRODUCT_NAME} and is waiting for review.\n\n\
+             {text_rows}\n\
+             Approve or reject it, until the admin website is ready: {decide}\n",
+            r.name
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "{} \u{b7} {} \u{b7} GSTIN {} is waiting for your review",
+                r.name, r.city, r.gstin.number
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#9733;",
+                tone: Tone::Warning,
+            }),
+            heading: "New company to review",
+            card: [
+                t::company(&r.name, &place, "Waiting", Tone::Warning),
+                t::details(&rows),
+                t::eyebrow("To decide"),
+                t::para_html(&format!(
+                    "Until the admin website is ready, approve or reject it with \
+                     <code style=\"font-family:Menlo,Consolas,monospace;font-size:13px;\
+                     background:#f3ece4;padding:2px 6px;border-radius:4px;\">{}</code>",
+                    t::esc(&decide)
+                )),
+            ]
+            .concat(),
+            note: None,
+        })),
+    }
+}
+
+// How the review email names a business type.
+fn business_type_label(t: BusinessType) -> &'static str {
+    match t {
+        BusinessType::Proprietorship => "Proprietorship",
+        BusinessType::Partnership => "Partnership",
+        BusinessType::Llp => "LLP",
+        BusinessType::PrivateLimited => "Private limited",
+        BusinessType::PublicLimited => "Public limited",
+        BusinessType::Other => "Other",
+    }
+}
+
+// To the owner: it arrived, and what happens next.
+fn received_email(r: &ValidRegistration) -> Email {
+    let intro = format!(
+        "Thanks for registering {} on {PRODUCT_NAME}. Here's where it stands:",
+        r.name
+    );
+    let registered = format!("{} \u{b7} GSTIN {}", r.name, r.gstin.number);
+    let call = format!("We call you on +91 {} to confirm your details.", r.phone);
+    let live = "We email you here once you're approved, with a link to your dashboard on the web.";
+    let note = format!(
+        "You're receiving this email because this address was given as the \
+         owner's when {} registered on {PRODUCT_NAME}.",
+        r.name
+    );
+    Email {
+        to: r.email.clone(),
+        subject: format!("We received {}'s registration", r.name),
+        body: format!(
+            "{intro}\n\n\
+             1. Registered: {registered}. Done.\n\
+             2. MarkCliq checks your details: {call} (now)\n\
+             3. You're live: {live}\n\n{}\n\n{note}\n",
+            t::sign_off_text()
+        ),
+        html: Some(t::page(EmailPage {
+            preheader: Some(&format!(
+                "We're checking {}. Next: a call from MarkCliq on +91 {}.",
+                r.name, r.phone
+            )),
+            sun_dot: false,
+            badge: Some(Badge {
+                glyph: "&#8987;",
+                tone: Tone::Warning,
+            }),
+            heading: "Registration received",
+            card: [
+                t::para(&intro),
+                t::steps(&[
+                    (Step::Done, "Registered", &registered),
+                    (Step::Now, "MarkCliq checks your details", &call),
+                    (Step::Later, "You're live", live),
+                ]),
+                t::sign_off(),
+            ]
+            .concat(),
+            note: Some(&note),
+        })),
+    }
+}

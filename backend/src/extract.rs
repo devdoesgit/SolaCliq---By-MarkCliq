@@ -1,0 +1,130 @@
+//! Our own versions of axum's extractors, so that a bad request gets the
+//! same problem-JSON error as everything else instead of axum's plain text.
+
+use axum::extract::{
+    FromRequest, FromRequestParts,
+    rejection::{JsonRejection, PathRejection, QueryRejection},
+};
+
+use crate::error::ApiError;
+
+/// Use `ApiJson<T>` instead of `axum::Json<T>` for request bodies.
+///
+/// `#[derive(FromRequest)]` writes the extractor for us: it runs
+/// `axum::Json<T>` (the `via`), and when that fails (body isn't JSON, a
+/// required field is missing...) it turns the error into an `ApiError`
+/// with the `From` impl below (the `rejection`).
+#[derive(FromRequest)]
+#[from_request(via(axum::Json), rejection(ApiError))]
+pub struct ApiJson<T>(pub T);
+
+impl From<JsonRejection> for ApiError {
+    fn from(rejection: JsonRejection) -> Self {
+        // body_text() says what was wrong, e.g. "missing field `email`".
+        ApiError::validation(Vec::new()).detail(rejection.body_text())
+    }
+}
+
+/*
+    Use `ApiQuery<T>` instead of `axum::extract::Query<T>` for `?a=1&b=2`
+    --------------------------------------------------------------------
+    - the same idea as ApiJson: a bad value (`?limit=abc`) gets a 422
+      problem instead of axum's plain-text 400
+*/
+#[derive(FromRequestParts)]
+#[from_request(via(axum::extract::Query), rejection(ApiError))]
+pub struct ApiQuery<T>(pub T);
+
+impl From<QueryRejection> for ApiError {
+    fn from(rejection: QueryRejection) -> Self {
+        ApiError::validation(Vec::new()).detail(rejection.body_text())
+    }
+}
+
+/*
+    Use `ApiPath<T>` instead of `axum::extract::Path<T>`
+    --------------------------------------------------------------------
+    - a path segment that doesn't parse (`/platform/orgs/abc`) can't name
+      anything that exists, so it's a 404 problem, not axum's plain 400
+*/
+#[derive(FromRequestParts)]
+#[from_request(via(axum::extract::Path), rejection(ApiError))]
+pub struct ApiPath<T>(pub T);
+
+impl From<PathRejection> for ApiError {
+    fn from(_: PathRejection) -> Self {
+        ApiError::not_found()
+    }
+}
+
+/// The logged-in person. Put `user: AuthUser` in a handler's arguments and
+/// the handler only runs for a valid session; otherwise axum answers 401
+/// `auth.unauthenticated` without calling it.
+///
+/// The token comes from `Authorization: Bearer <token>` (the app) or the
+/// `solacliq_session` cookie (the website).
+#[derive(Debug, Clone, Copy)]
+pub struct AuthUser {
+    pub user_id: uuid::Uuid,
+    pub session_id: uuid::Uuid,
+}
+
+impl AuthUser {
+    /*
+        A transaction for this person's own rows, under row-level
+        security: their memberships, companies and personal feed
+        (`scope::person`)
+    */
+    pub async fn begin(&self, db: &sqlx::PgPool) -> crate::error::ApiResult<crate::scope::Tx> {
+        crate::scope::person(db, self.user_id).await
+    }
+}
+
+/// The website's access token cookie, sent on every request.
+pub const SESSION_COOKIE: &str = "solacliq_session";
+/// The website's refresh token cookie, sent only to `/auth/refresh`.
+pub const REFRESH_COOKIE: &str = "solacliq_refresh";
+
+impl axum::extract::FromRequestParts<crate::AppState> for AuthUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &crate::AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let token = bearer_token(&parts.headers)
+            .or_else(|| cookie(&parts.headers, SESSION_COOKIE))
+            .ok_or_else(ApiError::unauthenticated)?;
+        let (session_id, user_id) = crate::session::find(&state.db, token)
+            .await?
+            .ok_or_else(ApiError::unauthenticated)?;
+        Ok(AuthUser {
+            user_id,
+            session_id,
+        })
+    }
+}
+
+/// `Authorization: Bearer abc` → `Some("abc")`.
+pub(crate) fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
+    headers
+        .get(axum::http::header::AUTHORIZATION)?
+        .to_str()
+        .ok()?
+        .strip_prefix("Bearer ")
+        .filter(|t| !t.is_empty())
+}
+
+/// `cookie(headers, "solacliq_session")` with
+/// `Cookie: a=1; solacliq_session=abc` → `Some("abc")`.
+pub fn cookie<'a>(headers: &'a axum::http::HeaderMap, name: &str) -> Option<&'a str> {
+    headers
+        .get_all(axum::http::header::COOKIE)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .flat_map(|v| v.split(';'))
+        .find_map(|pair| {
+            let (key, value) = pair.trim().split_once('=')?;
+            (key == name && !value.is_empty()).then_some(value)
+        })
+}
