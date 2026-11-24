@@ -280,17 +280,143 @@ keyAlias=solacliq
 keyPassword=...
 ```
 
-Build and install:
+The key's certificate, to recognise it: SHA-256
+`15f7e66f949531d1d79168144d66cbcaed67ea5e5ad9546d69b5c213b3bf6f9e`
+(`CN=Devesh Rajput, O=MarkCliq`).
+
+### A release: a new APK, through Shorebird
+
+**Always build the APK with Shorebird.** An APK from `flutter build` can
+never receive a patch. Ask before releasing: it reaches real users.
 
 ```
 cd mobile
-flutter build apk --release --flavor production -t lib/main_production.dart
-adb install build/app/outputs/flutter-apk/app-production-release.apk
+export PATH="$HOME/.shorebird/bin:$PATH"
+shorebird release android --flavor production -t lib/main_production.dart --artifact apk --flutter-version=3.47.7
 ```
 
-## Later releases
+It builds, signs and registers the release with Shorebird, then prints
+the APK's path (`build/app/outputs/flutter-apk/app-production-release.apk`):
+that's the file to hand out. The release build needs about 7 GB of
+memory; close what you can first.
 
-**local**: commit, `deploy/build.sh`, `scp` the archive (and any changed
+### A patch: a Dart fix, over the air
+
+For a change to Dart code only (screens, logic, text). New plugins,
+permissions, Android settings or the icon need a release instead;
+Shorebird refuses a patch that changes them. Ask before patching: it
+reaches real users.
+
+```
+shorebird patch android --flavor production -t lib/main_production.dart --release-version <version, e.g. 1.0.0+1>
+```
+
+Phones download it in the background and run it from their next start.
+If it misbehaves:
+
+```
+shorebird patches rollback --flavor production --release-version <version> --patch-number <n>
+```
+
+Try a patch on `--flavor staging` first: staging and development have
+their own Shorebird apps (`mobile/shorebird.yaml`), so nothing reaches
+real users.
+
+## Deploying from GitHub (CI/CD)
+
+After the first deploy works by hand, GitHub can do the building and
+sending. Two workflows:
+
+- **CI** (`.github/workflows/ci.yml`), on every push and pull request:
+  the server (format, clippy, every test against Postgres), its Docker
+  image, the app (format, analyze, tests, a debug APK), the website
+  (lint, types, tests, build), and the API contract.
+- **Deploy** (`.github/workflows/deploy.yml`):
+  1. `git tag v1.0.1 && git push origin v1.0.1` runs CI, builds the
+     release archive and attaches it to a GitHub Release. Nothing goes
+     live.
+  2. **You put it live:** GitHub → Actions → Deploy → Run workflow → the
+     tag. It sends the archive to the VPS, where `release.sh` backs up,
+     puts it live, and rolls back by itself if it doesn't answer. Only
+     people with write access to the repo can run it.
+
+GitHub gets the narrowest way in: its own user, whose key can only send
+a release (`deploy/solacliq-deploy`: no shell, nothing else), and `sudo`
+for `release.sh` on an uploaded release only. A leaked key could only
+deploy a release.
+
+### Set it up once
+
+On the VPS (from the repo clone, or `scp` the two files as in step 3):
+
+```
+sudo useradd --system --create-home --home-dir /var/lib/solacliq-deploy --shell /bin/bash solacliq-deploy
+sudo chmod 700 /var/lib/solacliq-deploy
+sudo install -m 755 deploy/solacliq-deploy /usr/local/bin/solacliq-deploy
+sudo install -m 440 deploy/sudoers-solacliq-deploy /etc/sudoers.d/solacliq-deploy
+sudo visudo -c
+```
+
+`visudo -c` must say `parsed OK`; if not, `sudo rm /etc/sudoers.d/solacliq-deploy`.
+
+**local**, a key for GitHub only:
+
+```
+ssh-keygen -t ed25519 -N "" -C github-deploy -f ~/solacliq-github-deploy
+cat ~/solacliq-github-deploy.pub
+```
+
+On the VPS, with the line it printed in place of `ssh-ed25519 AAAA...`:
+
+```
+sudo install -d -m 700 -o solacliq-deploy -g solacliq-deploy /var/lib/solacliq-deploy/.ssh
+echo 'command="/usr/local/bin/solacliq-deploy",restrict ssh-ed25519 AAAA... github-deploy' \
+  | sudo tee /var/lib/solacliq-deploy/.ssh/authorized_keys > /dev/null
+sudo chown solacliq-deploy: /var/lib/solacliq-deploy/.ssh/authorized_keys
+sudo chmod 600 /var/lib/solacliq-deploy/.ssh/authorized_keys
+```
+
+**local**, check the key does nothing else (expected: `Refused: send the release name`):
+
+```
+ssh -i ~/solacliq-github-deploy solacliq-deploy@solacliq.markcliq.com whoami
+```
+
+and record the server's identity for GitHub:
+
+```
+ssh-keyscan -t ed25519 solacliq.markcliq.com
+```
+
+On GitHub: the repo → Settings → Secrets and variables → Actions → New
+repository secret, four of them:
+
+| Secret | Value |
+|---|---|
+| `DEPLOY_HOST` | `solacliq.markcliq.com` (or the VPS's IP) |
+| `DEPLOY_PORT` | the SSH port, if not 22 (else leave it out) |
+| `DEPLOY_SSH_KEY` | the whole of `~/solacliq-github-deploy` (the private one, from `-----BEGIN` to `END-----`) |
+| `DEPLOY_KNOWN_HOSTS` | the line `ssh-keyscan` printed |
+
+Then delete the private key from this machine
+(`rm ~/solacliq-github-deploy`): GitHub has it, and a new one is easy to
+make. To take GitHub's access away, empty
+`/var/lib/solacliq-deploy/.ssh/authorized_keys`.
+
+### A release
+
+```
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+Wait for the Deploy run to go green (CI, then "Build the release"), then
+Actions → Deploy → Run workflow → `v1.0.1`. The log shows `release.sh`'s
+own output, ending `Live: solacliq-<commit>`, then a health check. A
+release that doesn't answer rolls back by itself and the run goes red.
+
+## Later releases, by hand
+
+Without GitHub (or if it's down): **local**: commit, `deploy/build.sh`, `scp` the archive (and any changed
 file of the deploy kit, then `install` it as in step 3), and reload
 Caddy if `deploy/Caddyfile` changed.
 **Server**: `sudo bash /opt/solacliq/release.sh /tmp/solacliq-<commit>.tar.gz`.

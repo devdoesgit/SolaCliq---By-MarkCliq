@@ -948,3 +948,22 @@ Change a decision by adding a new line, not by editing an old one.
   the containers; all were drilled on a scratch server, including a
   failed release that had migrated. Replaces the systemd service and
   the Postgres installed on the server (2026-11-19).
+- **CI/CD (owner, 2026-11-24).** CI now also checks the server (format,
+  clippy, every test against Postgres 17) and builds its Docker image.
+  A version tag builds the release and attaches it to a GitHub Release;
+  putting it live is a manual "Run workflow" on the Deploy workflow, so
+  nothing goes live without the owner (and it works on GitHub's free
+  plan, which has no environment approvals for private repos). GitHub's
+  key on the VPS can only run `solacliq-deploy`, which accepts a release
+  name and runs `release.sh` through a sudo rule for that alone. The
+  app's Shorebird patches join once Shorebird is set up; full APK
+  releases stay manual.
+- **Shorebird set up (owner, 2026-11-24).** One Shorebird app per flavor
+  (production, staging, development); builds use Shorebird's Flutter
+  3.47.7, the version the app is tested on. The owner made the signing
+  key (`~/solacliq-upload.jks`, backed up off the machine; certificate
+  SHA-256 `15f7e66f…3bf6f9e`). Proved on staging: release 1.0.0+1, a
+  patch delivered and booted, then rolled back. Every production APK is
+  built with `shorebird release`, never `flutter build`, or it can't be
+  patched. Patches in CI wait for a decision on keeping the signing key
+  and the Firebase config as GitHub secrets.
