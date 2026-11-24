@@ -1,6 +1,8 @@
-//! One module per area (see ../CLAUDE.md "Modules"). Each exposes a
-//! `router()` that `router()` below merges; handlers carry `#[utoipa::path]`
-//! so the spec is generated from them.
+/*
+    One module per area (see ../CLAUDE.md "Modules"). Each exposes a
+    `router()` that `router()` below merges; handlers carry `#[utoipa::path]`
+    so the spec is generated from them.
+*/
 
 pub mod admin;
 pub mod admin_site;

@@ -32,10 +32,12 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(get_health))
 }
 
-/// Service health
-///
-/// Whether the API and its database are up. Needs no authentication.
-/// 503 with the same body when the database can't be reached.
+/*
+    Service health
+
+    Whether the API and its database are up. Needs no authentication.
+    503 with the same body when the database can't be reached.
+*/
 #[utoipa::path(
     get,
     path = "/health",

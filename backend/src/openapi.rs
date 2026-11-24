@@ -1,5 +1,7 @@
-//! The OpenAPI spec generated from the handlers, served at `/api/docs`.
-//! CI compares it with the committed ../api/openapi.yaml.
+/*
+    The OpenAPI spec generated from the handlers, served at `/api/docs`.
+    CI compares it with the committed ../api/openapi.yaml.
+*/
 
 use axum::Router;
 use utoipa::{

@@ -38,9 +38,11 @@ pub struct LogoSet {
     pub upload_id: Uuid,
 }
 
-/// Set the company's logo
-///
-/// The company's admin only. Replaces the current logo, if any.
+/*
+    Set the company's logo
+
+    The company's admin only. Replaces the current logo, if any.
+*/
 #[utoipa::path(
     put,
     path = "/orgs/{org_id}/logo",
@@ -82,9 +84,11 @@ async fn set_logo(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Remove the company's logo
-///
-/// The company's admin only. The app shows the company's initials again.
+/*
+    Remove the company's logo
+
+    The company's admin only. The app shows the company's initials again.
+*/
 #[utoipa::path(
     delete,
     path = "/orgs/{org_id}/logo",

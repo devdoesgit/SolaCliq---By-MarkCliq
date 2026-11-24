@@ -1,5 +1,7 @@
-//! SolaCliq API. `app` builds the router; `main.rs` wires config, the
-//! database and the server around it, so tests can build the same router.
+/*
+    SolaCliq API. `app` builds the router; `main.rs` wires config, the
+    database and the server around it, so tests can build the same router.
+*/
 
 pub mod account;
 pub mod bank;

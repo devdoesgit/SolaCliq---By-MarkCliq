@@ -1,5 +1,7 @@
-//! Login sessions: making tokens, storing their hashes, and finding the
-//! session a token belongs to.
+/*
+    Login sessions: making tokens, storing their hashes, and finding the
+    session a token belongs to.
+*/
 
 use chrono::{Duration, Utc};
 use sha2::{Digest, Sha256};
@@ -8,9 +10,11 @@ use uuid::Uuid;
 
 use crate::error::ApiError;
 
-/// How long tokens last. Set from the environment by `Config`
-/// (`ACCESS_TOKEN_MINUTES`, `REFRESH_TOKEN_DAYS`); `Default` holds the
-/// values used when those aren't set. The same for the app and the website.
+/*
+    How long tokens last. Set from the environment by `Config`
+    (`ACCESS_TOKEN_MINUTES`, `REFRESH_TOKEN_DAYS`); `Default` holds the
+    values used when those aren't set. The same for the app and the website.
+*/
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Lifetimes {
     pub access: Duration,
@@ -43,8 +47,10 @@ impl Client {
     }
 }
 
-/// The plain tokens of a session, fresh from login or refresh. They exist
-/// only in this value and in the response; the database keeps their hashes.
+/*
+    The plain tokens of a session, fresh from login or refresh. They exist
+    only in this value and in the response; the database keeps their hashes.
+*/
 pub struct Tokens {
     pub access_token: String,
     pub refresh_token: String,
@@ -63,9 +69,11 @@ impl Tokens {
     }
 }
 
-/// 32 random bytes as 64 hex characters. Unguessable, so a fast hash
-/// (SHA-256) is enough to store it; passwords need Argon2 because people
-/// pick guessable ones.
+/*
+    32 random bytes as 64 hex characters. Unguessable, so a fast hash
+    (SHA-256) is enough to store it; passwords need Argon2 because people
+    pick guessable ones.
+*/
 pub(crate) fn new_token() -> Result<String, ApiError> {
     let mut bytes = [0u8; 32];
     getrandom::fill(&mut bytes).map_err(|e| {
@@ -106,14 +114,16 @@ pub async fn create(
     Ok(tokens)
 }
 
-/// Trades a refresh token for new tokens (OAuth 2.1 rotation): both tokens
-/// are replaced, so the old refresh token and the old access token stop
-/// working. Returns which client the session belongs to, so the caller
-/// answers in JSON (app) or cookies (website).
-///
-/// Errors with 401 `auth.session_expired` when the token is unknown,
-/// expired or revoked. If it is the session's *previous* refresh token,
-/// someone kept a copy, so the session is revoked as well.
+/*
+    Trades a refresh token for new tokens (OAuth 2.1 rotation): both tokens
+    are replaced, so the old refresh token and the old access token stop
+    working. Returns which client the session belongs to, so the caller
+    answers in JSON (app) or cookies (website).
+
+    Errors with 401 `auth.session_expired` when the token is unknown,
+    expired or revoked. If it is the session's *previous* refresh token,
+    someone kept a copy, so the session is revoked as well.
+*/
 pub async fn rotate(
     db: &PgPool,
     lifetimes: &Lifetimes,
@@ -124,11 +134,13 @@ pub async fn rotate(
     // create new pair of token
     let tokens = Tokens::new(lifetimes)?;
 
-    // One UPDATE does the check and the swap, so it is atomic: if two
-    // requests bring the same token at once, Postgres locks the row, the
-    // first one changes refresh_hash, and the second then matches nothing
-    // and is treated as reuse below. The refresh expiry moves forward too,
-    // so a person who opens the app at least once a month stays logged in.
+    /*
+        One UPDATE does the check and the swap, so it is atomic: if two
+        requests bring the same token at once, Postgres locks the row, the
+        first one changes refresh_hash, and the second then matches nothing
+        and is treated as reuse below. The refresh expiry moves forward too,
+        so a person who opens the app at least once a month stays logged in.
+    */
     let rotated: Option<(String,)> = sqlx::query_as(
         "UPDATE sessions
          SET previous_refresh_hash = refresh_hash,
@@ -221,8 +233,10 @@ pub fn session_expired() -> ApiError {
     )
 }
 
-/// The live session an access token or cookie belongs to:
-/// (session id, user id). `None` when unknown, expired or revoked.
+/*
+    The live session an access token or cookie belongs to:
+    (session id, user id). `None` when unknown, expired or revoked.
+*/
 pub async fn find(db: &PgPool, token: &str) -> Result<Option<(Uuid, Uuid)>, ApiError> {
     let row = sqlx::query_as(
         "SELECT id, user_id FROM sessions

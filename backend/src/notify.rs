@@ -56,8 +56,10 @@ pub enum Kind {
     PaymentClaimed,
     // To a customer who wasn't taken up.
     RegistrationClosed,
-    // A landing-page lead arrived (admins, website only), or was handed
-    // to a Sales Agent (F20).
+    /*
+        A landing-page lead arrived (admins, website only), or was handed
+        to a Sales Agent (F20).
+    */
     LeadNew,
     LeadAssigned,
 }

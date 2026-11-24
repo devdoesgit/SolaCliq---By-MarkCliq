@@ -1181,8 +1181,10 @@ struct CustomerDocumentPath {
 pub struct CustomerVerify {
     // The system's price, paise.
     pub total: i64,
-    // PM Surya Ghar, paise; left out: from the government table when the
-    // customer asked for it, else 0.
+    /*
+        PM Surya Ghar, paise; left out: from the government table when the
+        customer asked for it, else 0.
+    */
     pub subsidy: Option<i64>,
 }
 

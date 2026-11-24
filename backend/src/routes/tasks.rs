@@ -1457,8 +1457,10 @@ mod tests {
 
     #[test]
     fn today_ends_at_midnight_in_india() {
-        // 20:00 UTC on 15 Nov is 01:30 on 16 Nov in India: today ends at
-        // midnight starting 17 Nov there, 18:30 UTC on 16 Nov.
+        /*
+            20:00 UTC on 15 Nov is 01:30 on 16 Nov in India: today ends at
+            midnight starting 17 Nov there, 18:30 UTC on 16 Nov.
+        */
         let now = Utc.with_ymd_and_hms(2026, 11, 15, 20, 0, 0).unwrap();
         assert_eq!(
             end_of_today(now),
