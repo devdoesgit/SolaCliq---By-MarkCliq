@@ -1,0 +1,4 @@
+# /etc/sudoers.d/solacliq-deploy (install with visudo, deploy/README.md).
+# GitHub's deploy user may run release.sh as root, on an uploaded release
+# only, and nothing else.
+solacliq-deploy ALL=(root) NOPASSWD: /opt/solacliq/release.sh /var/lib/solacliq-deploy/solacliq-*.tar.gz

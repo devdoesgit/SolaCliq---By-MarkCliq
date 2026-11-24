@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# The only thing GitHub's deploy key can run on the VPS (deploy/README.md,
+# "Deploying from GitHub"): its authorized_keys line forces this command,
+# with no shell, terminal or forwarding. Installed as
+# /usr/local/bin/solacliq-deploy, run as the user solacliq-deploy.
+#   ssh solacliq-deploy@<vps> solacliq-<commit> < solacliq-<commit>.tar.gz
+# Saves the archive it's sent, then runs release.sh on it through sudo
+# (allowed for exactly that, by /etc/sudoers.d/solacliq-deploy). Its
+# output, and whether it went live, go back to GitHub.
+set -euo pipefail
+name="${SSH_ORIGINAL_COMMAND:-}"
+# Exactly a release's name: nothing else reaches a path or a command.
+if [[ ! "$name" =~ ^solacliq-[0-9a-f]{7,40}$ ]]; then
+  echo "Refused: send the release name (solacliq-<commit>), nothing else." >&2
+  exit 2
+fi
+inbox="${SOLACLIQ_DEPLOY_INBOX:-/var/lib/solacliq-deploy}"
+release="${SOLACLIQ_RELEASE:-/opt/solacliq/release.sh}"
+file="$inbox/$name.tar.gz"
+umask 077
+# At most 500 MB: a release is about 45.
+head -c 500000000 > "$file.part"
+mv "$file.part" "$file"
+status=0
+sudo -n "$release" "$file" || status=$?
+rm -f "$file"
+exit "$status"

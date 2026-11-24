@@ -1,0 +1,91 @@
+# Releases the server (deploy/README.md, "Deploying from GitHub").
+# 1. A version tag builds a release, and only that:
+#      git tag v1.0.1 && git push origin v1.0.1
+#    every CI check (ci.yml), then the archive from deploy/build.sh,
+#    attached to a GitHub Release for the tag.
+# 2. Putting it live is the owner's press of a button: Actions → Deploy →
+#    Run workflow, with that tag. It sends the release to the VPS, where
+#    release.sh backs up, puts it live and rolls back by itself if it
+#    doesn't answer. Only people with write access to the repo can press
+#    it (works on GitHub's free plan; no environment approvals needed).
+name: Deploy
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The release to put live (a tag, e.g. v1.0.1)"
+        required: true
+
+# One deploy at a time, and never one cancelled half way.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build the release
+    if: github.event_name == 'push'
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - uses: docker/setup-buildx-action@v3
+        with:
+          # The image must land in the runner's Docker for `docker save`.
+          driver: docker
+      - name: Build
+        run: bash deploy/build.sh
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" deploy/out/solacliq-*.tar.gz \
+            --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+
+  deploy:
+    name: Deploy to solacliq.markcliq.com
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: The release's archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'solacliq-*.tar.gz'
+          ls solacliq-*.tar.gz
+          echo "NAME=$(basename solacliq-*.tar.gz .tar.gz)" >> "$GITHUB_ENV"
+      - name: Send it to the VPS and release it
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The key can only run solacliq-deploy on the server, which reads
+          # the archive from here and runs release.sh; its output comes back.
+          ssh -i ~/.ssh/deploy -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "solacliq-deploy@$DEPLOY_HOST" "$NAME" < "$NAME.tar.gz"
+      - name: Check it answers
+        run: curl -fsS --retry 5 --retry-delay 3 https://solacliq.markcliq.com/api/v1/health
