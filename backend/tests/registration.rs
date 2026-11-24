@@ -79,8 +79,17 @@ async fn a_registration_is_saved_as_pending_with_its_owner(db: PgPool) {
 #[sqlx::test]
 async fn the_owner_sees_a_pending_company_but_none_of_its_data(db: PgPool) {
     verified_user(&db, "asha@example.com", "sunlight1").await;
-    post(&db, REGISTER, registration("asha@example.com")).await;
     let owner = token(&db, "asha@example.com").await;
+    // Registered by the account itself, logged in.
+    let res = call(
+        &db,
+        "POST",
+        REGISTER,
+        &owner,
+        Some(registration("asha@example.com")),
+    )
+    .await;
+    assert_eq!(res.status, StatusCode::ACCEPTED, "{}", res.body);
 
     // An existing account is used as it is, now with a pending company.
     let me = get(&db, "/api/v1/me", Some(&owner)).await;
@@ -157,7 +166,15 @@ async fn a_gstin_registers_once_until_rejected(db: PgPool) {
 #[sqlx::test]
 async fn approving_opens_the_company_and_emails_the_owner(db: PgPool) {
     verified_user(&db, "asha@example.com", "sunlight1").await;
-    post(&db, REGISTER, registration("asha@example.com")).await;
+    let asha = token(&db, "asha@example.com").await;
+    call(
+        &db,
+        "POST",
+        REGISTER,
+        &asha,
+        Some(registration("asha@example.com")),
+    )
+    .await;
     let admin = platform_admin(&db).await;
     let org = org_id(&db).await;
 
@@ -266,4 +283,45 @@ async fn a_malformed_id_is_a_problem_404(db: PgPool) {
     let res = call(&db, "GET", "/api/v1/platform/orgs/not-an-id", &admin, None).await;
     assert_eq!(res.status, StatusCode::NOT_FOUND);
     assert_eq!(res.body["code"], "common.not_found");
+}
+
+#[sqlx::test]
+async fn no_one_can_tie_someone_elses_account_to_a_company(db: PgPool) {
+    verified_user(&db, "asha@example.com", "sunlight1").await;
+    verified_user(&db, "ravi@example.com", "sunlight1").await;
+
+    // Not logged in, with an email that has an account: refused.
+    let res = post(&db, REGISTER, registration("asha@example.com")).await;
+    assert_eq!(res.status, StatusCode::CONFLICT);
+    assert_eq!(res.body["code"], "org.owner_has_account");
+
+    // Logged in as someone else: refused too.
+    let ravi = token(&db, "ravi@example.com").await;
+    let res = call(
+        &db,
+        "POST",
+        REGISTER,
+        &ravi,
+        Some(registration("asha@example.com")),
+    )
+    .await;
+    assert_eq!(res.body["code"], "org.owner_has_account");
+
+    // Nothing was saved: no company, no membership, no agreement in Asha's name.
+    let orgs: i64 = sqlx::query_scalar("SELECT count(*) FROM orgs")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(orgs, 0);
+    let asha = token(&db, "asha@example.com").await;
+    let me = get(&db, "/api/v1/me", Some(&asha)).await;
+    assert_eq!(me.body["memberships"].as_array().unwrap().len(), 0);
+    let agreements: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM agreements a JOIN users u ON u.id = a.user_id
+         WHERE u.email = 'asha@example.com' AND a.document = 'company_terms'",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(agreements, 0);
 }

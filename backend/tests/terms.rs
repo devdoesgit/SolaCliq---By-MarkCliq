@@ -186,10 +186,14 @@ async fn registration_by_an_existing_account_records_only_the_company_terms(db: 
         .await
         .unwrap();
 
-    let res = post(
+    // The account registers its company itself, logged in.
+    let owner = token(&db, "dev.owner@example.com").await;
+    let res = call(
         &db,
+        "POST",
         "/api/v1/org-registrations",
-        registration("dev.owner@example.com", Some(TERMS_VERSION)),
+        &owner,
+        Some(registration("dev.owner@example.com", Some(TERMS_VERSION))),
     )
     .await;
     assert_eq!(res.status, StatusCode::ACCEPTED, "{}", res.body);

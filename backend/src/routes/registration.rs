@@ -21,7 +21,7 @@ use uuid::Uuid;
 use crate::{
     AppState, PRODUCT_NAME,
     error::{ApiError, ApiResult},
-    extract::ApiJson,
+    extract::{ApiJson, AuthUser},
     gstin::{self, Gstin},
     mail::{
         Email,
@@ -63,7 +63,7 @@ pub struct OrgRegistrationCreate {
     path = "/org-registrations",
     operation_id = "registerOrg",
     tag = "onboarding",
-    security(()),
+    security((), ("bearer" = []), ("cookie" = [])),
     request_body = OrgRegistrationCreate,
     responses(
         (status = 202, description = "Saved as pending; MarkCliq reviews it."),
@@ -78,6 +78,7 @@ pub struct OrgRegistrationCreate {
 async fn register_org(
     State(state): State<AppState>,
     ip: ClientIp,
+    user: Option<AuthUser>,
     ApiJson(req): ApiJson<OrgRegistrationCreate>,
 ) -> ApiResult<StatusCode> {
     state.limits.check(Rule::RegistrationByIp, &ip.0)?;
@@ -107,9 +108,19 @@ async fn register_org(
     }
 
     /*
-        The owner's account. An email that already has an account (they
-        work with another company, say) keeps it as it is; otherwise a
-        new one with no password, set up after approval
+        The owner's account
+        ----------------------------------------------------------------
+        - a new email: a new account, with no password, set up after
+          approval
+        - an email that already has an account: only its own owner,
+          logged in, may make it a company's admin. Anyone can call this
+          endpoint, so otherwise anyone could tie a stranger's account
+          to a made-up company and record an agreement in their name
+          (409 `org.owner_has_account`: log in first, or use another
+          email)
+        - except an account nobody uses (`account_unused`: no password,
+          no company but rejected ones), which an earlier, turned-down
+          registration leaves: registering again reuses it, as new
     */
     let created: Option<Uuid> = sqlx::query_scalar(
         "INSERT INTO users (id, email, name, phone) VALUES ($1, $2, $3, $4)
@@ -122,13 +133,24 @@ async fn register_org(
     .bind(&r.phone)
     .fetch_optional(&mut *tx)
     .await?;
-    let owner_id = match created {
-        Some(id) => id,
+    let (owner_id, new_owner) = match created {
+        Some(id) => (id, true),
         None => {
-            sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+            let existing: Uuid = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
                 .bind(&r.email)
                 .fetch_one(&mut *tx)
+                .await?;
+            if user.is_some_and(|u| u.user_id == existing) {
+                (existing, false)
+            } else if sqlx::query_scalar("SELECT account_unused($1)")
+                .bind(existing)
+                .fetch_one(&mut *tx)
                 .await?
+            {
+                (existing, true)
+            } else {
+                return Err(owner_has_account());
+            }
         }
     };
 
@@ -165,9 +187,8 @@ async fn register_org(
 
     /*
         The agreements (F16): the Company Terms, for the company, always;
-        the owner's own Terms only for an account made just now. An
-        existing account isn't logged in here, so it is asked after its
-        next login instead (`/me`)
+        the owner's own Terms only for an account new to them (made now,
+        or unused). A logged-in owner already agreed at sign-up
     */
     terms::record(
         &mut tx,
@@ -181,7 +202,7 @@ async fn register_org(
         },
     )
     .await?;
-    if created.is_some() {
+    if new_owner {
         terms::record(
             &mut tx,
             Agreement {
@@ -323,6 +344,15 @@ fn optional(value: Option<String>) -> Option<String> {
 // Not blank, and at most `max` characters.
 fn within(value: &str, max: usize) -> bool {
     !value.is_empty() && value.chars().count() <= max
+}
+
+fn owner_has_account() -> ApiError {
+    ApiError::new(
+        StatusCode::CONFLICT,
+        "org.owner_has_account",
+        "This email already has a SolaCliq account",
+    )
+    .detail("Log in with it first, then register the company. Or give another email for the owner.")
 }
 
 fn gstin_taken() -> ApiError {

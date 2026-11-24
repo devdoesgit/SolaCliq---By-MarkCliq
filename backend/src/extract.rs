@@ -1,5 +1,7 @@
-//! Our own versions of axum's extractors, so that a bad request gets the
-//! same problem-JSON error as everything else instead of axum's plain text.
+/*
+    Our own versions of axum's extractors, so that a bad request gets the
+    same problem-JSON error as everything else instead of axum's plain text.
+*/
 
 use axum::extract::{
     FromRequest, FromRequestParts,
@@ -8,12 +10,14 @@ use axum::extract::{
 
 use crate::error::ApiError;
 
-/// Use `ApiJson<T>` instead of `axum::Json<T>` for request bodies.
-///
-/// `#[derive(FromRequest)]` writes the extractor for us: it runs
-/// `axum::Json<T>` (the `via`), and when that fails (body isn't JSON, a
-/// required field is missing...) it turns the error into an `ApiError`
-/// with the `From` impl below (the `rejection`).
+/*
+    Use `ApiJson<T>` instead of `axum::Json<T>` for request bodies.
+
+    `#[derive(FromRequest)]` writes the extractor for us: it runs
+    `axum::Json<T>` (the `via`), and when that fails (body isn't JSON, a
+    required field is missing...) it turns the error into an `ApiError`
+    with the `From` impl below (the `rejection`).
+*/
 #[derive(FromRequest)]
 #[from_request(via(axum::Json), rejection(ApiError))]
 pub struct ApiJson<T>(pub T);
@@ -57,12 +61,14 @@ impl From<PathRejection> for ApiError {
     }
 }
 
-/// The logged-in person. Put `user: AuthUser` in a handler's arguments and
-/// the handler only runs for a valid session; otherwise axum answers 401
-/// `auth.unauthenticated` without calling it.
-///
-/// The token comes from `Authorization: Bearer <token>` (the app) or the
-/// `solacliq_session` cookie (the website).
+/*
+    The logged-in person. Put `user: AuthUser` in a handler's arguments and
+    the handler only runs for a valid session; otherwise axum answers 401
+    `auth.unauthenticated` without calling it.
+
+    The token comes from `Authorization: Bearer <token>` (the app) or the
+    `solacliq_session` cookie (the website).
+*/
 #[derive(Debug, Clone, Copy)]
 pub struct AuthUser {
     pub user_id: uuid::Uuid,
@@ -105,6 +111,32 @@ impl axum::extract::FromRequestParts<crate::AppState> for AuthUser {
     }
 }
 
+/*
+    `Option<AuthUser>`, for a public endpoint that does more for someone
+    logged in (registering a company with one's own account). No token,
+    or one that no longer works: None, never a 401
+*/
+impl axum::extract::OptionalFromRequestParts<crate::AppState> for AuthUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &crate::AppState,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        let Some(token) =
+            bearer_token(&parts.headers).or_else(|| cookie(&parts.headers, SESSION_COOKIE))
+        else {
+            return Ok(None);
+        };
+        Ok(crate::session::find(&state.db, token)
+            .await?
+            .map(|(session_id, user_id)| AuthUser {
+                user_id,
+                session_id,
+            }))
+    }
+}
+
 /// `Authorization: Bearer abc` → `Some("abc")`.
 pub(crate) fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
     headers
@@ -115,8 +147,10 @@ pub(crate) fn bearer_token(headers: &axum::http::HeaderMap) -> Option<&str> {
         .filter(|t| !t.is_empty())
 }
 
-/// `cookie(headers, "solacliq_session")` with
-/// `Cookie: a=1; solacliq_session=abc` → `Some("abc")`.
+/*
+    `cookie(headers, "solacliq_session")` with
+    `Cookie: a=1; solacliq_session=abc` → `Some("abc")`.
+*/
 pub fn cookie<'a>(headers: &'a axum::http::HeaderMap, name: &str) -> Option<&'a str> {
     headers
         .get_all(axum::http::header::COOKIE)
