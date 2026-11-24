@@ -20,7 +20,12 @@ cargo run -- seed                        # illustrative data, APP_ENV=developmen
 cargo run -- make-platform-admin <email>
 cargo run -- send-test-email <to>        # checks the Gmail API setup
 cargo run -- send-test-push <token>      # checks the Firebase (push) setup
+docker build --load -t solacliq-api:dev backend   # the production image (deploy/README.md)
 ```
+
+In production the binary runs as `solacliq-api` in the image
+(`Dockerfile`); its commands go through `docker compose exec api
+solacliq-api <command>`.
 
 ## Rules
 

@@ -1,0 +1,5 @@
+# Only Cargo.toml, Cargo.lock, src and migrations go into the image.
+target
+tests
+.env
+*.md
