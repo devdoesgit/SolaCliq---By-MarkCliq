@@ -931,3 +931,20 @@ Change a decision by adding a new line, not by editing an old one.
   email and bank stay the person's own ("we let the person edit, not the
   admin"). A role changes only with nothing open in the old role; pay
   applies from now on.
+
+## 2026-11-24
+
+- **The API and Postgres run in Docker on the VPS (owner, 2026-11-24).**
+  One compose file (`deploy/compose.yml`): Postgres 17 with its data in
+  the `solacliq-db` volume, on a network with no way in or out, and the
+  API image (`backend/Dockerfile`, built on the development machine by
+  `deploy/build.sh`, so the server compiles nothing). The VPS's Caddy
+  stays in front and serves the website's files: same origin for the
+  cookie, the write protection and the CSP. Vercel was considered and
+  not chosen: a second origin would need cross-site cookies or every API
+  call proxied through it, Vercel would see personal data, and commercial
+  use needs its paid plan. Release with automatic rollback, nightly
+  backups (outside Docker) and restore keep their behaviour, now through
+  the containers; all were drilled on a scratch server, including a
+  failed release that had migrated. Replaces the systemd service and
+  the Postgres installed on the server (2026-11-19).

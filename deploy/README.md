@@ -1,85 +1,104 @@
 # Deploying SolaCliq
 
 Everything runs on the VPS under `solacliq.markcliq.com`: Caddy in front
-(HTTPS), the Rust API on `127.0.0.1:8080` behind `/api`, the admin
-website's static files at `/`, Postgres 17 on the same machine. Files and
-photos are in Cloudflare R2, not on the server.
+(HTTPS), and in Docker the Rust API (on `127.0.0.1:8080`, behind `/api`)
+and Postgres 17. The admin website's static files are served by Caddy at
+`/`. Files and photos are in Cloudflare R2, not on the server.
+
+> **The database is the Docker volume `solacliq-db`.**
+> `docker compose down` keeps it. `docker compose down -v`, or
+> `docker volume rm solacliq-db`, **erases every company's data**.
+> The nightly dumps in `/var/backups/solacliq` are outside Docker.
 
 The owner runs every command on the server; Claude has no access to it.
 Commands marked **local** run on the development machine, in the repo.
 
 | File | Where it goes |
 |---|---|
-| `Caddyfile` | a block in `/etc/caddy/Caddyfile` |
-| `solacliq-api.service` | `/etc/systemd/system/` |
-| `solacliq-backup.service`, `.timer` | `/etc/systemd/system/` |
+| `compose.yml`, `db-init.sh`, `db-setup.sql` | `/opt/solacliq/` (the containers) |
+| `common.sh`, `backup.sh`, `release.sh`, `restore.sh` | `/opt/solacliq/` (run as root) |
+| `db.env.example` | filled in as `/etc/solacliq/db.env` |
 | `solacliq.env.example` | filled in as `/etc/solacliq/solacliq.env` |
-| `db-setup.sql` | run once with `psql` |
-| `build.sh` | **local**: builds a release archive |
-| `release.sh` | on the server: backs up, puts a release live, rolls back if it fails |
-| `restore.sh` | on the server: puts a backup back (also used by `release.sh`) |
+| `solacliq-backup.service`, `.timer` | `/etc/systemd/system/` |
+| `Caddyfile` | a block in `/etc/caddy/Caddyfile` |
+| `build.sh` | **local**: builds a release archive (API image + website) |
+| `../backend/Dockerfile` | the API's image, built by `build.sh` |
 
 On the server:
 
 ```
-/etc/solacliq/            solacliq.env, gmail-sender.json, firebase-key.json
-/opt/solacliq/releases/   one folder per release (backend + admin/)
-/opt/solacliq/current     link to the live release
-/var/backups/solacliq/    daily database dumps, 14 days
+/etc/solacliq/            db.env, solacliq.env, gmail-sender.json, firebase-key.json
+/opt/solacliq/            compose.yml and the scripts
+/opt/solacliq/releases/   one folder per release (the website's files)
+/opt/solacliq/current     link to the live release; the image solacliq-api:current is its API
+/var/backups/solacliq/    database dumps: daily ones for 14 days, the last 10 releases'
 ```
 
 ## First deploy
+
+### 0. Before you start
+
+- **DNS:** an `A` record for `solacliq.markcliq.com` pointing at the
+  VPS's IP address (where markcliq.com's DNS is managed). Check with
+  `dig +short solacliq.markcliq.com`: it must print that IP before
+  step 9, or Caddy can't get the certificate.
+- **The production bucket:** in Cloudflare R2, create `solacliq-uploads`
+  and an API token with Object Read & Write on that bucket only. Keep its
+  Access Key ID and Secret for step 6.
+- **On this machine, Docker** for `build.sh`: your user isn't in the
+  `docker` group, so use Podman's socket in that terminal:
+  `systemctl --user start podman.socket && export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock`
+  (or `sudo usermod -aG docker $USER` and log in again).
 
 ### 1. Check the server
 
 ```
 cat /etc/os-release | head -2; uname -m
-caddy version; psql --version
-sudo ss -ltnp | grep -E ':80 |:443 |:5432 |:8080 '
+caddy version; docker --version; docker compose version
+sudo ss -ltnp | grep -E ':80 |:443 |:8080 '
 ```
 
-Expected: Ubuntu 22.04+ or Debian 12+, `x86_64`, nothing else on port
-8080. If something differs, stop and tell Claude what it printed.
+Expected: Ubuntu 22.04+ or Debian 12+, `x86_64`, Docker 24+ with the
+compose plugin, nothing else on port 8080. If Docker is missing, install
+it from Docker's own apt repository (docs.docker.com, "Install Docker
+Engine on Ubuntu"), which includes compose. If something else differs,
+stop and tell Claude what it printed.
 
 Ports 80 and 443 must be open to the internet (nothing answers on them
 today). With ufw: `sudo ufw allow 80,443/tcp`. Also check the hosting
-provider's firewall in its control panel.
+provider's firewall in its control panel. Postgres needs no port: it's
+reachable only by the API, inside Docker. (Docker's published ports skip
+ufw; the API's is bound to 127.0.0.1, so it's closed to the internet
+anyway.)
 
-### 2. Postgres 17
-
-Skip if `psql --version` shows 17. Otherwise, from the PostgreSQL apt
-repository:
-
-```
-sudo apt install -y postgresql-common
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-sudo apt install -y postgresql-17
-```
-
-It listens on localhost only by default; keep it that way.
-
-### 3. The service user and folders
+### 2. The folders
 
 ```
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin solacliq
-sudo install -d -o root -g solacliq -m 750 /etc/solacliq
+sudo install -d -o root -g root -m 755 /etc/solacliq
 sudo install -d -o root -g root -m 755 /opt/solacliq/releases
-sudo install -d -o postgres -g postgres -m 700 /var/backups/solacliq
+sudo install -d -o root -g root -m 700 /var/backups/solacliq
 ```
 
-### 4. The database
+### 3. The deploy kit
 
-**local**: `scp deploy/db-setup.sql <you>@solacliq.markcliq.com:/tmp/`
-
-Then on the server, with two new passwords:
+**local**: `scp deploy/compose.yml deploy/db-init.sh deploy/db-setup.sql deploy/common.sh deploy/backup.sh deploy/release.sh deploy/restore.sh deploy/*.example deploy/*.service deploy/*.timer <you>@solacliq.markcliq.com:/tmp/`
 
 ```
-OWNER_PW=$(openssl rand -hex 24); API_PW=$(openssl rand -hex 24)
-sudo -u postgres psql -v ON_ERROR_STOP=1 -v owner_pw="$OWNER_PW" -v api_pw="$API_PW" -f /tmp/db-setup.sql
-echo "owner: $OWNER_PW"; echo "api: $API_PW"
+cd /tmp && sudo install -m 644 compose.yml db-setup.sql common.sh /opt/solacliq/
+sudo install -m 755 db-init.sh backup.sh release.sh restore.sh /opt/solacliq/
 ```
 
-The passwords go into the settings in step 6. Clear the terminal after.
+### 4. The database passwords
+
+```
+sudo install -o root -g root -m 600 /tmp/db.env.example /etc/solacliq/db.env
+for v in POSTGRES_PASSWORD SOLACLIQ_OWNER_PASSWORD SOLACLIQ_API_PASSWORD; do echo "$v=$(openssl rand -hex 24)"; done
+sudo nano /etc/solacliq/db.env
+```
+
+Paste the three lines it printed over the empty ones. The owner and API
+passwords also go into the settings in step 6. They're read once, when
+the database is first created. Clear the terminal after.
 
 ### 5. The key files
 
@@ -91,24 +110,21 @@ already be on the server (`ls -l /etc/solacliq/`).
 
 ```
 sudo mv /tmp/firebase-key.json /etc/solacliq/
-sudo chown root:solacliq /etc/solacliq/*.json
-sudo chmod 640 /etc/solacliq/*.json
+sudo chown 10001:10001 /etc/solacliq/*.json
+sudo chmod 600 /etc/solacliq/*.json
 ```
 
-640 with group `solacliq`, not 600: the API runs as `solacliq` and has to
-read them.
+10001 is the API's user inside its container: only it reads the keys.
 
 ### 6. The settings
 
-**local**: `scp deploy/solacliq.env.example <you>@solacliq.markcliq.com:/tmp/`
-
 ```
-sudo install -o root -g solacliq -m 640 /tmp/solacliq.env.example /etc/solacliq/solacliq.env
+sudo install -o root -g root -m 600 /tmp/solacliq.env.example /etc/solacliq/solacliq.env
 openssl rand -hex 32   # run twice: one for CODE_SECRET, one for BANK_KEY
 sudo nano /etc/solacliq/solacliq.env
 ```
 
-Fill in the two database passwords, `CODE_SECRET`, `BANK_KEY` and the
+Fill in the two database passwords (the same as in `db.env`), `CODE_SECRET`, `BANK_KEY` and the
 production R2 token's four values. Save `BANK_KEY` in your password
 manager: without it the stored bank account numbers can't be read.
 
@@ -135,34 +151,33 @@ curl -si -X OPTIONS "https://<account id>.r2.cloudflarestorage.com/solacliq-uplo
   -H "Access-Control-Request-Headers: content-type" | grep -i allow-origin
 ```
 
-### 7. The services
-
-**local**: `scp deploy/*.service deploy/*.timer <you>@solacliq.markcliq.com:/tmp/`
+### 7. The nightly backup
 
 ```
-sudo mv /tmp/solacliq-api.service /tmp/solacliq-backup.service /tmp/solacliq-backup.timer /etc/systemd/system/
+sudo mv /tmp/solacliq-backup.service /tmp/solacliq-backup.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable solacliq-api
 sudo systemctl enable --now solacliq-backup.timer
 ```
 
-The API starts with the first release, next.
+Docker restarts the containers by itself after a crash or a reboot
+(`restart: unless-stopped`); there's no service for them.
 
 ### 8. The first release
 
-**local**:
+**local** (Docker running; the archive holds the API image and the website):
 
 ```
 deploy/build.sh
-scp deploy/out/solacliq-<commit>.tar.gz deploy/release.sh deploy/restore.sh <you>@solacliq.markcliq.com:/tmp/
+scp deploy/out/solacliq-<commit>.tar.gz <you>@solacliq.markcliq.com:/tmp/
 ```
 
 On the server:
 
 ```
-sudo bash /tmp/release.sh /tmp/solacliq-<commit>.tar.gz
+sudo bash /opt/solacliq/release.sh /tmp/solacliq-<commit>.tar.gz
 ```
 
+The first time, the database container starts and sets itself up first.
 It prints `Live: solacliq-<commit>`, or the API's log if it didn't
 start. The most likely cause then is a setting in step 6; the log names
 it.
@@ -182,13 +197,13 @@ request can take a few seconds while Caddy gets the certificate.
 
 ### 10. Check it end to end
 
-1. Email: `sudo systemd-run --pty --wait -q --uid=solacliq -p EnvironmentFile=/etc/solacliq/solacliq.env /opt/solacliq/current/backend send-test-email info@markcliq.com`
+1. Email: `sudo docker compose -f /opt/solacliq/compose.yml exec api solacliq-api send-test-email info@markcliq.com`
 2. The app, built for production (below), on a real phone: sign up,
    enter the emailed code, log in.
 3. Register a test company in the app; the review email reaches
    info@markcliq.com.
 4. Make your account MarkCliq's platform admin (it must have signed up first):
-   `sudo systemd-run --pty --wait -q --uid=solacliq -p EnvironmentFile=/etc/solacliq/solacliq.env /opt/solacliq/current/backend make-platform-admin <your email>`
+   `sudo docker compose -f /opt/solacliq/compose.yml exec api solacliq-api make-platform-admin <your email>`
 5. Approve that test company (next section), open
    https://solacliq.markcliq.com as its owner, choose "First time here?
    Set your password", and add a logo in Settings (it proves R2's rule).
@@ -275,30 +290,39 @@ adb install build/app/outputs/flutter-apk/app-production-release.apk
 
 ## Later releases
 
-**local**: commit, `deploy/build.sh`, then `scp` the archive with
-`deploy/release.sh` and `deploy/restore.sh`, and reload Caddy if
-`deploy/Caddyfile` changed.
-**Server**: `sudo bash /tmp/release.sh /tmp/solacliq-<commit>.tar.gz`.
+**local**: commit, `deploy/build.sh`, `scp` the archive (and any changed
+file of the deploy kit, then `install` it as in step 3), and reload
+Caddy if `deploy/Caddyfile` changed.
+**Server**: `sudo bash /opt/solacliq/release.sh /tmp/solacliq-<commit>.tar.gz`.
 
 It stops the API for a few seconds, takes a backup, then starts the
-release. If that doesn't start, the previous release comes back by
-itself, with the backup if a migration had run. Don't roll back by
-moving `current` yourself after a migration: an older API won't start on
-a newer database.
+release. If that doesn't answer within a minute, the previous release
+comes back by itself, with the backup if a migration had run. Don't roll
+back by hand after a migration: an older API won't start on a newer
+database. The last five releases and their images are kept.
 
 ## Restore a backup
 
 ```
-sudo bash /tmp/restore.sh /var/backups/solacliq/<dump> [solacliq-<commit>]
+sudo bash /opt/solacliq/restore.sh /var/backups/solacliq/<dump> [solacliq-<commit>]
 ```
 
 Give the release the dump was made with when it's older than the live
-one. What was written after the dump was taken is not in it. The
-database it replaces is kept as `solacliq_replaced_<time>`; once you're
-sure, drop it with `sudo -u postgres dropdb <that name>`. Don't use
-`pg_restore --clean` on the live database: later releases can then never
-migrate it.
+one. What was written after the dump was taken is not in it. It loads
+into a new database first: a dump that won't load leaves the live one
+untouched. The database it replaces is kept as
+`solacliq_replaced_<time>`; once you're sure, drop it:
+`sudo docker compose -f /opt/solacliq/compose.yml exec db dropdb -U postgres <that name>`.
+Don't use `pg_restore --clean` on the live database: later releases can
+then never migrate it.
 
-## Logs
+## Logs and status
 
-`journalctl -u solacliq-api -f` (the API), `journalctl -u caddy -f`.
+```
+sudo docker compose -f /opt/solacliq/compose.yml ps
+sudo docker compose -f /opt/solacliq/compose.yml logs -f api
+sudo docker compose -f /opt/solacliq/compose.yml logs -f db
+journalctl -u caddy -f
+```
+
+Each container keeps 5 log files of 10 MB.

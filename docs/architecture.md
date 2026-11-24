@@ -10,7 +10,7 @@ Claude builds every part; the owner reviews.
 | Part | Choice |
 |---|---|
 | Backend | Rust, Axum + sqlx, `utoipa` for the OpenAPI spec |
-| Database | Postgres 17 on the owner's VPS (`make db` locally) |
+| Database | Postgres 17 in Docker on the owner's VPS (`make db` locally) |
 | Object storage | Cloudflare R2 (free plan) |
 | Mobile app (workers, agents, customers) | Flutter (Dart), Android first |
 | Admin website (org admins) | React + Vite + TypeScript, static SPA |
@@ -19,8 +19,9 @@ Claude builds every part; the owner reviews.
 ## Hosting
 
 - Everything on the owner's VPS under `solacliq.markcliq.com`:
-  - `/` admin website (static files, no Node server)
-  - `/api` Rust API
+  - `/` admin website (static files, no Node server), served by Caddy
+  - `/api` Rust API, in Docker with Postgres (`deploy/compose.yml`),
+    Caddy in front; releases, backups and restores in `deploy/README.md`
   - `/r/<code>` referral links (Android App Links open the app)
   - `/app` APK download page
 - Not a path on markcliq.com: the website and SolaCliq stay separate.
