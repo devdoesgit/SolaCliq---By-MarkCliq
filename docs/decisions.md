@@ -982,3 +982,9 @@ Change a decision by adding a new line, not by editing an old one.
   entries above say; the settings and deploy steps use the real name.
   Its CORS rule allows `GET` and `PUT` from `https://solacliq.markcliq.com`
   only (checked: another origin is refused).
+- **MarkCliq reviews companies on the website (owner, 2026-11-25, F22).**
+  The first production sign-up showed the gap: a platform admin saw
+  "pages aren't built yet" and had to approve through the API. The
+  pages use the existing endpoints, no contract change. A platform admin
+  always lands on the home page (MarkCliq's Companies on top), never
+  jumped straight into one company.

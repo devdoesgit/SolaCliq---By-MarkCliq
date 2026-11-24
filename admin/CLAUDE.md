@@ -7,7 +7,8 @@ KYC, tasks and proof, expenses, commissions, payments, UPI id (W0 to W4,
 `../docs/features/admin-website.md`), and the public legal pages
 (`/terms`, `/privacy`, `/company-terms`, made from `../legal/*.md` at
 build time; F16). Also built: the overview and notifications (W5), logo and
-attendance (W6), stage templates (F19), leads (F20) and editing a member (F21).
+attendance (W6), stage templates (F19), leads (F20), editing a member (F21)
+and MarkCliq's company review (F22, `/platform`).
 Workers, agents and customers use the mobile app.
 
 Stack and API conventions: `../docs/architecture.md`.
@@ -46,5 +47,5 @@ Stack and API conventions: `../docs/architecture.md`.
 | Org admin | Approvals queue: expenses and commission | F7/F8 |
 | Org admin | Referral settings: bonus or discount | F11 |
 | Org admin | Dashboard overview | after F8 |
-| Platform admin | Pending companies: approve or reject (API only for now) | F2 |
-| Platform admin | Org list, suspend, support access | F14 |
+| Platform admin | Companies by status; approve, reject, suspend, restore (`/platform`) | F22 |
+| Platform admin | Support access | F14 |

@@ -40,6 +40,7 @@ Status: `planned` → `spec` (spec written, under review) → `building` →
 | F19 | Stage templates per company | built 2026-11-23: backend, website editor, New task fills from it, app shows the company's names (`features/F19-stage-templates.md`) |
 | F20 | Landing-page leads | built 2026-11-23: lead key and intake, website Leads, agents' leads in the app (`features/F20-leads.md`) |
 | F21 | Editing a team member | built 2026-11-23: role and pay type, resend invite; people keep editing their own details (`features/F21-team-edit.md`) |
+| F22 | MarkCliq's company review (website) | built 2026-11-25: Companies list by status, a company's page, approve, reject with a reason, suspend, restore (`features/F22-platform-companies.md`) |
 
 ## Which part each feature touches
 

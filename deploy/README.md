@@ -211,9 +211,13 @@ request can take a few seconds while Caddy gets the certificate.
 
 ## Approve a company
 
-A vendor can't use the website until MarkCliq approves them, and there's
-no page for it yet. On any machine with curl and Python, as a platform
-admin (step 10.4). Run each block by itself.
+A vendor can't use the website until MarkCliq approves them. As a platform
+admin (step 10.4), log in at https://solacliq.markcliq.com → **Companies**
+→ the company → **Approve** (or **Reject**, with the reason the owner is
+emailed). Suspend and Restore are on the same page.
+
+Without the website, through the API, on any machine with curl and
+Python. Run each block by itself.
 
 Log in (the password isn't shown or saved):
 

@@ -2162,8 +2162,14 @@ a.inbox-row:hover {
   text-decoration: underline;
 }
 
-.settings .facts {
+.settings .facts,
+.owner-card .facts {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* An email too long for the side card breaks, but only if it must. */
+.owner-card dd {
+  overflow-wrap: anywhere;
 }
 
 .form .sc-textarea {

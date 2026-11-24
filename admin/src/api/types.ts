@@ -28,3 +28,5 @@ export type LeadSummary = S['LeadSummary'];
 export type Lead = S['Lead'];
 export type LeadStatus = S['LeadStatus'];
 export type Stage = S['Stage'];
+export type PlatformOrg = S['PlatformOrg'];
+export type OrgStatus = S['OrgStatus'];

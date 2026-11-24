@@ -122,3 +122,19 @@ export const LEAD: Record<S['LeadStatus'], Label> = {
   won: { label: 'Won', tone: 'success' },
   lost: { label: 'Lost', tone: 'quiet' },
 };
+
+export const ORG: Record<S['OrgStatus'], Label> = {
+  pending: { label: 'Waiting for review', tone: 'info' },
+  active: { label: 'Active', tone: 'success' },
+  suspended: { label: 'Suspended', tone: 'danger' },
+  rejected: { label: 'Not approved', tone: 'danger' },
+};
+
+export const BUSINESS: Record<S['BusinessType'], string> = {
+  proprietorship: 'Proprietorship',
+  partnership: 'Partnership',
+  llp: 'LLP',
+  private_limited: 'Private limited',
+  public_limited: 'Public limited',
+  other: 'Other',
+};

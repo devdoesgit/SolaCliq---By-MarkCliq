@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup as cleanupRender, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1251,5 +1251,111 @@ describe('editing a member (F21)', () => {
       method: 'POST',
       path: '/orgs/{org_id}/members/{user_id}/invite',
     });
+  });
+});
+
+describe("MarkCliq's companies (F22)", () => {
+  const company = (over: object = {}) => ({
+    id: 'p1',
+    name: 'Sun Power',
+    legal_name: 'Sun Power Private Limited',
+    business_type: 'private_limited',
+    gstin: '03AAAAA0000A1Z5',
+    pan: 'AAAAA0000A',
+    address_line_1: 'Plot 4',
+    city: 'Mohali',
+    state: 'Punjab',
+    pin_code: '160055',
+    phone: '9814022671',
+    status: 'pending',
+    owner: { user_id: 'u9', name: 'Asha Owner', email: 'asha@example.com', phone: '9814022672' },
+    created_at: at,
+    ...over,
+  });
+
+  beforeEach(() => {
+    me = { ...admin(), is_platform_admin: true };
+    reads['/platform/orgs'] = (query) =>
+      answer(200, page(query.status === 'pending' ? [company()] : []));
+    reads['/platform/orgs/{org_id}'] = () => answer(200, company());
+    write = () => answer(200, company({ status: 'active' }));
+  });
+
+  it('a platform admin lands on home with Companies and how many wait', async () => {
+    me = { ...admin(membership(ORG)), is_platform_admin: true };
+    const router = open('/');
+    expect(await screen.findByText('1 waiting')).toBeInTheDocument();
+    // No jump into their one company: MarkCliq's card would be hidden.
+    expect(router.state.location.pathname).toBe('/');
+    expect(screen.getByText(`Solar ${ORG}`)).toBeInTheDocument();
+  });
+
+  it('the list opens on those waiting, and other tabs say when they are empty', async () => {
+    open('/platform/companies');
+    expect(await screen.findByRole('link', { name: 'Review Sun Power' })).toBeInTheDocument();
+    expect(queries.find((q) => q.path === '/platform/orgs')?.query).toMatchObject({
+      status: 'pending',
+    });
+    await userEvent.click(screen.getByRole('link', { name: 'Suspended' }));
+    expect(await screen.findByText('No suspended companies.')).toBeInTheDocument();
+  });
+
+  it('a waiting company is approved through a dialog', async () => {
+    open('/platform/companies/p1');
+    expect(await screen.findByText('03AAAAA0000A1Z5')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Call Asha' })).toHaveAttribute(
+      'href',
+      'tel:+919814022672',
+    );
+    expect(screen.queryByRole('button', { name: 'Suspend' })).not.toBeInTheDocument();
+    await click('Approve');
+    await confirm('Approve');
+    expect(sent[0]).toMatchObject({
+      method: 'POST',
+      path: '/platform/orgs/{org_id}/status',
+      body: { status: 'active' },
+    });
+  });
+
+  it('rejecting needs a reason, which is sent', async () => {
+    open('/platform/companies/p1');
+    await click('Reject');
+    await confirm('Reject');
+    expect(await screen.findByText('Write a few words.')).toBeInTheDocument();
+    expect(sent).toHaveLength(0);
+    await userEvent.type((await inDialog()).getByLabelText('Reason'), 'GSTIN does not match');
+    await confirm('Reject');
+    expect(sent[0].body).toEqual({ status: 'rejected', note: 'GSTIN does not match' });
+  });
+
+  it('an active company can only be suspended, a suspended one only restored', async () => {
+    reads['/platform/orgs/{org_id}'] = () => answer(200, company({ status: 'active' }));
+    open('/platform/companies/p1');
+    await click('Suspend');
+    await confirm('Suspend');
+    expect(sent[0].body).toEqual({ status: 'suspended' });
+    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+    cleanupRender();
+    reads['/platform/orgs/{org_id}'] = () => answer(200, company({ status: 'suspended' }));
+    open('/platform/companies/p1');
+    await click('Restore');
+    await confirm('Restore');
+    expect(sent[1].body).toEqual({ status: 'active' });
+  });
+
+  it('someone else deciding first closes the dialog and says so', async () => {
+    write = () => problem(409, 'org.status_change_not_allowed', "That status change isn't allowed");
+    open('/platform/companies/p1');
+    await click('Approve');
+    await confirm('Approve');
+    expect(await screen.findByRole('status')).toHaveTextContent(/now shows how it stands/);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it("someone who isn't a platform admin finds nothing there", async () => {
+    me = admin(membership(ORG));
+    open('/platform/companies');
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(queries.some((q) => q.path.startsWith('/platform'))).toBe(false);
   });
 });

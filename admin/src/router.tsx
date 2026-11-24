@@ -15,6 +15,9 @@ import { CommissionsPage } from './features/money/CommissionsPage';
 import { ExpensesPage } from './features/money/ExpensesPage';
 import { PaymentsPage } from './features/money/PaymentsPage';
 import { OverviewPage } from './features/overview/OverviewPage';
+import { CompaniesPage } from './features/platform/CompaniesPage';
+import { CompanyPage } from './features/platform/CompanyPage';
+import { PlatformLayout } from './features/platform/PlatformLayout';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { StagesPage } from './features/settings/StagesPage';
 import { NewTaskPage } from './features/tasks/NewTaskPage';
@@ -36,6 +39,16 @@ export const routes = [
     element: <RequireSession />,
     children: [
       { path: '/', element: <HomePage /> },
+      {
+        path: '/platform',
+        element: <PlatformLayout />,
+        children: [
+          { index: true, element: <Navigate to="companies" replace /> },
+          { path: 'companies', element: <CompaniesPage /> },
+          { path: 'companies/:orgId', element: <CompanyPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
       {
         path: '/c/:orgId',
         element: <CompanyLayout />,
