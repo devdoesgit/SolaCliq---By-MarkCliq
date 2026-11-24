@@ -458,6 +458,19 @@ Actions → Deploy → Run workflow → `v1.0.1`. The log shows `release.sh`'s
 own output, ending `Live: solacliq-<commit>`, then a health check. A
 release that doesn't answer rolls back by itself and the run goes red.
 
+### When a deploy-kit file changed
+
+A release carries the API and the website, not the deploy kit. When a
+commit changes `deploy/compose.yml` (or another kit file), copy it to the
+server by hand **before** putting that release live, as in step 3:
+
+```
+scp deploy/compose.yml root@solacliq.markcliq.com:/tmp/        # local
+install -m 644 /tmp/compose.yml /opt/solacliq/                  # server
+```
+
+`release.sh` then starts the API with it.
+
 ## Later releases, by hand
 
 Without GitHub (or if it's down): **local**: commit, `deploy/build.sh`, `scp` the archive (and any changed

@@ -138,7 +138,11 @@ collection = {
                      "address_line_1": "{{address_line_1}}", "city": "{{city}}", "pin_code": "{{pin_code}}",
                      "owner_name": "{{name}}", "email": "{{email}}", "phone": "{{phone}}"},
                     expect(202) + "console.log('MarkCliq should now get the review email at info@markcliq.com');",
-                    auth=False, description="You are its owner: the same email as your account."),
+                    description=(
+                        "You are its owner: the same email as your account. Sent logged in "
+                        "(run 1d first): an existing account can only be made a company's "
+                        "owner by itself (409 org.owner_has_account otherwise)."
+                    )),
             request("2b Companies waiting", "GET", "/platform/orgs?status=pending", test=PENDING),
             request("2c Approve it", "POST", "/platform/orgs/{{org_id}}/status", {"status": "active"},
                     expect(200) + "pm.test('now active', () => pm.expect(pm.response.json().status).to.eql('active'));"),

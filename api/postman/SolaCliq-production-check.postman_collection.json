@@ -277,10 +277,14 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "url": "{{baseUrl}}/org-registrations",
-            "description": "You are its owner: the same email as your account.",
+            "description": "You are its owner: the same email as your account. Sent logged in (run 1d first): an existing account can only be made a company's owner by itself (409 org.owner_has_account otherwise).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"terms_version\": 1,\n  \"legal_name\": \"{{legal_name}}\",\n  \"trade_name\": \"{{trade_name}}\",\n  \"business_type\": \"{{business_type}}\",\n  \"gstin\": \"{{gstin}}\",\n  \"address_line_1\": \"{{address_line_1}}\",\n  \"city\": \"{{city}}\",\n  \"pin_code\": \"{{pin_code}}\",\n  \"owner_name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\"\n}"

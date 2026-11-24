@@ -17,8 +17,11 @@ rejects it before anyone can use it.
 2. `POST /org-registrations` checks everything again (GSTIN checksum;
    PAN and state taken from it; one live registration per GSTIN) and, in
    one transaction, saves the company `pending`, the owner's account (no
-   password; an existing account is reused) and their `org_admin`
-   membership. MarkCliq (`REVIEW_EMAIL`, info@markcliq.com) and the owner
+   password) and their `org_admin` membership. An email that already has
+   an account becomes the owner only when that account sends the request,
+   logged in, or when nobody uses it (no password, no company but
+   rejected ones: what a turned-down registration leaves); otherwise 409
+   `org.owner_has_account` (2026-11-25, found by the cloud review). MarkCliq (`REVIEW_EMAIL`, info@markcliq.com) and the owner
    are emailed.
 3. MarkCliq checks the company and calls them, then
    `POST /platform/orgs/{id}/status`: `active` (owner emailed how to log

@@ -998,3 +998,31 @@ Change a decision by adding a new line, not by editing an old one.
   the last master commit CI passed, not the push before it, so a push
   whose run was cancelled, skipped or failed is still checked by the next
   one (found by the cloud review). Skipped jobs show grey, not green.
+- **Fixes from the full backend review (owner, 2026-11-25).** A cloud
+  review of the whole backend (PR #1 on two temporary branches) found:
+  1. In Docker, Caddy's connections reach the API from Docker's gateway,
+     not loopback, so `X-Real-IP` was ignored and every visitor shared
+     one set of per-IP limits (30 log-ins a quarter hour for everyone).
+     Now TRUSTED_PROXIES (set in `deploy/compose.yml`: Docker's address
+     pools) says where the header is believed; the port is published on
+     127.0.0.1 only, so nothing else reaches those addresses.
+  2. A public registration could make any existing account a pending
+     company's admin and record an agreement in its name. Now only that
+     account, logged in, or an account nobody uses (`account_unused`).
+  3. Lead limits were counted before the key was checked, so made-up
+     keys could use up a company's leads. Now wrong keys count per IP
+     (`LeadBadKeyByIp`), and only right ones against the company.
+  4. The limiter's map could grow without end: now pruned at most once a
+     second, capped at 200,000 keys (new keys refused past it), and an
+     IPv6 address counts by its /64.
+  5. Password hashing had no cap: now a few at once (twice the CPUs), 503
+     `common.busy` past a 5-second wait; a sign-up token is checked
+     before hashing.
+  6. The customer's progress bar named fixed stages; now the company's
+     first and last (F19), cut short in the app if long.
+  7. Push: one failed device cleanup no longer drops the rest of a
+     batch, and freshness is checked again before each send.
+  8. The subsidy is whole paise (watts first, then integers).
+  9. Stacked `//` and `///` comments became `/* */` blocks.
+  Tests added for each. The review is also why releases now carry a note
+  to copy a changed deploy-kit file by hand first (README).
