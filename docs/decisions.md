@@ -967,3 +967,18 @@ Change a decision by adding a new line, not by editing an old one.
   built with `shorebird release`, never `flutter build`, or it can't be
   patched. Patches in CI wait for a decision on keeping the signing key
   and the Firebase config as GitHub secrets.
+- **App releases and patches from GitHub (owner, 2026-11-24).** For a
+  futureproof setup: builds come from CI, not one PC; the signing key,
+  Firebase config and Shorebird key are repository secrets. On GitHub's
+  free plan (the owner's) they can't be limited to release tags, so only
+  the owner has write access; before anyone else gets it, the signing
+  key comes out or the repo moves to Pro. Patches go to Shorebird's
+  `staging` track first and reach phones only when promoted. The
+  workflow (`app.yml`) stays off (`APP_PIPELINE`) until those secrets are
+  in place. Later, with the Play Store: Play App Signing and an upload
+  key, so a lost or leaked key can be reset.
+- **The production bucket is `solacliq-uploads-prod` (owner, 2026-11-24).**
+  The bucket the owner made is named that, not `solacliq-uploads` as the
+  entries above say; the settings and deploy steps use the real name.
+  Its CORS rule allows `GET` and `PUT` from `https://solacliq.markcliq.com`
+  only (checked: another origin is refused).

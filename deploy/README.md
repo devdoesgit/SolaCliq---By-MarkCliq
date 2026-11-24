@@ -42,7 +42,7 @@ On the server:
   VPS's IP address (where markcliq.com's DNS is managed). Check with
   `dig +short solacliq.markcliq.com`: it must print that IP before
   step 9, or Caddy can't get the certificate.
-- **The production bucket:** in Cloudflare R2, create `solacliq-uploads`
+- **The production bucket:** in Cloudflare R2, create `solacliq-uploads-prod`
   and an API token with Object Read & Write on that bucket only. Keep its
   Access Key ID and Secret for step 6.
 - **On this machine, Docker** for `build.sh`: your user isn't in the
@@ -129,7 +129,7 @@ production R2 token's four values. Save `BANK_KEY` in your password
 manager: without it the stored bank account numbers can't be read.
 
 **The bucket's CORS rule.** Without it the website can't upload a logo.
-In Cloudflare: R2 → `solacliq-uploads` → Settings → CORS policy → Edit:
+In Cloudflare: R2 → `solacliq-uploads-prod` → Settings → CORS policy → Edit:
 
 ```json
 [
@@ -146,7 +146,7 @@ Check it from any machine, with your account id. Expected: a line
 `access-control-allow-origin: https://solacliq.markcliq.com`.
 
 ```
-curl -si -X OPTIONS "https://<account id>.r2.cloudflarestorage.com/solacliq-uploads/check" \
+curl -si -X OPTIONS "https://<account id>.r2.cloudflarestorage.com/solacliq-uploads-prod/check" \
   -H "Origin: https://solacliq.markcliq.com" -H "Access-Control-Request-Method: PUT" \
   -H "Access-Control-Request-Headers: content-type" | grep -i allow-origin
 ```
@@ -321,6 +321,46 @@ shorebird patches rollback --flavor production --release-version <version> --pat
 Try a patch on `--flavor staging` first: staging and development have
 their own Shorebird apps (`mobile/shorebird.yaml`), so nothing reaches
 real users.
+
+### The app from GitHub
+
+`.github/workflows/app.yml` builds releases and patches on GitHub, so
+they don't depend on this PC. It is **off** until you add its secrets:
+every job is skipped unless the repo variable `APP_PIPELINE` is `on`.
+
+On GitHub's free plan the secrets are repository secrets: anyone with
+**write access** to the repo could read them, by changing a workflow.
+So: **only you have write access.** Anyone else gets read access, or
+works through pull requests from a fork. Before giving anyone write
+access, take the signing key out (or move to GitHub Pro, where secrets
+can be limited to your release tags).
+
+**Switching it on**, once (Settings → Secrets and variables → Actions):
+
+1. Secrets:
+   - `SHOREBIRD_TOKEN`: a service account key, made on
+     console.shorebird.dev (Account → Service accounts). Revoke it
+     there if it ever leaks.
+   - `ANDROID_KEYSTORE_BASE64`: the output of
+     `base64 -w0 ~/solacliq-upload.jks`, pasted.
+   - `ANDROID_KEYSTORE_PASSWORD`: the key's password.
+   - `GOOGLE_SERVICES_JSON`: the contents of
+     `mobile/android/app/google-services.json`.
+2. Variables: `APP_PIPELINE` = `on`.
+3. Turn on two-step login on your GitHub account, if it isn't: the
+   account now guards the signing key.
+
+**Using it.** Every step that reaches users is a step you take:
+
+- **A release:** set `version:` in `mobile/pubspec.yaml` (e.g. `1.0.1+2`),
+  commit, then `git tag app-v1.0.1+2 && git push origin app-v1.0.1+2`.
+  The APK appears on the tag's GitHub Release; handing it out is yours.
+- **A patch:** Actions → App → Run workflow → `patch`, with the release
+  it's for. It goes to the `staging` track only: no phone gets it.
+  Check it on your own phone (`shorebird preview --track staging`).
+- **Promote:** Run workflow → `promote`, with the patch's number: every
+  phone on that release gets it on its next start.
+- **Roll back:** Run workflow → `rollback`, with the patch's number.
 
 ## Deploying from GitHub (CI/CD)
 
