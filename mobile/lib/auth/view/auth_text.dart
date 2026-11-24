@@ -77,6 +77,8 @@ extension AuthFailureText on AuthFailureCode {
     AuthFailureCode.validation => l10n.failValidation,
     AuthFailureCode.gstinInvalid => l10n.failGstinInvalid,
     AuthFailureCode.gstinTaken => l10n.failGstinTaken,
+    AuthFailureCode.ownerHasAccount => l10n.failOwnerHasAccount,
+    AuthFailureCode.busy => l10n.failBusy,
     AuthFailureCode.taskLocked => l10n.failTaskLocked,
     AuthFailureCode.taskIncomplete => l10n.failTaskIncomplete,
     AuthFailureCode.expenseLocked => l10n.failExpenseLocked,

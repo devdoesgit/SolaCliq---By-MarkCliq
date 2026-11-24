@@ -3815,6 +3815,14 @@
     "@failGstinTaken": {
         "description": "Error from the server."
     },
+    "failOwnerHasAccount": "This email already has a SolaCliq account. Give another email for the owner, or contact MarkCliq.",
+    "@failOwnerHasAccount": {
+        "description": "Company registration: the owner's email belongs to an existing account, which only its own owner, logged in, can use."
+    },
+    "failBusy": "Too many people are logging in right now. Try again in a moment.",
+    "@failBusy": {
+        "description": "The server is busy checking passwords (503 common.busy)."
+    },
     "orgRejected": "Not approved",
     "@orgRejected": {
         "description": "Company status."

@@ -401,11 +401,17 @@ export interface paths {
          *     (`validation.failed`). PAN and state are taken from the GSTIN.
          *
          *     Then, in one transaction, it saves the company as `pending`, the
-         *     owner's account (no password; an existing account with this email
-         *     is used as it is) and their `org_admin` membership. MarkCliq is
+         *     owner's account and their `org_admin` membership. MarkCliq is
          *     emailed to review it, and the owner is emailed that it arrived.
          *     A platform admin then approves or rejects it
          *     (`/platform/orgs/{org_id}/status`).
+         *
+         *     The owner: a new email gets a new account (no password, set up
+         *     after approval). An email that already has an account becomes the
+         *     owner only when that account sends the request, logged in;
+         *     otherwise 409 `org.owner_has_account` (log in first, or give
+         *     another email). No one can tie someone else's account to a
+         *     company.
          */
         post: operations["registerOrg"];
         delete?: never;
@@ -3333,7 +3339,7 @@ export interface components {
             label: string;
             trailing?: string;
             segments: components["schemas"]["HomeSegment"][];
-            /** @description Names spread under the bar. */
+            /** @description The company's first and last stage names (F19), spread under the bar. */
             stages?: string[];
             /**
              * @description Shows each segment's label with a dot under the bar.
@@ -4806,6 +4812,7 @@ export interface operations {
             400: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     login: {
@@ -4843,6 +4850,7 @@ export interface operations {
             401: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     refreshSession: {
@@ -4948,6 +4956,7 @@ export interface operations {
             400: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     getMe: {
@@ -4996,6 +5005,7 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     listMembers: {

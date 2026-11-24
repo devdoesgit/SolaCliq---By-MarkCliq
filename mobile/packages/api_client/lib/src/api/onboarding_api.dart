@@ -19,7 +19,7 @@ class OnboardingApi {
   const OnboardingApi(this._dio);
 
   /// A solar company registers with SolaCliq
-  /// Public. The server checks the details first: GSTIN format and checksum (&#x60;org.gstin_invalid&#x60;, 422), a GSTIN already registered and not rejected (&#x60;org.gstin_taken&#x60;, 409), and the usual field rules (&#x60;validation.failed&#x60;). PAN and state are taken from the GSTIN.  Then, in one transaction, it saves the company as &#x60;pending&#x60;, the owner&#39;s account (no password; an existing account with this email is used as it is) and their &#x60;org_admin&#x60; membership. MarkCliq is emailed to review it, and the owner is emailed that it arrived. A platform admin then approves or rejects it (&#x60;/platform/orgs/{org_id}/status&#x60;).
+  /// Public. The server checks the details first: GSTIN format and checksum (&#x60;org.gstin_invalid&#x60;, 422), a GSTIN already registered and not rejected (&#x60;org.gstin_taken&#x60;, 409), and the usual field rules (&#x60;validation.failed&#x60;). PAN and state are taken from the GSTIN.  Then, in one transaction, it saves the company as &#x60;pending&#x60;, the owner&#39;s account and their &#x60;org_admin&#x60; membership. MarkCliq is emailed to review it, and the owner is emailed that it arrived. A platform admin then approves or rejects it (&#x60;/platform/orgs/{org_id}/status&#x60;).  The owner: a new email gets a new account (no password, set up after approval). An email that already has an account becomes the owner only when that account sends the request, logged in; otherwise 409 &#x60;org.owner_has_account&#x60; (log in first, or give another email). No one can tie someone else&#39;s account to a company.
   ///
   /// Parameters:
   /// * [orgRegistrationCreate]
@@ -45,7 +45,18 @@ class OnboardingApi {
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{...?headers},
-      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'cookie',
+            'keyName': 'solacliq_session',
+            'where': '',
+          },
+          {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+        ],
+        ...?extra,
+      },
       contentType: 'application/json',
       validateStatus: validateStatus,
     );

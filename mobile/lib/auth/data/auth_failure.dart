@@ -20,6 +20,12 @@ enum AuthFailureCode {
   gstinInvalid('org.gstin_invalid'),
   gstinTaken('org.gstin_taken'),
 
+  /// The owner's email already has an account: they register logged in.
+  ownerHasAccount('org.owner_has_account'),
+
+  /// Too many people are logging in at once; try again in a moment.
+  busy('common.busy'),
+
   /// A task no longer with the worker (submitted, approved, cancelled).
   taskLocked('task.locked'),
 

@@ -40,7 +40,7 @@ class HomeProgress {
   @JsonKey(name: r'segments', required: true, includeIfNull: false)
   final List<HomeSegment> segments;
 
-  /// Names spread under the bar.
+  /// The company's first and last stage names (F19), spread under the bar.
   @JsonKey(name: r'stages', required: false, includeIfNull: false)
   final List<String>? stages;
 

@@ -177,6 +177,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "429":
           $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
 
   /auth/login:
     post:
@@ -244,6 +246,8 @@ paths:
         "401":
           $ref: "#/components/responses/Problem"
         "429":
+          $ref: "#/components/responses/Problem"
+        "503":
           $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
@@ -346,6 +350,8 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
         "429":
+          $ref: "#/components/responses/Problem"
+        "503":
           $ref: "#/components/responses/Problem"
 
   /me:
@@ -483,6 +489,8 @@ paths:
         "422":
           $ref: "#/components/responses/Problem"
         "429":
+          $ref: "#/components/responses/Problem"
+        "503":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/members:
@@ -660,13 +668,22 @@ paths:
         (`validation.failed`). PAN and state are taken from the GSTIN.
 
         Then, in one transaction, it saves the company as `pending`, the
-        owner's account (no password; an existing account with this email
-        is used as it is) and their `org_admin` membership. MarkCliq is
+        owner's account and their `org_admin` membership. MarkCliq is
         emailed to review it, and the owner is emailed that it arrived.
         A platform admin then approves or rejects it
         (`/platform/orgs/{org_id}/status`).
+
+        The owner: a new email gets a new account (no password, set up
+        after approval). An email that already has an account becomes the
+        owner only when that account sends the request, logged in;
+        otherwise 409 `org.owner_has_account` (log in first, or give
+        another email). No one can tie someone else's account to a
+        company.
       tags: [onboarding]
-      security: []
+      security:
+        - {}
+        - bearer: []
+        - cookie: []
       requestBody:
         required: true
         content:
@@ -4361,7 +4378,7 @@ components:
             $ref: "#/components/schemas/HomeSegment"
         stages:
           type: array
-          description: Names spread under the bar.
+          description: "The company's first and last stage names (F19), spread under the bar."
           items:
             type: string
         legend:
