@@ -1,0 +1,66 @@
+# SolaCliq on the VPS: Postgres 17 and the API (deploy/README.md).
+# Lives at /opt/solacliq/compose.yml; release.sh, restore.sh and backup.sh
+# drive it. Caddy (outside Docker) serves the website and forwards /api to
+# 127.0.0.1:8080.
+#
+# THE DATABASE IS THE `solacliq-db` VOLUME. `docker compose down` keeps it;
+# `docker compose down -v` or `docker volume rm` ERASES IT. The nightly
+# dumps in /var/backups/solacliq are outside Docker.
+name: solacliq
+
+services:
+  db:
+    image: docker.io/library/postgres:17-bookworm
+    restart: unless-stopped
+    env_file: ${SOLACLIQ_ETC:-/etc/solacliq}/db.env
+    volumes:
+      - solacliq-db:/var/lib/postgresql/data
+      # Run once, on an empty volume: the database and its three roles.
+      # `z`: labelled for containers where SELinux is on; ignored elsewhere.
+      - ./db-init.sh:/docker-entrypoint-initdb.d/10-solacliq.sh:ro,z
+      - ./db-setup.sql:/solacliq/db-setup.sql:ro,z
+    # Only the API reaches it; nothing is published.
+    networks: [internal]
+    # The solacliq database, over TCP: during its first start Postgres runs
+    # a socket-only server to set itself up, which mustn't count as ready.
+    healthcheck:
+      test: ["CMD", "psql", "-h", "127.0.0.1", "-U", "postgres", "-d", "solacliq", "-qAtc", "SELECT 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: &logs
+      driver: json-file
+      options: { max-size: 10m, max-file: "5" }
+
+  api:
+    # release.sh points `current` at the release it puts live.
+    image: solacliq-api:current
+    restart: unless-stopped
+    env_file: ${SOLACLIQ_ETC:-/etc/solacliq}/solacliq.env
+    environment:
+      BIND_ADDR: 0.0.0.0:8080
+    # The key files the env file names, at the same paths.
+    volumes:
+      - ${SOLACLIQ_ETC:-/etc/solacliq}:/etc/solacliq:ro,z
+    # On the server itself only; Caddy is the way in.
+    ports: ["127.0.0.1:${SOLACLIQ_PORT:-8080}:8080"]
+    # `internal` for the database, `default` for R2, Gmail and FCM.
+    networks: [internal, default]
+    depends_on:
+      db: { condition: service_healthy }
+    # Queued emails are sent before it stops.
+    stop_grace_period: 30s
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logs
+
+networks:
+  # No way out to the internet, and none in.
+  internal:
+    internal: true
+
+volumes:
+  solacliq-db:
+    name: solacliq-db
