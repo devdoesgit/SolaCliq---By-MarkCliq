@@ -1,6 +1,8 @@
-//! `GET /me`: who is logged in and which companies they belong to. The app
-//! calls it on start-up and builds every workspace from `memberships`.
-//! `POST /me/terms`: the person agrees to the current terms (F16).
+/*
+    `GET /me`: who is logged in and which companies they belong to. The app
+    calls it on start-up and builds every workspace from `memberships`.
+    `POST /me/terms`: the person agrees to the current terms (F16).
+*/
 
 use axum::{
     Json,
@@ -32,8 +34,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(delete_account))
 }
 
-/// The contract's `Me`. `Serialize` turns it into JSON; field names stay
-/// as written (snake_case), which is what the contract uses.
+/*
+    The contract's `Me`. `Serialize` turns it into JSON; field names stay
+    as written (snake_case), which is what the contract uses.
+*/
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Me {
     pub id: Uuid,
@@ -83,9 +87,11 @@ pub struct OrgSummary {
     pub logo_url: Option<String>,
 }
 
-/// The signed-in person and their memberships
-///
-/// Used by both apps on start-up to restore the session.
+/*
+    The signed-in person and their memberships
+
+    Used by both apps on start-up to restore the session.
+*/
 #[utoipa::path(
     get,
     path = "/me",
@@ -281,6 +287,8 @@ pub struct AccountDelete {
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 503, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
 )]

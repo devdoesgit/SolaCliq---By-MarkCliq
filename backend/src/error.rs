@@ -1,6 +1,8 @@
-//! Errors as RFC 9457 problem details (`application/problem+json`), matching
-//! `Problem` in ../api/openapi.yaml. The app reads `code`; `detail` is safe
-//! to show to the user.
+/*
+    Errors as RFC 9457 problem details (`application/problem+json`), matching
+    `Problem` in ../api/openapi.yaml. The app reads `code`; `detail` is safe
+    to show to the user.
+*/
 
 use axum::{
     Json,
@@ -32,8 +34,10 @@ pub struct Problem {
     pub errors: Vec<FieldError>,
 }
 
-/// What a handler returns on failure. Build with the constructors, e.g.
-/// `ApiError::new(StatusCode::CONFLICT, "expense.limit_exceeded", "Over the limit")`.
+/*
+    What a handler returns on failure. Build with the constructors, e.g.
+    `ApiError::new(StatusCode::CONFLICT, "expense.limit_exceeded", "Over the limit")`.
+*/
 #[derive(Debug)]
 pub struct ApiError {
     status: StatusCode,
@@ -101,6 +105,17 @@ impl ApiError {
                 "Check the highlighted fields",
             )
         }
+    }
+
+    // 503: password checks are all busy (`password.rs`); try again shortly.
+    pub fn busy() -> Self {
+        Self::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "common.busy",
+            "The server is busy",
+        )
+        .detail("Too many people are logging in right now. Try again in a moment.")
+        .retry_after(5)
     }
 
     pub fn internal() -> Self {

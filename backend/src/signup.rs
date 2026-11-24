@@ -112,6 +112,19 @@ pub async fn prove(
     Ok(token)
 }
 
+/*
+    Whether a token is still live, without using it up: checked before the
+    slow password hash, so a made-up token costs no hashing
+*/
+pub async fn is_live(db: &sqlx::PgPool, token: &str) -> Result<bool, ApiError> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM signups WHERE token_hash = $1 AND token_expires_at > now())",
+    )
+    .bind(session::hash_token(token))
+    .fetch_one(db)
+    .await?)
+}
+
 // The email a live token proved; the token is gone once the caller commits.
 pub async fn claim(conn: &mut PgConnection, token: &str) -> Result<Option<String>, ApiError> {
     Ok(sqlx::query_scalar(

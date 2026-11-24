@@ -178,8 +178,10 @@ pub struct CompleteSignupRequest {
     pub name: String,
     pub phone: Option<String>,
     pub password: String,
-    /// The version of the terms the person ticked (F16, `terms.rs`).
-    /// Optional here so a missing one gets its own error code.
+    /*
+        The version of the terms the person ticked (F16, `terms.rs`).
+        Optional here so a missing one gets its own error code.
+    */
     #[schema(required = true, minimum = 1)]
     pub terms_version: Option<i32>,
 }
@@ -209,6 +211,8 @@ pub struct CompleteSignupRequest {
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 503, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn complete_signup(
@@ -219,6 +223,14 @@ async fn complete_signup(
     state.limits.check(Rule::CodeCheckByIp, &ip.0)?;
     let input = validate(&req)?;
     let terms_version = terms::check_sent(req.terms_version)?;
+    /*
+        A token that isn't live is refused before hashing, so made-up
+        tokens cost no hashing. The claim below still decides, in the
+        transaction
+    */
+    if !signup::is_live(&state.db, &req.signup_token).await? {
+        return Err(signup_expired());
+    }
     // Before the transaction: Argon2 is slow on purpose.
     let password_hash = password::hash(req.password).await?;
 
@@ -327,6 +339,8 @@ pub struct TokenPair {
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 503, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
@@ -386,8 +400,10 @@ async fn login(
     }
 }
 
-/// The app's refresh request. The website sends no body: its refresh token
-/// is the `solacliq_refresh` cookie.
+/*
+    The app's refresh request. The website sends no body: its refresh token
+    is the `solacliq_refresh` cookie.
+*/
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RefreshRequest {
     pub refresh_token: String,
@@ -455,10 +471,12 @@ async fn refresh(
     }
 }
 
-/// Log out of this session
-///
-/// Revokes the session, so its access and refresh tokens stop working at
-/// once. The website's cookies are cleared too.
+/*
+    Log out of this session
+
+    Revokes the session, so its access and refresh tokens stop working at
+    once. The website's cookies are cleared too.
+*/
 #[utoipa::path(
     post,
     path = "/auth/logout",
@@ -559,6 +577,8 @@ pub struct ResetPasswordRequest {
         (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 503, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
 )]
@@ -679,13 +699,15 @@ fn invalid_credentials() -> ApiError {
     )
 }
 
-/// The website's two cookies, both HttpOnly (page scripts can't read
-/// them), SameSite=Lax (other sites can't send them with their forms) and,
-/// in production, Secure (HTTPS only).
-///
-/// - `solacliq_session`: the access token, sent on every request.
-/// - `solacliq_refresh`: the refresh token, sent only to `/auth/refresh`,
-///   so normal requests never carry the long-lived token.
+/*
+    The website's two cookies, both HttpOnly (page scripts can't read
+    them), SameSite=Lax (other sites can't send them with their forms) and,
+    in production, Secure (HTTPS only).
+
+    - `solacliq_session`: the access token, sent on every request.
+    - `solacliq_refresh`: the refresh token, sent only to `/auth/refresh`,
+      so normal requests never carry the long-lived token.
+*/
 fn set_cookies(res: &mut Response, tokens: &Tokens, secure: bool) {
     let headers = res.headers_mut();
     headers.append(
@@ -734,9 +756,11 @@ struct ValidSignup {
     phone: Option<String>,
 }
 
-/// Collects every problem at once, so the app can mark all bad fields.
-/// A weak password on its own gets the contract's own code,
-/// `auth.password_too_weak`, which the app shows under the password field.
+/*
+    Collects every problem at once, so the app can mark all bad fields.
+    A weak password on its own gets the contract's own code,
+    `auth.password_too_weak`, which the app shows under the password field.
+*/
 fn validate(req: &CompleteSignupRequest) -> Result<ValidSignup, ApiError> {
     let name = req.name.trim().to_owned();
     // `.filter(...)` turns Some("") into None: a blank phone means no phone.
