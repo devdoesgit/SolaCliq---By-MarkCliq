@@ -6,11 +6,14 @@ import { TextArea } from './Fields';
 export function NoteDialog({
   label,
   help,
+  maxLength = 500,
   send,
   ...rest
 }: Omit<ActionDialogProps, 'children' | 'validate' | 'run'> & {
   label: string;
   help?: string;
+  /** The server's limit for this note. */
+  maxLength?: number;
   send: (note: string) => Promise<unknown>;
 }) {
   const [note, setNote] = useState('');
@@ -24,7 +27,7 @@ export function NoteDialog({
         <TextArea
           label={label}
           help={help}
-          maxLength={500}
+          maxLength={maxLength}
           autoFocus
           value={note}
           error={errors.note}

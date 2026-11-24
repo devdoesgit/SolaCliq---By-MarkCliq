@@ -23,6 +23,8 @@ export interface ActionDialogProps {
   run: () => Promise<unknown>;
   onClose: () => void;
   children?: (errors: Errors) => ReactNode;
+  /** The data read again afterwards: the company's, unless it's MarkCliq's. */
+  refresh?: readonly unknown[];
 }
 
 /*
@@ -33,7 +35,7 @@ export interface ActionDialogProps {
   - 409: someone got there first (another tab). It closes, says so, and
     the screen reloads. The message can't live in the dialog: the reload
     takes away the button that owns it
-  - whatever happened, the company's data is read again
+  - whatever happened, the company's data (or `refresh`) is read again
 */
 export function ActionDialog({
   title,
@@ -45,6 +47,7 @@ export function ActionDialog({
   run,
   onClose,
   children,
+  refresh = ['org'],
 }: ActionDialogProps) {
   const client = useQueryClient();
   const announce = useAnnounce();
@@ -78,7 +81,7 @@ export function ActionDialog({
     setBusy(true);
     try {
       await run();
-      void client.invalidateQueries({ queryKey: ['org'] });
+      void client.invalidateQueries({ queryKey: refresh });
       announce(done);
       onClose();
     } catch (error) {
@@ -89,7 +92,7 @@ export function ActionDialog({
       // A conflict in what was typed (an email already in the team) is
       // fixed here; one in the record's state can't be.
       if (failed.status === 409 && !FIXABLE.has(failed.code)) {
-        void client.invalidateQueries({ queryKey: ['org'] });
+        void client.invalidateQueries({ queryKey: refresh });
         announce(`${failed.message}. The page now shows how it stands.`);
         onClose();
         return;
