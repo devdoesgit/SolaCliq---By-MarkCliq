@@ -48,7 +48,7 @@ class PlatformOrg {
 
     required this.status,
 
-    required this.owner,
+    this.owner,
 
     required this.createdAt,
 
@@ -101,8 +101,8 @@ class PlatformOrg {
   @JsonKey(name: r'status', required: true, includeIfNull: false)
   final OrgStatus status;
 
-  @JsonKey(name: r'owner', required: true, includeIfNull: false)
-  final PlatformOrgOwner owner;
+  @JsonKey(name: r'owner', required: false, includeIfNull: false)
+  final PlatformOrgOwner? owner;
 
   /// ISO 8601, UTC.
   @JsonKey(name: r'created_at', required: true, includeIfNull: false)

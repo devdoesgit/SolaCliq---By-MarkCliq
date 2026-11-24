@@ -3190,7 +3190,8 @@ export interface components {
             pin_code: string;
             phone: components["schemas"]["Phone"];
             status: components["schemas"]["OrgStatus"];
-            owner: {
+            /** @description The company's admin; absent only when there is none (they were removed). */
+            owner?: {
                 user_id: components["schemas"]["Id"];
                 name: string;
                 email: components["schemas"]["Email"];
@@ -4776,6 +4777,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -4839,6 +4841,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -4918,6 +4921,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -5031,6 +5035,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     addMember: {
@@ -5631,7 +5636,6 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
-            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -5797,6 +5801,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     submitTask: {
@@ -6657,6 +6662,7 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     approveCommission: {

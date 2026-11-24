@@ -33,7 +33,7 @@ abstract class _$PlatformOrgCWProxy {
 
   PlatformOrg status(OrgStatus status);
 
-  PlatformOrg owner(PlatformOrgOwner owner);
+  PlatformOrg owner(PlatformOrgOwner? owner);
 
   PlatformOrg createdAt(DateTime createdAt);
 
@@ -61,7 +61,7 @@ abstract class _$PlatformOrgCWProxy {
     String pinCode,
     String phone,
     OrgStatus status,
-    PlatformOrgOwner owner,
+    PlatformOrgOwner? owner,
     DateTime createdAt,
     DateTime? reviewedAt,
     String? reviewNote,
@@ -117,7 +117,7 @@ class _$PlatformOrgCWProxyImpl implements _$PlatformOrgCWProxy {
   PlatformOrg status(OrgStatus status) => this(status: status);
 
   @override
-  PlatformOrg owner(PlatformOrgOwner owner) => this(owner: owner);
+  PlatformOrg owner(PlatformOrgOwner? owner) => this(owner: owner);
 
   @override
   PlatformOrg createdAt(DateTime createdAt) => this(createdAt: createdAt);
@@ -210,7 +210,7 @@ class _$PlatformOrgCWProxyImpl implements _$PlatformOrgCWProxy {
       owner: owner == const $CopyWithPlaceholder()
           ? _value.owner
           // ignore: cast_nullable_to_non_nullable
-          : owner as PlatformOrgOwner,
+          : owner as PlatformOrgOwner?,
       createdAt: createdAt == const $CopyWithPlaceholder()
           ? _value.createdAt
           // ignore: cast_nullable_to_non_nullable
@@ -256,7 +256,6 @@ PlatformOrg _$PlatformOrgFromJson(Map<String, dynamic> json) => $checkedCreate(
         'pin_code',
         'phone',
         'status',
-        'owner',
         'created_at',
       ],
     );
@@ -282,7 +281,9 @@ PlatformOrg _$PlatformOrgFromJson(Map<String, dynamic> json) => $checkedCreate(
       ),
       owner: $checkedConvert(
         'owner',
-        (v) => PlatformOrgOwner.fromJson(v as Map<String, dynamic>),
+        (v) => v == null
+            ? null
+            : PlatformOrgOwner.fromJson(v as Map<String, dynamic>),
       ),
       createdAt: $checkedConvert(
         'created_at',
@@ -323,7 +324,7 @@ Map<String, dynamic> _$PlatformOrgToJson(PlatformOrg instance) =>
       'pin_code': instance.pinCode,
       'phone': instance.phone,
       'status': _$OrgStatusEnumMap[instance.status]!,
-      'owner': instance.owner.toJson(),
+      'owner': ?instance.owner?.toJson(),
       'created_at': instance.createdAt.toIso8601String(),
       'reviewed_at': ?instance.reviewedAt?.toIso8601String(),
       'review_note': ?instance.reviewNote,
