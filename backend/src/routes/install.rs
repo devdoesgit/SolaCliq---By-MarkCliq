@@ -453,6 +453,8 @@ async fn get_my_install(
             content_type = "application/problem+json"),
         (status = 409, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn claim_install_payment(

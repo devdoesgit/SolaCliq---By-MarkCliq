@@ -154,6 +154,8 @@ pub struct SignupSetup {
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
     ),
 )]
 async fn verify_signup(
@@ -324,6 +326,8 @@ pub struct TokenPair {
         (status = 401, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
 )]
@@ -496,6 +500,8 @@ async fn logout(State(state): State<AppState>, user: AuthUser) -> ApiResult<Resp
     responses(
         (status = 202, description = "Accepted."),
         (status = 429, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
+            content_type = "application/problem+json"),
+        (status = 422, description = "Error, as RFC 9457 problem details.", body = crate::error::Problem,
             content_type = "application/problem+json"),
     ),
 )]

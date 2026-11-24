@@ -142,6 +142,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "429":
           $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
 
   /auth/signup/complete:
     post:
@@ -243,6 +245,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "429":
           $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
 
   /auth/refresh:
     post:
@@ -317,6 +321,8 @@ paths:
         "202":
           description: Accepted.
         "429":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
   /auth/password/reset:
@@ -505,6 +511,8 @@ paths:
         "401":
           $ref: "#/components/responses/Problem"
         "403":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
     post:
       operationId: addMember
@@ -1082,8 +1090,6 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
-        "404":
-          $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
 
@@ -1248,6 +1254,8 @@ paths:
         "404":
           $ref: "#/components/responses/Problem"
         "409":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/tasks/{task_id}/submit:
@@ -2071,6 +2079,8 @@ paths:
         "404":
           $ref: "#/components/responses/Problem"
         "409":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
 
   /orgs/{org_id}/customers/{customer_id}/commission:
@@ -4073,7 +4083,7 @@ components:
     PlatformOrg:
       type: object
       description: A company as MarkCliq reviews it.
-      required: [id, name, legal_name, business_type, gstin, pan, address_line_1, city, state, pin_code, phone, status, owner, created_at]
+      required: [id, name, legal_name, business_type, gstin, pan, address_line_1, city, state, pin_code, phone, status, created_at]
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -4106,6 +4116,7 @@ components:
           $ref: "#/components/schemas/OrgStatus"
         owner:
           type: object
+          description: The company's admin; absent only when there is none (they were removed).
           required: [user_id, name, email]
           properties:
             user_id:
