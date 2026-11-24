@@ -67,6 +67,18 @@ Known emulator faults on this machine (NVIDIA, Wayland), 2026-11-17:
   avoids the uninstall crash. Typing with `adb shell input text` can
   drop the first key after a field gains focus: wait a second first.
 
+## Shorebird (over-the-air patches)
+
+Set up 2026-11-24 (`shorebird.yaml`: one Shorebird app per flavor, so a
+staging patch never reaches production). Releases and patches are built
+with Shorebird's Flutter 3.47.7 (`--flutter-version=3.47.7`), signed
+with `~/solacliq-upload.jks` through the git-ignored
+`android/key.properties`. Commands, and when a patch isn't enough:
+`../deploy/README.md`, "The production app". Releases and patches reach
+real users: ask the owner every time. On the emulator, restart the app
+by cold-booting (and `adb shell sync` first): a hard stop loses a
+just-downloaded patch's bookkeeping.
+
 ## Push notifications
 
 The Android build needs `android/app/google-services.json` (git-ignored):
