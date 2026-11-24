@@ -2,8 +2,9 @@
 Description=Daily SolaCliq database backup
 
 [Timer]
-# 03:30 server time; Persistent runs a missed one after a reboot.
-OnCalendar=*-*-* 03:30:00
+# 03:30 in India, whatever the server's clock is set to (the VPS runs on
+# UTC); Persistent runs a missed one after a reboot.
+OnCalendar=*-*-* 03:30:00 Asia/Kolkata
 Persistent=true
 
 [Install]
