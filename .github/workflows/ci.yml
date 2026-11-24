@@ -1,5 +1,5 @@
-# Checks every push to master and every pull request into it.
-# The backend job is the owner's to add.
+# Checks every push to master and every pull request into it, and every
+# release before it's built (deploy.yml calls it).
 name: CI
 
 on:
@@ -7,6 +7,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,8 +19,61 @@ permissions:
 env:
   FLUTTER_VERSION: "3.47.7"
   NODE_VERSION: "22"
+  RUST_VERSION: "1.98.1"
 
 jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    # The same Postgres and logins as `make db`: every test makes its own
+    # database in it.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: solacliq
+          POSTGRES_PASSWORD: solacliq
+          POSTGRES_DB: solacliq
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U solacliq"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://solacliq:solacliq@127.0.0.1:5432/solacliq
+      APP_DATABASE_URL: postgres://solacliq_api:solacliq_api@127.0.0.1:5432/solacliq
+      CARGO_TERM_COLOR: always
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+      - name: The database's roles
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f dev-roles.sql
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked --no-fail-fast
+
+  image:
+    name: API image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      # Built only, never pushed: a broken Dockerfile fails here, not at release.
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   contract:
     name: API contract and generated files
     runs-on: ubuntu-latest
