@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Builds a release on this machine: the API binary (for any Linux with
-# glibc 2.30 or newer, via cargo-zigbuild) and the admin website, packed as
+# Builds a release on this machine: the API's container image (built with
+# Docker, so the server compiles nothing) and the admin website, packed as
 # deploy/out/solacliq-<commit>.tar.gz. Nothing is sent anywhere.
+# SOLACLIQ_ALLOW_DIRTY=1 builds uncommitted work, for trying it locally.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-if [[ -n "$(git status --porcelain)" ]]; then
+if [[ -n "$(git status --porcelain)" && -z "${SOLACLIQ_ALLOW_DIRTY:-}" ]]; then
   echo "Uncommitted changes: commit first, so the release matches a commit." >&2
   exit 1
 fi
@@ -13,8 +14,9 @@ name="solacliq-$(git rev-parse --short HEAD)"
 stage="deploy/out/$name"
 rm -rf "$stage" && mkdir -p "$stage"
 
-(cd backend && cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.31)
-cp backend/target/x86_64-unknown-linux-gnu/release/backend "$stage/backend"
+image="solacliq-api:${name#solacliq-}"
+docker build --load --platform linux/amd64 -t "$image" backend
+docker save -o "$stage/api-image.tar" "$image"
 
 (cd admin && npm ci && npm run build)
 cp -r admin/dist "$stage/admin"
